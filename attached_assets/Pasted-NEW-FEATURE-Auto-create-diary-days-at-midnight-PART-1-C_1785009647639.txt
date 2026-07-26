@@ -1,0 +1,84 @@
+NEW FEATURE: Auto-create diary days at midnight
+
+───────────────────────────────
+PART 1 — CREATE MISSING DAYS 69-76 NOW
+
+The database currently has entries up to day 69.
+Today is July 25, 2026. The project started May 2, 2026.
+Day 76 = today.
+
+Create entries for days 70, 71, 72, 73, 74, 75, 76
+with the correct dates:
+
+INSERT INTO giorni (numero, data) VALUES
+  (70, '2026-07-11'),
+  (71, '2026-07-12'),
+  (72, '2026-07-13'),
+  (73, '2026-07-14'),
+  (74, '2026-07-15'),
+  (75, '2026-07-16'),
+  (76, '2026-07-17');
+
+IMPORTANT: Only insert if the numero does not already
+exist. Use ON CONFLICT (numero) DO NOTHING.
+
+All other fields (kcal, sonno, peso, battito, testo,
+foto, etc.) should be NULL — J will fill them in later
+via the admin panel.
+
+───────────────────────────────
+PART 2 — MIDNIGHT AUTO-CREATION (CRON JOB)
+
+Add a scheduled task that runs every day at 00:00
+(midnight, Europe/Rome timezone).
+
+FILE: artifacts/api-server/src/cron.ts (new file)
+
+Logic:
+1. Get the project start date: 2026-05-02
+2. Calculate today's day number:
+   dayNumber = differenceInDays(today, startDate) + 1
+   Use date-fns or manual calculation.
+   Timezone: Europe/Rome (important — midnight Italian
+   time, not UTC).
+3. Check if an entry with that numero exists in giorni.
+4. If not, insert a new row:
+   { numero: dayNumber, data: today's date ISO string }
+   All other fields NULL.
+5. Log the result: "Created day N" or "Day N already
+   exists, skipping."
+
+Register the cron in:
+FILE: artifacts/api-server/src/index.ts
+
+Use node-cron or a simple setInterval approach:
+- If using node-cron: schedule('0 0 * * *', callback,
+  { timezone: 'Europe/Rome' })
+- Install node-cron if not present:
+  pnpm --filter @workspace/api-server add node-cron
+  pnpm --filter @workspace/api-server add -D @types/node-cron
+
+IMPORTANT CONSTRAINTS:
+- The cron must only create the entry if it does not
+  exist (ON CONFLICT DO NOTHING or check-then-insert)
+- Never overwrite existing data
+- Never delete entries
+- The start date 2026-05-02 should be stored as a
+  constant, not computed
+
+───────────────────────────────
+PART 3 — HERO COUNTER UPDATE
+
+After Part 1 and Part 2, the hero counter fix from
+the previous prompt (FIX 1) will automatically show
+the correct day because it reads the highest numero
+from the entries array.
+
+───────────────────────────────
+VERIFY:
+1. Days 70-76 exist in the database with correct dates
+   and NULL data fields
+2. The cron job is registered and will fire at midnight
+   Rome time
+3. Tomorrow (July 26) at 00:00, day 77 is auto-created
+4. No existing entry data was modified or deleted

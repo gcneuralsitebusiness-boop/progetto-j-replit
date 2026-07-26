@@ -1,0 +1,1320 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: API specification for Progetto J — 180-day transformation journal
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: entries
+    description: Journal entries
+  - name: admin
+    description: Admin authentication
+  - name: content
+    description: Site content (CMS)
+  - name: pages
+    description: Custom pages (CMS)
+  - name: storage
+    description: Object storage upload and serving
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /entries:
+    get:
+      operationId: listEntries
+      tags: [entries]
+      summary: List all journal entries
+      description: Returns all entries sorted by date descending
+      responses:
+        "200":
+          description: List of entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Entry"
+    post:
+      operationId: createEntry
+      tags: [entries]
+      summary: Create a new journal entry (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EntryInput"
+      responses:
+        "201":
+          description: Created entry
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Entry"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "409":
+          description: Entry with this numero already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /entries/latest:
+    get:
+      operationId: getLatestEntries
+      tags: [entries]
+      summary: Get 3 most recent journal entries
+      description: Returns the 3 most recent entries for the home page
+      responses:
+        "200":
+          description: Latest entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Entry"
+
+  /bulk/entries:
+    get:
+      operationId: getEntriesBulkText
+      tags: [entries]
+      summary: Export all entries as editable text
+      description: Returns a text representation of all entries for bulk editing
+      responses:
+        "200":
+          description: Bulk text export
+          content:
+            text/plain:
+              schema:
+                type: string
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+    post:
+      operationId: importEntriesBulkText
+      tags: [entries]
+      summary: Import entries from editable text
+      description: Parses bulk text and updates existing entries. Only updates entries that already exist.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BulkTextInput"
+      responses:
+        "200":
+          description: Import result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BulkTextResult"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /entries/{numero}:
+    patch:
+      operationId: updateEntry
+      tags: [entries]
+      summary: Update a journal entry (admin only)
+      parameters:
+        - name: numero
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EntryUpdate"
+      responses:
+        "200":
+          description: Updated entry
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Entry"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "404":
+          description: Entry not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+    delete:
+      operationId: deleteEntry
+      tags: [entries]
+      summary: Delete a journal entry (admin only)
+      parameters:
+        - name: numero
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "404":
+          description: Entry not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /content:
+    get:
+      operationId: getSiteContent
+      tags: [content]
+      summary: Get all site content key-values
+      responses:
+        "200":
+          description: Site content
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SiteContent"
+
+  /content/{chiave}:
+    put:
+      operationId: updateSiteContent
+      tags: [content]
+      summary: Update a site content key (admin only)
+      parameters:
+        - name: chiave
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContentInput"
+      responses:
+        "200":
+          description: Updated content
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SiteContent"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /pages:
+    get:
+      operationId: listPages
+      tags: [pages]
+      summary: List all custom pages
+      responses:
+        "200":
+          description: List of pages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PageItem"
+    post:
+      operationId: createPage
+      tags: [pages]
+      summary: Create a custom page (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PageInput"
+      responses:
+        "201":
+          description: Created page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PageItem"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "409":
+          description: Slug already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /pages/{slug}:
+    get:
+      operationId: getPage
+      tags: [pages]
+      summary: Get a single custom page by slug
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PageItem"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+    patch:
+      operationId: updatePage
+      tags: [pages]
+      summary: Update a custom page (admin only)
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PageUpdate"
+      responses:
+        "200":
+          description: Updated page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PageItem"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+    delete:
+      operationId: deletePage
+      tags: [pages]
+      summary: Delete a custom page (admin only)
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /admin/login:
+    post:
+      operationId: adminLogin
+      tags: [admin]
+      summary: Authenticate as admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: Authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthStatus"
+        "401":
+          description: Wrong password
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /admin/logout:
+    post:
+      operationId: adminLogout
+      tags: [admin]
+      summary: Log out admin session
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthStatus"
+
+  /admin/me:
+    get:
+      operationId: adminMe
+      tags: [admin]
+      summary: Check current admin session
+      responses:
+        "200":
+          description: Auth status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthStatus"
+
+  /storage/uploads/request-url:
+    post:
+      operationId: requestUploadUrl
+      tags: [storage]
+      summary: Request a presigned URL for file upload
+      description: |
+        Returns a presigned GCS URL for direct upload. The client sends JSON
+        metadata here, then uploads the file directly to the returned URL.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UploadUrlRequest"
+      responses:
+        "200":
+          description: Presigned upload URL generated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadUrlResponse"
+        "400":
+          description: Missing or invalid required fields.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "401":
+          description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "500":
+          description: Failed to generate upload URL.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /storage/objects/{objectPath}:
+    get:
+      operationId: getStorageObject
+      tags: [storage]
+      summary: Serve an uploaded object
+      parameters:
+        - name: objectPath
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Object path within the private object dir (e.g. `uploads/some-uuid`).
+      responses:
+        "200":
+          description: Object content streamed with correct Content-Type.
+          content:
+            '*/*':
+              schema:
+                type: string
+                format: binary
+        "404":
+          description: File not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "500":
+          description: Failed to serve object.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /social:
+    get:
+      operationId: listSocial
+      tags: [social]
+      summary: List public social profiles
+      responses:
+        "200":
+          description: List of social profiles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Social"
+    post:
+      operationId: createSocial
+      tags: [social]
+      summary: Create social profile (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SocialInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Social"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /social/{id}:
+    put:
+      operationId: updateSocial
+      tags: [social]
+      summary: Update social profile (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SocialUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Social"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    delete:
+      operationId: deleteSocial
+      tags: [social]
+      summary: Delete social profile (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /sponsors:
+    get:
+      operationId: listSponsors
+      tags: [sponsors]
+      summary: List public sponsors
+      responses:
+        "200":
+          description: List of sponsors
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Sponsor"
+    post:
+      operationId: createSponsor
+      tags: [sponsors]
+      summary: Create sponsor (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SponsorInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Sponsor"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /sponsors/{id}:
+    put:
+      operationId: updateSponsor
+      tags: [sponsors]
+      summary: Update sponsor (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SponsorUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Sponsor"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    delete:
+      operationId: deleteSponsor
+      tags: [sponsors]
+      summary: Delete sponsor (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /articles:
+    get:
+      operationId: listArticles
+      tags: [articles]
+      summary: List public articles
+      responses:
+        "200":
+          description: List of articles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Article"
+    post:
+      operationId: createArticle
+      tags: [articles]
+      summary: Create article (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ArticleInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Article"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /articles/{slug}:
+    get:
+      operationId: getArticle
+      tags: [articles]
+      summary: Get public article by slug
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Article
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Article"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /articles/{id}:
+    put:
+      operationId: updateArticle
+      tags: [articles]
+      summary: Update article (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ArticleUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Article"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    delete:
+      operationId: deleteArticle
+      tags: [articles]
+      summary: Delete article (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /coaching:
+    get:
+      operationId: getCoaching
+      tags: [coaching]
+      summary: Get coaching landing content
+      responses:
+        "200":
+          description: Coaching content
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Coaching"
+    put:
+      operationId: updateCoaching
+      tags: [coaching]
+      summary: Update coaching content (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CoachingUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Coaching"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+components:
+  responses:
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+    NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    Entry:
+      type: object
+      required:
+        - id
+        - numero
+        - data
+      properties:
+        id:
+          type: integer
+        numero:
+          type: integer
+          description: Day number (1-180)
+        data:
+          type: string
+          description: ISO date string (YYYY-MM-DD)
+        kcal:
+          type: ["integer", "null"]
+        sonno:
+          type: ["number", "null"]
+          description: Hours of sleep
+        flessioni:
+          type: ["integer", "null"]
+        addominali:
+          type: ["integer", "null"]
+        round:
+          type: ["integer", "null"]
+        km:
+          type: ["number", "null"]
+        peso:
+          type: ["number", "null"]
+          description: Weight in kg
+        battito:
+          type: ["integer", "null"]
+          description: Resting heart rate bpm
+        entrate:
+          type: ["number", "null"]
+          description: Daily income (€)
+        uscite:
+          type: ["number", "null"]
+          description: Daily expenses (€)
+        testo:
+          type: ["string", "null"]
+          description: Diary text
+        foto:
+          type: ["string", "null"]
+          description: Photo URL
+        createdAt:
+          type: string
+
+    EntryInput:
+      type: object
+      required:
+        - numero
+        - data
+      properties:
+        numero:
+          type: integer
+        data:
+          type: string
+        kcal:
+          type: ["integer", "null"]
+        sonno:
+          type: ["number", "null"]
+        flessioni:
+          type: ["integer", "null"]
+        addominali:
+          type: ["integer", "null"]
+        round:
+          type: ["integer", "null"]
+        km:
+          type: ["number", "null"]
+        peso:
+          type: ["number", "null"]
+        battito:
+          type: ["integer", "null"]
+        entrate:
+          type: ["number", "null"]
+        uscite:
+          type: ["number", "null"]
+        testo:
+          type: ["string", "null"]
+        foto:
+          type: ["string", "null"]
+
+    EntryUpdate:
+      type: object
+      properties:
+        data:
+          type: string
+        kcal:
+          type: ["integer", "null"]
+        sonno:
+          type: ["number", "null"]
+        flessioni:
+          type: ["integer", "null"]
+        addominali:
+          type: ["integer", "null"]
+        round:
+          type: ["integer", "null"]
+        km:
+          type: ["number", "null"]
+        peso:
+          type: ["number", "null"]
+        battito:
+          type: ["integer", "null"]
+        entrate:
+          type: ["number", "null"]
+        uscite:
+          type: ["number", "null"]
+        testo:
+          type: ["string", "null"]
+        foto:
+          type: ["string", "null"]
+
+    SiteContent:
+      type: object
+      properties:
+        chi_sono_bio:
+          type: ["string", "null"]
+        chi_sono_il_progetto:
+          type: ["string", "null"]
+        chi_sono_la_motivazione:
+          type: ["string", "null"]
+        chi_sono_la_promessa:
+          type: ["string", "null"]
+        chi_sono_foto:
+          type: ["string", "null"]
+        instagram_url:
+          type: ["string", "null"]
+        journaling_intro:
+          type: ["string", "null"]
+        home_hero_titolo:
+          type: ["string", "null"]
+        home_hero_sottotitolo:
+          type: ["string", "null"]
+        home_cta_testo:
+          type: ["string", "null"]
+        home_community_testo:
+          type: ["string", "null"]
+
+    ContentInput:
+      type: object
+      required:
+        - valore
+      properties:
+        valore:
+          type: string
+
+    PageItem:
+      type: object
+      required:
+        - id
+        - slug
+        - titolo
+        - contenuto
+        - pubblicata
+        - ordine
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: integer
+        slug:
+          type: string
+        titolo:
+          type: string
+        contenuto:
+          type: string
+        pubblicata:
+          type: boolean
+        ordine:
+          type: integer
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+
+    PageInput:
+      type: object
+      required:
+        - slug
+        - titolo
+      properties:
+        slug:
+          type: string
+        titolo:
+          type: string
+        contenuto:
+          type: string
+        pubblicata:
+          type: boolean
+        ordine:
+          type: integer
+
+    PageUpdate:
+      type: object
+      properties:
+        slug:
+          type: string
+        titolo:
+          type: string
+        contenuto:
+          type: string
+        pubblicata:
+          type: boolean
+        ordine:
+          type: integer
+
+    LoginInput:
+      type: object
+      required:
+        - password
+      properties:
+        password:
+          type: string
+
+    AuthStatus:
+      type: object
+      required:
+        - authenticated
+      properties:
+        authenticated:
+          type: boolean
+
+    BulkTextInput:
+      type: object
+      required:
+        - text
+      properties:
+        text:
+          type: string
+          description: Bulk text representation of all entries
+
+    BulkTextResult:
+      type: object
+      required:
+        - updated
+        - errors
+      properties:
+        updated:
+          type: integer
+          description: Number of entries updated
+        errors:
+          type: array
+          items:
+            type: string
+          description: List of errors during parsing or update
+
+    ApiError:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+
+    UploadUrlRequest:
+      type: object
+      required: [name, size, contentType]
+      properties:
+        name:
+          type: string
+          minLength: 1
+        size:
+          type: integer
+          minimum: 1
+        contentType:
+          type: string
+          minLength: 1
+
+    UploadUrlResponse:
+      type: object
+      required: [uploadURL, objectPath]
+      properties:
+        uploadURL:
+          type: string
+          format: uri
+        objectPath:
+          type: string
+        metadata:
+          $ref: "#/components/schemas/UploadUrlRequest"
+
+    Social:
+      type: object
+      required: [id, nome, url, icona, descrizione, ordine, visibile]
+      properties:
+        id:
+          type: integer
+        nome:
+          type: string
+        url:
+          type: string
+        icona:
+          type: string
+        descrizione:
+          type: string
+        ordine:
+          type: integer
+        visibile:
+          type: boolean
+
+    SocialInput:
+      type: object
+      required: [nome, url]
+      properties:
+        nome:
+          type: string
+        url:
+          type: string
+        icona:
+          type: string
+          default: Instagram
+        descrizione:
+          type: string
+          default: ""
+        ordine:
+          type: integer
+          default: 0
+        visibile:
+          type: boolean
+          default: true
+
+    SocialUpdate:
+      type: object
+      properties:
+        nome:
+          type: string
+        url:
+          type: string
+        icona:
+          type: string
+        descrizione:
+          type: string
+        ordine:
+          type: integer
+        visibile:
+          type: boolean
+
+    Sponsor:
+      type: object
+      required: [id, nome, descrizione, url, logo, livello, ordine, visibile]
+      properties:
+        id:
+          type: integer
+        nome:
+          type: string
+        descrizione:
+          type: string
+        url:
+          type: string
+        logo:
+          type: string
+          nullable: true
+        livello:
+          type: string
+          enum: [Bronze, Silver, Gold, Blood]
+        ordine:
+          type: integer
+        visibile:
+          type: boolean
+
+    SponsorInput:
+      type: object
+      required: [nome]
+      properties:
+        nome:
+          type: string
+        descrizione:
+          type: string
+          default: ""
+        url:
+          type: string
+          default: ""
+        logo:
+          type: string
+          nullable: true
+        livello:
+          type: string
+          enum: [Bronze, Silver, Gold, Blood]
+          default: Bronze
+        ordine:
+          type: integer
+          default: 0
+        visibile:
+          type: boolean
+          default: true
+
+    SponsorUpdate:
+      type: object
+      properties:
+        nome:
+          type: string
+        descrizione:
+          type: string
+        url:
+          type: string
+        logo:
+          type: string
+          nullable: true
+        livello:
+          type: string
+          enum: [Bronze, Silver, Gold, Blood]
+        ordine:
+          type: integer
+        visibile:
+          type: boolean
+
+    Article:
+      type: object
+      required: [id, slug, titolo, categoria, contenuto, immagine, pubblicato, data]
+      properties:
+        id:
+          type: integer
+        slug:
+          type: string
+        titolo:
+          type: string
+        categoria:
+          type: string
+        contenuto:
+          type: string
+        immagine:
+          type: string
+          nullable: true
+        pubblicato:
+          type: boolean
+        data:
+          type: string
+          format: date
+
+    ArticleInput:
+      type: object
+      required: [slug, titolo]
+      properties:
+        slug:
+          type: string
+        titolo:
+          type: string
+        categoria:
+          type: string
+          default: Generale
+        contenuto:
+          type: string
+          default: ""
+        immagine:
+          type: string
+          nullable: true
+        pubblicato:
+          type: boolean
+          default: false
+        data:
+          type: string
+          format: date
+
+    ArticleUpdate:
+      type: object
+      properties:
+        slug:
+          type: string
+        titolo:
+          type: string
+        categoria:
+          type: string
+        contenuto:
+          type: string
+        immagine:
+          type: string
+          nullable: true
+        pubblicato:
+          type: boolean
+        data:
+          type: string
+          format: date
+
+    Coaching:
+      type: object
+      required: [id, heroTitolo, heroSottotitolo, descrizione, communityCta, communityUrl, email, visibile]
+      properties:
+        id:
+          type: integer
+        heroTitolo:
+          type: string
+        heroSottotitolo:
+          type: string
+        descrizione:
+          type: string
+        communityCta:
+          type: string
+        communityUrl:
+          type: string
+        email:
+          type: string
+        visibile:
+          type: boolean
+
+    CoachingUpdate:
+      type: object
+      properties:
+        heroTitolo:
+          type: string
+        heroSottotitolo:
+          type: string
+        descrizione:
+          type: string
+        communityCta:
+          type: string
+        communityUrl:
+          type: string
+        email:
+          type: string
+        visibile:
+          type: boolean

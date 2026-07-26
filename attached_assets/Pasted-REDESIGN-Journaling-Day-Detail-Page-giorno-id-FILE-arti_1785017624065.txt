@@ -1,0 +1,221 @@
+REDESIGN: Journaling Day Detail Page (/giorno/:id)
+
+FILE: artifacts/progetto-j/src/pages/giorno.tsx
+
+Do NOT touch any other page. Do NOT change the data
+layer, API calls, or database schema. This is a
+FRONTEND-ONLY redesign of how data is displayed.
+
+═══════════════════════════════════════════════════════
+CURRENT STRUCTURE (to be replaced):
+  1. Hero photo
+  2. Day number + date
+  3. Diary text (flat block)
+  4. Finanze card (large, with bar chart)
+  5. Attività vs Media (separate cards with bar charts)
+  6. Allenamento vs Media (separate cards with bar charts)
+  7. Prev/Next navigation
+
+NEW STRUCTURE (in this exact order):
+  1. Hero photo (KEEP AS IS)
+  2. Day number + date (KEEP AS IS)
+  3. Data strip (NEW)
+  4. Finance row (NEW)
+  5. VS Media table (NEW)
+  6. Diary text with styled subtitles (REDESIGNED)
+  7. Prev/Next navigation (KEEP AS IS)
+
+═══════════════════════════════════════════════════════
+SECTION 3 — DATA STRIP (replaces nothing, new element)
+═══════════════════════════════════════════════════════
+
+Position: immediately after the day number + date block.
+
+Layout: single horizontal row, scrollable on mobile
+(overflow-x: auto, no scrollbar visible).
+On desktop: centered, flex with gap-6.
+On mobile: flex, gap-4, horizontal scroll, snap to item.
+
+Each data point is a vertical stack:
+  TOP:    value — Bebas Neue (font-serif), white #F5F0E8,
+          36px on mobile, 48px on desktop, tabular-nums
+  BOTTOM: label — Inter, 11px, uppercase,
+          letter-spacing 0.12em, color #8A8A8A
+
+Show these fields IN THIS ORDER, skip any that are NULL:
+  peso    → "{value}KG"    label: "PESO"
+  battito → "{value}BPM"   label: "BATTITO"
+  sonno   → "{value}H"     label: "SONNO"
+  kcal    → "{value}"      label: "KCAL"
+  round   → "{value}"      label: "ROUND"
+  flessioni → "{value}"    label: "FLEX"
+  addominali → "{value}"   label: "ADDOM"
+  km      → "{value}"      label: "KM"
+
+Container: padding 16px vertical, no background,
+thin border-b 1px #1A1A1A at bottom.
+
+═══════════════════════════════════════════════════════
+SECTION 4 — FINANCE ROW (replaces the large card)
+═══════════════════════════════════════════════════════
+
+Show ONLY if entrate OR uscite is not null.
+
+Layout: single horizontal row, flex, justify-between,
+padding 16px vertical.
+
+Three items, each a vertical stack:
+  Item 1:
+    TOP:    "€{entrate}" — Inter Bold, 20px,
+            color: var(--acid) (#2ECC40)
+    BOTTOM: "ENTRATE" — Inter, 11px, #8A8A8A, uppercase
+
+  Item 2:
+    TOP:    "€{uscite}" — Inter Bold, 20px, white #F5F0E8
+    BOTTOM: "USCITE" — Inter, 11px, #8A8A8A, uppercase
+
+  Item 3:
+    TOP:    "€{saldo}" — Inter Bold, 20px,
+            color: saldo >= 0 ? var(--acid) : var(--primary)
+    BOTTOM: "SALDO" — Inter, 11px, #8A8A8A, uppercase
+    Prefix with "+" if positive, "-" if negative.
+
+Container: border-b 1px #1A1A1A at bottom.
+
+DELETE: the entire FinanceBlock component with its
+Recharts bar chart. It is no longer used on this page.
+
+═══════════════════════════════════════════════════════
+SECTION 5 — VS MEDIA TABLE (replaces all CompareBar
+cards and their bar charts)
+═══════════════════════════════════════════════════════
+
+Show ONLY if at least one comparable metric exists.
+
+Layout: vertical stack of rows, no cards, no borders
+between rows — just clean rows with padding-y 12px.
+
+Each row is a horizontal flex with 3 elements:
+  LEFT:   metric label — Inter, 13px, uppercase,
+          letter-spacing 0.1em, #8A8A8A, width 40%
+  CENTER: current value — Bebas Neue, 28px, white,
+          width 30%, text-align right
+  RIGHT:  delta — Inter Bold, 14px, width 30%,
+          text-align right.
+          If value > avg: "↑ {percent}%" in #2ECC40
+          If value < avg: "↓ {percent}%" in #B81D1D
+          If value == avg: "= 0%" in #8A8A8A
+
+Show these metrics IN ORDER, skip null:
+  KCAL, SONNO, PESO, BATTITO, KM,
+  FLESSIONI, ADDOMINALI, ROUND
+
+Compute avg from all entries (already done in current
+code — reuse the same calculation).
+
+Container: padding 16px vertical, border-b 1px #1A1A1A.
+
+DELETE: all CompareBar components and their Recharts
+charts from this page. They are no longer used here.
+
+═══════════════════════════════════════════════════════
+SECTION 6 — DIARY TEXT (redesigned rendering)
+═══════════════════════════════════════════════════════
+
+The diary text is stored as plain text with markdown-
+style bold markers: **Il Corpo**, **Il Lavoro**, etc.
+
+CURRENT: rendered as plain white text with left red
+border (border-l-2). Subtitles look identical to body.
+
+NEW RENDERING:
+1. Keep the left red border-l-2 on the container.
+
+2. Parse the text for patterns matching **...** and
+   render them as styled subtitles:
+   - Font: Bebas Neue (font-serif)
+   - Size: 20px
+   - Color: #B81D1D (primary red)
+   - Uppercase
+   - Margin-top: 24px (except if it's the first element)
+   - Margin-bottom: 8px
+   - Display: block
+
+3. Body text between subtitles:
+   - Font: Inter, 16px, color #F5F0E8, line-height 1.7
+   - Max-width: 65ch (characters) for readability
+   - Margin-bottom: 16px per paragraph
+
+4. The stripDayLabel() function must still run before
+   rendering (already implemented — keep it).
+
+Implementation approach:
+  Split the text by line. For each line:
+  - If it matches /^\*\*(.+)\*\*$/ → render as subtitle
+  - Else → render as paragraph
+  
+  Or use a simple regex replace to convert **text**
+  into <span class="...">text</span> with the styles.
+
+═══════════════════════════════════════════════════════
+CLEANUP
+═══════════════════════════════════════════════════════
+
+After the redesign, remove any components or imports
+that are no longer used on this page:
+- FinanceBlock (if it was a sub-component)
+- CompareBar (if it was a sub-component)
+- Any Recharts imports no longer needed ON THIS PAGE
+  (do NOT remove Recharts from journaling.tsx — it
+  still uses charts there)
+
+═══════════════════════════════════════════════════════
+DO NOT CHANGE
+═══════════════════════════════════════════════════════
+
+- Hero photo section
+- Day number + date display
+- Prev/Next navigation
+- The Cross ornament at the bottom
+- Any API calls or data fetching logic
+- The stripDayLabel() function
+- Any other page (home, journaling, coaching, etc.)
+
+═══════════════════════════════════════════════════════
+VISUAL REFERENCE
+═══════════════════════════════════════════════════════
+
+The page should feel like a fighter's stat card, not
+a report. Think UFC fight card or boxing tale-of-tape:
+numbers prominent, compact, scannable in 3 seconds.
+
+Brand tokens to use:
+  Background: var(--background) #0A0A0A
+  Text: var(--foreground) #F5F0E8
+  Red: var(--primary) #B81D1D
+  Green: var(--acid) #2ECC40
+  Muted: var(--muted-foreground) #8A8A8A
+  Border: var(--border) #1A1A1A
+  Font display: font-serif (Bebas Neue)
+  Font body: font-sans (Inter)
+
+═══════════════════════════════════════════════════════
+BUILD AND DEPLOY
+═══════════════════════════════════════════════════════
+
+After the redesign:
+1. cd artifacts/progetto-j
+   PORT=26090 BASE_PATH=/progetto-j/ pnpm run build
+2. Republish
+
+═══════════════════════════════════════════════════════
+VERIFY
+═══════════════════════════════════════════════════════
+
+Open /giorno/69 and confirm:
+1. Data strip shows: 84KG 69BPM 6H 1780KCAL 7R 100F
+2. Finance row shows: €0,00 | €45,00 | -€45,00
+3. VS Media shows rows with arrows, no bar charts
+4. Diary text has red Bebas Neue subtitles
+5. No Recharts bar charts remain on this page
+6. Page loads without console errors

@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "RaxhnXio5q6PJh-q8Z-RX"
+uri = "file://entries-export.txt"
+type = "text"
+title = "Esportazione giornate Progetto J"

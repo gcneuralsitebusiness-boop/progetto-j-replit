@@ -1,0 +1,157 @@
+Apply these 8 fixes. I am listing the exact files.
+Do not refactor or touch anything else.
+
+───────────────────────────────
+FIX 1 — HERO COUNTER
+FILE: artifacts/progetto-j/src/pages/home.tsx
+
+The hero shows "GG 64 / 180". It must show the highest
+day number from the entries.
+
+Find where the "GG" value is rendered in the hero section.
+Replace it with:
+  const currentDay = entries.length > 0
+    ? Math.max(...entries.map(e => e.numero))
+    : 0;
+Render: GG {currentDay} / 180
+
+Also verify km, kcal, entrate totals are computed from
+the full useListEntries() array, not cached.
+
+───────────────────────────────
+FIX 2 — GHOST TEXT BEHIND DAY NUMBER
+FILE: artifacts/progetto-j/src/components/DayCard.tsx
+
+On the day card, a dark duplicate of the day number
+renders behind/offset from the red number. Find and
+remove either:
+- A duplicate DOM node rendering the same number
+- A CSS text-shadow on the day number element
+Only the red "GIORNO" label + red number should remain.
+
+───────────────────────────────
+FIX 3 — RECHARTS TOOLTIP ON MOBILE
+FILE: artifacts/progetto-j/src/pages/giorno.tsx
+
+Recharts tooltips get stuck on touch devices.
+
+Add at the top of the component:
+  const isTouch = typeof window !== 'undefined'
+    && window.matchMedia('(pointer: coarse)').matches;
+
+For every <Tooltip> in this file:
+  {!isTouch && <Tooltip ... />}
+
+Add <XAxis> tick labels "OGGI" and "MEDIA" under the
+bars so charts are readable without tooltips.
+
+Also apply the same fix in:
+FILE: artifacts/progetto-j/src/pages/journaling.tsx
+for any Recharts <Tooltip> components there.
+
+───────────────────────────────
+FIX 4 — FINANCE GREEN
+FILES: artifacts/progetto-j/src/index.css
+
+Find: --acid: 111 100% 54%
+Replace with: --acid: 145 63% 49%
+
+This changes the acid green from #4ade80 to #2ECC40.
+No other files need changing — all components read
+this CSS variable.
+
+───────────────────────────────
+FIX 5 — COACHING CARD NUTRIZIONE → TRACKING
+This content is stored in the database, not in code.
+FILE: artifacts/api-server/src/routes/coaching.ts
+
+Find the hardcoded defaults for the coaching pillars.
+The second pillar currently reads:
+  label: "NUTRIZIONE" or similar
+  testo: "Deficit calorico controllato, senza diete
+          da fenomeno."
+
+Change the defaults to:
+  label: "TRACKING"
+  testo: "Come misurare e leggere i tuoi dati."
+
+ALSO: check if the database already has values for
+coaching_pillar_2_label and coaching_pillar_2_testo
+in the contenuti table. If yes, update them via:
+  UPDATE contenuti SET valore = 'TRACKING'
+    WHERE chiave = 'coaching_pillar_2_label';
+  UPDATE contenuti SET valore = 'Come misurare e
+    leggere i tuoi dati.'
+    WHERE chiave = 'coaching_pillar_2_testo';
+
+If the pillars are stored in the coaching table instead,
+update there. Report which table you changed.
+
+───────────────────────────────
+FIX 6 — META TAGS
+FILE: index.html (project root, or
+      artifacts/progetto-j/index.html)
+
+Replace the <title> and all meta description/og/twitter
+tags with exactly:
+
+<title>Progetto J — 180 Giorni Documentati</title>
+<meta name="description" content="180 giorni di
+  trasformazione documentata. Dati reali, zero filtri.
+  Corpo, mente, business." />
+<meta property="og:title" content="Progetto J — 180
+  Giorni Documentati" />
+<meta property="og:description" content="180 giorni di
+  trasformazione documentata. Dati reali, zero filtri." />
+<meta property="og:type" content="website" />
+<meta property="og:locale" content="it_IT" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Progetto J — 180
+  Giorni Documentati" />
+<meta name="twitter:description" content="180 giorni di
+  trasformazione documentata. Dati reali, zero filtri." />
+
+Keep viewport and charset unchanged.
+
+───────────────────────────────
+FIX 7 — FORM "LAVORA CON ME" DOES NOTHING
+FILE: artifacts/progetto-j/src/pages/social.tsx
+
+The contact form shows a success toast but never sends
+data anywhere. Two options — implement the simpler one:
+
+Add a POST /api/contact endpoint in the API server:
+FILE: artifacts/api-server/src/routes/ (new file or
+      add to existing routes)
+
+The endpoint should:
+- Accept { nome, email, tipo, messaggio }
+- Store it in a new "contatti" table (create migration)
+- Fields: id serial PK, nome text, email text,
+  tipo text, messaggio text, created_at timestamptz
+- Return 201
+- No auth required (public form)
+
+Then update social.tsx to POST to /api/contact on submit.
+Keep the success toast after a successful response.
+Show an error toast if the request fails.
+
+───────────────────────────────
+FIX 8 — HIDE EMPTY SECTIONS
+FILE: artifacts/progetto-j/src/pages/articoli.tsx
+
+The articles page shows "PRESTO" placeholder.
+Add a check: if articles array is empty, redirect to
+home or show a minimal message without the placeholder
+card. Better: hide the "ARTICOLI" link from the Navbar
+when there are 0 published articles.
+
+FILE: artifacts/progetto-j/src/components/Navbar.tsx
+Conditionally render the ARTICOLI nav link only if
+useListArticles() returns at least 1 article.
+
+───────────────────────────────
+AFTER ALL FIXES:
+1. Rebuild and redeploy
+2. Report which files were modified
+3. Confirm each fix with a one-line verification

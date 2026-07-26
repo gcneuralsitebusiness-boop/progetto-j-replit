@@ -1,0 +1,250 @@
+Fix everything below in ONE session. Do not stop
+between steps. Report results at the end.
+
+═══════════════════════════════════════════
+STEP 1 — FORCE CACHE BUST AND REDEPLOY
+═══════════════════════════════════════════
+
+The live site is serving cached old files.
+
+1a. Add a cache-busting comment to index.html:
+    <!-- deploy-bust: 20260725-v2 -->
+    Add it right after the <head> tag.
+
+1b. Set env vars and rebuild:
+    cd artifacts/progetto-j
+    PORT=26090 BASE_PATH=/progetto-j/ pnpm run build
+
+1c. Verify the new build:
+    head -5 artifacts/progetto-j/dist/public/index.html
+    Confirm the cache-bust comment is present.
+
+1d. Trigger republish from the deployment system.
+
+═══════════════════════════════════════════
+STEP 2 — APPLY ALL 8 FIXES BEFORE BUILDING
+═══════════════════════════════════════════
+
+Apply these BEFORE running the build in step 1b.
+
+───────────────────────────────
+FIX A — HERO COUNTER
+FILE: artifacts/progetto-j/src/pages/home.tsx
+
+Find where the hero "GG" number is rendered.
+Replace the day count value with:
+  const currentDay = entries.length > 0
+    ? Math.max(...entries.map(e => e.numero))
+    : 0;
+Render: GG {currentDay} / 180
+
+Verify km, kcal, entrate totals are summed from the
+full entries array returned by useListEntries().
+
+───────────────────────────────
+FIX B — GHOST TEXT BEHIND DAY NUMBER
+FILE: artifacts/progetto-j/src/components/DayCard.tsx
+
+Find the day number display. There is either:
+- A duplicate DOM element rendering the same number
+  with darker color/offset position
+- A CSS text-shadow creating a ghost effect
+
+Remove the duplicate element or the text-shadow.
+Only the red GIORNO label + red number should remain.
+
+───────────────────────────────
+FIX C — RECHARTS TOOLTIP STUCK ON MOBILE
+FILES: artifacts/progetto-j/src/pages/giorno.tsx
+       artifacts/progetto-j/src/pages/journaling.tsx
+
+Add at the top of each component:
+  const isTouch = typeof window !== 'undefined'
+    && window.matchMedia('(pointer: coarse)').matches;
+
+For every <Tooltip> in both files, wrap:
+  {!isTouch && <Tooltip ... />}
+
+Add visible labels under each bar in bar charts:
+"OGGI" (left bar) and "MEDIA" (right bar) using
+Inter, 11px, uppercase, #666666.
+
+───────────────────────────────
+FIX D — FINANCE GREEN
+FILE: artifacts/progetto-j/src/index.css
+
+Find: --acid: 111 100% 54%
+Replace: --acid: 145 63% 49%
+
+This changes from #4ade80 to #2ECC40.
+
+───────────────────────────────
+FIX E — COACHING NUTRIZIONE → TRACKING
+
+First check: is the coaching pillar data in the
+coaching table or the contenuti table?
+
+If coaching table: UPDATE the second pillar directly.
+If contenuti table:
+  UPDATE contenuti SET valore = 'TRACKING'
+    WHERE chiave = 'coaching_pillar_2_label';
+  UPDATE contenuti SET valore =
+    'Come misurare e leggere i tuoi dati.'
+    WHERE chiave = 'coaching_pillar_2_testo';
+
+If the data is hardcoded in the coaching.tsx page
+component or in the API defaults, change it there.
+
+Also change hero_sottotitolo from
+"Dimagrimento. Disciplina. Dati."
+to "Disciplina. Tracking. Dati."
+
+Report which table/file you changed.
+
+───────────────────────────────
+FIX F — META TAGS
+FILE: artifacts/progetto-j/index.html
+
+Replace <title> and all meta tags with:
+
+<title>Progetto J — 180 Giorni Documentati</title>
+<meta name="description" content="180 giorni di
+  trasformazione documentata. Dati reali, zero filtri.
+  Corpo, mente, business." />
+<meta property="og:title" content="Progetto J — 180
+  Giorni Documentati" />
+<meta property="og:description" content="180 giorni
+  di trasformazione documentata. Dati reali, zero
+  filtri." />
+<meta property="og:type" content="website" />
+<meta property="og:locale" content="it_IT" />
+<meta name="twitter:card"
+  content="summary_large_image" />
+<meta name="twitter:title" content="Progetto J — 180
+  Giorni Documentati" />
+<meta name="twitter:description" content="180 giorni
+  di trasformazione documentata. Dati reali, zero
+  filtri." />
+
+───────────────────────────────
+FIX G — FORM LAVORA CON ME
+FILE: artifacts/api-server/src/routes/ (new or existing)
+
+The contact form in social.tsx shows a success toast
+but never sends data.
+
+Create a new table "contatti":
+  id serial PK
+  nome text NOT NULL
+  email text NOT NULL
+  tipo text NOT NULL
+  messaggio text NOT NULL
+  created_at timestamptz DEFAULT now()
+
+Create endpoint POST /api/contact:
+  - Accept { nome, email, tipo, messaggio }
+  - Insert into contatti table
+  - Return 201
+  - No auth required
+
+Update social.tsx to POST to /api/contact on submit.
+Show error toast on failure.
+
+Add a "Contatti" tab in /admin showing all submissions
+with dates. No export needed yet.
+
+───────────────────────────────
+FIX H — HIDE EMPTY ARTICOLI
+
+FILE: artifacts/progetto-j/src/components/Navbar.tsx
+
+Only show the "ARTICOLI" nav link if there are
+published articles. Use useListArticles() — if the
+array is empty, do not render the link.
+
+FILE: artifacts/progetto-j/src/pages/articoli.tsx
+
+If no articles, show a simple centered message:
+"Gli articoli arrivano presto." — no placeholder card,
+no diagonal stripes.
+
+═══════════════════════════════════════════
+STEP 3 — CREATE MISSING DIARY DAYS
+═══════════════════════════════════════════
+
+Project start date: 2026-05-02
+Today: 2026-07-25 = Day 85
+
+Wait — calculate this properly:
+  Day 1 = May 2, Day 85 = July 25
+
+The database has entries up to day 69. Create days
+70 through 85 with correct dates. All data fields
+NULL except numero and data.
+
+Use: INSERT INTO giorni (numero, data) VALUES (...)
+     ON CONFLICT (numero) DO NOTHING
+
+═══════════════════════════════════════════
+STEP 4 — MIDNIGHT AUTO-CREATION
+═══════════════════════════════════════════
+
+FILE: artifacts/api-server/src/cron.ts (new)
+
+Install node-cron:
+  pnpm --filter @workspace/api-server add node-cron
+  pnpm --filter @workspace/api-server add -D
+    @types/node-cron
+
+Create a cron that runs at 00:00 Europe/Rome:
+  import cron from 'node-cron';
+
+  const PROJECT_START = new Date('2026-05-02');
+
+  cron.schedule('0 0 * * *', async () => {
+    const today = new Date();
+    const diffMs = today.getTime() - PROJECT_START.getTime();
+    const dayNumber = Math.floor(diffMs / 86400000) + 1;
+    const isoDate = today.toISOString().split('T')[0];
+    // INSERT INTO giorni (numero, data) VALUES
+    // (dayNumber, isoDate) ON CONFLICT DO NOTHING
+  }, { timezone: 'Europe/Rome' });
+
+Register in: artifacts/api-server/src/index.ts
+Import and call the cron setup after server starts.
+
+CONSTRAINTS:
+- Never overwrite existing entries
+- Never delete entries
+- Log: "Created day N" or "Day N exists, skipping"
+
+═══════════════════════════════════════════
+STEP 5 — BUILD AND DEPLOY
+═══════════════════════════════════════════
+
+After ALL fixes are applied:
+
+1. Rebuild API server:
+   cd artifacts/api-server && pnpm run build
+
+2. Rebuild web app:
+   cd artifacts/progetto-j
+   PORT=26090 BASE_PATH=/progetto-j/ pnpm run build
+
+3. Verify:
+   head -5 artifacts/progetto-j/dist/public/index.html
+
+4. Trigger Republish.
+
+═══════════════════════════════════════════
+STEP 6 — FINAL REPORT
+═══════════════════════════════════════════
+
+Report a table with one row per fix (A through H):
+  FIX | FILE CHANGED | STATUS | VERIFICATION
+
+Also report:
+- Total diary days now in database
+- Cron job registered: yes/no
+- Build succeeded: yes/no
+- Deploy triggered: yes/no

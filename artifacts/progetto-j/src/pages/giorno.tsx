@@ -1,0 +1,399 @@
+import { useParams, Link } from "wouter";
+import { useListEntries } from "@workspace/api-client-react";
+import { format } from "date-fns";
+import { it } from "date-fns/locale";
+import { ArrowLeft } from "lucide-react";
+import { Reveal } from "@/components/Reveal";
+import { Cross } from "@/components/Cross";
+import { getPhotoUrl } from "@workspace/object-storage-web";
+
+function padDay(n: number) {
+  return n.toString().padStart(3, "0");
+}
+
+function stripDayLabel(text: string): string {
+  return text.replace(/^\s*GIORNO\s+\d+\s*[—–-]?\s*[\d-]*\s*\n?/i, "").trim();
+}
+
+function formatCurrency(n: number): string {
+  return n.toLocaleString("it-IT", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function formatNumber(n: number, fraction = 0): string {
+  return n.toLocaleString("it-IT", { minimumFractionDigits: 0, maximumFractionDigits: fraction });
+}
+
+// ─── Data strip ───────────────────────────────────────────────────────────────
+
+interface DataStripItem {
+  key: string;
+  value: number;
+  display: string;
+  label: string;
+}
+
+function DataStrip({ entry }: { entry: GiornoEntry }) {
+  const items: DataStripItem[] = [];
+  if (entry.peso != null) {
+    items.push({ key: "peso", value: entry.peso, display: `${formatNumber(entry.peso, 1)}KG`, label: "PESO" });
+  }
+  if (entry.battito != null) {
+    items.push({ key: "battito", value: entry.battito, display: `${formatNumber(entry.battito)}BPM`, label: "BATTITO" });
+  }
+  if (entry.sonno != null) {
+    items.push({ key: "sonno", value: entry.sonno, display: `${formatNumber(entry.sonno, 1)}H`, label: "SONNO" });
+  }
+  if (entry.kcal != null) {
+    items.push({ key: "kcal", value: entry.kcal, display: formatNumber(entry.kcal), label: "KCAL" });
+  }
+  if (entry.round != null) {
+    items.push({ key: "round", value: entry.round, display: formatNumber(entry.round), label: "ROUND" });
+  }
+  if (entry.flessioni != null) {
+    items.push({ key: "flessioni", value: entry.flessioni, display: formatNumber(entry.flessioni), label: "FLEX" });
+  }
+  if (entry.addominali != null) {
+    items.push({ key: "addominali", value: entry.addominali, display: formatNumber(entry.addominali), label: "ADDOM" });
+  }
+  if (entry.km != null) {
+    items.push({ key: "km", value: entry.km, display: formatNumber(entry.km, 1), label: "KM" });
+  }
+
+  if (items.length === 0) return null;
+
+  return (
+    <div className="flex overflow-x-auto no-scrollbar snap-x snap-mandatory justify-start sm:justify-center gap-4 sm:gap-6 py-4 border-b border-border">
+      {items.map((item) => (
+        <div key={item.key} className="snap-start flex-shrink-0 flex flex-col items-center min-w-[60px] sm:min-w-[72px]">
+          <div className="font-serif text-[36px] sm:text-[48px] leading-none text-foreground bebas tabular-nums">
+            {item.display}
+          </div>
+          <div className="text-[11px] font-sans uppercase tracking-[0.12em] text-muted-foreground mt-1">
+            {item.label}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── Finance row ──────────────────────────────────────────────────────────────
+
+function FinanceRow({ entry }: { entry: GiornoEntry }) {
+  if (entry.entrate == null && entry.uscite == null) return null;
+
+  const entrate = entry.entrate ?? 0;
+  const uscite = entry.uscite ?? 0;
+  const saldo = entrate - uscite;
+
+  return (
+    <div className="flex justify-between items-start py-4 border-b border-border">
+      <div className="flex flex-col gap-1">
+        <div className="text-[20px] font-sans font-bold text-[hsl(var(--acid))]">
+          €{formatCurrency(entrate)}
+        </div>
+        <div className="text-[11px] font-sans uppercase tracking-[0.12em] text-muted-foreground">
+          ENTRATE
+        </div>
+      </div>
+      <div className="flex flex-col gap-1 items-center">
+        <div className="text-[20px] font-sans font-bold text-foreground">
+          €{formatCurrency(uscite)}
+        </div>
+        <div className="text-[11px] font-sans uppercase tracking-[0.12em] text-muted-foreground">
+          USCITE
+        </div>
+      </div>
+      <div className="flex flex-col gap-1 items-end">
+        <div className={`text-[20px] font-sans font-bold ${saldo >= 0 ? "text-[hsl(var(--acid))]" : "text-primary"}`}>
+          {saldo >= 0 ? "+" : "−"}€{formatCurrency(Math.abs(saldo))}
+        </div>
+        <div className="text-[11px] font-sans uppercase tracking-[0.12em] text-muted-foreground">
+          SALDO
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── VS Media table ───────────────────────────────────────────────────────────
+
+interface VsMetric {
+  label: string;
+  value: number;
+  avg: number;
+  fraction?: number;
+}
+
+function VsMediaTable({ entry, averages }: { entry: GiornoEntry; averages: VsMetric[] }) {
+  const rows = averages.filter((m) => m.value != null);
+  if (rows.length === 0) return null;
+
+  return (
+    <div className="py-4 border-b border-border">
+      {rows.map((m) => {
+        const diff = m.value - m.avg;
+        const pct = m.avg > 0 ? Math.round((diff / m.avg) * 100) : 0;
+        const isPositive = diff > 0;
+        const isEqual = diff === 0;
+        const colorClass = isEqual ? "text-muted-foreground" : isPositive ? "text-[hsl(var(--acid))]" : "text-primary";
+        const arrow = isEqual ? "=" : isPositive ? "↑" : "↓";
+        const pctText = isEqual ? "0" : Math.abs(pct);
+
+        return (
+          <div key={m.label} className="flex items-center justify-between py-3">
+            <div className="w-[40%] text-[13px] font-sans uppercase tracking-[0.1em] text-muted-foreground">
+              {m.label}
+            </div>
+            <div className="w-[30%] text-right font-serif text-[28px] leading-none text-foreground bebas tabular-nums">
+              {formatNumber(m.value, m.fraction ?? 0)}
+            </div>
+            <div className={`w-[30%] text-right text-[14px] font-sans font-bold ${colorClass}`}>
+              {arrow} {pctText}%
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── Diary text ───────────────────────────────────────────────────────────────
+
+function isSubtitleLine(line: string): { isSubtitle: true; text: string } | { isSubtitle: false } {
+  const md = line.match(/^\*\*(.+)\*\*$/);
+  if (md) {
+    return { isSubtitle: true, text: md[1].trim() };
+  }
+  const titleCase = /^[A-Z][A-Za-z'\u2019]+(?:\s+[A-Z][A-Za-z'\u2019]+)*$/;
+  if (line.length <= 25 && !/[.!?,:;]$/.test(line) && titleCase.test(line)) {
+    return { isSubtitle: true, text: line };
+  }
+  return { isSubtitle: false };
+}
+
+function DiaryText({ text }: { text: string }) {
+  const cleaned = stripDayLabel(text);
+  const lines = cleaned.split(/\r?\n/);
+  const elements: JSX.Element[] = [];
+  let buffer: string[] = [];
+  let key = 0;
+
+  const flush = () => {
+    if (buffer.length > 0) {
+      const paragraph = buffer.join(" ").replace(/\s+/g, " ").trim();
+      if (paragraph) {
+        elements.push(
+          <p key={key++} className="font-sans text-[16px] text-foreground leading-[1.7] max-w-[65ch] mb-4">
+            {paragraph}
+          </p>
+        );
+      }
+      buffer = [];
+    }
+  };
+
+  lines.forEach((raw) => {
+    const line = raw.trim();
+    if (!line) return;
+
+    const sub = isSubtitleLine(line);
+    if (sub.isSubtitle) {
+      flush();
+      elements.push(
+        <span
+          key={key++}
+          className="block font-serif text-[20px] text-primary bebas uppercase mt-6 first:mt-0 mb-2"
+        >
+          {sub.text}
+        </span>
+      );
+    } else {
+      buffer.push(line);
+    }
+  });
+  flush();
+
+  if (elements.length === 0) return null;
+
+  return <div className="border-l-2 border-primary pl-6">{elements}</div>;
+}
+
+// ─── main page ────────────────────────────────────────────────────────────────
+
+export default function GiornoDetail() {
+  const { id } = useParams<{ id: string }>();
+  const { data: entries, isLoading } = useListEntries();
+
+  const entry = entries?.find((e) => String(e.id) === id);
+
+  // Compute averages across all entries
+  const avg = (arr: (number | null | undefined)[]): number => {
+    const vals = arr.filter((v): v is number => v != null && v > 0);
+    return vals.length ? Math.round((vals.reduce((s, v) => s + v, 0) / vals.length) * 10) / 10 : 0;
+  };
+
+  const avgKcal = avg(entries?.map((e) => e.kcal) ?? []);
+  const avgKm = avg(entries?.map((e) => e.km) ?? []);
+  const avgSonno = avg(entries?.map((e) => e.sonno) ?? []);
+  const avgPeso = avg(entries?.map((e) => e.peso) ?? []);
+  const avgBattito = avg(entries?.map((e) => e.battito) ?? []);
+  const avgFlessioni = avg(entries?.map((e) => e.flessioni) ?? []);
+  const avgAddominali = avg(entries?.map((e) => e.addominali) ?? []);
+  const avgRound = avg(entries?.map((e) => e.round) ?? []);
+
+  // Sorted entries for prev/next navigation
+  const sorted = entries ? [...entries].sort((a, b) => b.numero - a.numero) : [];
+  const idx = sorted.findIndex((e) => String(e.id) === id);
+  const prevEntry = sorted[idx + 1] ?? null;
+  const nextEntry = sorted[idx - 1] ?? null;
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen pt-24 flex items-center justify-center">
+        <span className="text-muted-foreground font-sans uppercase tracking-widest text-[12px] animate-pulse">Caricamento...</span>
+      </div>
+    );
+  }
+
+  if (!entry) {
+    return (
+      <div className="min-h-screen pt-24 flex flex-col items-center justify-center gap-6">
+        <span className="text-[11px] font-sans uppercase tracking-[0.3em] text-muted-foreground">Giornata non trovata</span>
+        <Link href="/journaling" className="btn-primary text-[12px]">Torna al Journaling</Link>
+      </div>
+    );
+  }
+
+  const photoUrl = getPhotoUrl(entry.foto);
+  const hasPhoto = Boolean(entry.foto && photoUrl);
+
+  const averages: VsMetric[] = [
+    { label: "KCAL", value: entry.kcal, avg: avgKcal },
+    { label: "SONNO", value: entry.sonno, avg: avgSonno, fraction: 1 },
+    { label: "PESO", value: entry.peso, avg: avgPeso, fraction: 1 },
+    { label: "BATTITO", value: entry.battito, avg: avgBattito },
+    { label: "KM", value: entry.km, avg: avgKm, fraction: 1 },
+    { label: "FLESSIONI", value: entry.flessioni, avg: avgFlessioni },
+    { label: "ADDOMINALI", value: entry.addominali, avg: avgAddominali },
+    { label: "ROUND", value: entry.round, avg: avgRound },
+  ];
+
+  return (
+    <div className="min-h-screen pb-24">
+      {/* ─── Hero ─── */}
+      <div className="relative w-full h-[50svh] min-h-[320px] max-h-[520px] overflow-hidden">
+        {hasPhoto ? (
+          <img
+            src={photoUrl ?? undefined}
+            alt={`Giorno ${entry.numero}`}
+            className="w-full h-full object-cover grayscale-[15%]"
+          />
+        ) : (
+          <div className="crosshatch w-full h-full" />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
+
+        {/* Back button */}
+        <div className="absolute top-20 left-0 right-0 max-w-5xl mx-auto px-5 sm:px-6">
+          <Link
+            href="/journaling"
+            className="inline-flex items-center gap-2 text-[11px] font-sans uppercase tracking-[0.2em] text-foreground/70 hover:text-primary transition-colors"
+          >
+            <ArrowLeft size={14} /> Journaling
+          </Link>
+        </div>
+      </div>
+
+      {/* ─── Content ─── */}
+      <div className="max-w-5xl mx-auto px-5 sm:px-6 -mt-16 relative z-10">
+
+        {/* Day header */}
+        <Reveal>
+          <div className="flex items-end justify-between flex-wrap gap-4 mb-6">
+            <div>
+              <span className="page-label">GIORNO</span>
+              <h1 className="font-serif text-[clamp(72px,14vw,140px)] leading-[0.8] text-primary bebas tracking-wide">
+                {padDay(entry.numero)}
+              </h1>
+            </div>
+            <div className="text-right pb-2">
+              <div className="text-[13px] font-sans uppercase tracking-[0.2em] text-muted-foreground">
+                {format(new Date(entry.data), "EEEE", { locale: it })}
+              </div>
+              <div className="font-serif text-[28px] text-foreground bebas tracking-wide">
+                {format(new Date(entry.data), "d MMMM yyyy", { locale: it })}
+              </div>
+            </div>
+          </div>
+        </Reveal>
+
+        <div className="h-px bg-primary/30 mb-6" />
+
+        {/* ─── Data strip ─── */}
+        <Reveal>
+          <DataStrip entry={entry} />
+        </Reveal>
+
+        {/* ─── Finance row ─── */}
+        <Reveal>
+          <FinanceRow entry={entry} />
+        </Reveal>
+
+        {/* ─── VS Media table ─── */}
+        <Reveal>
+          <VsMediaTable entry={entry} averages={averages} />
+        </Reveal>
+
+        {/* ─── Diary text ─── */}
+        {entry.testo && (
+          <Reveal>
+            <div className="mt-12 mb-12">
+              <DiaryText text={entry.testo} />
+            </div>
+          </Reveal>
+        )}
+
+        {/* ─── Prev / Next navigation ─── */}
+        <div className="h-px bg-border mb-10" />
+        <div className="flex items-center justify-between gap-4">
+          {prevEntry ? (
+            <Link
+              href={`/giorno/${prevEntry.id}`}
+              className="flex items-center gap-2 border border-border bg-card px-5 py-3 hover:border-primary transition-colors group"
+            >
+              <ArrowLeft size={14} className="text-primary" />
+              <div>
+                <div className="text-[9px] font-sans uppercase tracking-[0.2em] text-muted-foreground">Precedente</div>
+                <div className="font-serif text-[20px] leading-none text-foreground bebas">GG {padDay(prevEntry.numero)}</div>
+              </div>
+            </Link>
+          ) : (
+            <div />
+          )}
+          {nextEntry ? (
+            <Link
+              href={`/giorno/${nextEntry.id}`}
+              className="flex items-center gap-2 border border-border bg-card px-5 py-3 hover:border-primary transition-colors text-right group"
+            >
+              <div>
+                <div className="text-[9px] font-sans uppercase tracking-[0.2em] text-muted-foreground">Successivo</div>
+                <div className="font-serif text-[20px] leading-none text-foreground bebas">GG {padDay(nextEntry.numero)}</div>
+              </div>
+              <ArrowLeft size={14} className="text-primary rotate-180" />
+            </Link>
+          ) : (
+            <div />
+          )}
+        </div>
+
+        <div className="mt-16 flex justify-center">
+          <Cross />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Type helpers to keep inline components tidy
+type GiornoEntry = NonNullable<ReturnType<typeof useListEntries>["data"]> extends (infer T)[] ? T : never;

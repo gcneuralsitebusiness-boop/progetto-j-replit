@@ -1,0 +1,27 @@
+kind = "web"
+previewPath = "/"
+title = "Progetto J"
+version = "1.0.0"
+id = "artifacts/progetto-j"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 26090
+
+[services.development]
+run = "pnpm --filter @workspace/progetto-j run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/progetto-j", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/progetto-j/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "26090"
+BASE_PATH = "/"

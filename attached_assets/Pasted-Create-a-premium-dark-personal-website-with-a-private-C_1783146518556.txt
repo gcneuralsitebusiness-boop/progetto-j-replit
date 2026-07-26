@@ -1,0 +1,67 @@
+Create a premium dark personal website with a private CRM
+for "Progetto J" — a 180-day transformation documented by J,
+21, Bologna. Stack: React + Vite, Replit DB for storage,
+Recharts for charts.
+
+DESIGN TOKENS:
+- Background #0A0A0A, surfaces #141414, accent #B81D1D
+- Text #FFFFFF, muted text #9A9A9A, borders #262626
+- Headings: Bebas Neue. Body: Inter (from Google Fonts)
+- Numbers use font-variant-numeric: tabular-nums
+- Light film grain overlay on all sections
+- No white backgrounds anywhere
+- Cards use 1px #262626 borders, not shadows
+
+TYPE SCALE:
+- Hero "J": clamp(80px, 18vw, 220px)
+- Section title: clamp(40px, 7vw, 72px)
+- Day number: 56px, red
+- Body: 17px / line-height 1.6
+- Label: 13px / uppercase / letter-spaced / muted
+
+PUBLIC PAGES (3):
+
+1. HOME
+- Fixed translucent navbar: red "J" logo left,
+  links right (Chi Sono · Journaling · Instagram)
+- Full-height hero: giant red "J",
+  "PROGETTO J · 180 DAYS",
+  tagline "Documento la trasformazione. Dati veri. Zero filtri."
+- One red CTA "Segui il percorso" → Instagram
+- Below hero: "ULTIMI GIORNI" + 3 most recent entry cards
+- Footer: small red orthodox cross + "IC XC NIKA"
+
+2. JOURNALING
+- Title "JOURNALING"
+- 4 Recharts charts, red (#B81D1D) lines on black:
+  Peso nel tempo, Ore sonno, Kcal, Allenamento settimanale
+- Chronological feed below. Each entry card:
+  large red day number left, date muted,
+  data row (kcal · sonno · flessioni · addominali ·
+  round · km · peso · battito), diary text below
+- Empty state text: "Il primo giorno arriva presto."
+
+3. CHI SONO
+- Short story blocks, muted labels,
+  IC XC NIKA signature in red
+
+PRIVATE CRM (/admin):
+- Password gate (password stored as a Replit secret)
+- Form to add an entry, fields:
+  data, numero, kcal, sonno, flessioni, addominali,
+  round, km, peso, battito, testo (textarea), foto (URL)
+- Red "Salva giorno" button
+- Below: list of existing entries with Modifica / Elimina
+- Save to Replit DB under key "giorno_<numero>"
+- Public pages read all entries, sort by date,
+  render feed and charts automatically
+
+DATA SHAPE:
+{ data, numero, kcal, sonno, flessioni, addominali,
+  round, km, peso, battito, testo, foto }
+
+QUALITY FLOOR:
+- Responsive, mobile-first
+- Only animation: fade-in of blocks on scroll
+- Visible keyboard focus, prefers-reduced-motion respected
+- Orthodox cross only as small red section separator
