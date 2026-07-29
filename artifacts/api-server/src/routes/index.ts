@@ -10,6 +10,7 @@ import sponsorRouter from "./sponsor";
 import articoliRouter from "./articoli";
 import coachingRouter from "./coaching";
 import contactRouter from "./contact";
+import subscribeRouter from "./subscribe";
 
 const router: IRouter = Router();
 
@@ -24,5 +25,6 @@ router.use(sponsorRouter);
 router.use(articoliRouter);
 router.use(coachingRouter);
 router.use(contactRouter);
+router.use(subscribeRouter);
 
 export default router;

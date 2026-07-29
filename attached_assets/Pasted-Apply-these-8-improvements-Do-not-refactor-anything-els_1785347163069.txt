@@ -1,0 +1,108 @@
+Apply these 8 improvements. Do not refactor anything else.
+
+───────────────────────────────
+FIX 1 — LANG ATTRIBUTE
+FILE: artifacts/progetto-j/index.html
+Change: <html lang="en"> → <html lang="it">
+
+───────────────────────────────
+FIX 2 — ALLOW ZOOM
+FILE: artifacts/progetto-j/index.html
+Change the viewport meta to:
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+(remove maximum-scale=1)
+
+───────────────────────────────
+FIX 3 — PRELOAD BEBAS NEUE
+FILE: artifacts/progetto-j/index.html
+Change the Google Fonts link to include Bebas Neue:
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+Then in artifacts/progetto-j/src/index.css, remove the
+duplicate @import for Google Fonts (it is now loaded
+in the HTML head, loading it twice delays render).
+
+───────────────────────────────
+FIX 4 — OG IMAGE PLACEHOLDER
+FILE: artifacts/progetto-j/index.html
+Add inside <head>:
+<meta property="og:image" content="https://portfolio-showcase-gcneuralsitebus.replit.app/og-image.jpg" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:url" content="https://portfolio-showcase-gcneuralsitebus.replit.app" />
+<meta name="twitter:image" content="https://portfolio-showcase-gcneuralsitebus.replit.app/og-image.jpg" />
+<link rel="canonical" href="https://portfolio-showcase-gcneuralsitebus.replit.app" />
+
+NOTE: the file og-image.jpg does not exist yet.
+J will upload it to artifacts/progetto-j/public/
+manually. Do not generate it.
+
+───────────────────────────────
+FIX 5 — SITEMAP
+Create: artifacts/progetto-j/public/sitemap.xml
+containing entries for: /, /journaling, /chi-sono,
+/coaching, /social, /sponsor
+Use https://portfolio-showcase-gcneuralsitebus.replit.app
+as the base URL. Set changefreq daily for / and
+/journaling, monthly for the rest.
+
+Then add to artifacts/progetto-j/public/robots.txt:
+Sitemap: https://portfolio-showcase-gcneuralsitebus.replit.app/sitemap.xml
+
+───────────────────────────────
+FIX 6 — HERO HEIGHT
+FILE: artifacts/progetto-j/src/pages/home.tsx
+In the hero <section>, change min-h-[100svh]
+to min-h-[85svh]
+This lets the next section peek above the fold.
+
+───────────────────────────────
+FIX 7 — EMAIL CAPTURE COMPONENT
+Create: artifacts/progetto-j/src/components/EmailCapture.tsx
+
+Design (match existing brand tokens):
+- Full-width section, bg #0A0A0A
+- Border-top and border-bottom 1px var(--border)
+- Padding: 64px vertical, 20px horizontal on mobile
+- Max-width 640px, centered
+- Title: font-serif (Bebas Neue), clamp(32px, 8vw, 48px),
+  uppercase, text-foreground:
+  "IL REPORT DEL GIORNO 180"
+- Body: Inter 15px, text-muted-foreground, line-height 1.7:
+  "Quando finisco, mando il documento completo: tutti i
+  dati, il metodo, cosa ha funzionato e cosa no."
+- Input: bg #141414, border 1px #242424, height 52px,
+  text-foreground, placeholder "LA TUA EMAIL" in
+  #666666, Inter uppercase tracking-[0.12em], no radius
+- Button: bg var(--primary), text white, height 52px,
+  Inter bold uppercase tracking-[0.12em]: "MANDAMELO"
+- Small note below, Inter 12px #666666: "Niente spam."
+- Mobile: input and button stacked, full width, gap 12px
+- Desktop: side by side, input flex-1
+
+Backend:
+Create POST /api/subscribe in the API server.
+New table "iscritti": id serial PK, email text NOT NULL
+UNIQUE, created_at timestamptz DEFAULT now().
+Validate email format. Return 201 on success,
+409 if already subscribed.
+No auth required.
+
+On success: replace the form with text
+"FATTO. CI SENTIAMO AL GIORNO 180." in Bebas Neue.
+On error: red text below input.
+
+Placement: insert <EmailCapture /> in home.tsx
+immediately BEFORE the footer.
+
+Admin: add an "ISCRITTI" tab to /admin listing all
+emails with dates, plus a CSV export button.
+
+───────────────────────────────
+FIX 8 — REBUILD AND DEPLOY
+cd artifacts/api-server && pnpm run build
+cd artifacts/progetto-j && PORT=26090 BASE_PATH=/progetto-j/ pnpm run build
+Then republish.
+
+───────────────────────────────
+REPORT which files changed and confirm each fix.

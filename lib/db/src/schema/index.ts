@@ -6,3 +6,4 @@ export * from "./sponsor";
 export * from "./articoli";
 export * from "./coaching";
 export * from "./contatti";
+export * from "./iscritti";

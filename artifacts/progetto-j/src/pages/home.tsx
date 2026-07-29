@@ -4,6 +4,7 @@ import { Reveal } from "@/components/Reveal";
 import { Cross } from "@/components/Cross";
 import { Timeline180 } from "@/components/Timeline180";
 import { DayCard } from "@/components/DayCard";
+import { EmailCapture } from "@/components/EmailCapture";
 import { ArrowRight, Users, Flame, Dumbbell, Heart, Wallet } from "lucide-react";
 
 export default function Home() {
@@ -49,7 +50,7 @@ export default function Home() {
     <div className="min-h-screen flex flex-col">
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="min-h-[100svh] flex flex-col items-center justify-center px-5 sm:px-6 py-20 text-center relative hero-radial">
+        <section className="min-h-[85svh] flex flex-col items-center justify-center px-5 sm:px-6 py-20 text-center relative hero-radial">
           <Reveal className="relative z-10">
             <h1 className="font-serif text-[clamp(120px,28vw,280px)] leading-[0.75] text-primary bebas tracking-wide glow-red hero-glitch">J</h1>
             <h2 className="font-serif text-[clamp(24px,6vw,44px)] text-foreground tracking-[0.08em] mt-4 sm:mt-6 mb-6 bebas">
@@ -180,6 +181,8 @@ export default function Home() {
           </Reveal>
         </section>
       </main>
+
+      <EmailCapture />
 
       <footer className="border-t border-border py-12 mt-12 w-full">
         <div className="max-w-5xl mx-auto px-5 sm:px-6 flex flex-col items-center gap-6">
