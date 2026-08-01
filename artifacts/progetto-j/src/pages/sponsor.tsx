@@ -1,6 +1,8 @@
 import { useListSponsors, useGetSiteContent } from "@workspace/api-client-react";
 import { Reveal } from "@/components/Reveal";
 import { Cross } from "@/components/Cross";
+import { SiteFooter } from "@/components/SiteFooter";
+import { DataErrorState } from "@/components/DataErrorState";
 import { ArrowUpRight, Mail } from "lucide-react";
 
 const LEVEL_STYLES: Record<string, string> = {
@@ -11,13 +13,24 @@ const LEVEL_STYLES: Record<string, string> = {
 };
 
 export default function Sponsor() {
-  const { data: sponsors, isLoading } = useListSponsors();
-  const { data: siteContent } = useGetSiteContent();
+  const { data: sponsors, isLoading: sponsorsLoading, isError: sponsorsError } = useListSponsors();
+  const { data: siteContent, isLoading: siteContentLoading, isError: siteContentError } = useGetSiteContent();
+  const isLoading = sponsorsLoading || siteContentLoading;
+  const isError = sponsorsError || siteContentError;
 
   const sponsorIntro = siteContent?.sponsor_intro || "Chi crede in questo percorso e lo rende possibile. Sponsor tecnici, partner, e chi mette le risorse per costruire qualcosa di reale.";
   const ctaTitolo = siteContent?.sponsor_cta_titolo || "SOSTIENI IL PROGETTO";
   const ctaTesto = siteContent?.sponsor_cta_testo || "Se vuoi mettere il tuo brand dietro un percorso di trasformazione documentato, scrivi a";
   const sponsorEmail = siteContent?.sponsor_email || "sponsor@progettoj.it";
+
+  if (isError) {
+    return (
+      <>
+        <DataErrorState />
+        <SiteFooter />
+      </>
+    );
+  }
 
   return (
     <div className="min-h-screen pt-20 pb-20 max-w-5xl mx-auto px-5 sm:px-6">
@@ -91,6 +104,7 @@ export default function Sponsor() {
       <div className="mt-16 flex justify-center">
         <Cross />
       </div>
+      <SiteFooter />
     </div>
   );
 }

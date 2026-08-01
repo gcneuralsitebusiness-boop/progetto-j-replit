@@ -2,6 +2,8 @@ import { useGetSiteContent } from "@workspace/api-client-react";
 import { getPhotoUrl } from "@workspace/object-storage-web";
 import { Reveal } from "@/components/Reveal";
 import { Cross } from "@/components/Cross";
+import { SiteFooter } from "@/components/SiteFooter";
+import { DataErrorState } from "@/components/DataErrorState";
 
 const DEFAULTS = {
   chi_sono_bio:
@@ -67,7 +69,7 @@ function PhotoBlock({ path }: { path: string | null | undefined }) {
 }
 
 export default function ChiSono() {
-  const { data: content } = useGetSiteContent();
+  const { data: content, isLoading, isError } = useGetSiteContent();
 
   const bio = content?.chi_sono_bio ?? DEFAULTS.chi_sono_bio;
   const progetto = content?.chi_sono_il_progetto ?? DEFAULTS.chi_sono_il_progetto;
@@ -80,6 +82,26 @@ export default function ChiSono() {
     { key: "LA MOTIVAZIONE", body: motivazione },
     { key: "LA PROMESSA", body: promessa },
   ];
+
+  if (isError) {
+    return (
+      <>
+        <DataErrorState />
+        <SiteFooter />
+      </>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <>
+        <div className="min-h-screen pt-24 flex items-center justify-center">
+          <span className="text-muted-foreground font-sans uppercase tracking-widest text-[12px] animate-pulse">Caricamento...</span>
+        </div>
+        <SiteFooter />
+      </>
+    );
+  }
 
   return (
     <div className="min-h-screen pt-20 pb-20 max-w-4xl mx-auto px-5 sm:px-6">
@@ -122,6 +144,7 @@ export default function ChiSono() {
           </div>
         </Reveal>
       </div>
+      <SiteFooter />
     </div>
   );
 }

@@ -11,6 +11,7 @@ import articoliRouter from "./articoli";
 import coachingRouter from "./coaching";
 import contactRouter from "./contact";
 import subscribeRouter from "./subscribe";
+import sitemapRouter from "./sitemap";
 
 const router: IRouter = Router();
 
@@ -26,5 +27,6 @@ router.use(articoliRouter);
 router.use(coachingRouter);
 router.use(contactRouter);
 router.use(subscribeRouter);
+router.use(sitemapRouter);
 
 export default router;

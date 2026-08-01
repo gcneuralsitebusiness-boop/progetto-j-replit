@@ -5,6 +5,8 @@ import { it } from "date-fns/locale";
 import { ArrowLeft } from "lucide-react";
 import { Reveal } from "@/components/Reveal";
 import { Cross } from "@/components/Cross";
+import { SiteFooter } from "@/components/SiteFooter";
+import { DataErrorState } from "@/components/DataErrorState";
 import { getPhotoUrl } from "@workspace/object-storage-web";
 
 function padDay(n: number) {
@@ -223,7 +225,7 @@ function DiaryText({ text }: { text: string }) {
 
 export default function GiornoDetail() {
   const { id } = useParams<{ id: string }>();
-  const { data: entries, isLoading } = useListEntries();
+  const { data: entries, isLoading, isError } = useListEntries();
 
   const entry = entries?.find((e) => String(e.id) === id);
 
@@ -250,18 +252,33 @@ export default function GiornoDetail() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen pt-24 flex items-center justify-center">
-        <span className="text-muted-foreground font-sans uppercase tracking-widest text-[12px] animate-pulse">Caricamento...</span>
-      </div>
+      <>
+        <div className="min-h-screen pt-24 flex items-center justify-center">
+          <span className="text-muted-foreground font-sans uppercase tracking-widest text-[12px] animate-pulse">Caricamento...</span>
+        </div>
+        <SiteFooter />
+      </>
+    );
+  }
+
+  if (isError) {
+    return (
+      <>
+        <DataErrorState />
+        <SiteFooter />
+      </>
     );
   }
 
   if (!entry) {
     return (
-      <div className="min-h-screen pt-24 flex flex-col items-center justify-center gap-6">
-        <span className="text-[11px] font-sans uppercase tracking-[0.3em] text-muted-foreground">Giornata non trovata</span>
-        <Link href="/journaling" className="btn-primary text-[12px]">Torna al Journaling</Link>
-      </div>
+      <>
+        <div className="min-h-screen pt-24 flex flex-col items-center justify-center gap-6">
+          <span className="text-[11px] font-sans uppercase tracking-[0.3em] text-muted-foreground">Giornata non trovata</span>
+          <Link href="/journaling" className="btn-primary text-[12px]">Torna al Journaling</Link>
+        </div>
+        <SiteFooter />
+      </>
     );
   }
 
@@ -391,6 +408,7 @@ export default function GiornoDetail() {
           <Cross />
         </div>
       </div>
+      <SiteFooter />
     </div>
   );
 }

@@ -8,6 +8,8 @@ import { DayCard } from "@/components/DayCard";
 import { ProgressRing } from "@/components/ProgressRing";
 import { MilestoneBadge } from "@/components/MilestoneBadge";
 import { AnimatedNumber } from "@/components/AnimatedNumber";
+import { SiteFooter } from "@/components/SiteFooter";
+import { DataErrorState } from "@/components/DataErrorState";
 import { Dumbbell, Heart, Flame, Wallet } from "lucide-react";
 
 const chartTooltip = {
@@ -23,8 +25,10 @@ const axisProps = {
 };
 
 export default function Journaling() {
-  const { data: entries, isLoading } = useListEntries();
-  const { data: content } = useGetSiteContent({ query: { queryKey: getGetSiteContentQueryKey() } });
+  const { data: entries, isLoading: entriesLoading, isError: entriesError } = useListEntries();
+  const { data: content, isLoading: contentLoading, isError: contentError } = useGetSiteContent({ query: { queryKey: getGetSiteContentQueryKey() } });
+  const isLoading = entriesLoading || contentLoading;
+  const isError = entriesError || contentError;
   const journalingIntro = content?.journaling_intro;
 
   const chartData = entries
@@ -67,6 +71,15 @@ export default function Journaling() {
   const goalDay = 180;
 
   const chartProps = { margin: { top: 10, right: 10, left: -20, bottom: 0 } };
+
+  if (isError) {
+    return (
+      <>
+        <DataErrorState />
+        <SiteFooter />
+      </>
+    );
+  }
 
   return (
     <div className="min-h-screen pt-20 pb-12 max-w-5xl mx-auto px-5 sm:px-6">
@@ -335,6 +348,7 @@ export default function Journaling() {
           ))
         )}
       </div>
+      <SiteFooter />
     </div>
   );
 }

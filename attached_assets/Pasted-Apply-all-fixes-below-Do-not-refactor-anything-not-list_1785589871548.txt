@@ -1,0 +1,135 @@
+Apply all fixes below. Do not refactor anything not listed.
+Report file-by-file at the end.
+
+═══════════════════════════════════════════
+FIX A — SHARED FOOTER ON EVERY PAGE
+═══════════════════════════════════════════
+
+Currently only home.tsx renders a footer. All other
+pages end abruptly with no navigation and no email
+capture. Traffic from Instagram lands on /giorno/:id
+and /journaling, which have neither.
+
+CREATE: artifacts/progetto-j/src/components/SiteFooter.tsx
+
+Move the entire <footer> block from home.tsx into this
+new component, unchanged in styling:
+- Cross ornament
+- global_footer_mantra via useGetSiteContent(), fallback
+  "IC XC NIKA"
+- nav links: Chi Sono, Journaling, Articoli, Coaching,
+  Social, Sponsor
+
+The Articoli link must render ONLY when useListArticles()
+returns a non-empty array. Apply the same condition that
+Navbar.tsx already uses.
+
+Inside SiteFooter, ABOVE the <footer> element, render
+<EmailCapture />.
+
+Then import and render <SiteFooter /> as the last element
+before the closing wrapper div in each of these files,
+and REMOVE the inline footer and the standalone
+<EmailCapture /> from home.tsx:
+
+  pages/home.tsx
+  pages/journaling.tsx
+  pages/giorno.tsx
+  pages/chi-sono.tsx
+  pages/coaching.tsx
+  pages/social.tsx
+  pages/sponsor.tsx
+  pages/articoli.tsx
+
+Do NOT add it to admin.tsx or not-found.tsx.
+
+═══════════════════════════════════════════
+FIX B — ERROR HANDLING ON ALL DATA PAGES
+═══════════════════════════════════════════
+
+No page handles API failures. When the API is
+unreachable (Replit standby, network drop, deploy in
+progress) pages hang on "Caricamento..." forever.
+
+For every page that calls a React Query hook, destructure
+isError alongside isLoading and render an error state.
+
+Pages to fix: home.tsx, journaling.tsx, giorno.tsx,
+chi-sono.tsx, coaching.tsx, social.tsx, sponsor.tsx,
+articoli.tsx
+
+Error state markup (use identical styling everywhere):
+
+<div className="max-w-5xl mx-auto px-5 py-24 text-center">
+  <p className="font-serif text-[clamp(32px,7vw,56px)]
+     leading-none bebas text-foreground">
+    DATI NON DISPONIBILI
+  </p>
+  <p className="mt-4 font-sans text-[14px]
+     text-muted-foreground">
+    Il server non risponde. Riprova tra qualche istante.
+  </p>
+  <button
+    onClick={() => window.location.reload()}
+    className="mt-8 h-[48px] px-7 bg-primary text-white
+      font-sans text-[13px] font-bold uppercase
+      tracking-[0.12em] hover:opacity-90">
+    RICARICA
+  </button>
+</div>
+
+Render this INSTEAD of the page body when isError is true.
+Keep the Navbar visible above it.
+
+═══════════════════════════════════════════
+FIX C — LOADING STATES ON CHI-SONO AND COACHING
+═══════════════════════════════════════════
+
+These two pages render hardcoded fallback text while
+the API call is in flight, then the text visibly swaps
+when real data arrives.
+
+In pages/chi-sono.tsx and pages/coaching.tsx, destructure
+isLoading from useGetSiteContent() / useGetCoaching() and
+render the same "Caricamento..." block used in the other
+pages until data resolves.
+
+═══════════════════════════════════════════
+FIX D — DYNAMIC SITEMAP INCLUDING DAY PAGES
+═══════════════════════════════════════════
+
+public/sitemap.xml is static and lists only 6 pages.
+The 76 day pages — the actual content — are absent.
+
+Add a new API endpoint that generates the sitemap:
+
+FILE: artifacts/api-server/src/routes/sitemap.ts (new)
+
+GET /api/sitemap.xml
+No auth. Content-Type: application/xml
+
+Generate the XML with:
+- The 6 static routes (/, /journaling, /chi-sono,
+  /coaching, /social, /sponsor)
+- One <url> entry per row in the giorni table:
+  /giorno/{id}  with <lastmod> from the entry date
+  and <changefreq>monthly</changefreq>
+
+Base URL:
+https://portfolio-showcase-gcneuralsitebus.replit.app
+
+Then update public/robots.txt to point at the dynamic
+endpoint instead of the static file:
+  Sitemap: https://portfolio-showcase-gcneuralsitebus.replit.app/api/sitemap.xml
+
+Delete public/sitemap.xml.
+
+═══════════════════════════════════════════
+BUILD
+═══════════════════════════════════════════
+cd artifacts/api-server && pnpm run build
+cd artifacts/progetto-j && PORT=26090 BASE_PATH=/progetto-j/ pnpm run build
+Then republish.
+
+Report each fix with the file changed and one line of
+verification.

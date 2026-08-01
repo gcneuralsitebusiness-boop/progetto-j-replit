@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useListSocial, useGetSiteContent } from "@workspace/api-client-react";
 import { Reveal } from "@/components/Reveal";
 import { Cross } from "@/components/Cross";
+import { SiteFooter } from "@/components/SiteFooter";
+import { DataErrorState } from "@/components/DataErrorState";
 import { Instagram, Youtube, Twitter, MessageCircle, Send, Mail, ArrowUpRight } from "lucide-react";
 import { toast } from "sonner";
 
@@ -20,8 +22,10 @@ function SocialIcon({ name, size = 24 }: { name: string; size?: number }) {
 }
 
 export default function Social() {
-  const { data: socials, isLoading } = useListSocial();
-  const { data: siteContent } = useGetSiteContent();
+  const { data: socials, isLoading: socialsLoading, isError: socialsError } = useListSocial();
+  const { data: siteContent, isLoading: siteContentLoading, isError: siteContentError } = useGetSiteContent();
+  const isLoading = socialsLoading || siteContentLoading;
+  const isError = socialsError || siteContentError;
   const [form, setForm] = useState({ nome: "", email: "", tipo: "", messaggio: "" });
 
   const socialIntro = siteContent?.social_intro || "Tutti i canali dove pubblico. Segui il percorso, commenta, condividi. Se vuoi collaborare, compila il form in fondo.";
@@ -48,6 +52,15 @@ export default function Social() {
       setIsSubmitting(false);
     }
   };
+
+  if (isError) {
+    return (
+      <>
+        <DataErrorState />
+        <SiteFooter />
+      </>
+    );
+  }
 
   return (
     <div className="min-h-screen pt-20 pb-20 max-w-5xl mx-auto px-5 sm:px-6">
@@ -170,6 +183,7 @@ export default function Social() {
       <div className="mt-16 flex justify-center">
         <Cross />
       </div>
+      <SiteFooter />
     </div>
   );
 }

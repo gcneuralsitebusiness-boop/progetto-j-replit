@@ -1,11 +1,15 @@
 import { useGetCoaching, useGetSiteContent } from "@workspace/api-client-react";
 import { Reveal } from "@/components/Reveal";
 import { Cross } from "@/components/Cross";
+import { SiteFooter } from "@/components/SiteFooter";
+import { DataErrorState } from "@/components/DataErrorState";
 import { Users, Mail, Target, TrendingDown, Dumbbell, ArrowRight } from "lucide-react";
 
 export default function Coaching() {
-  const { data: coaching, isLoading } = useGetCoaching();
-  const { data: siteContent } = useGetSiteContent();
+  const { data: coaching, isLoading: coachingLoading, isError: coachingError } = useGetCoaching();
+  const { data: siteContent, isLoading: siteContentLoading, isError: siteContentError } = useGetSiteContent();
+  const isLoading = coachingLoading || siteContentLoading;
+  const isError = coachingError || siteContentError;
 
   const content = coaching ?? {
     heroTitolo: "PROTOCOLLO COACHING",
@@ -16,6 +20,26 @@ export default function Coaching() {
     communityUrl: "#",
     email: "contatto@progettoj.it",
   };
+
+  if (isError) {
+    return (
+      <>
+        <DataErrorState />
+        <SiteFooter />
+      </>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <>
+        <div className="min-h-screen pt-24 flex items-center justify-center">
+          <span className="text-muted-foreground font-sans uppercase tracking-widest text-[12px] animate-pulse">Caricamento...</span>
+        </div>
+        <SiteFooter />
+      </>
+    );
+  }
 
   return (
     <div className="min-h-screen pt-20 pb-20 max-w-5xl mx-auto px-5 sm:px-6">
@@ -107,6 +131,7 @@ export default function Coaching() {
       <div className="mt-16 flex justify-center">
         <Cross />
       </div>
+      <SiteFooter />
     </div>
   );
 }

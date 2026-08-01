@@ -1,17 +1,19 @@
 import { useGetLatestEntries, useListEntries, useGetCoaching, useGetSiteContent } from "@workspace/api-client-react";
 import { Link } from "wouter";
 import { Reveal } from "@/components/Reveal";
-import { Cross } from "@/components/Cross";
 import { Timeline180 } from "@/components/Timeline180";
 import { DayCard } from "@/components/DayCard";
-import { EmailCapture } from "@/components/EmailCapture";
+import { SiteFooter } from "@/components/SiteFooter";
+import { DataErrorState } from "@/components/DataErrorState";
 import { ArrowRight, Users, Flame, Dumbbell, Heart, Wallet } from "lucide-react";
 
 export default function Home() {
-  const { data: latestEntries, isLoading: latestLoading } = useGetLatestEntries();
-  const { data: allEntries, isLoading: allLoading } = useListEntries();
-  const { data: coaching } = useGetCoaching();
-  const { data: siteContent } = useGetSiteContent();
+  const { data: latestEntries, isLoading: latestLoading, isError: latestError } = useGetLatestEntries();
+  const { data: allEntries, isLoading: allLoading, isError: allError } = useListEntries();
+  const { data: coaching, isLoading: coachingLoading, isError: coachingError } = useGetCoaching();
+  const { data: siteContent, isLoading: siteContentLoading, isError: siteContentError } = useGetSiteContent();
+  const isError = latestError || allError || coachingError || siteContentError;
+  const isLoading = latestLoading || allLoading || coachingLoading || siteContentLoading;
 
   const heroTitolo = siteContent?.home_hero_titolo || "PROGETTO J · 180 DAYS";
   const heroSottotitolo = siteContent?.home_hero_sottotitolo || "Disciplina. Tracking. Dati.";
@@ -45,6 +47,15 @@ export default function Home() {
       ))}
     </div>
   );
+
+  if (isError) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <DataErrorState />
+        <SiteFooter />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -182,23 +193,7 @@ export default function Home() {
         </section>
       </main>
 
-      <EmailCapture />
-
-      <footer className="border-t border-border py-12 mt-12 w-full">
-        <div className="max-w-5xl mx-auto px-5 sm:px-6 flex flex-col items-center gap-6">
-          <Cross />
-          <span className="font-serif text-[18px] text-primary bebas">
-            {siteContent?.global_footer_mantra || "IC XC NIKA"}
-          </span>
-          <nav className="flex flex-wrap items-center justify-center gap-5 sm:gap-8 text-[11px] font-sans uppercase tracking-[0.2em] text-muted-foreground">
-            <Link href="/chi-sono" className="hover:text-primary transition-colors">Chi Sono</Link>
-            <Link href="/journaling" className="hover:text-primary transition-colors">Journaling</Link>
-            <Link href="/articoli" className="hover:text-primary transition-colors">Articoli</Link>
-            <Link href="/coaching" className="hover:text-primary transition-colors">Coaching</Link>
-            <Link href="/social" className="hover:text-primary transition-colors">Social</Link>
-          </nav>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

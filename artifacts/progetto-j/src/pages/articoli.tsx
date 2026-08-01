@@ -4,11 +4,13 @@ import { format } from "date-fns";
 import { it } from "date-fns/locale";
 import { Reveal } from "@/components/Reveal";
 import { Cross } from "@/components/Cross";
+import { SiteFooter } from "@/components/SiteFooter";
+import { DataErrorState } from "@/components/DataErrorState";
 import { ArrowRight } from "lucide-react";
 import { useMemo, useState } from "react";
 
 export default function Articoli() {
-  const { data: articles, isLoading } = useListArticles();
+  const { data: articles, isLoading, isError } = useListArticles();
   const [filter, setFilter] = useState<string>("Tutte");
 
   const categories = useMemo(() => {
@@ -21,6 +23,15 @@ export default function Articoli() {
     if (filter === "Tutte") return articles;
     return articles.filter((a) => a.categoria === filter);
   }, [articles, filter]);
+
+  if (isError) {
+    return (
+      <>
+        <DataErrorState />
+        <SiteFooter />
+      </>
+    );
+  }
 
   return (
     <div className="min-h-screen pt-20 pb-20 max-w-5xl mx-auto px-5 sm:px-6">
@@ -91,6 +102,7 @@ export default function Articoli() {
       <div className="mt-16 flex justify-center">
         <Cross />
       </div>
+      <SiteFooter />
     </div>
   );
 }
