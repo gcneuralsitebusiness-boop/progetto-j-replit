@@ -5,6 +5,7 @@ import { Timeline180 } from "@/components/Timeline180";
 import { DayCard } from "@/components/DayCard";
 import { SiteFooter } from "@/components/SiteFooter";
 import { DataErrorState } from "@/components/DataErrorState";
+import { PulseTrace } from "@/components/PulseTrace";
 import { ArrowRight, Users, Flame, Dumbbell, Heart, Wallet } from "lucide-react";
 
 export default function Home() {
@@ -39,10 +40,10 @@ export default function Home() {
     <div className="ticker-track">
       {[...tickerItems, ...tickerItems].map((item, i) => (
         <div key={i} className="flex items-center gap-3 px-6 sm:px-8 text-[11px] sm:text-[12px] font-sans uppercase tracking-[0.2em] text-muted-foreground">
-          <item.icon size={14} className="text-primary" />
-          <span className="text-foreground">{item.value}</span>
+          <item.icon size={14} className="text-iron" />
+          <span className="measured text-foreground">{item.value}</span>
           <span>{item.label}</span>
-          <span className="text-primary">·</span>
+          <span className="text-iron">·</span>
         </div>
       ))}
     </div>
@@ -61,9 +62,10 @@ export default function Home() {
     <div className="min-h-screen flex flex-col">
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="min-h-[85svh] flex flex-col items-center justify-center px-5 sm:px-6 py-20 text-center relative hero-radial">
+        <section className="min-h-[85svh] flex flex-col items-center justify-center px-5 sm:px-6 py-20 text-center relative hero-radial overflow-hidden">
+          {allEntries && <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 z-0"><PulseTrace entries={allEntries} variant="hero" /></div>}
           <Reveal className="relative z-10">
-            <h1 className="font-serif text-[clamp(120px,28vw,280px)] leading-[0.75] text-primary bebas tracking-wide glow-red hero-glitch">J</h1>
+            <h1 className="font-serif text-[clamp(120px,28vw,280px)] leading-[0.73] text-primary bebas tracking-[0.02em]">J</h1>
             <h2 className="font-serif text-[clamp(24px,6vw,44px)] text-foreground tracking-[0.08em] mt-4 sm:mt-6 mb-6 bebas">
               {heroTitolo}
             </h2>
@@ -77,19 +79,27 @@ export default function Home() {
             {/* Live hero data strip */}
             {currentDay > 0 && (
               <div className="mt-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
-                <span className="hero-data-item"><strong>GG {currentDay}</strong> / 180</span>
-                <span className="text-primary/40 text-[10px]">·</span>
-                <span className="hero-data-item"><strong>{totalKm}</strong> km</span>
-                <span className="text-primary/40 text-[10px]">·</span>
-                <span className="hero-data-item"><strong>{totalKcal.toLocaleString("it-IT")}</strong> kcal</span>
+                <span className="hero-data-item"><strong className="measured">GG {currentDay}</strong> / 180</span>
+                <span className="text-iron text-[10px]">·</span>
+                <span className="hero-data-item"><strong className="measured">{totalKm}</strong> km</span>
+                <span className="text-iron text-[10px]">·</span>
+                <span className="hero-data-item"><strong className="measured">{totalKcal.toLocaleString("it-IT")}</strong> kcal</span>
                 {totalIncome > 0 && (
                   <>
-                    <span className="text-primary/40 text-[10px]">·</span>
-                    <span className="hero-data-item"><strong>€{totalIncome.toLocaleString("it-IT")}</strong></span>
+                    <span className="text-iron text-[10px]">·</span>
+                    <span className="hero-data-item"><strong className="measured">€{totalIncome.toLocaleString("it-IT")}</strong></span>
                   </>
                 )}
               </div>
             )}
+            {allEntries && (() => {
+              const pulse = allEntries.filter((entry) => entry.battito != null).sort((a, b) => a.numero - b.numero);
+              return pulse.length >= 2 ? (
+                <p className="mt-5 text-[10px] font-sans uppercase tracking-[0.25em] text-muted-foreground">
+                  BATTITO A RIPOSO · <span className="measured">{pulse[0].battito}</span> <span className="text-iron">→</span> <span className="measured">{pulse[pulse.length - 1].battito}</span> BPM
+                </p>
+              ) : null;
+            })()}
           </Reveal>
 
           {/* Scroll hint */}
@@ -117,7 +127,7 @@ export default function Home() {
           </Reveal>
         </section>
 
-        <div className="cut-divider max-w-5xl mx-auto" />
+        <div className="max-w-5xl mx-auto"><PulseTrace entries={allEntries ?? []} variant="divider" /></div>
 
         {/* Latest Days */}
         <section className="max-w-5xl mx-auto px-5 sm:px-6 py-24 w-full">
@@ -170,7 +180,7 @@ export default function Home() {
           <Reveal>
             <a
               href={coaching?.communityUrl || "#"}
-              className="group block border border-primary bg-card p-5 sm:p-6 metallic-sheen card-lift hover:border-primary transition-colors"
+              className="group block border border-iron bg-card p-5 sm:p-6 card-lift hover:border-iron transition-colors"
             >
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
                 <div className="flex items-center gap-4">

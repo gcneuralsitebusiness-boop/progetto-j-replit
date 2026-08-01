@@ -67,7 +67,7 @@ function DataStrip({ entry }: { entry: GiornoEntry }) {
     <div className="flex overflow-x-auto no-scrollbar snap-x snap-mandatory justify-start sm:justify-center gap-4 sm:gap-6 py-4 border-b border-border">
       {items.map((item) => (
         <div key={item.key} className="snap-start flex-shrink-0 flex flex-col items-center min-w-[60px] sm:min-w-[72px]">
-          <div className="font-serif text-[36px] sm:text-[48px] leading-none text-foreground bebas tabular-nums">
+          <div className="font-serif text-[36px] sm:text-[48px] leading-none text-foreground bebas measured">
             {item.display}
           </div>
           <div className="text-[11px] font-sans uppercase tracking-[0.12em] text-muted-foreground mt-1">
@@ -91,7 +91,7 @@ function FinanceRow({ entry }: { entry: GiornoEntry }) {
   return (
     <div className="flex justify-between items-start py-4 border-b border-border">
       <div className="flex flex-col gap-1">
-        <div className="text-[20px] font-sans font-bold text-[hsl(var(--acid))]">
+        <div className="measured text-[20px] font-sans font-bold text-[hsl(var(--acid))]">
           €{formatCurrency(entrate)}
         </div>
         <div className="text-[11px] font-sans uppercase tracking-[0.12em] text-muted-foreground">
@@ -99,7 +99,7 @@ function FinanceRow({ entry }: { entry: GiornoEntry }) {
         </div>
       </div>
       <div className="flex flex-col gap-1 items-center">
-        <div className="text-[20px] font-sans font-bold text-foreground">
+        <div className="measured text-[20px] font-sans font-bold text-foreground">
           €{formatCurrency(uscite)}
         </div>
         <div className="text-[11px] font-sans uppercase tracking-[0.12em] text-muted-foreground">
@@ -107,7 +107,7 @@ function FinanceRow({ entry }: { entry: GiornoEntry }) {
         </div>
       </div>
       <div className="flex flex-col gap-1 items-end">
-        <div className={`text-[20px] font-sans font-bold ${saldo >= 0 ? "text-[hsl(var(--acid))]" : "text-primary"}`}>
+        <div className={`measured text-[20px] font-sans font-bold ${saldo >= 0 ? "text-[hsl(var(--acid))]" : "text-primary"}`}>
           {saldo >= 0 ? "+" : "−"}€{formatCurrency(Math.abs(saldo))}
         </div>
         <div className="text-[11px] font-sans uppercase tracking-[0.12em] text-muted-foreground">
@@ -147,7 +147,7 @@ function VsMediaTable({ entry, averages }: { entry: GiornoEntry; averages: VsMet
             <div className="w-[40%] text-[13px] font-sans uppercase tracking-[0.1em] text-muted-foreground">
               {m.label}
             </div>
-            <div className="w-[30%] text-right font-serif text-[28px] leading-none text-foreground bebas tabular-nums">
+            <div className="w-[30%] text-right font-serif text-[28px] leading-none text-foreground bebas measured">
               {formatNumber(m.value, m.fraction ?? 0)}
             </div>
             <div className={`w-[30%] text-right text-[14px] font-sans font-bold ${colorClass}`}>
@@ -205,7 +205,7 @@ function DiaryText({ text }: { text: string }) {
       elements.push(
         <span
           key={key++}
-          className="block font-serif text-[20px] text-primary bebas uppercase mt-6 first:mt-0 mb-2"
+          className="block font-serif text-[20px] text-iron bebas uppercase mt-6 first:mt-0 mb-2"
         >
           {sub.text}
         </span>
@@ -218,7 +218,7 @@ function DiaryText({ text }: { text: string }) {
 
   if (elements.length === 0) return null;
 
-  return <div className="border-l-2 border-primary pl-6">{elements}</div>;
+  return <div className="border-l-2 border-iron pl-6">{elements}</div>;
 }
 
 // ─── main page ────────────────────────────────────────────────────────────────
@@ -286,14 +286,14 @@ export default function GiornoDetail() {
   const hasPhoto = Boolean(entry.foto && photoUrl);
 
   const averages: VsMetric[] = [
-    { label: "KCAL", value: entry.kcal, avg: avgKcal },
-    { label: "SONNO", value: entry.sonno, avg: avgSonno, fraction: 1 },
-    { label: "PESO", value: entry.peso, avg: avgPeso, fraction: 1 },
-    { label: "BATTITO", value: entry.battito, avg: avgBattito },
-    { label: "KM", value: entry.km, avg: avgKm, fraction: 1 },
-    { label: "FLESSIONI", value: entry.flessioni, avg: avgFlessioni },
-    { label: "ADDOMINALI", value: entry.addominali, avg: avgAddominali },
-    { label: "ROUND", value: entry.round, avg: avgRound },
+    { label: "KCAL", value: entry.kcal ?? 0, avg: avgKcal },
+    { label: "SONNO", value: entry.sonno ?? 0, avg: avgSonno, fraction: 1 },
+    { label: "PESO", value: entry.peso ?? 0, avg: avgPeso, fraction: 1 },
+    { label: "BATTITO", value: entry.battito ?? 0, avg: avgBattito },
+    { label: "KM", value: entry.km ?? 0, avg: avgKm, fraction: 1 },
+    { label: "FLESSIONI", value: entry.flessioni ?? 0, avg: avgFlessioni },
+    { label: "ADDOMINALI", value: entry.addominali ?? 0, avg: avgAddominali },
+    { label: "ROUND", value: entry.round ?? 0, avg: avgRound },
   ];
 
   return (
@@ -345,31 +345,26 @@ export default function GiornoDetail() {
           </div>
         </Reveal>
 
-        <div className="h-px bg-primary/30 mb-6" />
-
-        {/* ─── Data strip ─── */}
-        <Reveal>
-          <DataStrip entry={entry} />
-        </Reveal>
-
-        {/* ─── Finance row ─── */}
-        <Reveal>
-          <FinanceRow entry={entry} />
-        </Reveal>
-
-        {/* ─── VS Media table ─── */}
-        <Reveal>
-          <VsMediaTable entry={entry} averages={averages} />
-        </Reveal>
-
-        {/* ─── Diary text ─── */}
-        {entry.testo && (
-          <Reveal>
-            <div className="mt-12 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-[140px_1fr] gap-x-8 gap-y-0 max-w-4xl mx-auto px-5">
+          <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-[140px_1fr] gap-x-8 border-t border-iron py-10">
+            <div className="font-sans text-[11px] uppercase tracking-[0.2em] text-muted-foreground md:sticky md:top-24 self-start mb-4 md:mb-0">DATI</div>
+            <DataStrip entry={entry} />
+          </div>
+          <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-[140px_1fr] gap-x-8 border-t border-iron py-10">
+            <div className="font-sans text-[11px] uppercase tracking-[0.2em] text-muted-foreground md:sticky md:top-24 self-start mb-4 md:mb-0">FINANZE</div>
+            <FinanceRow entry={entry} />
+          </div>
+          <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-[140px_1fr] gap-x-8 border-t border-iron py-10">
+            <div className="font-sans text-[11px] uppercase tracking-[0.2em] text-muted-foreground md:sticky md:top-24 self-start mb-4 md:mb-0">VS MEDIA</div>
+            <VsMediaTable entry={entry} averages={averages} />
+          </div>
+          {entry.testo && (
+            <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-[140px_1fr] gap-x-8 border-t border-iron py-10">
+              <div className="font-sans text-[11px] uppercase tracking-[0.2em] text-muted-foreground md:sticky md:top-24 self-start mb-4 md:mb-0">DIARIO</div>
               <DiaryText text={entry.testo} />
             </div>
-          </Reveal>
-        )}
+          )}
+        </div>
 
         {/* ─── Prev / Next navigation ─── */}
         <div className="h-px bg-border mb-10" />
@@ -377,7 +372,7 @@ export default function GiornoDetail() {
           {prevEntry ? (
             <Link
               href={`/giorno/${prevEntry.id}`}
-              className="flex items-center gap-2 border border-border bg-card px-5 py-3 hover:border-primary transition-colors group"
+              className="flex items-center gap-2 border border-border bg-card px-5 py-3 hover:border-iron transition-colors group"
             >
               <ArrowLeft size={14} className="text-primary" />
               <div>
@@ -391,7 +386,7 @@ export default function GiornoDetail() {
           {nextEntry ? (
             <Link
               href={`/giorno/${nextEntry.id}`}
-              className="flex items-center gap-2 border border-border bg-card px-5 py-3 hover:border-primary transition-colors text-right group"
+              className="flex items-center gap-2 border border-border bg-card px-5 py-3 hover:border-iron transition-colors text-right group"
             >
               <div>
                 <div className="text-[9px] font-sans uppercase tracking-[0.2em] text-muted-foreground">Successivo</div>

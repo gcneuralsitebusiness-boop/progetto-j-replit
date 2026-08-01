@@ -28,13 +28,13 @@ export function Timeline180({ entries }: { entries: Entry[] }) {
 
       {/* Progress bar */}
       <div className="w-full h-1 bg-[#1a1a1a] border-b border-border mb-4">
-        <div className="h-full bg-primary transition-all duration-700" style={{ width: `${percent}%` }} />
+        <div className="h-full bg-iron transition-all duration-700" style={{ width: `${percent}%` }} />
       </div>
 
       {/* Legend */}
       <div className="flex flex-wrap items-center gap-4 sm:gap-6 mb-4 text-[10px] font-sans uppercase tracking-[0.15em] text-muted-foreground">
         <span className="flex items-center gap-2">
-          <span className="inline-block w-3 h-3 bg-primary border border-primary" />
+          <span className="inline-block w-3 h-3 bg-iron border border-iron" />
           Registrato
         </span>
         <span className="flex items-center gap-2">
@@ -61,13 +61,13 @@ export function Timeline180({ entries }: { entries: Entry[] }) {
             <div
               key={day}
               title={`Giorno ${day}${done ? " — registrato" : ""}${isCurrent ? " — corrente" : ""}`}
-              className={`aspect-square flex items-center justify-center text-[9px] sm:text-[10px] font-sans tabular-nums border transition-colors ${
+              className={`measured aspect-square flex items-center justify-center text-[9px] sm:text-[10px] border transition-colors ${
                 done
                   ? isMilestone
                     ? "bg-[hsl(var(--bronze))] text-[hsl(var(--bronze-foreground))] border-[hsl(var(--bronze))]"
-                    : "bg-primary text-primary-foreground border-primary"
+                     : "bg-iron text-primary-foreground border-iron"
                   : isCurrent
-                    ? "bg-[#1a1a1a] border-primary text-primary"
+                     ? "bg-[#1a1a1a] border-primary text-primary"
                     : isMilestone
                       ? "bg-card border-[hsl(var(--bronze))]/50 text-[hsl(var(--bronze))]"
                       : "bg-card border-border text-muted-foreground"

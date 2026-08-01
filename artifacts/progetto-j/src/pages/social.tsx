@@ -90,7 +90,7 @@ export default function Social() {
                 href={s.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group block border border-border bg-card p-5 metallic-sheen hover:border-primary transition-colors"
+                className="group block border border-border bg-card p-5 hover:border-iron transition-colors"
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="border border-border p-3">
@@ -110,7 +110,7 @@ export default function Social() {
 
       {/* Lavora con me */}
       <Reveal>
-        <div className="border border-border bg-card p-6 sm:p-8 metallic-sheen">
+        <div className="border border-border bg-card p-6 sm:p-8">
           <div className="flex items-center gap-3 mb-6">
             <div className="border border-primary p-2">
               <Mail size={18} className="text-primary" />

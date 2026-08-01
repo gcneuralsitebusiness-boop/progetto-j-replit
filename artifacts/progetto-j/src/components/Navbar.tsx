@@ -20,7 +20,7 @@ function NavLink({
   const isActive = location === href || (href !== "/" && location.startsWith(href));
   const baseClasses = cn(
     "text-[12px] font-sans uppercase tracking-[0.2em] transition-colors",
-    isActive ? "nav-active text-foreground" : "text-muted-foreground hover:text-primary"
+    isActive ? "nav-active text-foreground" : "text-muted-foreground hover:text-iron"
   );
 
   if (external) {
@@ -66,7 +66,7 @@ export function Navbar() {
         <div className="max-w-5xl mx-auto px-5 sm:px-6 h-16 flex items-center justify-between">
           <Link
             href="/"
-            className="font-serif text-[32px] text-primary leading-none bebas tracking-wide glow-red"
+            className="font-serif text-[32px] text-primary leading-none bebas tracking-wide"
             style={{ position: "relative", zIndex: 10000 }}
           >
             J

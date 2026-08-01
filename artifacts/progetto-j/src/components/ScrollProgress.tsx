@@ -18,7 +18,7 @@ export function ScrollProgress() {
 
   return (
     <div
-      className="fixed top-0 left-0 h-[2px] bg-primary z-[9999] pointer-events-none origin-left"
+      className="fixed top-0 left-0 h-[2px] bg-iron z-[9999] pointer-events-none origin-left"
       style={{ width: `${pct}%`, transition: "width 80ms linear" }}
     />
   );

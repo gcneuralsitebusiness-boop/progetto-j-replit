@@ -59,7 +59,7 @@ export default function Sponsor() {
                 href={s.url || "#"}
                 target={s.url ? "_blank" : undefined}
                 rel={s.url ? "noopener noreferrer" : undefined}
-                className={`group block border bg-card p-5 metallic-sheen hover:border-primary transition-colors ${LEVEL_STYLES[s.livello] || LEVEL_STYLES.Bronze}`}
+                className={`group block border bg-card p-5 hover:border-iron transition-colors ${LEVEL_STYLES[s.livello] || LEVEL_STYLES.Bronze}`}
               >
                 <div className="flex items-start justify-between mb-4">
                   <span className="text-[10px] font-sans uppercase tracking-[0.2em] border px-2 py-0.5">{s.livello}</span>
@@ -79,7 +79,7 @@ export default function Sponsor() {
       </div>
 
       <Reveal>
-        <div className="border border-border bg-card p-6 sm:p-8 metallic-sheen">
+        <div className="border border-border bg-card p-6 sm:p-8">
           <div className="flex items-center gap-3 mb-4">
             <div className="border border-primary p-2">
               <Mail size={18} className="text-primary" />

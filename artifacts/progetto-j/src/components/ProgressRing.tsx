@@ -39,7 +39,7 @@ export function ProgressRing({ value, max, size = 120, stroke = 6, label, sublab
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="font-serif text-[28px] leading-none text-foreground bebas">{Math.round(pct)}%</span>
+          <span className="font-serif text-[28px] leading-none text-foreground bebas measured">{Math.round(pct)}%</span>
           {sublabel && (
             <span className="text-[9px] font-sans uppercase tracking-[0.15em] text-muted-foreground mt-1">{sublabel}</span>
           )}

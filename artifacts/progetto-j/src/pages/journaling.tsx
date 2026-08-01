@@ -104,7 +104,7 @@ export default function Journaling() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-12">
         <Reveal>
           <div className="kpi-card">
-            <div className="flex items-center gap-2 mb-2 text-primary">
+            <div className="flex items-center gap-2 mb-2 text-iron">
               <Flame size={16} strokeWidth={2} />
               <span className="text-[10px] font-sans uppercase tracking-[0.2em] text-muted-foreground">GIORNI</span>
             </div>
@@ -113,7 +113,7 @@ export default function Journaling() {
         </Reveal>
         <Reveal delay={50}>
           <div className="kpi-card">
-            <div className="flex items-center gap-2 mb-2 text-primary">
+            <div className="flex items-center gap-2 mb-2 text-iron">
               <Dumbbell size={16} strokeWidth={2} />
               <span className="text-[10px] font-sans uppercase tracking-[0.2em] text-muted-foreground">KM</span>
             </div>
@@ -122,7 +122,7 @@ export default function Journaling() {
         </Reveal>
         <Reveal delay={100}>
           <div className="kpi-card">
-            <div className="flex items-center gap-2 mb-2 text-primary">
+            <div className="flex items-center gap-2 mb-2 text-iron">
               <Heart size={16} strokeWidth={2} />
               <span className="text-[10px] font-sans uppercase tracking-[0.2em] text-muted-foreground">KCAL</span>
             </div>
@@ -135,7 +135,7 @@ export default function Journaling() {
               <Wallet size={16} strokeWidth={2} />
               <span className="text-[10px] font-sans uppercase tracking-[0.2em] text-muted-foreground">ENTRATE</span>
             </div>
-            <div className="font-serif text-[36px] sm:text-[48px] leading-none text-[hsl(var(--acid))] bebas">
+            <div className="font-serif text-[36px] sm:text-[48px] leading-none text-[hsl(var(--acid))] bebas measured">
               €<AnimatedNumber value={totalIncome} />
             </div>
           </div>
@@ -145,16 +145,16 @@ export default function Journaling() {
       {/* Progress rings */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-12">
         <Reveal>
-          <div className="border border-border bg-card p-6 metallic-sheen flex items-center justify-center">
+          <div className="border border-border bg-card p-6 flex items-center justify-center">
             <ProgressRing value={maxDay} max={goalDay} label="Progresso 180 giorni" sublabel={`${maxDay}/180`} size={140} />
           </div>
         </Reveal>
         <Reveal delay={50}>
-          <div className="border border-border bg-card p-6 metallic-sheen flex flex-col justify-center">
+          <div className="border border-border bg-card p-6 flex flex-col justify-center">
             <span className="text-[11px] font-sans uppercase tracking-[0.2em] text-muted-foreground mb-4">Ultimo giorno</span>
             {latest ? (
               <div className="flex items-center gap-3">
-                <span className="font-serif text-[48px] leading-none text-primary bebas">{latest.numero.toString().padStart(3, "0")}</span>
+                  <span className="font-serif text-[48px] leading-none text-primary bebas measured">{latest.numero.toString().padStart(3, "0")}</span>
                 <MilestoneBadge day={latest.numero} />
               </div>
             ) : (
@@ -163,23 +163,23 @@ export default function Journaling() {
           </div>
         </Reveal>
         <Reveal delay={100}>
-          <div className="border border-border bg-card p-6 metallic-sheen flex flex-col justify-center">
+          <div className="border border-border bg-card p-6 flex flex-col justify-center">
             <span className="text-[11px] font-sans uppercase tracking-[0.2em] text-muted-foreground mb-5">Metriche chiave</span>
             <div className="space-y-5">
               <div>
                 <span className="text-[10px] font-sans uppercase tracking-[0.18em] text-muted-foreground/70">Peso attuale</span>
-                <div className="font-serif text-[32px] leading-none text-foreground bebas mt-1">
+                <div className="font-serif text-[32px] leading-none text-foreground bebas measured mt-1">
                   {latestWithPeso ? `${latestWithPeso.peso} KG` : "—"}
                 </div>
                 {pesoDelta !== null && (
-                  <span className={`text-[11px] font-sans tabular ${pesoDelta <= 0 ? "stat-delta-positive" : "stat-delta-negative"}`}>
+                  <span className={`measured text-[11px] font-sans tabular ${pesoDelta <= 0 ? "stat-delta-positive" : "stat-delta-negative"}`}>
                     {pesoDelta > 0 ? "+" : ""}{pesoDelta} kg dal gg 1
                   </span>
                 )}
               </div>
               <div>
                 <span className="text-[10px] font-sans uppercase tracking-[0.18em] text-muted-foreground/70">Sonno medio</span>
-                <div className="font-serif text-[32px] leading-none text-foreground bebas mt-1">
+                <div className="font-serif text-[32px] leading-none text-foreground bebas measured mt-1">
                   {sonnoMedio !== null ? `${sonnoMedio}H` : "—"}
                 </div>
                 {sonnoEntries.length > 0 && (
@@ -197,7 +197,7 @@ export default function Journaling() {
       {formattedChartData.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-16">
           <Reveal>
-            <div className="bg-card border border-border p-5 metallic-sheen h-full flex flex-col">
+            <div className="bg-card border border-border p-5 h-full flex flex-col">
               <h3 className="text-[11px] font-sans uppercase tracking-[0.2em] text-muted-foreground mb-5">PESO NEL TEMPO</h3>
               <div className="flex-1 min-h-[200px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
@@ -214,7 +214,7 @@ export default function Journaling() {
           </Reveal>
 
           <Reveal>
-            <div className="bg-card border border-border p-5 metallic-sheen h-full flex flex-col">
+            <div className="bg-card border border-border p-5 h-full flex flex-col">
               <h3 className="text-[11px] font-sans uppercase tracking-[0.2em] text-muted-foreground mb-5">ORE SONNO</h3>
               <div className="flex-1 min-h-[200px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
@@ -231,7 +231,7 @@ export default function Journaling() {
           </Reveal>
 
           <Reveal>
-            <div className="bg-card border border-border p-5 metallic-sheen h-full flex flex-col">
+            <div className="bg-card border border-border p-5 h-full flex flex-col">
               <h3 className="text-[11px] font-sans uppercase tracking-[0.2em] text-muted-foreground mb-5">KCAL GIORNALIERE</h3>
               <div className="flex-1 min-h-[200px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
@@ -248,7 +248,7 @@ export default function Journaling() {
           </Reveal>
 
           <Reveal>
-            <div className="bg-card border border-border p-5 metallic-sheen h-full flex flex-col">
+            <div className="bg-card border border-border p-5 h-full flex flex-col">
               <h3 className="text-[11px] font-sans uppercase tracking-[0.2em] text-muted-foreground mb-5">ALLENAMENTO SETTIMANALE</h3>
               <div className="flex-1 min-h-[200px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
@@ -267,7 +267,7 @@ export default function Journaling() {
           {/* Entrate vs Uscite — full width */}
           {financeData.length > 0 && (
             <Reveal>
-              <div className="bg-card border border-border p-5 metallic-sheen md:col-span-2 flex flex-col">
+              <div className="bg-card border border-border p-5 md:col-span-2 flex flex-col">
                 <div className="flex items-center justify-between mb-5">
                   <h3 className="text-[11px] font-sans uppercase tracking-[0.2em] text-muted-foreground">ENTRATE VS USCITE</h3>
                   <div className="flex items-center gap-5">
@@ -275,7 +275,7 @@ export default function Journaling() {
                       <span style={{ display: "inline-block", width: 16, height: 2, background: "#4ade80", borderRadius: 1 }} />
                       Entrate
                     </span>
-                    <span className="flex items-center gap-2 text-[10px] font-sans uppercase tracking-[0.16em] text-primary">
+                    <span className="flex items-center gap-2 text-[10px] font-sans uppercase tracking-[0.16em] text-iron">
                       <span style={{ display: "inline-block", width: 16, height: 2, background: "hsl(0 68% 38%)", borderRadius: 1 }} />
                       Uscite
                     </span>

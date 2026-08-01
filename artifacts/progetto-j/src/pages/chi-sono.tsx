@@ -121,11 +121,11 @@ export default function ChiSono() {
         </div>
       </Reveal>
 
-      <div className="space-y-14">
+      <div className="grid grid-cols-1 gap-0 max-w-4xl mx-auto">
         {sections.map((section, i) => (
           <Reveal key={section.key} delay={i * 80 + 120}>
-            <section>
-              <h2 className="text-[11px] font-sans uppercase tracking-[0.2em] text-primary mb-4">
+            <section className="grid grid-cols-1 md:grid-cols-[140px_1fr] gap-x-8 border-t border-iron py-10">
+              <h2 className="font-sans text-[11px] uppercase tracking-[0.2em] text-muted-foreground md:sticky md:top-24 self-start mb-4 md:mb-0">
                 {section.key}
               </h2>
               <p className="text-[16px] sm:text-[17px] font-sans text-foreground/90 leading-[1.8] whitespace-pre-wrap">
@@ -136,7 +136,7 @@ export default function ChiSono() {
         ))}
 
         <Reveal delay={440}>
-          <div className="border border-primary bg-card p-8 sm:p-10 metallic-sheen text-center">
+           <div className="border border-iron bg-card p-8 sm:p-10 text-center">
             <Cross className="mx-auto mb-4" />
             <span className="font-serif text-[clamp(36px,8vw,64px)] leading-none text-primary bebas tracking-wide">
               IC XC NIKA

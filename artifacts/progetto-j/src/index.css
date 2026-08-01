@@ -55,6 +55,7 @@
   --color-ink: hsl(var(--ink));
   --color-carbon: hsl(var(--carbon));
   --color-scratch: hsl(var(--scratch));
+  --color-iron: hsl(var(--iron));
 
   --font-sans: var(--app-font-sans);
   --font-serif: var(--app-font-serif);
@@ -112,6 +113,7 @@
   --bronze: 42 74% 31%;
   --bronze-foreground: 40 33% 94%;
   --acid: 145 63% 49%;
+  --iron: 0 0% 18%;
   --ink: 40 33% 94%;
   --carbon: 0 0% 8%;
   --scratch: 0 74% 42%;
@@ -123,8 +125,8 @@
   --chart-5: 0 0% 25%;
 
   --app-font-sans: 'Inter', sans-serif;
-  --app-font-serif: 'Bebas Neue', sans-serif;
-  --app-font-mono: 'JetBrains Mono', Menlo, monospace;
+  --app-font-serif: "Anton", "Bebas Neue", sans-serif;
+  --app-font-mono: "JetBrains Mono", monospace;
 }
 
 @layer base {
@@ -169,19 +171,6 @@ body::before {
   mix-blend-mode: overlay;
 }
 
-/* Metallic sheen on cards */
-.metallic-sheen {
-  position: relative;
-}
-.metallic-sheen::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0.06;
-  background: linear-gradient(135deg, rgba(245,240,232,0.08) 0%, transparent 40%, transparent 60%, rgba(184,29,29,0.06) 100%);
-}
-
 /* Primary button: filled red, hover outline */
 .btn-primary {
   @apply inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground font-sans text-[13px] uppercase tracking-[0.2em] px-6 py-3 border border-primary transition-all duration-300;
@@ -223,7 +212,7 @@ body::before {
   transform: scaleX(1);
 }
 .kpi-card:hover {
-  border-color: hsl(var(--primary) / 0.6);
+  border-color: hsl(var(--iron));
 }
 
 /* Card lift effect */
@@ -232,20 +221,12 @@ body::before {
 }
 .card-lift:hover {
   transform: translateY(-3px);
-  box-shadow: 0 8px 30px -10px rgba(184, 29, 29, 0.25);
-}
-
-/* Red glow for logo/text */
-.glow-red {
-  @apply transition-all duration-300;
-}
-.glow-red:hover {
-  text-shadow: 0 0 18px rgba(184, 29, 29, 0.55), 0 0 34px rgba(184, 29, 29, 0.3);
+  box-shadow: 0 8px 30px -10px hsl(var(--iron) / 0.45);
 }
 
 /* Page label: red line + uppercase */
 .page-label {
-  @apply text-[11px] font-sans uppercase tracking-[0.2em] text-primary;
+  @apply text-[11px] font-sans uppercase tracking-[0.2em] text-iron;
   padding-left: 0.75rem;
   position: relative;
 }
@@ -256,7 +237,7 @@ body::before {
   top: 0.25em;
   bottom: 0.25em;
   width: 2px;
-  background: hsl(var(--primary));
+  background: hsl(var(--iron));
 }
 
 /* Nav active underline */
@@ -270,14 +251,14 @@ body::before {
   right: 0;
   bottom: -6px;
   height: 2px;
-  background: hsl(var(--primary));
+  background: hsl(var(--iron));
 }
 
 /* Scratched / cut edge divider with central diamond */
 .cut-divider {
   position: relative;
   height: 1px;
-  background: linear-gradient(90deg, transparent 0%, hsl(var(--scratch)) 15%, hsl(var(--scratch)) 45%, transparent 55%, hsl(var(--scratch)) 65%, hsl(var(--scratch)) 85%, transparent 100%);
+  background: linear-gradient(90deg, transparent 0%, hsl(var(--iron)) 15%, hsl(var(--iron)) 45%, transparent 55%, hsl(var(--iron)) 65%, hsl(var(--iron)) 85%, transparent 100%);
   opacity: 0.6;
 }
 .cut-divider::after {
@@ -287,7 +268,7 @@ body::before {
   top: 50%;
   transform: translate(-50%, -50%);
   padding: 0 0.75rem;
-  color: hsl(var(--scratch));
+  color: hsl(var(--iron));
   font-size: 10px;
   background: hsl(var(--background));
   line-height: 1;
@@ -310,7 +291,7 @@ body::before {
 
 /* Hero radial background */
 .hero-radial {
-  background: radial-gradient(circle at 50% 40%, rgba(184, 29, 29, 0.14), transparent 55%);
+  background: radial-gradient(circle at 50% 40%, hsl(var(--iron) / 0.22), transparent 55%);
 }
 
 /* Crosshatch placeholder for missing photos */
@@ -321,7 +302,7 @@ body::before {
   background-size: 8px 8px;
 }
 
-/* Red ink accent line */
+/* Technical annotation line */
 .ink-line {
   position: relative;
   padding-left: 1rem;
@@ -333,7 +314,7 @@ body::before {
   top: 0.2em;
   bottom: 0.2em;
   width: 2px;
-  background: hsl(var(--primary));
+  background: hsl(var(--iron));
 }
 
 /* Utility: hide scrollbar but keep scroll */
@@ -353,48 +334,7 @@ body::before {
 /* Bebas tracking */
 .bebas {
   font-family: var(--app-font-serif);
-  letter-spacing: 0.04em;
-}
-
-/* ─── Micro-animations & effects ──────────────────────────────────────────── */
-
-/* Hero J glitch — fires every ~10s, very brief */
-@keyframes j-glitch {
-  0%, 87%, 100% { filter: none; transform: none; }
-  88% { filter: brightness(1.5) saturate(0.2); transform: skewX(-1.5deg) translateX(3px); }
-  89% { filter: none; transform: skewX(0.8deg) translateX(-2px); }
-  90% { filter: brightness(0.75); transform: none; }
-  91% { filter: none; }
-}
-.hero-glitch {
-  display: inline-block;
-  animation: j-glitch 10s linear infinite;
-}
-
-/* Scan line sweep on card hover */
-@keyframes scan {
-  from { left: -60%; opacity: 1; }
-  to   { left: 130%; opacity: 0.6; }
-}
-.scan-sweep {
-  position: relative;
-  overflow: hidden;
-}
-.scan-sweep::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: -60%;
-  width: 40%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(245, 240, 232, 0.06), transparent);
-  transform: skewX(-8deg);
-  pointer-events: none;
-  z-index: 1;
-  opacity: 0;
-}
-.scan-sweep:hover::after {
-  animation: scan 0.65s ease-out forwards;
+  letter-spacing: 0.03em;
 }
 
 /* Corner bracket accent on hover */
@@ -407,7 +347,7 @@ body::before {
   position: absolute;
   width: 14px;
   height: 14px;
-  border-color: hsl(var(--primary));
+  border-color: hsl(var(--iron));
   border-style: solid;
   opacity: 0;
   transition: opacity 0.22s ease, transform 0.22s ease;
@@ -440,7 +380,6 @@ body::before {
   height: 36px;
   background: linear-gradient(to bottom, hsl(var(--primary) / 0.9), transparent);
   margin: 6px auto 0;
-  animation: scroll-bounce 2s ease-in-out infinite;
 }
 
 /* Mobile menu slide-in */
@@ -470,6 +409,30 @@ body::before {
 .hero-data-item strong {
   color: hsl(var(--foreground));
   font-variant-numeric: tabular-nums;
+}
+
+.measured {
+  font-family: var(--app-font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+@keyframes pulse-trace-draw {
+  from { stroke-dashoffset: 1000; }
+  to { stroke-dashoffset: 0; }
+}
+
+.pulse-trace-path {
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: pulse-trace-draw 2.2s ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pulse-trace-path {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
 }
 
 /* Articoli: empty state "coming soon" style */

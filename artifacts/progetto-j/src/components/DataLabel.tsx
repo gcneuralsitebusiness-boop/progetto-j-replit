@@ -17,7 +17,7 @@ export function DataLabel({ label, value, suffix = "", prefix = "", variant = "d
   return (
     <div className="flex flex-col min-w-[70px]">
       <span className="text-[10px] font-sans uppercase tracking-[0.18em] text-muted-foreground mb-1">{label}</span>
-      <span className={`text-[15px] sm:text-[16px] font-sans font-semibold tabular ${valueClasses[variant]}`}>
+      <span className={`measured text-[15px] sm:text-[16px] font-semibold tabular ${valueClasses[variant]}`}>
         {prefix}
         {value}
         {suffix}

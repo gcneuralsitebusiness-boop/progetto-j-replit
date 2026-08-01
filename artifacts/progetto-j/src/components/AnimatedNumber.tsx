@@ -43,5 +43,5 @@ export function AnimatedNumber({ value, className = "", formatter, duration = 12
 
   const fmt = formatter ?? ((n: number) => n.toLocaleString("it-IT"));
 
-  return <span ref={ref} className={className}>{fmt(displayed)}</span>;
+  return <span ref={ref} className={`measured ${className}`}>{fmt(displayed)}</span>;
 }

@@ -70,7 +70,7 @@ export default function Coaching() {
           { icon: Users, label: siteContent?.coaching_pillar_4_label || "ACCOUNTABILITY", text: siteContent?.coaching_pillar_4_testo || "Report settimanali e obiettivi chiari." },
         ].map((p, i) => (
           <Reveal key={p.label} delay={i * 80}>
-            <div className="border border-border bg-card p-5 metallic-sheen h-full">
+            <div className="border border-border bg-card p-5 h-full">
               <div className="border border-primary p-2 w-fit mb-4">
                 <p.icon size={20} className="text-primary" />
               </div>
@@ -85,7 +85,7 @@ export default function Coaching() {
 
       {/* Community CTA */}
       <Reveal>
-        <div className="border border-primary bg-card p-6 sm:p-8 metallic-sheen relative overflow-hidden">
+        <div className="border border-primary bg-card p-6 sm:p-8 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 -translate-y-1/2 translate-x-1/2 rotate-45" />
           <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
             <div className="flex items-center gap-4">
@@ -111,7 +111,7 @@ export default function Coaching() {
 
       {/* Contact */}
       <Reveal>
-        <div className="mt-12 border border-border bg-card p-6 sm:p-8 metallic-sheen text-center">
+        <div className="mt-12 border border-border bg-card p-6 sm:p-8 text-center">
           <div className="inline-flex items-center gap-2 mb-4 text-primary">
             <Mail size={18} />
             <span className="text-[11px] font-sans uppercase tracking-[0.2em]">INFO</span>

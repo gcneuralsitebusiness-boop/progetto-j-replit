@@ -58,7 +58,7 @@ export default function Articoli() {
               key={cat}
               onClick={() => setFilter(cat)}
               className={`text-[11px] font-sans uppercase tracking-[0.15em] px-3 py-1.5 border transition-colors ${
-                filter === cat ? "bg-primary text-primary-foreground border-primary" : "bg-transparent text-muted-foreground border-border hover:border-primary hover:text-primary"
+                filter === cat ? "bg-primary text-primary-foreground border-primary" : "bg-transparent text-muted-foreground border-border hover:border-iron hover:text-iron"
               }`}
             >
               {cat}
@@ -78,7 +78,7 @@ export default function Articoli() {
           filtered.map((a) => (
             <Reveal key={a.id}>
               <Link href={`/a/${a.slug}`}>
-                <article className="group block border border-border bg-card p-5 metallic-sheen hover:border-primary transition-colors h-full">
+                <article className="group block border border-border bg-card p-5 hover:border-iron transition-colors h-full">
                   <div className="flex justify-between items-start mb-4">
                     <span className="text-[10px] font-sans uppercase tracking-[0.2em] text-primary">{a.categoria}</span>
                     <span className="text-[11px] font-sans text-muted-foreground">

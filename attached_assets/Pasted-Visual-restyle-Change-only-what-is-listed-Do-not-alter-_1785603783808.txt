@@ -1,0 +1,225 @@
+Visual restyle. Change only what is listed.
+Do not alter any data logic, API calls, or routing.
+
+═══════════════════════════════════════════
+A1 — TYPOGRAPHY: THREE ROLES
+═══════════════════════════════════════════
+
+FILE: artifacts/progetto-j/index.html
+
+Replace the Google Fonts link with:
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+FILE: artifacts/progetto-j/src/index.css
+
+In the :root / @theme block, change what the display
+token points to — do NOT rename the token, it is used
+across many files:
+
+  --app-font-serif: "Anton", "Bebas Neue", sans-serif;
+  --app-font-mono: "JetBrains Mono", monospace;
+
+Update the .bebas class to use the same stack.
+
+Anton is heavier and slightly wider than Bebas Neue.
+Compensate globally: wherever font-serif is used at
+display sizes, reduce letter-spacing by 0.01em and
+line-height by 0.02. Do not change the font sizes.
+
+═══════════════════════════════════════════
+A2 — MONO FOR ALL MEASURED VALUES
+═══════════════════════════════════════════
+
+Every numeric value that represents a measurement must
+render in JetBrains Mono with font-variant-numeric:
+tabular-nums.
+
+Add a utility class in index.css:
+
+.measured {
+  font-family: var(--app-font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+Apply .measured to the VALUE (never the label) in:
+  components/DataLabel.tsx      — the value span
+  components/AnimatedNumber.tsx — the counting span
+  pages/giorno.tsx              — data strip values,
+                                  finance row values,
+                                  vs-media values
+  pages/journaling.tsx          — KPI card values
+  pages/home.tsx                — hero data strip values,
+                                  ticker values
+  components/Timeline180.tsx    — the day numbers in cells
+
+Labels stay in Inter. Headings stay in Anton.
+
+═══════════════════════════════════════════
+A3 — RED BECOMES SCARCE
+═══════════════════════════════════════════
+
+Red currently serves seven roles simultaneously, so it
+no longer signals emphasis anywhere.
+
+FILE: artifacts/progetto-j/src/index.css
+
+Add a new token in the same :root block:
+  --iron: 0 0% 18%;   /* #2E2E2E */
+
+And register it in @theme inline alongside the others so
+it is available as a Tailwind color named "iron".
+
+Then replace red with iron in EVERY decorative use.
+Search the whole src/ directory for these and convert:
+
+  - .cut-divider           → iron
+  - .ink-line              → iron
+  - .page-label left border → iron
+  - card borders on hover  → iron
+  - the red divider line under day numbers in
+    DayCard.tsx and giorno.tsx → iron
+  - ScrollProgress bar     → iron
+  - .scan-sweep            → remove entirely
+  - .glow-red              → remove entirely
+  - chart-4 and chart-5    → unchanged
+
+Red #B81D1D survives in exactly three roles per page:
+  1. The current day marker in Timeline180
+  2. The single most important number on that page
+     (hero: the day count. giorno: the day number.
+      journaling: the resting heart rate delta)
+  3. One primary CTA button
+
+Everything else that was red is now iron.
+
+Do not change --bronze or --acid.
+
+═══════════════════════════════════════════
+A4 — ANNOTATION MARGIN LAYOUT
+═══════════════════════════════════════════
+
+FILE: artifacts/progetto-j/src/pages/giorno.tsx
+
+Sections currently stack as centred full-width blocks
+with identical padding and no rhythm.
+
+Restructure the page body below the hero photo as a
+two-column grid, taken from technical drawing:
+
+  <div className="grid grid-cols-1 md:grid-cols-[140px_1fr]
+       gap-x-8 gap-y-0 max-w-4xl mx-auto px-5">
+
+Left column (140px): section labels only.
+  Inter, 11px, uppercase, letter-spacing 0.2em,
+  color hsl(var(--muted-foreground)), sticky top-24,
+  aligned to the top of its row.
+  Labels: "DATI", "FINANZE", "VS MEDIA", "DIARIO"
+
+Right column: the existing content of each block,
+unchanged in content.
+
+Each row separated by a 1px iron border-top,
+padding-y 40px.
+
+On mobile (below md) the grid collapses to one column
+and the label renders above its content block, same
+styling.
+
+Apply the identical structure to pages/chi-sono.tsx,
+where the left column carries the section names
+(LA STORIA, IL PROGETTO, LA MOTIVAZIONE, LA PROMESSA)
+and the right column the body text.
+
+═══════════════════════════════════════════
+A5 — SIGNATURE: THE HEART RATE TRACE
+═══════════════════════════════════════════
+
+CREATE: artifacts/progetto-j/src/components/PulseTrace.tsx
+
+An inline SVG that plots the real resting heart rate
+series from the entries.
+
+Props:
+  entries: Entry[]
+  variant: "hero" | "divider"
+
+Logic:
+  const points = entries
+    .filter(e => e.battito != null)
+    .sort((a, b) => a.numero - b.numero)
+    .map(e => ({ x: e.numero, y: e.battito }));
+  Return null if fewer than 2 points.
+
+Render a single <path> as a polyline across a viewBox
+sized 1000 x 120, preserveAspectRatio="none",
+width 100%.
+
+Map x from the first to the last day number across the
+full width. Map y so the highest bpm sits near the top
+and the lowest near the bottom, with 15% padding above
+and below.
+
+variant="hero":
+  stroke: hsl(var(--primary))
+  stroke-width: 1.5
+  fill: none
+  opacity: 0.9
+  Add a small filled circle (r=3, primary) at the LAST
+  point only.
+  On page load, animate the path drawing itself using
+  stroke-dasharray / stroke-dashoffset over 2.2s
+  ease-out. Wrap in a prefers-reduced-motion check —
+  if reduced motion is requested, render the path
+  fully drawn with no animation.
+
+variant="divider":
+  stroke: hsl(var(--iron))
+  stroke-width: 1
+  opacity: 0.5
+  No animation, no end dot.
+  viewBox height 60 instead of 120.
+
+PLACEMENT:
+
+pages/home.tsx — inside the hero section, positioned
+absolutely behind the "J" and the headline, spanning
+the full width, vertically centred, pointer-events-none,
+z-index below the text. Pass variant="hero".
+Directly beneath the hero data strip, add a single line:
+  Inter, 10px, uppercase, tracking 0.25em,
+  text-muted-foreground:
+  "BATTITO A RIPOSO · {first} → {last} BPM"
+with the two numbers in .measured and the arrow in iron.
+
+Then replace every <div className="cut-divider" /> on
+the home page with <PulseTrace entries={allEntries}
+variant="divider" />.
+
+The trace is the one memorable element of the site.
+Nothing else on the page may animate on load.
+
+═══════════════════════════════════════════
+A6 — REMOVE WHAT NO LONGER SERVES
+═══════════════════════════════════════════
+
+FILE: artifacts/progetto-j/src/index.css
+
+Delete these rules entirely and remove every usage:
+  .hero-glitch and @keyframes j-glitch
+  .glow-red
+  .scan-sweep and @keyframes scan
+  .metallic-sheen
+
+They compete with the pulse trace for attention.
+Keep: .card-lift, .bracket-hover, .crosshatch,
+.ticker-track, the body grain texture.
+
+═══════════════════════════════════════════
+BUILD
+═══════════════════════════════════════════
+cd artifacts/progetto-j && PORT=26090 BASE_PATH=/progetto-j/ pnpm run build
+
+Report each item with the files changed. Confirm that
+grep for "39FF14", ".glow-red", ".scan-sweep" and
+"hero-glitch" returns zero results in src/.

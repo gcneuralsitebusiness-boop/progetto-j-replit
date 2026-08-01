@@ -33,7 +33,7 @@ export function DayCard({ entry, featured = false }: { entry: Entry; featured?: 
   return (
     <Link href={`/giorno/${entry.id}`} className="block">
     <article
-      className={`group relative border border-border bg-card metallic-sheen scan-sweep bracket-hover overflow-hidden transition-all duration-300 hover:border-primary card-lift cursor-pointer ${
+      className={`group relative border border-border bg-card bracket-hover overflow-hidden transition-all duration-300 hover:border-iron card-lift cursor-pointer ${
         featured ? "min-h-[420px]" : ""
       }`}
     >
@@ -67,7 +67,7 @@ export function DayCard({ entry, featured = false }: { entry: Entry; featured?: 
           </div>
         </div>
 
-        <div className="h-px bg-primary/30 mb-4" />
+        <div className="h-px bg-iron/70 mb-4" />
 
         {/* Stats row */}
         <div className="flex flex-wrap gap-y-4 gap-x-6 mb-5">
