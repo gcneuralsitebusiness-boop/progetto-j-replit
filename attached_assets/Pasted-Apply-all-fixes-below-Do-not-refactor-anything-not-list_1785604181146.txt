@@ -1,0 +1,175 @@
+Apply all fixes below. Do not refactor anything not listed.
+
+═══════════════════════════════════════════
+B1 — TIMELINE NUMBERS DO NOT ADD UP
+═══════════════════════════════════════════
+
+FILE: artifacts/progetto-j/src/components/Timeline180.tsx
+
+The stats line reads "71 registrati · giorno 76 di 180 ·
+104 rimanenti". 71 + 104 = 175, not 180: "registrati"
+counts DB rows while "rimanenti" subtracts currentDay.
+
+Replace with a single coherent basis:
+  const logged = completedDays.size;
+  const skipped = currentDay - logged;
+  const remaining = total - currentDay;
+
+Render:
+  giorno {currentDay} di {total} · {logged} registrati
+  {skipped > 0 ? ` · ${skipped} saltati` : ""}
+  · {remaining} rimanenti
+
+═══════════════════════════════════════════
+B2 — "OGGI" STATE IS UNREACHABLE
+═══════════════════════════════════════════
+
+Same file. currentDay is always the highest logged day,
+so it is always in completedDays and the `done` branch
+always wins. The legend describes a state that never
+renders.
+
+Add above the cell map:
+  const isSkipped = !done && day < currentDay;
+
+Reorder the cell className ternary, isCurrent FIRST:
+
+  isCurrent
+    ? "bg-primary text-primary-foreground border-2 border-foreground"
+    : done
+      ? isMilestone
+        ? "bg-[hsl(var(--bronze))] text-[hsl(var(--bronze-foreground))] border-[hsl(var(--bronze))]"
+        : "bg-primary text-primary-foreground border-primary"
+      : isSkipped
+        ? "bg-card border border-dashed border-[#333333] text-[#444444]"
+        : isMilestone
+          ? "bg-card border-[hsl(var(--bronze))]/50 text-[hsl(var(--bronze))]"
+          : "bg-card border-border text-muted-foreground"
+
+Update the "Oggi" legend swatch to bg-primary with
+border-2 border-foreground, and add a new legend entry
+after it:
+  <span className="inline-block w-3 h-3 bg-card
+    border border-dashed border-[#333333]" /> Saltato
+
+═══════════════════════════════════════════
+B3 — BACKFILL MISSING DAYS
+═══════════════════════════════════════════
+
+FILE: artifacts/api-server/src/lib/ensureToday.ts
+
+ensureTodayEntry() only creates today. If the deployment
+sleeps for several days, those days are never created —
+which already happened (31 July and 1 August were missed).
+
+Extend it to fill gaps:
+1. Find MAX(data) among existing entries
+2. If the gap between that date and today exceeds one
+   day, create an entry for EVERY missing date in
+   between, incrementing numero sequentially
+3. Cap the backfill at 30 days
+4. Log each created day: "Created day N for YYYY-MM-DD"
+
+Keep the per-date duplicate check and
+onConflictDoNothing on every insert.
+
+═══════════════════════════════════════════
+B4 — NOTIFICATION ON CONTACT AND SUBSCRIBE
+═══════════════════════════════════════════
+
+Submissions to /api/contact and /api/subscribe are
+stored but nobody is notified. A client enquiry can sit
+unseen for days.
+
+1. pnpm --filter @workspace/api-server add resend
+
+2. Two new env vars, both supplied by the user — never
+   hardcode an address:
+     RESEND_API_KEY
+     NOTIFICATION_EMAIL
+
+3. CREATE artifacts/api-server/src/lib/notify.ts
+   export async function notify(subject: string,
+                                body: string)
+   Sends plain text to NOTIFICATION_EMAIL via Resend.
+   If RESEND_API_KEY is absent, log a warning and return
+   silently. Never throw.
+
+4. Call notify() after a successful insert in
+   routes/contact.ts and routes/subscribe.ts, wrapped in
+   try/catch. The HTTP response must return 201 even if
+   the notification fails.
+
+═══════════════════════════════════════════
+B5 — SPONSOR EMAIL IS A DEAD ADDRESS
+═══════════════════════════════════════════
+
+FILE: artifacts/progetto-j/src/pages/sponsor.tsx
+
+The fallback "sponsor@progettoj.it" points at a domain
+that is not owned. Mail sent there is lost.
+
+Remove the hardcoded fallback. If sponsor_email is empty
+or missing in site content, hide the entire "DIVENTA
+SPONSOR" CTA block rather than rendering a mailto to a
+dead address.
+
+Report this so the user can set a real address from the
+admin panel.
+
+═══════════════════════════════════════════
+B6 — UNPUBLISHED PAGES EXPOSED
+═══════════════════════════════════════════
+
+FILE: artifacts/api-server/src/routes/pages.ts
+
+GET /api/pages returns rows with pubblicata: false.
+Drafts are readable by anyone querying the API.
+
+GET /api/pages → filter WHERE pubblicata = true unless
+req.session.adminAuthenticated is true.
+GET /api/pages/:slug → 404 if unpublished and the
+requester is not an authenticated admin.
+
+Verify the admin Pagine tab still lists drafts.
+
+═══════════════════════════════════════════
+B7 — NO RATE LIMIT ON ADMIN LOGIN
+═══════════════════════════════════════════
+
+FILE: the route defining POST /api/admin/login
+
+Passwords can be guessed indefinitely.
+
+Implement an in-memory limiter, no new dependency:
+- Track failed attempts per IP in a Map
+- After 5 failures within 15 minutes return 429 with
+  { error: "Troppi tentativi. Riprova più tardi." }
+- Clear the counter on successful login
+- Prune entries older than 15 minutes on each request
+
+═══════════════════════════════════════════
+B8 — PUBLIC OBJECT STORAGE
+═══════════════════════════════════════════
+
+FILE: artifacts/api-server/src/routes/storage.ts
+
+GET /api/storage/objects/* serves private-bucket files
+with the auth check commented out. These images are
+intentionally public — they appear on the public site —
+so leave the route open, but:
+
+- Add Cache-Control: public, max-age=31536000, immutable
+- Delete the commented-out replit-auth block so it does
+  not read as an unfinished security control
+
+═══════════════════════════════════════════
+BUILD
+═══════════════════════════════════════════
+cd artifacts/api-server && pnpm run build
+cd artifacts/progetto-j && PORT=26090 BASE_PATH=/progetto-j/ pnpm run build
+
+Report each fix with the file changed and one line of
+verification. For B4, state explicitly which env vars
+must be set before notifications work. Confirm whether
+database changes were applied to PRODUCTION or only dev.
