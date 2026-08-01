@@ -5,3 +5,4 @@
 - [Vite build env vars](vite-build-env-vars.md) — artifact Vite builds require `PORT` and `BASE_PATH` exported, even for static builds.
 - [Anthropic Cowork integration](anthropic-cowork-integration.md) — provision via Replit AI Integrations, no API key; use provided client; parse fenced JSON defensively; never auto-save AI output.
 - [Tailwind v4 custom component classes](tailwind-v4-custom-classes.md) — `@apply` cannot reference custom classes defined in the same CSS; use raw CSS or keep them as separate classes.
+- [Autoscale diary day creation](autoscale-day-creation.md) — trigger idempotent day creation from requests because autoscale can sleep through midnight.

@@ -1,6 +1,7 @@
 import { Router, type IRouter } from "express";
 import { desc, eq } from "drizzle-orm";
 import { db, giorniTable } from "@workspace/db";
+import { ensureTodayEntry } from "../lib/ensureToday";
 import {
   CreateEntryBody,
   UpdateEntryBody,
@@ -19,6 +20,10 @@ const ser = <T>(v: T): T => JSON.parse(JSON.stringify(v)) as T;
 
 // GET /entries — all entries sorted by date descending
 router.get("/entries", async (_req, res): Promise<void> => {
+  void ensureTodayEntry().catch((err) => {
+    _req.log.error({ err }, "Failed to ensure today's entry");
+  });
+
   const rows = await db
     .select()
     .from(giorniTable)
