@@ -1,23 +1,33 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
 import { pagineTable } from "@workspace/db/schema";
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 
 const router = Router();
 
-router.get("/pages", async (_req, res): Promise<void> => {
+router.get("/pages", async (req, res): Promise<void> => {
+  const isAdmin = req.session?.adminAuthenticated === true;
   const rows = await db
     .select()
     .from(pagineTable)
+    .where(isAdmin ? undefined : eq(pagineTable.pubblicata, true))
     .orderBy(asc(pagineTable.ordine), asc(pagineTable.createdAt));
   res.json(rows);
 });
 
 router.get("/pages/:slug", async (req, res): Promise<void> => {
+  const isAdmin = req.session?.adminAuthenticated === true;
   const [row] = await db
     .select()
     .from(pagineTable)
-    .where(eq(pagineTable.slug, req.params.slug))
+    .where(
+      isAdmin
+        ? eq(pagineTable.slug, req.params.slug)
+        : and(
+            eq(pagineTable.slug, req.params.slug),
+            eq(pagineTable.pubblicata, true),
+          ),
+    )
     .limit(1);
   if (!row) {
     res.status(404).json({ error: "Page not found" });

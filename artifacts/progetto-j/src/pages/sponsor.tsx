@@ -21,7 +21,7 @@ export default function Sponsor() {
   const sponsorIntro = siteContent?.sponsor_intro || "Chi crede in questo percorso e lo rende possibile. Sponsor tecnici, partner, e chi mette le risorse per costruire qualcosa di reale.";
   const ctaTitolo = siteContent?.sponsor_cta_titolo || "SOSTIENI IL PROGETTO";
   const ctaTesto = siteContent?.sponsor_cta_testo || "Se vuoi mettere il tuo brand dietro un percorso di trasformazione documentato, scrivi a";
-  const sponsorEmail = siteContent?.sponsor_email || "sponsor@progettoj.it";
+  const sponsorEmail = siteContent?.sponsor_email?.trim() || null;
 
   if (isError) {
     return (
@@ -78,7 +78,7 @@ export default function Sponsor() {
         )}
       </div>
 
-      <Reveal>
+      {sponsorEmail && <Reveal>
         <div className="border border-border bg-card p-6 sm:p-8">
           <div className="flex items-center gap-3 mb-4">
             <div className="border border-primary p-2">
@@ -99,7 +99,7 @@ export default function Sponsor() {
             Contattaci
           </a>
         </div>
-      </Reveal>
+      </Reveal>}
 
       <div className="mt-16 flex justify-center">
         <Cross />

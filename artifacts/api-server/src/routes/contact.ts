@@ -2,6 +2,7 @@ import { Router } from "express";
 import { desc } from "drizzle-orm";
 import { db } from "@workspace/db";
 import { contattiTable } from "@workspace/db/schema";
+import { notify } from "../lib/notify";
 
 const router = Router();
 
@@ -24,6 +25,15 @@ router.post("/contact", async (req, res): Promise<void> => {
     tipo: tipo.trim(),
     messaggio: messaggio.trim(),
   }).returning();
+
+  try {
+    await notify(
+      `Nuovo contatto: ${tipo.trim()} — ${nome.trim()}`,
+      `Nome: ${nome.trim()}\nEmail: ${email.trim()}\nTipo: ${tipo.trim()}\n\n${messaggio.trim()}`,
+    );
+  } catch (error) {
+    req.log.error({ err: error }, "Contact notification failed");
+  }
 
   res.status(201).json(row);
 });

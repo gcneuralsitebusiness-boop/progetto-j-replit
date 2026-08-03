@@ -7,6 +7,9 @@ import {
 } from "@workspace/api-zod";
 
 const router: IRouter = Router();
+const failedLogins = new Map<string, { count: number; firstAttemptAt: number }>();
+const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
+const MAX_FAILED_ATTEMPTS = 5;
 
 // GET /admin/me — check session status
 router.get("/admin/me", async (req, res): Promise<void> => {
@@ -16,6 +19,19 @@ router.get("/admin/me", async (req, res): Promise<void> => {
 
 // POST /admin/login — authenticate with password
 router.post("/admin/login", async (req, res): Promise<void> => {
+  const now = Date.now();
+  for (const [ip, attempt] of failedLogins) {
+    if (now - attempt.firstAttemptAt >= RATE_LIMIT_WINDOW_MS) {
+      failedLogins.delete(ip);
+    }
+  }
+  const ip = req.ip || req.socket.remoteAddress || "unknown";
+  const attempt = failedLogins.get(ip);
+  if (attempt && attempt.count >= MAX_FAILED_ATTEMPTS) {
+    res.status(429).json({ error: "Troppi tentativi. Riprova più tardi." });
+    return;
+  }
+
   const parsed = AdminLoginBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -30,10 +46,17 @@ router.post("/admin/login", async (req, res): Promise<void> => {
   }
 
   if (parsed.data.password !== adminPassword) {
+    const current = failedLogins.get(ip);
+    if (!current || now - current.firstAttemptAt >= RATE_LIMIT_WINDOW_MS) {
+      failedLogins.set(ip, { count: 1, firstAttemptAt: now });
+    } else {
+      current.count += 1;
+    }
     res.status(401).json({ error: "Password errata" });
     return;
   }
 
+  failedLogins.delete(ip);
   req.session.adminAuthenticated = true;
   res.json(AdminLoginResponse.parse({ authenticated: true }));
 });

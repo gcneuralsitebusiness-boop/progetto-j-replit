@@ -4,7 +4,8 @@ export function Timeline180({ entries }: { entries: Entry[] }) {
   const completedDays = new Set(entries.map((e) => e.numero));
   const currentDay = entries.length > 0 ? Math.max(...entries.map((e) => e.numero)) : 0;
   const total = 180;
-  const completed = completedDays.size;
+  const logged = completedDays.size;
+  const skipped = currentDay - logged;
   const remaining = total - currentDay;
   const percent = total > 0 ? Math.round((currentDay / total) * 100) : 0;
 
@@ -18,7 +19,9 @@ export function Timeline180({ entries }: { entries: Entry[] }) {
             180 GIORNI
           </h3>
           <p className="text-[11px] sm:text-[12px] font-sans uppercase tracking-[0.2em] text-muted-foreground mt-3">
-            {completed} registrati · giorno {currentDay} di {total} · {remaining} rimanenti
+             giorno {currentDay} di {total} · {logged} registrati
+             {skipped > 0 ? ` · ${skipped} saltati` : ""}
+             {" · "}{remaining} rimanenti
           </p>
         </div>
         <div className="text-[12px] font-sans uppercase tracking-[0.2em] text-primary font-semibold">
@@ -42,9 +45,13 @@ export function Timeline180({ entries }: { entries: Entry[] }) {
           Tappa
         </span>
         <span className="flex items-center gap-2">
-          <span className="inline-block w-3 h-3 bg-[#1a1a1a] border border-primary" />
+           <span className="inline-block w-3 h-3 bg-primary border-2 border-foreground" />
           Oggi
         </span>
+         <span className="flex items-center gap-2">
+           <span className="inline-block w-3 h-3 bg-card border border-dashed border-[#333333]" />
+           Saltato
+         </span>
         <span className="flex items-center gap-2">
           <span className="inline-block w-3 h-3 bg-card border border-border" />
           Avanti
@@ -56,21 +63,24 @@ export function Timeline180({ entries }: { entries: Entry[] }) {
         {days.map((day) => {
           const done = completedDays.has(day);
           const isCurrent = day === currentDay && currentDay > 0;
+          const isSkipped = !done && day < currentDay;
           const isMilestone = [30, 60, 90, 180].includes(day);
           return (
             <div
               key={day}
               title={`Giorno ${day}${done ? " — registrato" : ""}${isCurrent ? " — corrente" : ""}`}
               className={`measured aspect-square flex items-center justify-center text-[9px] sm:text-[10px] border transition-colors ${
-                done
+                isCurrent
+                  ? "bg-primary text-primary-foreground border-2 border-foreground"
+                  : done
                   ? isMilestone
                     ? "bg-[hsl(var(--bronze))] text-[hsl(var(--bronze-foreground))] border-[hsl(var(--bronze))]"
                      : "bg-iron text-primary-foreground border-iron"
-                  : isCurrent
-                     ? "bg-[#1a1a1a] border-primary text-primary"
-                    : isMilestone
-                      ? "bg-card border-[hsl(var(--bronze))]/50 text-[hsl(var(--bronze))]"
-                      : "bg-card border-border text-muted-foreground"
+                   : isSkipped
+                     ? "bg-card border border-dashed border-[#333333] text-[#444444]"
+                     : isMilestone
+                       ? "bg-card border-[hsl(var(--bronze))]/50 text-[hsl(var(--bronze))]"
+                       : "bg-card border-border text-muted-foreground"
               }`}
             >
               {day}

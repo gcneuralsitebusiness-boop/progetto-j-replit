@@ -2,6 +2,7 @@ import { Router } from "express";
 import { desc } from "drizzle-orm";
 import { db } from "@workspace/db";
 import { iscrittiTable } from "@workspace/db/schema";
+import { notify } from "../lib/notify";
 
 const router = Router();
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -16,6 +17,14 @@ router.post("/subscribe", async (req, res): Promise<void> => {
 
   try {
     const [row] = await db.insert(iscrittiTable).values({ email }).returning();
+    try {
+      await notify(
+        "Nuova iscrizione newsletter",
+        `Nuovo indirizzo iscritto: ${email}`,
+      );
+    } catch (error) {
+      req.log.error({ err: error }, "Subscription notification failed");
+    }
     res.status(201).json(row);
   } catch (error: any) {
     if (error?.code === "23505") {
