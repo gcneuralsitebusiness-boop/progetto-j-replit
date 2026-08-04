@@ -7,6 +7,7 @@ import { Cross } from "@/components/Cross";
 import { SiteFooter } from "@/components/SiteFooter";
 import { getPhotoUrl } from "@workspace/object-storage-web";
 import { ArrowLeft } from "lucide-react";
+import { ArticleContent } from "@/components/ArticleContent";
 
 function resolveImgUrl(immagine: string | null | undefined): string | null {
   if (!immagine) return null;
@@ -19,42 +20,6 @@ function resolveImgUrl(immagine: string | null | undefined): string | null {
 function readingTime(testo: string): number {
   const words = testo.trim() ? testo.trim().split(/\s+/).length : 0;
   return Math.max(1, Math.round(words / 200));
-}
-
-// ─── Rendered content ─────────────────────────────────────────────────────────
-
-function ArticleContent({ contenuto }: { contenuto: string }) {
-  // Split on double newlines into paragraphs
-  const blocks = contenuto
-    .split(/\n\n+/)
-    .map((b) => b.trim())
-    .filter(Boolean);
-
-  return (
-    <div className="mt-8">
-      {blocks.map((block, i) => {
-        const headingMatch = block.match(/^\*\*(.+)\*\*$/);
-        if (headingMatch) {
-          return (
-            <h2
-              key={i}
-              className="font-serif text-[22px] uppercase tracking-wider text-primary bebas mt-10 mb-3 first:mt-0"
-            >
-              {headingMatch[1].trim()}
-            </h2>
-          );
-        }
-        return (
-          <p
-            key={i}
-            className="font-sans text-[17px] text-foreground leading-[1.8] max-w-[65ch] mb-5"
-          >
-            {block}
-          </p>
-        );
-      })}
-    </div>
-  );
 }
 
 export default function Articolo() {

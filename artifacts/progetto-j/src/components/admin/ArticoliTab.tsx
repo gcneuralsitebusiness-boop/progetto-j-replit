@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ArticleContent } from "@/components/ArticleContent";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   useListArticles,
@@ -43,6 +44,7 @@ export function ArticoliTab() {
   const [slugTouched, setSlugTouched] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [previewMode, setPreviewMode] = useState(false);
 
   const { uploadFile, isUploading, progress, error: uploadError } = useUpload({
     onSuccess: (res) => setForm((f) => ({ ...f, immagine: res.objectPath })),
@@ -233,15 +235,42 @@ export function ArticoliTab() {
 
         {/* Contenuto */}
         <div className="flex flex-col gap-1">
-          <label className="text-[11px] uppercase tracking-widest text-muted-foreground">Contenuto</label>
-          <textarea
-            rows={16}
-            placeholder="Scrivi il contenuto dell'articolo&#10;&#10;Usa righe vuote doppie tra i paragrafi.&#10;&#10;**Titolo sezione** per un'intestazione."
-            value={form.contenuto}
-            onChange={(e) => setForm({ ...form, contenuto: e.target.value })}
-            style={{ fontFamily: "var(--app-font-mono, ui-monospace, monospace)" }}
-            className="bg-[#141414] border border-border p-3 text-white focus:outline-none focus:border-primary resize-y leading-relaxed text-[13px]"
-          />
+          <div className="flex items-center justify-between">
+            <label className="text-[11px] uppercase tracking-widest text-muted-foreground">Contenuto</label>
+            <button
+              type="button"
+              onClick={() => setPreviewMode((v) => !v)}
+              className={`text-[11px] uppercase tracking-widest px-3 py-1 border transition-colors font-sans ${
+                previewMode
+                  ? "border-primary text-primary bg-primary/10"
+                  : "border-border text-muted-foreground hover:border-primary hover:text-primary"
+              }`}
+            >
+              {previewMode ? "✕ Anteprima" : "Anteprima"}
+            </button>
+          </div>
+
+          {previewMode ? (
+            <div className="bg-[#141414] border border-primary/40 p-4 min-h-[260px]">
+              {form.contenuto.trim() ? (
+                <ArticleContent contenuto={form.contenuto} />
+              ) : (
+                <p className="text-[13px] font-sans text-muted-foreground/50 italic">
+                  Nessun contenuto da visualizzare.
+                </p>
+              )}
+            </div>
+          ) : (
+            <textarea
+              rows={16}
+              placeholder="Scrivi il contenuto dell'articolo&#10;&#10;Usa righe vuote doppie tra i paragrafi.&#10;&#10;**Titolo sezione** per un'intestazione."
+              value={form.contenuto}
+              onChange={(e) => setForm({ ...form, contenuto: e.target.value })}
+              style={{ fontFamily: "var(--app-font-mono, ui-monospace, monospace)" }}
+              className="bg-[#141414] border border-border p-3 text-white focus:outline-none focus:border-primary resize-y leading-relaxed text-[13px]"
+            />
+          )}
+
           <p className="text-[11px] font-sans text-muted-foreground/70 mt-1">
             {wordCount} parole · lettura ~{readMinutes} min
           </p>
