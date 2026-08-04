@@ -44,10 +44,10 @@ export function ArticoliTab() {
   const [slugTouched, setSlugTouched] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
-  const [page, setPage] = useState(0);
+  const [page, setPage] = useState(1);
+  const [previewMode, setPreviewMode] = useState(false);
 
   const PAGE_SIZE = 20;
-  const [previewMode, setPreviewMode] = useState(false);
 
   const { uploadFile, isUploading, progress, error: uploadError } = useUpload({
     onSuccess: (res) => setForm((f) => ({ ...f, immagine: res.objectPath })),
@@ -309,38 +309,38 @@ export function ArticoliTab() {
         <input
           type="text"
           value={search}
-          onChange={(e) => { setSearch(e.target.value); setPage(0); }}
+          onChange={(e) => { setSearch(e.target.value); setPage(1); }}
           placeholder="Cerca per titolo o contenuto..."
           className="flex-1 bg-[#141414] border border-border px-4 py-2.5 text-[13px] font-sans text-white placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary"
         />
         {search && (
-          <button onClick={() => { setSearch(""); setPage(0); }} className="text-[11px] uppercase tracking-wider font-sans text-muted-foreground border border-border px-3 py-2 hover:bg-[#141414] transition-colors">
+          <button onClick={() => { setSearch(""); setPage(1); }} className="text-[11px] uppercase tracking-wider font-sans text-muted-foreground border border-border px-3 py-2 hover:bg-[#141414] transition-colors">
             Reset
           </button>
         )}
       </div>
 
       {(() => {
-        const allFiltered = (articles ?? []).filter((a) => {
+        const filtered = (articles ?? []).filter((a) => {
           if (!search.trim()) return true;
           const q = search.trim().toLowerCase();
           return a.titolo.toLowerCase().includes(q) || a.contenuto.toLowerCase().includes(q);
         });
-        const totalPages = Math.ceil(allFiltered.length / PAGE_SIZE);
-        const pageItems = allFiltered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+        const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+        const safePage = Math.min(page, totalPages);
+        const paginated = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
         return (
           <>
-            {/* Count + page indicator */}
-            <div className="flex items-center justify-between text-[11px] font-sans text-muted-foreground uppercase tracking-wider">
-              <span>{allFiltered.length} articol{allFiltered.length === 1 ? "o" : "i"}</span>
-              {totalPages > 1 && (
-                <span>pagina {page + 1} / {totalPages}</span>
-              )}
+            <div className="flex items-center justify-between">
+              <p className="text-[12px] font-sans text-muted-foreground uppercase tracking-wider">
+                {filtered.length} {filtered.length === 1 ? "articolo" : "articoli"}
+                {filtered.length > PAGE_SIZE && ` · pagina ${safePage} di ${totalPages}`}
+              </p>
             </div>
 
             <div className="space-y-3">
-              {pageItems.map((a) => (
+              {paginated.map((a) => (
                 <div key={a.id} className={`bg-card border p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 ${a.pubblicato ? "border-border" : "border-primary/50"}`}>
                   <div>
                     <div className="font-serif text-[20px] tracking-wider text-foreground">{a.titolo}</div>
@@ -354,20 +354,22 @@ export function ArticoliTab() {
               ))}
             </div>
 
-            {/* Prev / Next */}
             {totalPages > 1 && (
               <div className="flex items-center justify-between pt-2">
                 <button
-                  onClick={() => setPage((p) => Math.max(0, p - 1))}
-                  disabled={page === 0}
-                  className="text-[12px] font-sans uppercase tracking-wider border border-border px-4 py-2 text-muted-foreground hover:bg-[#141414] hover:text-foreground transition-colors disabled:opacity-30 disabled:pointer-events-none"
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={safePage <= 1}
+                  className="text-[11px] uppercase tracking-wider font-sans border border-border px-4 py-2 hover:bg-[#141414] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                 >
                   ← Precedente
                 </button>
+                <span className="text-[12px] font-sans text-muted-foreground">
+                  {safePage} / {totalPages}
+                </span>
                 <button
-                  onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-                  disabled={page >= totalPages - 1}
-                  className="text-[12px] font-sans uppercase tracking-wider border border-border px-4 py-2 text-muted-foreground hover:bg-[#141414] hover:text-foreground transition-colors disabled:opacity-30 disabled:pointer-events-none"
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={safePage >= totalPages}
+                  className="text-[11px] uppercase tracking-wider font-sans border border-border px-4 py-2 hover:bg-[#141414] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                 >
                   Successiva →
                 </button>
