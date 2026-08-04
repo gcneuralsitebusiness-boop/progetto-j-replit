@@ -1,3 +1,4 @@
+import { useState, useMemo } from "react";
 import { useListEntries, useGetSiteContent, getGetSiteContentQueryKey } from "@workspace/api-client-react";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { format } from "date-fns";
@@ -11,6 +12,8 @@ import { AnimatedNumber } from "@/components/AnimatedNumber";
 import { SiteFooter } from "@/components/SiteFooter";
 import { DataErrorState } from "@/components/DataErrorState";
 import { Dumbbell, Heart, Flame, Wallet } from "lucide-react";
+
+const PAGE_SIZE = 12;
 
 const chartTooltip = {
   contentStyle: { backgroundColor: "#0a0a0a", borderColor: "hsl(var(--primary))", color: "#F5F0E8", borderRadius: 0 },
@@ -31,6 +34,12 @@ export default function Journaling() {
   const isError = entriesError || contentError;
   const journalingIntro = content?.journaling_intro;
 
+  // ─── Filter + pagination state ─────────────────────────────────────────────
+  const [selectedMonth, setSelectedMonth] = useState<string>("all");
+  const [searchText, setSearchText] = useState("");
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+
+  // Full dataset for charts
   const chartData = entries
     ? [...entries].sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime())
     : [];
@@ -43,13 +52,13 @@ export default function Journaling() {
 
   const financeData = formattedChartData.filter((d) => d.entrate != null || d.uscite != null);
 
+  // Stats computed over full dataset
   const latest = entries && entries.length > 0 ? entries[0] : null;
   const totalEntries = entries?.length ?? 0;
   const totalCalories = entries?.reduce((sum, e) => sum + (e.kcal || 0), 0) ?? 0;
   const totalKm = entries?.reduce((sum, e) => sum + (e.km || 0), 0) ?? 0;
   const totalIncome = entries?.reduce((sum, e) => sum + (e.entrate || 0), 0) ?? 0;
 
-  // Peso progresso: delta dal primo peso registrato all'ultimo
   const sortedAsc = entries
     ? [...entries].sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime())
     : [];
@@ -60,7 +69,6 @@ export default function Journaling() {
       ? +(latestWithPeso.peso! - firstWithPeso.peso!).toFixed(1)
       : null;
 
-  // Sonno medio: media su tutti i giorni con dato sonno
   const sonnoEntries = entries?.filter((e) => e.sonno != null && e.sonno > 0) ?? [];
   const sonnoMedio =
     sonnoEntries.length > 0
@@ -69,8 +77,43 @@ export default function Journaling() {
 
   const maxDay = latest ? latest.numero : 0;
   const goalDay = 180;
-
   const chartProps = { margin: { top: 10, right: 10, left: -20, bottom: 0 } };
+
+  // ─── Month options (derived from full dataset) ─────────────────────────────
+  const monthOptions = useMemo(() => {
+    if (!entries) return [];
+    const months = new Set<string>();
+    for (const e of entries) {
+      const m = e.data.slice(0, 7); // YYYY-MM
+      months.add(m);
+    }
+    return [...months].sort().reverse();
+  }, [entries]);
+
+  // ─── Filtered + paginated feed ─────────────────────────────────────────────
+  const filteredEntries = useMemo(() => {
+    if (!entries) return [];
+    let result = [...entries]; // already newest-first from API
+    if (selectedMonth !== "all") {
+      result = result.filter((e) => e.data.startsWith(selectedMonth));
+    }
+    if (searchText.trim()) {
+      const q = searchText.trim().toLowerCase();
+      result = result.filter(
+        (e) =>
+          String(e.numero).includes(q) ||
+          (e.testo ?? "").toLowerCase().includes(q)
+      );
+    }
+    return result;
+  }, [entries, selectedMonth, searchText]);
+
+  const visibleEntries = filteredEntries.slice(0, visibleCount);
+  const hasMore = visibleCount < filteredEntries.length;
+
+  // Reset pagination when filters change
+  const handleMonthChange = (v: string) => { setSelectedMonth(v); setVisibleCount(PAGE_SIZE); };
+  const handleSearchChange = (v: string) => { setSearchText(v); setVisibleCount(PAGE_SIZE); };
 
   if (isError) {
     return (
@@ -154,7 +197,7 @@ export default function Journaling() {
             <span className="text-[11px] font-sans uppercase tracking-[0.2em] text-muted-foreground mb-4">Ultimo giorno</span>
             {latest ? (
               <div className="flex items-center gap-3">
-                  <span className="font-serif text-[48px] leading-none text-primary bebas measured">{latest.numero.toString().padStart(3, "0")}</span>
+                <span className="font-serif text-[48px] leading-none text-primary bebas measured">{latest.numero.toString().padStart(3, "0")}</span>
                 <MilestoneBadge day={latest.numero} />
               </div>
             ) : (
@@ -193,7 +236,7 @@ export default function Journaling() {
         </Reveal>
       </div>
 
-      {/* Charts */}
+      {/* Charts — always over full dataset */}
       {formattedChartData.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-16">
           <Reveal>
@@ -264,7 +307,6 @@ export default function Journaling() {
             </div>
           </Reveal>
 
-          {/* Entrate vs Uscite — full width */}
           {financeData.length > 0 && (
             <Reveal>
               <div className="bg-card border border-border p-5 md:col-span-2 flex flex-col">
@@ -322,13 +364,48 @@ export default function Journaling() {
         </div>
       )}
 
-      {/* Feed */}
+      {/* Feed with filter bar */}
       <div className="flex flex-col gap-4">
         <Reveal>
           <h2 className="font-serif text-[clamp(40px,8vw,72px)] leading-[0.85] tracking-wide bebas text-foreground mb-6">
             REGISTRO
           </h2>
         </Reveal>
+
+        {/* Filter bar */}
+        {entries && entries.length > 0 && (
+          <Reveal>
+            <div className="flex flex-col sm:flex-row gap-3 mb-6">
+              <select
+                value={selectedMonth}
+                onChange={(e) => handleMonthChange(e.target.value)}
+                className="bg-[#141414] border border-border px-4 py-2.5 text-[13px] font-sans text-foreground focus:outline-none focus:border-primary uppercase tracking-wider"
+              >
+                <option value="all">Tutti i mesi</option>
+                {monthOptions.map((m) => {
+                  const [year, month] = m.split("-");
+                  const label = format(new Date(Number(year), Number(month) - 1, 1), "MMMM yyyy", { locale: it }).toUpperCase();
+                  return <option key={m} value={m}>{label}</option>;
+                })}
+              </select>
+              <input
+                type="text"
+                value={searchText}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                placeholder="Cerca nel diario..."
+                className="flex-1 bg-[#141414] border border-border px-4 py-2.5 text-[13px] font-sans text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary"
+              />
+              {(selectedMonth !== "all" || searchText.trim()) && (
+                <button
+                  onClick={() => { handleMonthChange("all"); handleSearchChange(""); }}
+                  className="px-4 py-2.5 text-[11px] font-sans uppercase tracking-wider border border-border text-muted-foreground hover:text-foreground hover:bg-[#141414] transition-colors"
+                >
+                  Reset
+                </button>
+              )}
+            </div>
+          </Reveal>
+        )}
 
         {isLoading ? (
           <Reveal>
@@ -340,12 +417,30 @@ export default function Journaling() {
               <p className="font-serif text-[clamp(32px,5vw,48px)] text-muted-foreground">IL PRIMO GIORNO ARRIVA PRESTO.</p>
             </div>
           </Reveal>
+        ) : filteredEntries.length === 0 ? (
+          <Reveal>
+            <div className="py-16 text-center border border-border bg-card">
+              <p className="font-serif text-[28px] text-muted-foreground">NESSUN RISULTATO.</p>
+            </div>
+          </Reveal>
         ) : (
-          entries.map((entry) => (
-            <Reveal key={entry.id}>
-              <DayCard entry={entry} />
-            </Reveal>
-          ))
+          <>
+            {visibleEntries.map((entry) => (
+              <Reveal key={entry.id}>
+                <DayCard entry={entry} />
+              </Reveal>
+            ))}
+            {hasMore && (
+              <div className="flex justify-center pt-4 pb-8">
+                <button
+                  onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
+                  className="border border-border px-8 py-3 font-serif text-[15px] uppercase tracking-wider text-muted-foreground hover:text-foreground hover:bg-[#141414] transition-colors"
+                >
+                  CARICA ALTRI ({filteredEntries.length - visibleCount})
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
       <SiteFooter />

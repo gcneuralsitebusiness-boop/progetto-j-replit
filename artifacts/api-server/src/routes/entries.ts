@@ -41,6 +41,34 @@ router.get("/entries/latest", async (_req, res): Promise<void> => {
   res.json(GetLatestEntriesResponse.parse(ser(rows)));
 });
 
+// ─── Range validation ──────────────────────────────────────────────────────────
+
+const RANGES: Record<string, [number, number]> = {
+  peso: [30, 200],
+  battito: [30, 220],
+  sonno: [0, 24],
+  kcal: [0, 15000],
+  km: [0, 100],
+  flessioni: [0, 2000],
+  addominali: [0, 2000],
+  round: [0, 2000],
+  entrate: [0, 100000],
+  uscite: [0, 100000],
+};
+
+function validateRanges(data: Record<string, unknown>): string | null {
+  for (const [field, [min, max]] of Object.entries(RANGES)) {
+    const val = data[field];
+    if (val == null) continue;
+    const num = Number(val);
+    if (Number.isNaN(num)) continue;
+    if (num < min || num > max) {
+      return `${field}: il valore ${num} è fuori dall'intervallo consentito (${min}–${max})`;
+    }
+  }
+  return null;
+}
+
 // POST /entries — create entry (admin only)
 router.post("/entries", async (req, res): Promise<void> => {
   if (!req.session?.adminAuthenticated) {
@@ -52,6 +80,12 @@ router.post("/entries", async (req, res): Promise<void> => {
   if (!parsed.success) {
     req.log.warn({ errors: parsed.error.message }, "Invalid entry body");
     res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  const rangeError = validateRanges(parsed.data as Record<string, unknown>);
+  if (rangeError) {
+    res.status(400).json({ error: rangeError });
     return;
   }
 
@@ -85,6 +119,12 @@ router.patch("/entries/:numero", async (req, res): Promise<void> => {
   const body = UpdateEntryBody.safeParse(req.body);
   if (!body.success) {
     res.status(400).json({ error: body.error.message });
+    return;
+  }
+
+  const rangeError = validateRanges(body.data as Record<string, unknown>);
+  if (rangeError) {
+    res.status(400).json({ error: rangeError });
     return;
   }
 

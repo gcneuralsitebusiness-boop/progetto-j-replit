@@ -12,6 +12,9 @@ import coachingRouter from "./coaching";
 import contactRouter from "./contact";
 import subscribeRouter from "./subscribe";
 import sitemapRouter from "./sitemap";
+import backupRouter from "./backup";
+import draftsRouter from "./drafts";
+import dashboardRouter from "./dashboard";
 
 const router: IRouter = Router();
 
@@ -28,5 +31,8 @@ router.use(coachingRouter);
 router.use(contactRouter);
 router.use(subscribeRouter);
 router.use(sitemapRouter);
+router.use(backupRouter);
+router.use(draftsRouter);
+router.use(dashboardRouter);
 
 export default router;

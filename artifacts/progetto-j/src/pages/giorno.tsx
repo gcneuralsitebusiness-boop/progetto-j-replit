@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useParams, Link } from "wouter";
 import { useListEntries } from "@workspace/api-client-react";
 import { format } from "date-fns";
@@ -221,6 +222,45 @@ function DiaryText({ text }: { text: string }) {
   return <div className="border-l-2 border-iron pl-6">{elements}</div>;
 }
 
+// ─── Share button ─────────────────────────────────────────────────────────────
+
+function ShareButton({ entryNumero, entryTesto }: { entryNumero: number; entryTesto: string | null }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleShare = async () => {
+    const url = window.location.href;
+    const title = `Giorno ${entryNumero} — Progetto J`;
+    const firstLine = entryTesto?.trim().split("\n").find((l) => l.trim()) ?? "";
+
+    if (typeof navigator.share === "function") {
+      try {
+        await navigator.share({ title, text: firstLine || title, url });
+      } catch {
+        // user cancelled or error — ignore
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(url);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2500);
+      } catch {
+        // fallback: select text
+      }
+    }
+  };
+
+  return (
+    <div className="flex justify-center mb-10">
+      <button
+        onClick={handleShare}
+        className="border border-border bg-card px-6 py-3 font-serif text-[14px] uppercase tracking-[0.15em] text-muted-foreground hover:text-foreground hover:border-iron transition-colors"
+      >
+        {copied ? "LINK COPIATO ✓" : "CONDIVIDI"}
+      </button>
+    </div>
+  );
+}
+
 // ─── main page ────────────────────────────────────────────────────────────────
 
 export default function GiornoDetail() {
@@ -367,6 +407,8 @@ export default function GiornoDetail() {
         </div>
 
         {/* ─── Prev / Next navigation ─── */}
+        <ShareButton entryNumero={entry.numero} entryTesto={entry.testo} />
+
         <div className="h-px bg-border mb-10" />
         <div className="flex items-center justify-between gap-4">
           {prevEntry ? (

@@ -27,6 +27,7 @@ export function ArticoliTab() {
   const del = useDeleteArticle();
   const [editing, setEditing] = useState<Article | null>(null);
   const [form, setForm] = useState(EMPTY);
+  const [search, setSearch] = useState("");
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: getListArticlesQueryKey() });
 
@@ -128,8 +129,28 @@ export function ArticoliTab() {
         </div>
       </form>
 
+      {/* Search */}
+      <div className="flex items-center gap-3">
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Cerca per titolo o contenuto..."
+          className="flex-1 bg-[#141414] border border-border px-4 py-2.5 text-[13px] font-sans text-white placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary"
+        />
+        {search && (
+          <button onClick={() => setSearch("")} className="text-[11px] uppercase tracking-wider font-sans text-muted-foreground border border-border px-3 py-2 hover:bg-[#141414] transition-colors">
+            Reset
+          </button>
+        )}
+      </div>
+
       <div className="space-y-3">
-        {articles?.map((a) => (
+        {(articles ?? []).filter((a) => {
+          if (!search.trim()) return true;
+          const q = search.trim().toLowerCase();
+          return a.titolo.toLowerCase().includes(q) || a.contenuto.toLowerCase().includes(q);
+        }).map((a) => (
           <div key={a.id} className={`bg-card border p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 ${a.pubblicato ? "border-border" : "border-primary/50"}`}>
             <div>
               <div className="font-serif text-[20px] tracking-wider text-foreground">{a.titolo}</div>
