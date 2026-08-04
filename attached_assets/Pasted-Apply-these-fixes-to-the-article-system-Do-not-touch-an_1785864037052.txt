@@ -1,0 +1,186 @@
+Apply these fixes to the article system. Do not touch
+anything unrelated.
+
+═══════════════════════════════════════════
+FIX 1 — SILENT FAILURE ON SUBMIT
+═══════════════════════════════════════════
+
+FILE: artifacts/progetto-j/src/components/admin/ArticoliTab.tsx
+
+The submit button appears "dead" because create.mutate
+and update.mutate have no onError handler. If the admin
+session expired or the request fails, nothing happens —
+no message, no feedback.
+
+Add error state and display it:
+
+const [submitError, setSubmitError] = useState<string | null>(null);
+
+In handleSubmit, before calling mutate, clear submitError.
+Add onError to both create.mutate and update.mutate:
+
+  onError: (err) => {
+    setSubmitError(
+      err instanceof Error && err.message.includes("401")
+        ? "Sessione scaduta. Ricarica la pagina e rientra."
+        : "Salvataggio fallito. Riprova."
+    );
+  }
+
+Render submitError above the submit button, if present:
+
+  {submitError && (
+    <p className="text-[13px] font-sans text-primary
+       border border-primary/40 bg-primary/10 px-4 py-3">
+      {submitError}
+    </p>
+  )}
+
+Also add a visible required-field check before submit:
+if slug or titolo is empty after trim, set submitError
+to "Slug e titolo sono obbligatori." and return early —
+do not rely only on the native HTML `required` attribute,
+which can fail silently inside some mobile browsers when
+the field is scrolled out of view.
+
+═══════════════════════════════════════════
+FIX 2 — REAL IMAGE UPLOAD
+═══════════════════════════════════════════
+
+FILE: artifacts/progetto-j/src/components/admin/ArticoliTab.tsx
+
+Replace the "IMMAGINE URL" text input with a real upload
+control, following the exact pattern already used in
+components/admin/SitoTab.tsx (useUpload from
+@workspace/object-storage-web).
+
+Import: useUpload, getPhotoUrl from "@workspace/object-storage-web"
+
+Add:
+  const { uploadFile, isUploading, progress, error: uploadError } = useUpload();
+
+Replace the immagine input with:
+  - If form.immagine is set: show a thumbnail preview
+    (max-h-40, object-cover) with a small "Rimuovi" button
+    that clears it (setForm({ ...form, immagine: null }))
+  - If not set: a file input (accept="image/*") that on
+    change calls uploadFile(file) and on success sets
+    form.immagine to the returned object path
+  - While isUploading, show a progress indicator (use
+    `progress` if available) and disable the file input
+  - If uploadError, show it in the same red-bordered
+    style as FIX 1
+
+Keep this field full width (md:col-span-2).
+
+═══════════════════════════════════════════
+FIX 3 — SLUG AUTO-GENERATION
+═══════════════════════════════════════════
+
+Same file. Typing a slug by hand is friction and error
+prone (spaces, accents, capitals all break routing).
+
+When titolo changes AND the user has not manually edited
+slug yet (track with a `slugTouched` boolean, set to true
+only on direct input in the slug field), auto-generate:
+
+  const autoSlug = titolo
+    .toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9\s-]/g, "")
+    .trim()
+    .replace(/\s+/g, "-");
+
+Keep the slug field editable manually — once the user
+types in it directly, stop auto-updating it.
+
+═══════════════════════════════════════════
+FIX 4 — CATEGORY AS SELECT, NOT FREE TEXT
+═══════════════════════════════════════════
+
+Same file. Free-text category leads to inconsistent
+values ("Generale", "generale", "GENERALE" all different).
+
+Replace the categoria input with a <select> populated
+from a fixed list matching the site's content pillars:
+
+  const CATEGORIES = [
+    "Biohacking", "Combat", "Business", "Fede", "Mentalità"
+  ];
+
+Render as a native select styled to match the other
+inputs (same bg, border, padding). Default to the first
+category if form.categoria is empty or not in the list.
+
+═══════════════════════════════════════════
+FIX 5 — CONTENT EDITOR: LIVE WORD COUNT
+═══════════════════════════════════════════
+
+Same file. Long articles are hard to gauge in a plain
+textarea.
+
+Below the contenuto textarea, add a small line:
+  Inter 11px, text-muted-foreground:
+  "{wordCount} parole · lettura ~{readMinutes} min"
+
+  const wordCount = form.contenuto.trim()
+    ? form.contenuto.trim().split(/\s+/).length : 0;
+  const readMinutes = Math.max(1, Math.round(wordCount / 200));
+
+Also increase the textarea to rows={16} and add
+font-family: var(--app-font-mono) for the editing view
+only (monospace makes long-form editing easier to scan;
+the published page keeps using Inter).
+
+═══════════════════════════════════════════
+FIX 6 — PUBLIC ARTICLE PAGE: PARAGRAPH RENDERING
+═══════════════════════════════════════════
+
+FILE: artifacts/progetto-j/src/pages/articolo.tsx
+
+Content is currently rendered as a single text block.
+Long articles need visual structure.
+
+Parse entry.contenuto by splitting on double newlines
+into paragraphs. For each paragraph:
+  - If it matches /^\*\*(.+)\*\*$/ (a line wrapped in **),
+    render as a section subtitle: font-serif (Anton per
+    the new restyle, or Bebas Neue if restyle not applied
+    yet), 22px, uppercase, color var(--primary), margin-top
+    40px, margin-bottom 12px
+  - Otherwise render as a paragraph: Inter, 17px,
+    line-height 1.8, color var(--foreground), max-width 65ch,
+    margin-bottom 20px
+
+At the top of the article, above the title, render:
+  category badge (small pill, border var(--border),
+  uppercase, 11px) + reading time estimate computed the
+  same way as FIX 5, formatted "· {n} min di lettura"
+
+═══════════════════════════════════════════
+FIX 7 — PUBLIC ARTICOLI LIST: EMPTY STATE AND CARDS
+═══════════════════════════════════════════
+
+FILE: artifacts/progetto-j/src/pages/articoli.tsx
+
+Improve the article card in the list (if not already
+matching DayCard's visual language):
+  - If immagine is set, show it as a 16:9 cover with the
+    existing dark-gradient-from-bottom treatment used on
+    DayCard photos
+  - If not set, show the existing crosshatch placeholder
+  - Below: category badge, title in font-serif 22px,
+    a 2-line excerpt from contenuto (strip any ** markers
+    first), and reading time
+
+Grid: 1 column mobile, 2 columns tablet+, gap-6.
+
+═══════════════════════════════════════════
+BUILD
+═══════════════════════════════════════════
+cd artifacts/api-server && pnpm run build
+cd artifacts/progetto-j && PORT=26090 BASE_PATH=/progetto-j/ pnpm run build
+
+Report each fix with file changed and one line of
+verification. Confirm the image upload was tested with
+an actual file, not just code review.

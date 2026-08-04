@@ -1,0 +1,140 @@
+Build an admin dashboard, backup, autosave, validation,
+search, filtering, and pagination. Do not break existing
+features. Report file-by-file at the end.
+
+═══════════════════════════════════════════
+1 — FULL DATABASE BACKUP EXPORT
+═══════════════════════════════════════════
+
+FILE: artifacts/api-server/src/routes/backup.ts (new)
+
+GET /api/admin/backup — admin session required.
+Returns a single JSON file (Content-Disposition:
+attachment; filename="progetto-j-backup-YYYY-MM-DD.json")
+containing every row from: giorni, contenuti, pagine,
+social, sponsor, articoli, coaching, contatti, iscritti.
+
+Wrap each table in a top-level key. Include an
+exportedAt timestamp and a schemaVersion field.
+
+In the admin UI, add a "BACKUP" button in the dashboard
+header that hits this endpoint and triggers the download.
+
+This is the top priority: the 80+ days of diary data
+currently exist only inside Replit.
+
+═══════════════════════════════════════════
+2 — ADMIN DASHBOARD (landing view)
+═══════════════════════════════════════════
+
+FILE: artifacts/progetto-j/src/pages/admin.tsx
+
+Add a new default tab "OGGI" shown first on login,
+before the nine existing tabs.
+
+Content:
+- Today's status: does an entry exist for today's date
+  (Europe/Rome)? If yes and it has no testo, show a
+  prominent button "COMPLETA IL GIORNO {n}" that opens
+  the Diario tab pre-scrolled to that entry. If no entry
+  exists, show "CREA IL GIORNO DI OGGI".
+- A "cosa manca" list: count of entries with null testo,
+  count with null foto, count with null peso/battito.
+  Each count links to the Diario tab filtered to those.
+- Quick stats row (mono font): current day, logged days,
+  subscribers count, unread contacts count.
+- The BACKUP button from section 1.
+
+═══════════════════════════════════════════
+3 — DIARY FORM AUTOSAVE (local only)
+═══════════════════════════════════════════
+
+FILE: the diary editing component in admin (DiarioTab
+or equivalent)
+
+While editing an entry, debounce-save the form state to
+a local draft keyed by day number. Use an in-memory ref
+plus a state mirror — do NOT use localStorage (it is
+blocked in some embedded contexts); instead persist the
+draft to a new endpoint:
+
+POST /api/admin/drafts { numero, formJson } (admin only,
+upsert into a new "bozze" table: numero PK, dati jsonb,
+updated_at). GET /api/admin/drafts/:numero returns it.
+
+On opening an entry, if a draft newer than the saved
+entry exists, show a bar: "Bozza non salvata del {time}.
+[Ripristina] [Ignora]".
+
+On successful save of the real entry, delete the draft.
+
+═══════════════════════════════════════════
+4 — ENTRY VALIDATION
+═══════════════════════════════════════════
+
+FILE: the diary form component AND
+artifacts/api-server/src/routes/entries.ts
+
+Add range validation, both client and server side:
+  peso: 30–200 (kg)
+  battito: 30–220 (bpm)
+  sonno: 0–24 (h)
+  kcal: 0–15000
+  km: 0–100
+  flessioni/addominali/round: 0–2000
+  entrate/uscite: 0–100000
+
+Client: show an inline red message under the field and
+block submit. Server: return 400 with a clear message
+if any value is out of range. Null is always allowed.
+
+═══════════════════════════════════════════
+5 — SEARCH IN DIARY AND ARTICLES (admin)
+═══════════════════════════════════════════
+
+In the admin Diario tab, add a search input above the
+entry list that filters by day number or by text content
+(case-insensitive substring on testo). Instant, client-
+side, over the already-loaded list.
+
+Same for the Articoli tab: filter by titolo or contenuto.
+
+═══════════════════════════════════════════
+6 — PUBLIC DIARY FILTER + PAGINATION
+═══════════════════════════════════════════
+
+FILE: artifacts/progetto-j/src/pages/journaling.tsx
+
+The page loads all entries at once. At day 150 this will
+be slow on mobile.
+
+- Add a filter bar: a month dropdown (derived from entry
+  dates) and a text search over testo. Both client-side.
+- Render entries in pages of 12. Add a "CARICA ALTRI"
+  button at the bottom that reveals the next 12, or use
+  intersection-observer infinite scroll — whichever is
+  simpler in the existing code. Newest first.
+- The charts at the top still compute over the FULL
+  dataset, not just the visible page.
+
+═══════════════════════════════════════════
+7 — SHARE ON EACH DAY (public)
+═══════════════════════════════════════════
+
+FILE: artifacts/progetto-j/src/pages/giorno.tsx
+
+In the prev/next row, add a centered "CONDIVIDI" button.
+If navigator.share exists, call it with the day title,
+first line of testo, and current URL. Otherwise copy the
+URL to clipboard and show a "LINK COPIATO" toast.
+Style to match the prev/next buttons.
+
+═══════════════════════════════════════════
+BUILD
+═══════════════════════════════════════════
+cd artifacts/api-server && pnpm run build
+cd artifacts/progetto-j && PORT=26090 BASE_PATH=/progetto-j/ pnpm run build
+
+Report each section with files changed and one line of
+verification. Note whether the two new tables (bozze)
+and any migration were applied to PRODUCTION or dev only.
