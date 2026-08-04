@@ -1,0 +1,2530 @@
+SISTEMA DI DESIGN ATTUALE — PROGETTO J
+
+Analisi del progetto web Progetto J, includendo token CSS, componenti pubblici, pagine principali, asset locali e media dinamici provenienti da database/object storage.
+
+Nota: il progetto contiene anche un’app mobile separata, ma questo riepilogo riguarda il sistema di design del sito web Progetto J in artifacts/progetto-j.
+
+
+1. DIREZIONE VISIVA GENERALE
+
+Il sito utilizza un linguaggio visivo dark, editoriale e tecnico, ispirato a:
+
+- diario operativo
+- dossier personale
+- documentazione sportiva
+- interfacce da laboratorio
+- misurazione e tracking
+- estetica combat / industriale
+- tipografia da poster
+- dati reali senza decorazioni superflue
+
+Caratteristiche principali:
+
+- sfondo quasi nero
+- testo bianco caldo
+- rosso scuro come colore d’azione principale
+- verde acceso per dati positivi e risultati finanziari
+- bronzo per tappe e milestone
+- grigi scuri per griglie, bordi e strutture tecniche
+- angoli prevalentemente squadrati
+- bordi sottili
+- assenza quasi totale di ombre decorative
+- grandi titoli condensati in maiuscolo
+- numeri con font monospaziato e cifre tabulari
+- texture noise globale sovrapposta a tutta la pagina
+- elementi grafici minimali: linee, griglie, croci, divider, bracket angolari e tracce tipo elettrocardiogramma
+
+
+2. PALETTE COLORI
+
+2.1 Token principali
+
+I colori sono definiti in src/index.css tramite variabili HSL. Di seguito sono riportati sia il valore HSL sorgente sia l’equivalente HEX arrotondato.
+
+BACKGROUND
+
+Nome token:
+--background
+
+Valore sorgente:
+HSL 0 0% 4%
+
+HEX:
+#0A0A0A
+
+Utilizzo:
+
+- sfondo globale del sito
+- sfondo principale del body
+- sfondo della navbar mobile
+- sfondo dei campi form scuri
+- sfondo dietro i divider
+- sfondo della pagina dettaglio giorno
+- sfondo dei tooltip Recharts
+- base del footer
+- colore del track della scrollbar
+- colore sottostante alla texture noise
+
+FOREGROUND
+
+Nome token:
+--foreground
+
+Valore sorgente:
+HSL 40 33% 94%
+
+HEX equivalente:
+#F5F1EB
+
+Utilizzo:
+
+- testo principale
+- titoli secondari
+- numeri principali
+- contenuto editoriale
+- testo dei dati
+- testo dei pulsanti su sfondi scuri
+- colore principale delle icone quando non sono accentate
+
+CARD
+
+Nome token:
+--card
+
+Valore sorgente:
+HSL 0 0% 7%
+
+HEX equivalente:
+#121212
+
+Utilizzo:
+
+- card dei giorni
+- card KPI
+- card del journaling
+- card social
+- card coaching
+- card sponsor
+- box community
+- box contatti
+- sfondo del ticker
+- stati vuoti
+- contenitori editoriali
+
+CARD FOREGROUND
+
+Nome token:
+--card-foreground
+
+Valore sorgente:
+HSL 40 33% 94%
+
+HEX equivalente:
+#F5F1EB
+
+Utilizzo:
+
+- testo dentro le card
+- numeri e titoli contenuti nei pannelli
+
+CARD BORDER
+
+Nome token:
+--card-border
+
+Valore sorgente:
+HSL 0 0% 10%
+
+HEX equivalente:
+#1A1A1A
+
+Utilizzo:
+
+- bordo logico delle card
+- componente di tema condiviso
+
+BORDER
+
+Nome token:
+--border
+
+Valore sorgente:
+HSL 0 0% 10%
+
+HEX:
+#1A1A1A
+
+Utilizzo:
+
+- bordi standard
+- separatori orizzontali
+- contorno degli input
+- contorno dei grafici
+- bordi della navbar
+- bordo del footer
+- griglie e contenitori
+- progress ring di fondo
+- cards non attive
+- box di navigazione precedente/successivo
+
+MUTED
+
+Nome token:
+--muted
+
+Valore sorgente:
+HSL 0 0% 12%
+
+HEX equivalente:
+#1F1F1F
+
+Utilizzo:
+
+- superfici secondarie
+- elementi UI generici
+- stati attenuati
+- componenti Shadcn generici
+
+MUTED FOREGROUND
+
+Nome token:
+--muted-foreground
+
+Valore sorgente:
+HSL 0 0% 54%
+
+HEX equivalente:
+#8A8A8A
+
+Utilizzo:
+
+- label
+- metadata
+- date
+- testo descrittivo
+- testo secondario
+- microcopy
+- legenda
+- placeholder semantici
+- testo nav non attivo
+- testo dei tooltip e degli assi dei grafici
+
+PRIMARY
+
+Nome token:
+--primary
+
+Valore sorgente:
+HSL 0 74% 42%
+
+HEX:
+#BA1C1C
+
+Utilizzo:
+
+- grande lettera “J” nella hero
+- titoli principali accentati
+- numeri dei giorni
+- pulsanti pieni
+- bordi dei pulsanti
+- link attivi
+- stato corrente della timeline
+- linee dei grafici
+- progress ring attivo
+- icone accentate
+- CTA
+- link hover
+- messaggi e valori negativi
+- bordo sinistro dei contenuti editoriali
+- colore della selezione testuale
+- scrollbar thumb
+
+PRIMARY FOREGROUND
+
+Nome token:
+--primary-foreground
+
+Valore sorgente:
+HSL 40 33% 94%
+
+HEX equivalente:
+#F5F1EB
+
+Utilizzo:
+
+- testo sopra il rosso primary
+- testo dei pulsanti pieni
+- testo dello stato “Oggi” nella timeline
+- testo dei giorni registrati o attivi quando il fondo è rosso
+
+ACCENT
+
+Nome token:
+--accent
+
+Valore sorgente:
+HSL 0 74% 42%
+
+HEX:
+#BA1C1C
+
+Utilizzo:
+
+- colore accent del tema generico
+- componenti UI standard
+- stati aperti o attivi nei componenti Shadcn
+
+ACCENT FOREGROUND
+
+Nome token:
+--accent-foreground
+
+Valore sorgente:
+HSL 40 33% 94%
+
+HEX equivalente:
+#F5F1EB
+
+Utilizzo:
+
+- testo sopra superfici accentate
+
+SECONDARY
+
+Nome token:
+--secondary
+
+Valore sorgente:
+HSL 0 0% 10%
+
+HEX:
+#1A1A1A
+
+Utilizzo:
+
+- superfici secondarie nei componenti UI generici
+
+SECONDARY FOREGROUND
+
+Nome token:
+--secondary-foreground
+
+Valore sorgente:
+HSL 0 0% 54%
+
+HEX equivalente:
+#8A8A8A
+
+Utilizzo:
+
+- testo sopra superfici secondarie
+
+INPUT
+
+Nome token:
+--input
+
+Valore sorgente:
+HSL 0 0% 14%
+
+HEX:
+#242424
+
+Utilizzo:
+
+- stato base degli input nei componenti UI
+- bordo e sfondo di alcuni campi
+- bordo dell’input email nella sezione report Giorno 180
+
+RING
+
+Nome token:
+--ring
+
+Valore sorgente:
+HSL 0 74% 42%
+
+HEX:
+#BA1C1C
+
+Utilizzo:
+
+- focus ring dei componenti UI
+- stato focus generico
+
+POPOVER
+
+Nome token:
+--popover
+
+Valore sorgente:
+HSL 0 0% 7%
+
+HEX equivalente:
+#121212
+
+Utilizzo:
+
+- superfici popover
+- menu e pannelli flottanti dei componenti generici
+
+POPOVER FOREGROUND
+
+Nome token:
+--popover-foreground
+
+Valore sorgente:
+HSL 40 33% 94%
+
+HEX equivalente:
+#F5F1EB
+
+Utilizzo:
+
+- testo dentro popover
+
+POPOVER BORDER
+
+Nome token:
+--popover-border
+
+Valore sorgente:
+HSL 0 0% 10%
+
+HEX:
+#1A1A1A
+
+Utilizzo:
+
+- bordi dei popover
+
+DESTRUCTIVE
+
+Nome token:
+--destructive
+
+Valore sorgente:
+HSL 0 74% 42%
+
+HEX:
+#BA1C1C
+
+Utilizzo:
+
+- errori e stati distruttivi dei componenti UI
+- colore coerente con il rosso principale
+
+DESTRUCTIVE FOREGROUND
+
+Nome token:
+--destructive-foreground
+
+Valore sorgente:
+HSL 40 33% 94%
+
+HEX equivalente:
+#F5F1EB
+
+Utilizzo:
+
+- testo sopra stati distruttivi
+
+SIDEBAR
+
+Nome token:
+--sidebar
+
+Valore sorgente:
+HSL 0 0% 5%
+
+HEX equivalente:
+#0D0D0D
+
+Utilizzo:
+
+- tema sidebar dei componenti UI
+- non è un elemento centrale del sito pubblico
+
+SIDEBAR FOREGROUND
+
+Nome token:
+--sidebar-foreground
+
+Valore sorgente:
+HSL 40 33% 94%
+
+HEX equivalente:
+#F5F1EB
+
+Utilizzo:
+
+- testo della sidebar
+
+SIDEBAR BORDER
+
+Nome token:
+--sidebar-border
+
+Valore sorgente:
+HSL 0 0% 10%
+
+HEX:
+#1A1A1A
+
+Utilizzo:
+
+- bordi della sidebar
+
+SIDEBAR PRIMARY
+
+Nome token:
+--sidebar-primary
+
+Valore sorgente:
+HSL 0 74% 42%
+
+HEX:
+#BA1C1C
+
+Utilizzo:
+
+- elemento primario della sidebar
+
+SIDEBAR PRIMARY FOREGROUND
+
+Nome token:
+--sidebar-primary-foreground
+
+Valore sorgente:
+HSL 40 33% 94%
+
+HEX equivalente:
+#F5F1EB
+
+Utilizzo:
+
+- testo sul primary della sidebar
+
+SIDEBAR ACCENT
+
+Nome token:
+--sidebar-accent
+
+Valore sorgente:
+HSL 0 0% 10%
+
+HEX:
+#1A1A1A
+
+Utilizzo:
+
+- stato accent della sidebar
+
+SIDEBAR ACCENT FOREGROUND
+
+Nome token:
+--sidebar-accent-foreground
+
+Valore sorgente:
+HSL 0 0% 54%
+
+HEX equivalente:
+#8A8A8A
+
+Utilizzo:
+
+- testo dell’accent sidebar
+
+SIDEBAR RING
+
+Nome token:
+--sidebar-ring
+
+Valore sorgente:
+HSL 0 74% 42%
+
+HEX:
+#BA1C1C
+
+Utilizzo:
+
+- focus ring della sidebar
+
+BRONZE
+
+Nome token:
+--bronze
+
+Valore sorgente:
+HSL 42 74% 31%
+
+HEX equivalente:
+#8A6615
+
+Utilizzo:
+
+- milestone della timeline
+- badge “30 DAYS”, “60 DAYS”, “90 DAYS”, “180 DAYS”
+- tappa milestone
+- variante bronze di DataLabel e StatBar
+- livello Bronze degli sponsor
+- badge finale del giorno 180
+- bordi bronze
+- testo bronze
+
+BRONZE FOREGROUND
+
+Nome token:
+--bronze-foreground
+
+Valore sorgente:
+HSL 40 33% 94%
+
+HEX equivalente:
+#F5F1EB
+
+Utilizzo:
+
+- testo sopra badge bronze pieni
+- testo sopra milestone finali
+
+ACID
+
+Nome token:
+--acid
+
+Valore sorgente:
+HSL 145 63% 49%
+
+HEX equivalente:
+#2ECC70
+
+Utilizzo:
+
+- entrate economiche
+- saldo positivo
+- delta positivo
+- valori finanziari positivi
+- barra e testo della variante income
+- legenda “Entrate” nei grafici
+- card KPI Entrate
+- numeri di guadagno
+- indicatori positivi nei confronti con la media
+
+INK
+
+Nome token:
+--ink
+
+Valore sorgente:
+HSL 40 33% 94%
+
+HEX equivalente:
+#F5F1EB
+
+Utilizzo:
+
+- colore semantico per contenuti “inchiostro”
+- attualmente allineato al foreground chiaro
+
+CARBON
+
+Nome token:
+--carbon
+
+Valore sorgente:
+HSL 0 0% 8%
+
+HEX equivalente:
+#141414
+
+Utilizzo:
+
+- tonalità carbonio per superfici scure
+- usata direttamente anche negli input e nelle preview admin
+
+SCRATCH
+
+Nome token:
+--scratch
+
+Valore sorgente:
+HSL 0 74% 42%
+
+HEX:
+#BA1C1C
+
+Utilizzo:
+
+- colore semantico per graffi/accenti
+- attualmente allineato al primary
+
+IRON
+
+Nome token:
+--iron
+
+Valore sorgente:
+HSL 0 0% 18%
+
+HEX equivalente:
+#2E2E2E
+
+Utilizzo:
+
+- linee tecniche
+- bordi secondari
+- testo delle page label
+- underline della navigazione attiva
+- divider
+- icone del ticker
+- progress bar
+- card hover
+- separatori interni
+- traccia pulse nella variante divider
+- texture e dettagli grafici industriali
+
+CHART 1
+
+Valore:
+HSL 0 74% 42%
+
+HEX:
+#BA1C1C
+
+Utilizzo:
+
+- serie grafica primaria
+
+CHART 2
+
+Valore:
+HSL 42 74% 31%
+
+HEX:
+#8A6615
+
+Utilizzo:
+
+- serie grafica bronze
+
+CHART 3
+
+Valore:
+HSL 111 100% 54%
+
+HEX equivalente:
+#38FF14
+
+Utilizzo:
+
+- colore disponibile per grafici generici
+- non è il verde principale utilizzato nei grafici finanziari attuali
+
+CHART 4
+
+Valore:
+HSL 0 0% 40%
+
+HEX:
+#666666
+
+Utilizzo:
+
+- serie grafica neutra
+
+CHART 5
+
+Valore:
+HSL 0 0% 25%
+
+HEX:
+#404040
+
+Utilizzo:
+
+- serie grafica grigio scuro
+
+
+2.2 Colori HEX espliciti usati direttamente nel codice
+
+#0A0A0A / #0a0a0a
+
+Utilizzo:
+
+- sfondo globale equivalente al background token
+- navbar
+- menu mobile
+- campi input delle pagine Social
+- input della newsletter
+- tooltip dei grafici
+- pannelli neri nelle sezioni sponsor
+- contenitore fotografico
+- fallback image block
+
+#141414
+
+Utilizzo:
+
+- sfondo degli input admin
+- sfondo di alcuni pannelli secondari
+- superficie carbonio
+
+#242424
+
+Utilizzo:
+
+- bordo dell’input della newsletter
+
+#1A1A1A / #1a1a1a
+
+Utilizzo:
+
+- griglia dei grafici
+- sfondo del progress ring inattivo
+- track delle barre
+- background della progress bar
+- divider e superfici tecniche
+
+#1F1F1F / #1f1f1f
+
+Utilizzo:
+
+- bordo dei tooltip finanziari
+- tonalità scura di pannelli e componenti
+
+#666666
+
+Utilizzo:
+
+- testo degli assi dei grafici
+- placeholder e microcopy attenuato
+
+#333333
+
+Utilizzo:
+
+- bordo tratteggiato dei giorni saltati nella timeline
+
+#444444
+
+Utilizzo:
+
+- testo dei giorni saltati nella timeline
+
+#4ADE80
+
+Utilizzo:
+
+- verde esplicito della legenda Entrate
+- barre Entrate nei grafici finanziari
+- colore positivo molto simile ma distinto dal token ACID
+
+#A31F1F
+
+Valore equivalente a:
+HSL 0 68% 38%
+
+Utilizzo:
+
+- barre Uscite nei grafici finanziari
+- indicatore rosso scuro delle uscite
+
+#F5F0E8
+
+Utilizzo:
+
+- colore del testo nei tooltip Recharts
+- colore leggermente diverso rispetto al foreground token #F5F1EB
+
+#C0C0C0
+
+Utilizzo:
+
+- livello Silver negli sponsor
+
+#D4AF37
+
+Utilizzo:
+
+- livello Gold negli sponsor
+
+#1E1E1E
+
+Utilizzo:
+
+- lettera “J” nel placeholder fotografico della pagina Chi Sono
+
+#2A2A2A
+
+Utilizzo:
+
+- linee del pattern crosshatch nel placeholder fotografico Chi Sono
+
+#262626
+
+Utilizzo:
+
+- alcuni pannelli e anteprime dell’area admin
+
+#FFFFFF / #fff
+
+Utilizzo:
+
+- testo bianco puro del pulsante newsletter
+- selettori e componenti UI generici
+- regole interne del tema chart
+
+#CCCCCC
+
+Utilizzo:
+
+- selettori di colore di componenti chart generici
+
+#FF3C00
+
+Utilizzo:
+
+- sfondo del favicon SVG locale
+
+
+2.3 Colori con trasparenza
+
+rgba(255,255,255,0.03)
+
+Utilizzo:
+
+- cursore/overlay molto leggero nel grafico Entrate vs Uscite
+
+rgba(220,38,38,0.5)
+
+Utilizzo:
+
+- anteprima grafica nell’area admin
+
+Varianti con alpha del tema:
+
+- primary al 5% per fondi CTA
+- primary al 50% o 90% per linee e overlay
+- iron al 22% per la hero radial
+- iron al 45% per l’ombra delle card
+- border al 40% per texture
+- muted foreground al 60–70% per testo secondario
+
+
+3. FONT UTILIZZATI
+
+3.1 Font sans-serif
+
+Nome dichiarato:
+Inter
+
+Fallback:
+sans-serif
+
+Variabile:
+--app-font-sans: 'Inter', sans-serif
+
+Utilizzato per:
+
+- testo del corpo
+- paragrafi editoriali
+- navigazione
+- label
+- metadata
+- date
+- descrizioni
+- pulsanti
+- form
+- placeholder
+- microcopy
+- legende
+- unità di misura
+- testi dei grafici
+- intestazioni delle sezioni
+- testi di supporto
+- testo delle CTA
+
+Esempi:
+
+- Navbar
+- descrizioni delle pagine
+- testo dei giorni
+- dati “PESO”, “SONNO”, “KCAL”
+- moduli Social
+- newsletter
+- testo Coaching
+- testo Sponsor
+
+
+3.2 Font display / titoli
+
+Nome dichiarato:
+Anton
+
+Fallback principale:
+Bebas Neue
+
+Fallback finale:
+sans-serif
+
+Variabile:
+--app-font-serif: "Anton", "Bebas Neue", sans-serif
+
+Classe principale:
+font-serif
+
+Classe custom:
+bebas
+
+Utilizzato per:
+
+- titoli hero
+- grande lettera J
+- titoli pagina
+- titoli delle card
+- numeri dei giorni
+- numeri KPI
+- milestone
+- titoli Coaching
+- titoli Sponsor
+- titoli Social
+- titoli Articoli
+- mantra “IC XC NIKA”
+- titoli degli stati vuoti
+- titoli dei dati nel dettaglio giorno
+- heading “JOURNALING”
+- heading “180 GIORNI”
+- heading “ULTIMI GIORNI”
+- heading “REGISTRO”
+
+Caratteristiche:
+
+- tutto maiuscolo nella maggior parte degli utilizzi
+- forme molto condensate
+- altezza linea ridotta
+- tracking leggermente aumentato
+- dimensioni responsive con clamp()
+- forte contrasto con il testo Inter
+
+
+3.3 Font monospaziato
+
+Nome dichiarato:
+JetBrains Mono
+
+Fallback:
+monospace
+
+Variabile:
+--app-font-mono: "JetBrains Mono", monospace
+
+Classe custom:
+measured
+
+Utilizzato per:
+
+- numeri dei giorni
+- valori KPI
+- dati metrici
+- peso
+- battito
+- ore di sonno
+- calorie
+- round
+- flessioni
+- addominali
+- chilometri
+- entrate
+- uscite
+- saldo
+- percentuali
+- dati della hero
+- dati del ticker
+- valori dei grafici quando tabulari
+- valori confrontati con la media
+
+Caratteristiche:
+
+- numeri tabulari
+- allineamento regolare tra cifre
+- tracking leggermente negativo
+- look tecnico e misurabile
+
+
+3.4 Pesi tipografici
+
+Il progetto non definisce font-face personalizzati né file di font locali nel repository.
+
+Non risultano import espliciti dei font da Google Fonts o da un CDN nel codice frontend. Sono quindi dichiarate le famiglie, ma il caricamento effettivo dipende dal contesto di esecuzione e dalla disponibilità del font nel browser.
+
+Pesi effettivamente usati:
+
+- normale / 400:
+  - corpo testo
+  - heading display nella maggior parte dei casi
+  - label e metadata standard
+
+- semibold / 600:
+  - valori DataLabel
+  - alcuni numeri e label importanti
+  - percentuali e indicatori
+
+- bold / 700:
+  - valori finanziari nella pagina giorno
+  - pulsante newsletter
+  - alcune CTA
+  - valori accentati e saldo
+
+La maggior parte dei grandi titoli Anton/Bebas non specifica esplicitamente un peso diverso.
+
+
+4. SFONDI, HERO E TEXTURE
+
+4.1 Sfondo globale
+
+Lo sfondo globale è #0A0A0A.
+
+Il body usa:
+
+- background scuro
+- testo chiaro
+- font Inter
+- antialiasing
+- scrollbar sottile
+
+Il sito è sempre in modalità dark: App.tsx aggiunge la classe “dark” al documento.
+
+
+4.2 Texture noise globale
+
+Il body possiede un pseudo-elemento fisso:
+
+- posizione: fixed
+- dimensione: 100vw x 100vh
+- z-index: 9999
+- pointer-events: none
+- opacity: 0.07
+- mix-blend-mode: overlay
+
+La texture è un SVG inline con:
+
+- fractalNoise
+- baseFrequency 0.8
+- numOctaves 5
+- tile ripetibile
+
+Effetto visivo:
+
+- grana molto sottile sopra tutte le pagine
+- superficie carbonio
+- riduce l’aspetto piatto del nero
+- simula una stampa o una pellicola ruvida
+
+
+4.3 Hero della Home
+
+Struttura:
+
+- altezza minima: 85svh
+- contenuto centrato verticalmente e orizzontalmente
+- testo allineato al centro
+- overflow nascosto
+- padding verticale ampio
+- layout responsive
+
+Sfondo:
+
+- base #0A0A0A
+- radial gradient centrato circa al 50% / 40%
+- colore iron con opacità 22%
+- dissolvenza verso trasparente al 55%
+
+Non usa:
+
+- fotografia
+- video
+- immagine di sfondo
+- overlay fotografico
+
+Elementi presenti:
+
+- grande lettera J rossa
+- titolo hero
+- sottotitolo uppercase
+- pulsante “Segui il percorso”
+- dati live “GG X / 180”
+- chilometri
+- calorie
+- entrate se presenti
+- battito a riposo
+- pulse trace SVG dietro il contenuto
+- indicatore “Scorri” in fondo
+
+
+4.4 Pulse trace nella hero
+
+La hero contiene una traccia SVG costruita dai valori battito degli entries.
+
+Caratteristiche:
+
+- linea rossa primary
+- altezza hero: 120px
+- stroke-width: 1.5
+- opacità 0.9
+- punto finale rosso
+- animazione di disegno della linea
+- durata: 2.2 secondi
+- easing ease-out
+
+La linea viene calcolata dinamicamente sui dati e non è un’immagine statica.
+
+
+4.5 Hero del dettaglio giorno
+
+La pagina /giorno/:id usa un hero fotografico.
+
+Dimensioni:
+
+- altezza: 50svh
+- minimo: 320px
+- massimo: 520px
+- overflow hidden
+
+Immagine:
+
+- object-fit: cover
+- grayscale 15%
+- l’immagine occupa tutta la larghezza
+- il contenuto viene sovrapposto visivamente nella parte bassa
+
+Overlay:
+
+- gradient verticale dal background in basso
+- background/30% al centro
+- trasparente in alto
+
+L’overlay serve a:
+
+- rendere leggibili il numero del giorno e la data
+- fondere la foto con il tema nero della pagina
+- creare una transizione fotografica/editoriale
+
+
+4.6 Fallback fotografico
+
+Quando manca una foto viene usato il pattern crosshatch.
+
+Il pattern è realizzato tramite due linear-gradient diagonali:
+
+- una diagonale a 45 gradi
+- una diagonale a -45 gradi
+- colori basati sul border
+- dimensione pattern: 8px x 8px
+
+Nella pagina Chi Sono il fallback è più elaborato:
+
+- base #0A0A0A
+- pattern SVG
+- linee #2A2A2A
+- grande J in #1E1E1E
+- bordo #1A1A1A
+
+Questo fallback comunica una fotografia non ancora disponibile senza lasciare una superficie vuota.
+
+
+4.7 Hero e intestazioni delle altre pagine
+
+Le pagine:
+
+- Chi Sono
+- Journaling
+- Coaching
+- Social
+- Sponsor
+- Articoli
+
+non usano hero fotografici a tutta altezza.
+
+Usano invece:
+
+- padding top per compensare la navbar fissa
+- label tecnica
+- grande titolo display
+- eventuale intro con barra verticale
+- contenuto a griglia
+- sfondo globale nero
+- bordi e divider
+
+
+4.8 Newsletter / Email Capture
+
+La sezione newsletter nel footer ha:
+
+- background #0A0A0A
+- bordo superiore e inferiore
+- padding verticale ampio
+- contenuto centrato
+- max-width circa 640px
+- heading display
+- paragrafo Inter
+- input #141414
+- bordo input #242424
+- pulsante rosso primary
+- testo bianco puro nel pulsante
+- messaggio di errore rosso
+
+
+4.9 Empty state degli Articoli
+
+La pagina Articoli usa uno stato vuoto semplice.
+
+Il componente CSS .empty-state supporta anche:
+
+- repeating-linear-gradient
+- linee diagonali ripetute
+- colore basato sul border con opacità 40%
+- spacing da 14px
+
+Attualmente il markup della pagina usa principalmente testo centrato; il pattern è disponibile come stile di sistema.
+
+
+5. IMMAGINI E VIDEO PRESENTI
+
+5.1 Asset locali del sito web
+
+Favicon:
+
+Path:
+artifacts/progetto-j/public/favicon.svg
+
+URL browser:
+/favicon.svg
+
+Formato:
+SVG
+
+Aspetto:
+
+- quadrato 180 x 180
+- angoli arrotondati con rx 36
+- fondo #FF3C00
+- non contiene un simbolo J visibile
+- utilizzato come favicon del sito
+
+
+5.2 Immagine Open Graph
+
+URL:
+
+https://portfolio-showcase-gcneuralsitebus.replit.app/og-image.jpg
+
+Utilizzo:
+
+- meta property og:image
+- immagine Twitter card
+- non viene mostrata direttamente nel layout delle pagine
+- dimensioni dichiarate: 1200 x 630
+- è un asset esterno al repository del progetto
+
+
+5.3 Foto reali caricate nel database/object storage
+
+Le immagini dei giorni non sono file locali nel repository. Sono riferimenti object storage restituiti dal database.
+
+Il codice trasforma un path del tipo:
+
+/objects/uploads/ID
+
+nel percorso browser:
+
+/api/storage/objects/uploads/ID
+
+
+Foto del Giorno 69
+
+Stored path:
+
+/objects/uploads/1b78721d-b84e-4fff-b0a2-5fa2c2bfd4a1
+
+Browser path:
+
+/api/storage/objects/uploads/1b78721d-b84e-4fff-b0a2-5fa2c2bfd4a1
+
+Riferimento dati:
+
+- entry id: 65
+- numero giorno: 69
+- data registrata: 2026-07-07
+
+Descrizione visiva:
+
+- scena di allenamento indoor
+- atleta giovane al centro durante un calcio o una tecnica di combattimento
+- altro atleta in primo piano sulla destra
+- persona seduta sullo sfondo
+- palestra con pavimento scuro e attrezzatura
+- palette fotografica scura e calda
+- visualizzazione con leggero effetto grayscale
+- overlay nero nella parte inferiore
+
+
+Foto del Giorno 68
+
+Stored path:
+
+/objects/uploads/d61fbb10-f002-4798-bae1-b734715ca2e2
+
+Browser path:
+
+/api/storage/objects/d61fbb10-f002-4798-bae1-b734715ca2e2
+
+Riferimento dati:
+
+- entry id: 64
+- numero giorno: 68
+- data registrata: 2026-07-06
+
+Descrizione visiva:
+
+- immagine ravvicinata di una persona all’aperto
+- parte del corpo e abbigliamento sportivo visibili
+- vegetazione verde sullo sfondo
+- luce naturale intensa
+- composizione inclinata e molto ravvicinata
+- visualizzazione con leggero effetto grayscale
+- overlay nero nella parte inferiore
+
+
+Foto del Giorno 65
+
+Stored path:
+
+/objects/uploads/8b99f47a-9397-4d17-b804-7edc21788169
+
+Browser path:
+
+/api/storage/objects/8b99f47a-9397-4d17-b804-7edc21788169
+
+Riferimento dati:
+
+- entry id: 62
+- numero giorno: 65
+- data registrata: 2026-07-04
+
+Descrizione visiva:
+
+- scena di combattimento all’aperto su erba
+- due persone impegnate in una tecnica di grappling o ground fighting
+- una persona è a terra con guantoni e protezioni
+- l’altra è sopra durante la fase di controllo
+- colori verdi e naturali
+- composizione dinamica
+- visualizzazione con leggero effetto grayscale
+- overlay nero nella parte inferiore
+
+
+5.4 Media non presenti o non configurati nel momento dell’analisi
+
+Nel database corrente:
+
+- foto Chi Sono: non configurata
+- logo sponsor: nessuno, perché non risultano sponsor
+- immagini articoli: nessuna, perché non risultano articoli
+- video: nessun video presente
+- hero video: nessuno
+- background video: nessuno
+- immagini statiche locali di contenuto: nessuna oltre al favicon
+
+Il sito supporta comunque:
+
+- foto dei giorni
+- foto Chi Sono
+- immagini degli articoli
+- logo sponsor
+- upload tramite object storage
+
+
+6. NAVBAR E STRUTTURA GLOBALE
+
+La navbar è:
+
+- fixed
+- top: 0
+- z-index: 50
+- altezza circa 64px
+- background #0A0A0A con opacità 90%
+- backdrop blur 12px
+- bordo inferiore #1A1A1A
+
+Layout desktop:
+
+- contenitore max-width 5xl
+- logo J a sinistra
+- navigazione orizzontale al centro/destra
+- gap tra link: circa 32px
+- pulsante Instagram a destra
+
+Logo navbar:
+
+- font Anton/Bebas
+- colore primary #BA1C1C
+- dimensione circa 32px
+- tracking ampio
+
+Link navbar:
+
+- Inter
+- 12px
+- uppercase
+- tracking 0.2em
+- colore inattivo #8A8A8A
+- hover verso iron
+- stato attivo con testo foreground e underline iron
+
+Pulsante Instagram:
+
+- background primary
+- testo chiaro
+- padding ridotto
+- uppercase
+- tracking aumentato
+
+Mobile:
+
+- menu full screen
+- background #0A0A0A
+- z-index 9999
+- animazione slide-down
+- link impilati verticalmente
+- pulsante Instagram in fondo alla lista
+- overflow verticale controllato
+- body scroll bloccato quando il menu è aperto
+
+
+7. BORDI, RAGGI E OMBRE
+
+7.1 Bordi
+
+Lo stile pubblico usa quasi sempre:
+
+- border: 1px solid
+- colori #1A1A1A o #2E2E2E
+- separatori orizzontali
+- bordi primary per CTA e focus
+- bordi bronze per milestone
+- bordi dashed per giorni saltati
+
+La maggior parte degli elementi pubblici ha angoli squadrati.
+
+Il tema globale imposta:
+
+--radius: 0rem
+
+Quindi il linguaggio principale è senza border-radius.
+
+
+7.2 Eccezioni con angoli arrotondati
+
+Alcuni componenti UI generici Shadcn/Tailwind contengono classi rounded-md o rounded-sm.
+
+Questi appartengono alla libreria UI condivisa e non rappresentano il linguaggio visivo prevalente delle pagine pubbliche.
+
+
+7.3 Ombre
+
+Le pagine pubbliche usano poche ombre.
+
+L’effetto principale è .card-lift:
+
+- transition: all 0.3s ease
+- hover translateY(-3px)
+- box-shadow:
+  0 8px 30px -10px hsl(var(--iron) / 0.45)
+
+Le card KPI non usano una grande ombra. Usano invece una barra inferiore animata.
+
+
+7.4 Barre inferiori delle KPI card
+
+Le KPI card hanno:
+
+- bordo #1A1A1A
+- sfondo #121212
+- padding 1rem
+- pseudo-elemento inferiore alto 2px
+- barra primary inizialmente nascosta tramite scaleX(0)
+- animazione verso scaleX(1) al passaggio del mouse
+- trasformazione origin left
+
+L’hover cambia anche il bordo verso iron.
+
+
+7.5 Bracket angolari
+
+Il componente .bracket-hover aggiunge due angoli tecnici:
+
+- angolo superiore sinistro
+- angolo inferiore destro
+- larghezza e altezza: 14px
+- bordo iron
+- inizialmente invisibili
+- appaiono su hover
+- transizione opacity e transform di 0.22s
+- simulano indicatori da interfaccia tecnica o dossier
+
+
+8. TRANSIZIONI E ANIMAZIONI
+
+8.1 Reveal on scroll
+
+Il componente Reveal utilizza IntersectionObserver.
+
+Stato iniziale:
+
+- opacity 0
+- translateY(20px)
+- scale 0.97
+
+Stato visibile:
+
+- opacity 1
+- translateY(0)
+- scale 1
+
+Durata:
+
+- 700ms
+- easing cubic-bezier(0.22, 1, 0.36, 1)
+
+È disponibile il delay progressivo tra elementi.
+
+Supporta prefers-reduced-motion.
+
+
+8.2 Hover delle card
+
+Le card utilizzano:
+
+- cambio bordo verso iron
+- leggero sollevamento verticale
+- eventuale ombra
+- transizione di circa 300ms
+
+
+8.3 Hover immagini dei giorni
+
+Le immagini delle DayCard:
+
+- object-fit cover
+- grayscale 20%
+- contrast 110%
+- scale 1.02 al passaggio del mouse
+- transizione transform di 700ms
+
+
+8.4 Hover pulsanti
+
+Pulsante primary:
+
+- stato normale: riempito rosso
+- hover: diventa trasparente
+- testo e bordo restano primary
+
+Pulsante ghost:
+
+- stato normale: trasparente con bordo e testo primary
+- hover: si riempie di primary
+- testo diventa primary-foreground
+
+Click:
+
+- entrambi i pulsanti fanno scale(0.96)
+
+
+8.5 Ticker orizzontale
+
+Il ticker della Home:
+
+- scorre orizzontalmente
+- durata: 24 secondi
+- animazione linear
+- loop infinito
+- contenuto duplicato per continuità
+- si mette in pausa al passaggio del mouse
+
+
+8.6 Pulse trace
+
+La traccia della hero viene disegnata da sinistra verso destra:
+
+- durata: 2.2s
+- easing ease-out
+- stroke-dasharray: 1000
+- stroke-dashoffset iniziale: 1000
+
+Con prefers-reduced-motion l’animazione viene disabilitata e la linea appare completa.
+
+
+8.7 Scroll hint
+
+L’indicatore “Scorri” usa:
+
+- linea verticale
+- gradiente da primary a trasparente
+- animazione bounce
+- movimento verticale di circa 9px
+- opacità variabile
+
+
+8.8 Menu mobile
+
+Il menu mobile usa:
+
+- fade in
+- translateY iniziale di -10px
+- durata 220ms
+- easing cubic-bezier(0.22, 1, 0.36, 1)
+
+
+9. ELEMENTI GRAFICI RICORRENTI
+
+9.1 Page label
+
+Le page label sono piccole intestazioni tecniche:
+
+- Inter
+- circa 11px
+- uppercase
+- tracking 0.2em
+- colore iron
+- linea verticale a sinistra
+- larghezza linea: 2px
+- padding-left: 0.75rem
+
+Esempi:
+
+- DOSSIER
+- DIARIO OPERATIVO
+- SERVIZIO
+- HUB
+- SUPPORTO
+- SCRITTI
+- GIORNO
+- DATI
+- FINANZE
+- VS MEDIA
+- DIARIO
+
+
+9.2 Ink line
+
+Alcune introduzioni editoriali usano una linea verticale:
+
+- bordo/linea iron
+- 2px
+- posizione a sinistra
+- padding-left: 1rem
+- contenuto testuale a destra
+
+
+9.3 Cut divider
+
+Il divider .cut-divider è una linea “tagliata”:
+
+- altezza: 1px
+- gradiente orizzontale iron
+- parti trasparenti
+- simbolo centrale “✦”
+- simbolo iron
+- sfondo background dietro il simbolo
+- opacità complessiva 0.6
+
+È usato per separare grandi blocchi.
+
+
+9.4 Croce
+
+Il componente Cross mostra:
+
+- simbolo cristiano “☩”
+- colore iron
+- dimensione 24px
+- opacità 0.8
+
+È usato:
+
+- tra sezioni
+- nel footer
+- in fondo alle pagine
+- nel blocco finale Chi Sono
+- dopo grafici e contenuti editoriali
+
+
+9.5 Numeri tabulari
+
+La classe measured usa:
+
+- JetBrains Mono
+- font-variant-numeric: tabular-nums
+- letter-spacing: -0.02em
+
+È uno dei tratti più riconoscibili del sistema.
+
+
+10. LAYOUT DELLA HOME
+
+10.1 Hero
+
+Ordine visuale:
+
+1. grande J rossa
+2. titolo “PROGETTO J · 180 DAYS”
+3. sottotitolo
+4. pulsante principale
+5. strip dati live
+6. battito iniziale/finale
+7. indicatore Scorri
+
+La traccia pulse è posizionata dietro il contenuto.
+
+
+10.2 Ticker dati
+
+Subito dopo la hero, quando esistono dati, appare un ticker orizzontale con:
+
+- GIORNI
+- KM
+- KCAL
+- ENTRATE
+
+Ogni item contiene:
+
+- icona Lucide
+- valore monospaziato
+- label uppercase
+- separatore “·”
+
+Sfondo card e bordi orizzontali.
+
+
+10.3 Timeline 180 giorni
+
+La timeline è dentro un contenitore max-width 5xl.
+
+Header:
+
+- grande titolo “180 GIORNI”
+- testo:
+  “giorno X di 180 · N registrati · N saltati · N rimanenti”
+- percentuale completata
+
+Progress bar:
+
+- track #1A1A1A
+- stato attivo iron
+- altezza 4px circa
+- animazione della larghezza
+
+Legenda:
+
+- Registrato: iron
+- Tappa: bronze
+- Oggi: primary con bordo foreground di 2px
+- Saltato: card con bordo dashed #333333
+- Avanti: card con bordo standard
+
+Griglia:
+
+- 10 colonne mobile
+- 15 colonne small
+- 20 colonne medium
+- 24 colonne large
+
+Stati delle celle:
+
+- giorno corrente: rosso primary
+- giorno registrato: iron
+- milestone registrata: bronze pieno
+- giorno saltato: fondo card, bordo tratteggiato
+- milestone futura: fondo card, bordo bronze attenuato
+- giorno futuro: card con bordo standard
+
+
+10.4 Ultimi giorni
+
+Layout:
+
+- titolo molto grande “ULTIMI GIORNI”
+- griglia responsive
+- 1 colonna mobile
+- 2 colonne medium
+- 3 colonne large
+
+Ogni DayCard contiene:
+
+1. immagine o placeholder
+2. badge milestone
+3. numero grande del giorno
+4. data
+5. divider iron
+6. riga di statistiche
+7. estratto del testo
+8. link “Leggi tutto”
+
+Le card usano:
+
+- background card
+- border standard
+- bracket hover
+- card lift
+- zoom fotografico leggero
+- gradient overlay dal basso sulla foto
+
+
+10.5 Community CTA
+
+Box finale con:
+
+- bordo iron
+- sfondo card
+- icona Users dentro box primary
+- label COMMUNITY
+- testo descrittivo
+- pulsante ghost
+- hover verso primary
+
+
+11. LAYOUT DELLA PAGINA JOURNALING
+
+Struttura verticale:
+
+1. page label “DIARIO OPERATIVO”
+2. titolo grande “JOURNALING”
+3. introduzione editoriale con ink line
+4. quattro KPI card
+5. tre pannelli di progresso
+6. grafici
+7. separatore Cross
+8. feed “REGISTRO”
+9. DayCard per ogni giorno
+10. newsletter/footer
+
+11.1 KPI
+
+Le quattro card sono:
+
+- GIORNI
+- KM
+- KCAL
+- ENTRATE
+
+Layout:
+
+- 2 colonne su mobile
+- 4 colonne su desktop
+
+Valori:
+
+- font display
+- numeri monospaziati quando necessario
+- Entrate in verde acid
+
+
+11.2 Pannelli progresso
+
+Tre pannelli:
+
+1. progress ring 180 giorni
+2. ultimo giorno
+3. metriche chiave
+
+Il progress ring contiene:
+
+- cerchio di sfondo #1A1A1A
+- arco active primary
+- percentuale al centro
+- label sotto
+
+
+11.3 Grafici
+
+Grafici presenti:
+
+- Peso nel tempo
+- Ore sonno
+- Kcal giornaliere
+- Allenamento settimanale
+- Entrate vs Uscite
+
+Stile:
+
+- pannelli card
+- bordo standard
+- padding 20px circa
+- altezza minima 200px
+- griglia tratteggiata con #1A1A1A
+- assi senza linee
+- testo asse #666666
+- linee primary
+- barre primary
+- Entrate #4ADE80
+- Uscite HSL 0 68% 38%, equivalente #A31F1F
+- tooltip nero con bordo primary o #1F1F1F
+- radius 0
+
+
+12. LAYOUT DEL DETTAGLIO GIORNO
+
+URL:
+/giorno/:id
+
+Struttura:
+
+1. hero fotografico
+2. pulsante di ritorno Journaling
+3. header con label GIORNO
+4. numero giorno molto grande
+5. giorno della settimana e data
+6. sezione DATI
+7. sezione FINANZE
+8. sezione VS MEDIA
+9. sezione DIARIO
+10. navigazione Precedente / Successivo
+11. Cross
+12. footer
+
+12.1 Header giorno
+
+Il numero è:
+
+- Anton/Bebas
+- primary
+- dimensione responsive molto grande
+- padding con tre cifre
+- esempio: 069
+
+La data è:
+
+- giorno della settimana in Inter uppercase
+- data in font display
+- allineata a destra su desktop
+
+
+12.2 Sezione DATI
+
+La sezione usa una strip orizzontale scorrevole su mobile.
+
+Possibili metriche:
+
+- PESO
+- BATTITO
+- SONNO
+- KCAL
+- ROUND
+- FLEX
+- ADDOM
+- KM
+
+Ogni dato contiene:
+
+- valore grande display/monospaziato
+- unità incorporata nel valore
+- label Inter uppercase
+- bordo inferiore
+- scroll orizzontale senza scrollbar visibile su mobile
+
+
+12.3 Sezione FINANZE
+
+La riga contiene tre colonne:
+
+- ENTRATE
+- USCITE
+- SALDO
+
+Entrate:
+
+- acid #2ECC70
+
+Uscite:
+
+- foreground chiaro
+
+Saldo:
+
+- acid se positivo
+- primary se negativo
+
+I numeri usano:
+
+- JetBrains Mono
+- 20px circa
+- peso bold
+
+
+12.4 Sezione VS MEDIA
+
+La tabella confronta il dato del giorno con la media generale.
+
+Metriche:
+
+- KCAL
+- SONNO
+- PESO
+- BATTITO
+- KM
+- FLESSIONI
+- ADDOMINALI
+- ROUND
+
+Ogni riga contiene:
+
+- label a sinistra
+- valore del giorno al centro/destra
+- differenza percentuale a destra
+- freccia verso l’alto, verso il basso oppure “=”
+
+Colori:
+
+- verde acid per valore sopra la media
+- rosso primary per valore sotto la media
+- muted foreground per valore uguale
+
+
+12.5 Sezione DIARIO
+
+Il diario viene trasformato in contenuto editoriale.
+
+Il parser:
+
+- rimuove l’intestazione “GIORNO N”
+- raggruppa le righe in paragrafi
+- riconosce sottotitoli Markdown del tipo **Titolo**
+- riconosce anche sottotitoli in title case, ad esempio “Il Corpo”
+- visualizza i sottotitoli con font display
+- usa testo Inter da circa 16px
+- line-height circa 1.7
+- limita la larghezza a circa 65 caratteri
+- applica una linea verticale iron a sinistra
+- usa padding-left di 24px
+
+
+12.6 Navigazione precedente/successivo
+
+I pulsanti sono:
+
+- card scura
+- bordo standard
+- padding orizzontale
+- numero giorno in display
+- label piccola uppercase
+- icona ArrowLeft
+- hover bordo iron
+- freccia ruotata per il pulsante successivo
+
+
+13. SEZIONE CHI SONO
+
+Layout:
+
+1. label DOSSIER
+2. titolo CHI SONO
+3. blocco foto o placeholder
+4. quattro sezioni editoriali
+5. box finale IC XC NIKA
+6. Cross
+7. footer
+
+Sezioni editoriali:
+
+- LA STORIA
+- IL PROGETTO
+- LA MOTIVAZIONE
+- LA PROMESSA
+
+Desktop:
+
+- griglia con colonna label da 140px
+- contenuto testuale a destra
+- label sticky durante lo scroll
+- bordo superiore iron
+- padding verticale generoso
+
+Mobile:
+
+- una sola colonna
+- label sopra il testo
+- stessa struttura verticale
+
+
+14. SEZIONE COACHING
+
+Layout:
+
+1. label SERVIZIO
+2. titolo hero dinamico
+3. sottotitolo
+4. descrizione con ink line
+5. quattro pillar card
+6. cut divider
+7. community CTA
+8. box contatto
+9. Cross
+10. footer
+
+Pillar:
+
+- ALLENAMENTO
+- TRACKING
+- DATI
+- ACCOUNTABILITY
+
+Ogni card contiene:
+
+- icona Lucide dentro box con bordo primary
+- titolo display
+- descrizione Inter
+- fondo card
+- bordo standard
+
+Community CTA:
+
+- bordo primary
+- fondo card
+- elemento geometrico decorativo in alto a destra
+- icona Users
+- label COMMUNITY
+- pulsante outline primary
+
+Contatto:
+
+- card centrata
+- icona Mail
+- label INFO
+- testo introduttivo
+- email grande in display
+- hover dell’email verso primary
+
+
+15. SEZIONE SOCIAL
+
+Layout:
+
+1. label HUB
+2. titolo SOCIAL
+3. introduzione con ink line
+4. griglia di social card
+5. cut divider
+6. sezione “LAVORA CON ME”
+7. form
+8. Cross
+9. footer
+
+Social card:
+
+- una colonna mobile
+- due colonne small
+- tre colonne large
+- fondo card
+- bordo standard
+- icona dentro box bordato
+- ArrowUpRight in alto a destra
+- titolo display
+- descrizione Inter
+- hover bordo iron
+- icona link verso primary
+
+Form:
+
+- input NOME
+- input EMAIL
+- select tipo collaborazione
+- textarea messaggio
+- pulsante outline primary
+- input con fondo #0A0A0A
+- bordo #1A1A1A
+- focus primary
+- layout a due colonne su desktop
+
+
+16. SEZIONE SPONSOR
+
+Layout:
+
+1. label SUPPORTO
+2. titolo SPONSOR
+3. intro con ink line
+4. griglia sponsor
+5. CTA sponsor condizionale
+6. Cross
+7. footer
+
+Sponsor card:
+
+- una colonna mobile
+- due colonne small
+- tre colonne large
+- card background
+- bordo dipendente dal livello
+- badge livello
+- logo su fondo #0A0A0A
+- titolo display
+- descrizione Inter
+- link esterno con ArrowUpRight
+
+Livelli:
+
+- Bronze: #8A6615
+- Silver: #C0C0C0
+- Gold: #D4AF37
+- Blood: #BA1C1C
+
+La CTA “Diventa sponsor” viene mostrata solo se esiste un indirizzo sponsor configurato nel CMS.
+
+
+17. SEZIONE ARTICOLI
+
+Layout:
+
+1. label SCRITTI
+2. titolo ARTICOLI
+3. intro con ink line
+4. filtri categoria
+5. griglia articoli
+6. Cross
+7. footer
+
+Filtri:
+
+- button outline
+- categoria attiva con fondo primary
+- testo primary-foreground
+- categorie inattive con bordo border
+- hover iron
+
+Article card:
+
+- fondo card
+- bordo standard
+- titolo display
+- categoria primary
+- data muted
+- estratto Inter
+- link “Leggi”
+- hover bordo iron
+
+Nel momento dell’analisi non risultano articoli pubblici nel database, quindi la navigazione Articoli viene nascosta quando non ci sono contenuti.
+
+
+18. SEZIONE ARTICOLO SINGOLO
+
+Layout:
+
+1. categoria come page label
+2. titolo grande
+3. data
+4. immagine opzionale
+5. testo con bordo sinistro primary
+6. Cross
+
+L’immagine dell’articolo, se presente, usa:
+
+- card wrapper
+- bordo standard
+- object-fit cover
+- altezza massima 400px
+
+
+19. SEZIONI “CORPO / LAVORO / BUSINESS / MENTE”
+
+Non esistono nel codice quattro sezioni autonome con route o componenti separati chiamati esattamente:
+
+- Corpo
+- Lavoro
+- Business
+- Mente
+
+Il sistema attuale le tratta come contenuti editoriali o categorie concettuali.
+
+CORPO
+
+Il tema Corpo appare soprattutto nei testi dei giorni e nel Coaching.
+
+Nel diario può apparire come sottotitolo title case, ad esempio:
+
+- Il Corpo
+
+Visivamente viene renderizzato nella sezione DIARIO del dettaglio giorno come:
+
+- titolo Anton/Bebas
+- uppercase
+- colore iron
+- separazione verticale
+- paragrafi Inter sottostanti
+
+
+LAVORO
+
+Il tema Lavoro appare nella sezione Social come:
+
+- “LAVORA CON ME”
+- area networking
+- form di contatto
+- card con icona Mail
+- struttura card scura con bordo
+
+
+BUSINESS
+
+Il tema Business appare soprattutto:
+
+- nell’introduzione della pagina Articoli
+- nel testo editoriale
+- nei dati finanziari degli entries
+- nei pannelli Entrate / Uscite / Saldo
+- nelle metriche economiche del diario
+
+Non esiste una pagina Business autonoma.
+
+
+MENTE
+
+Il tema Mente appare nei contenuti editoriali e nella sezione Chi Sono:
+
+- motivazione
+- disciplina
+- fede
+- riflessioni
+- testo del diario
+
+Non esiste una sezione tecnica “Mente” separata nel layout.
+
+
+20. COUNTDOWN E PROGRESSO
+
+Il sito non contiene un countdown temporale classico con ore, minuti e secondi.
+
+Il concetto di countdown/progresso è rappresentato tramite:
+
+- obiettivo di 180 giorni
+- giorno corrente
+- percentuale completata
+- progress bar
+- timeline 180 celle
+- progress ring
+- dati live della hero
+- ticker
+- numero dell’ultimo giorno
+- milestone a 30, 60, 90 e 180 giorni
+
+Le milestone sono:
+
+- 30 DAYS
+- 60 DAYS
+- 90 DAYS
+- 180 DAYS
+
+Il sistema comunica quindi un progresso operativo e documentale, non un timer in tempo reale.
+
+
+21. RESPONSIVE DESIGN
+
+Breakpoints principali:
+
+- xs: 390px
+- sm: 640px
+- md: 768px
+- lg: 1024px
+- xl: 1280px
+
+Comportamenti responsive ricorrenti:
+
+- titoli con clamp()
+- navbar desktop sostituita da menu mobile
+- griglie da 1 a 2 o 3 colonne
+- card KPI da 2 a 4 colonne
+- tabelle dati scrollabili orizzontalmente
+- paddings ridotti su mobile
+- pulsanti e CTA che diventano full width quando necessario
+- testo e numeri con dimensioni fluide
+- layout editoriale a una colonna su mobile
+- hero con altezza basata su svh
+- navigazione precedente/successiva mantenuta affiancata quando possibile
+
+
+22. RIASSUNTO TECNICO DEL DESIGN SYSTEM
+
+Nome concettuale:
+Dark Operational Editorial
+
+Palette:
+
+- Nero carbone: #0A0A0A
+- Superficie card: #121212
+- Carbone secondario: #141414
+- Bordo: #1A1A1A
+- Iron: #2E2E2E
+- Testo caldo: #F5F1EB
+- Muted: #8A8A8A
+- Rosso primary: #BA1C1C
+- Bronzo: #8A6615
+- Verde acid: #2ECC70
+- Verde entrate esplicito: #4ADE80
+- Rosso uscite: #A31F1F
+- Oro: #D4AF37
+- Argento: #C0C0C0
+
+Font:
+
+- Inter per testo, UI, label e paragrafi
+- Anton con fallback Bebas Neue per titoli e display
+- JetBrains Mono per numeri, dati e metriche
+
+Forme:
+
+- quasi tutto square
+- radius globale 0
+- border 1px
+- divider sottili
+- niente card arrotondate nel linguaggio pubblico
+
+Texture:
+
+- noise SVG globale
+- crosshatch per placeholder
+- linee tecniche
+- divider con simbolo centrale
+- bracket angolari
+- griglia dei dati
+
+Motion:
+
+- reveal on scroll
+- ticker orizzontale
+- pulse trace
+- hover lift
+- image scale
+- button press scale
+- menu slide
+- scroll indicator bounce
+
+Layout:
+
+- contenitori max-width 5xl
+- forte gerarchia verticale
+- grandi titoli tipografici
+- contenuti editoriali a griglia label + testo
+- dati organizzati in strip e tabelle
+- hero molto ariose
+- CTA in card scure con bordi primary
+
+Asset:
+
+- nessun video presente
+- nessuna hero image statica
+- tre foto di diario attualmente presenti via object storage
+- foto Chi Sono non configurata
+- nessun articolo o sponsor presente nel database corrente
+- favicon SVG locale
+- immagine Open Graph esterna per metadata social

@@ -6,3 +6,10 @@ id = "RaxhnXio5q6PJh-q8Z-RX"
 uri = "file://entries-export.txt"
 type = "text"
 title = "Esportazione giornate Progetto J"
+
+[[outputs]]
+id = "f0atXnIwcofPuK0TThcEX"
+uri = "file://reports/progetto-j-design-system.txt"
+type = "text"
+title = "Progetto J — Design System completo"
+description = "Riepilogo testuale completo e copiabile del sistema di design attuale: palette, font, sfondi, media, effetti e layout."
