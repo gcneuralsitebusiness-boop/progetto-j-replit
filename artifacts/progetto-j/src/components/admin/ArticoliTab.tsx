@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { ArticleContent } from "@/components/ArticleContent";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -49,9 +49,28 @@ export function ArticoliTab() {
 
   const PAGE_SIZE = 20;
 
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
   const { uploadFile, isUploading, progress, error: uploadError } = useUpload({
     onSuccess: (res) => setForm((f) => ({ ...f, immagine: res.objectPath })),
   });
+
+  // Insert text at the textarea cursor; wraps selected text if before+after provided
+  const insertAtCursor = (before: string, after = "") => {
+    const el = textareaRef.current;
+    if (!el) return;
+    const start = el.selectionStart ?? 0;
+    const end = el.selectionEnd ?? 0;
+    const selected = form.contenuto.slice(start, end);
+    const newText =
+      form.contenuto.slice(0, start) + before + selected + after + form.contenuto.slice(end);
+    setForm((f) => ({ ...f, contenuto: newText }));
+    requestAnimationFrame(() => {
+      el.focus();
+      const cursor = start + before.length + selected.length + after.length;
+      el.setSelectionRange(cursor, cursor);
+    });
+  };
 
   const imgUrl = form.immagine
     ? (getPhotoUrl(form.immagine) ?? (form.immagine.startsWith("http") ? form.immagine : null))
@@ -238,7 +257,8 @@ export function ArticoliTab() {
 
         {/* Contenuto */}
         <div className="flex flex-col gap-1">
-          <div className="flex items-center justify-between">
+          {/* Label row + preview toggle */}
+          <div className="flex items-center justify-between mb-1">
             <label className="text-[11px] uppercase tracking-widest text-muted-foreground">Contenuto</label>
             <button
               type="button"
@@ -253,6 +273,31 @@ export function ArticoliTab() {
             </button>
           </div>
 
+          {/* Formatting toolbar — only shown when editing */}
+          {!previewMode && (
+            <div className="flex items-center gap-2 mb-1">
+              <button
+                type="button"
+                title="Inserisci titolo sezione"
+                onClick={() => insertAtCursor("**", "**")}
+                className="text-[11px] font-mono uppercase tracking-wider px-2 py-1 border border-border text-muted-foreground hover:border-primary hover:text-primary transition-colors"
+              >
+                ** Titolo **
+              </button>
+              <button
+                type="button"
+                title="Inserisci interruzione di paragrafo"
+                onClick={() => insertAtCursor("\n\n")}
+                className="text-[11px] font-sans uppercase tracking-wider px-2 py-1 border border-border text-muted-foreground hover:border-primary hover:text-primary transition-colors"
+              >
+                ¶ Paragrafo
+              </button>
+              <span className="text-[10px] font-sans text-muted-foreground/50 ml-auto hidden sm:inline">
+                seleziona testo, poi clicca un bottone
+              </span>
+            </div>
+          )}
+
           {previewMode ? (
             <div className="bg-[#141414] border border-primary/40 p-4 min-h-[260px]">
               {form.contenuto.trim() ? (
@@ -265,8 +310,9 @@ export function ArticoliTab() {
             </div>
           ) : (
             <textarea
+              ref={textareaRef}
               rows={16}
-              placeholder="Scrivi il contenuto dell'articolo&#10;&#10;Usa righe vuote doppie tra i paragrafi.&#10;&#10;**Titolo sezione** per un'intestazione."
+              placeholder="Scrivi il contenuto dell'articolo..."
               value={form.contenuto}
               onChange={(e) => setForm({ ...form, contenuto: e.target.value })}
               style={{ fontFamily: "var(--app-font-mono, ui-monospace, monospace)" }}
@@ -274,9 +320,15 @@ export function ArticoliTab() {
             />
           )}
 
-          <p className="text-[11px] font-sans text-muted-foreground/70 mt-1">
-            {wordCount} parole · lettura ~{readMinutes} min
-          </p>
+          {/* Word count + format cheat sheet */}
+          <div className="flex flex-wrap items-center justify-between gap-2 mt-1">
+            <p className="text-[11px] font-sans text-muted-foreground/70">
+              {wordCount} parole · lettura ~{readMinutes} min
+            </p>
+            <p className="text-[10px] font-mono text-muted-foreground/40">
+              <span className="text-muted-foreground/60">**Testo**</span> → titolo sezione &nbsp;·&nbsp; riga vuota → nuovo paragrafo
+            </p>
+          </div>
         </div>
 
         <label className="flex items-center gap-2 text-[13px] font-sans text-foreground">
