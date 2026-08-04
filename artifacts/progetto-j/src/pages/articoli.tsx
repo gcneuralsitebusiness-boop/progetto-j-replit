@@ -6,8 +6,31 @@ import { Reveal } from "@/components/Reveal";
 import { Cross } from "@/components/Cross";
 import { SiteFooter } from "@/components/SiteFooter";
 import { DataErrorState } from "@/components/DataErrorState";
-import { ArrowRight } from "lucide-react";
+import { getPhotoUrl } from "@workspace/object-storage-web";
 import { useMemo, useState } from "react";
+
+function resolveImgUrl(immagine: string | null | undefined): string | null {
+  if (!immagine) return null;
+  const obj = getPhotoUrl(immagine);
+  if (obj) return obj;
+  if (immagine.startsWith("http")) return immagine;
+  return null;
+}
+
+function readingTime(testo: string): number {
+  const words = testo.trim() ? testo.trim().split(/\s+/).length : 0;
+  return Math.max(1, Math.round(words / 200));
+}
+
+function stripMarkdown(text: string): string {
+  return text.replace(/\*\*(.+?)\*\*/g, "$1");
+}
+
+function excerpt(contenuto: string, maxChars = 120): string {
+  const clean = stripMarkdown(contenuto).replace(/\n\n+/g, " ").replace(/\n/g, " ").trim();
+  if (clean.length <= maxChars) return clean;
+  return clean.slice(0, maxChars).replace(/\s+\S*$/, "") + "…";
+}
 
 export default function Articoli() {
   const { data: articles, isLoading, isError } = useListArticles();
@@ -67,7 +90,8 @@ export default function Articoli() {
         </div>
       </Reveal>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Article grid — 1-col mobile / 2-col tablet+ */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {isLoading ? (
           <div className="col-span-full text-center py-12 text-muted-foreground">Caricamento...</div>
         ) : filtered.length === 0 ? (
@@ -75,27 +99,63 @@ export default function Articoli() {
             Gli articoli arrivano presto.
           </div>
         ) : (
-          filtered.map((a) => (
-            <Reveal key={a.id}>
-              <Link href={`/a/${a.slug}`}>
-                <article className="group block border border-border bg-card p-5 hover:border-iron transition-colors h-full">
-                  <div className="flex justify-between items-start mb-4">
-                    <span className="text-[10px] font-sans uppercase tracking-[0.2em] text-primary">{a.categoria}</span>
-                    <span className="text-[11px] font-sans text-muted-foreground">
-                      {format(new Date(a.data), "d MMM yyyy", { locale: it })}
-                    </span>
-                  </div>
-                  <h3 className="font-serif text-[28px] leading-none text-foreground bebas mb-3">{a.titolo}</h3>
-                  <p className="text-[13px] font-sans text-muted-foreground leading-relaxed line-clamp-3 mb-4">
-                    {a.contenuto.slice(0, 160)}...
-                  </p>
-                  <div className="flex items-center gap-1 text-[11px] font-sans uppercase tracking-[0.15em] text-primary group-hover:text-foreground transition-colors">
-                    Leggi <ArrowRight size={14} />
-                  </div>
-                </article>
-              </Link>
-            </Reveal>
-          ))
+          filtered.map((a) => {
+            const imgUrl = resolveImgUrl(a.immagine);
+            const minutes = readingTime(a.contenuto);
+            const ex = excerpt(a.contenuto);
+
+            return (
+              <Reveal key={a.id}>
+                <Link href={`/a/${a.slug}`}>
+                  <article className="group block border border-border bg-card hover:border-iron transition-colors h-full flex flex-col">
+                    {/* Cover image — 16:9 */}
+                    <div className="relative w-full overflow-hidden" style={{ paddingBottom: "56.25%" }}>
+                      {imgUrl ? (
+                        <>
+                          <img
+                            src={imgUrl}
+                            alt={a.titolo}
+                            className="absolute inset-0 w-full h-full object-cover"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                        </>
+                      ) : (
+                        <div className="crosshatch absolute inset-0 w-full h-full" />
+                      )}
+                    </div>
+
+                    {/* Card body */}
+                    <div className="p-5 flex flex-col flex-1">
+                      {/* Category badge + date */}
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-[10px] font-sans uppercase tracking-[0.2em] border border-border px-2 py-0.5 text-muted-foreground">
+                          {a.categoria}
+                        </span>
+                        <span className="text-[11px] font-sans text-muted-foreground">
+                          {format(new Date(a.data), "d MMM yyyy", { locale: it })}
+                        </span>
+                      </div>
+
+                      {/* Title */}
+                      <h3 className="font-serif text-[26px] leading-none text-foreground bebas mb-3 group-hover:text-primary transition-colors">
+                        {a.titolo}
+                      </h3>
+
+                      {/* Excerpt — 2 lines */}
+                      <p className="text-[13px] font-sans text-muted-foreground leading-relaxed line-clamp-2 flex-1 mb-4">
+                        {ex}
+                      </p>
+
+                      {/* Reading time */}
+                      <span className="text-[11px] font-sans uppercase tracking-[0.15em] text-muted-foreground/60">
+                        {minutes} min di lettura
+                      </span>
+                    </div>
+                  </article>
+                </Link>
+              </Reveal>
+            );
+          })
         )}
       </div>
 
