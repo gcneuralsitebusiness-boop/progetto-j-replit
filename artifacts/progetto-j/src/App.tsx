@@ -3,6 +3,7 @@ import { Route, Switch, Router as WouterRouter } from 'wouter';
 import { useEffect } from 'react';
 import { Toaster } from '@/components/ui/toaster';
 import { Navbar } from '@/components/Navbar';
+import { ScrollToTop } from '@/components/ScrollToTop';
 import Home from '@/pages/home';
 import Journaling from '@/pages/journaling';
 import ChiSono from '@/pages/chi-sono';
@@ -42,6 +43,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
+        <ScrollToTop />
         <Navbar />
         <Switch>
           <Route path="/" component={Home} />

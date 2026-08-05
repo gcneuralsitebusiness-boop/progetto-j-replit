@@ -1,0 +1,71 @@
+BUG: navigando tra le pagine (es. da Diario a un 
+giorno specifico, o tra articoli) la nuova pagina si 
+apre già scrollata verso il basso. L'utente vede per 
+prima cosa il blocco newsletter/footer e deve 
+scorrere verso l'alto per leggere il contenuto.
+
+CAUSA
+Manca il ripristino della posizione di scroll al 
+cambio di route: essendo una SPA, il browser non 
+ricarica la pagina e mantiene lo scroll precedente.
+
+FIX RICHIESTO
+
+1. Crea un componente ScrollToTop che riporta la 
+   pagina in cima a ogni cambio di percorso, e 
+   montalo una sola volta dentro il Router, sopra 
+   le rotte:
+
+   import { useEffect } from 'react';
+   import { useLocation } from 'react-router-dom';
+
+   export default function ScrollToTop() {
+     const { pathname } = useLocation();
+     useEffect(() => {
+       window.scrollTo({ top: 0, left: 0, 
+         behavior: 'instant' });
+     }, [pathname]);
+     return null;
+   }
+
+   Usa 'instant', non 'smooth': con smooth l'utente 
+   vede la pagina scorrere e sembra un glitch.
+
+2. Se il progetto usa wouter invece di react-router, 
+   usa useLocation di wouter con la stessa logica.
+   Se usa Next.js App Router, usa usePathname dentro 
+   un componente client con lo stesso useEffect.
+
+3. Verifica che il contenitore che scrolla sia 
+   davvero window. Se il layout ha un div con 
+   overflow-y: auto o height: 100vh, window.scrollTo 
+   non ha effetto: in quel caso serve un ref al 
+   contenitore e ref.current.scrollTo(0, 0). 
+   Controlla il layout prima di scegliere.
+
+4. ECCEZIONE — non azzerare lo scroll quando cambia 
+   solo l'hash (ancore interne) o solo la query 
+   string (filtri, paginazione). Confronta soltanto 
+   pathname, non l'intera location.
+
+5. Il pulsante "indietro" del browser deve invece 
+   RIPRISTINARE la posizione precedente, non andare 
+   in cima. Se react-router lo permette, distingui 
+   la navigazione POP dalle altre e salta lo 
+   scrollTo quando è POP.
+
+VERIFICA AGGIUNTIVA
+Controlla anche che il blocco newsletter non sia 
+posizionato prima del contenuto nel DOM su mobile: se 
+un ordine CSS (order, flex-direction: column-reverse) 
+lo porta in alto sotto una certa larghezza, correggi 
+l'ordine così che il contenuto principale resti 
+sempre il primo elemento dopo la navigazione.
+
+TEST
+1. Da lista Diario, aprire tre giorni diversi di 
+   seguito: ogni pagina deve aprirsi in cima.
+2. Aprire un articolo lungo, scrollare fino in fondo, 
+   tornare indietro: la lista deve riaprirsi nel 
+   punto in cui era.
+3. Ripetere su Safari iPhone.

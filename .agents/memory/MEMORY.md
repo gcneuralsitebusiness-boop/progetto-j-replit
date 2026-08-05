@@ -10,3 +10,4 @@
 - [Email notification configuration](email-notification-configuration.md) — contact and newsletter notifications require both Resend secrets; delivery is best-effort after persistence.
 - [Preview and live diary data](preview-live-diary-data.md) — compare development and production before assuming preview data was deleted; diary routes use the public day number.
 - [Article HTML content](article-html-content.md) — article bodies accept a small sanitized HTML subset; preserve legacy plain-text rendering when changing the editor or public pages.
+- [SPA route scroll restoration](route-scroll-restoration.md) — reset on pathname navigation, preserve query/hash changes and native browser POP restoration.
