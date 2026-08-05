@@ -8,6 +8,7 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { DataErrorState } from "@/components/DataErrorState";
 import { getPhotoUrl } from "@workspace/object-storage-web";
 import { useMemo, useState } from "react";
+import { getArticlePlainText } from "@/components/ArticleContent";
 
 function resolveImgUrl(immagine: string | null | undefined): string | null {
   if (!immagine) return null;
@@ -18,16 +19,13 @@ function resolveImgUrl(immagine: string | null | undefined): string | null {
 }
 
 function readingTime(testo: string): number {
-  const words = testo.trim() ? testo.trim().split(/\s+/).length : 0;
+  const plainText = getArticlePlainText(testo);
+  const words = plainText ? plainText.split(/\s+/).length : 0;
   return Math.max(1, Math.round(words / 200));
 }
 
-function stripMarkdown(text: string): string {
-  return text.replace(/\*\*(.+?)\*\*/g, "$1");
-}
-
 function excerpt(contenuto: string, maxChars = 120): string {
-  const clean = stripMarkdown(contenuto).replace(/\n\n+/g, " ").replace(/\n/g, " ").trim();
+  const clean = getArticlePlainText(contenuto);
   if (clean.length <= maxChars) return clean;
   return clean.slice(0, maxChars).replace(/\s+\S*$/, "") + "…";
 }

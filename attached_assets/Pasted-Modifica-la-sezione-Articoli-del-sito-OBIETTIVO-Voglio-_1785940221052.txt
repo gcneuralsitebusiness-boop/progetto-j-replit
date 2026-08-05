@@ -1,0 +1,138 @@
+Modifica la sezione "Articoli" del sito.
+
+OBIETTIVO
+Voglio poter incollare HTML grezzo (h1, h2, p, ul, 
+li, blockquote, strong, em, a, hr) nel campo 
+contenuto di un articolo e vederlo renderizzato con 
+lo stile del brand, senza scrivere classi CSS a mano.
+
+IMPLEMENTAZIONE
+1. Nel form di creazione/modifica articolo, il campo 
+   "contenuto" deve essere una textarea che accetta 
+   HTML grezzo.
+2. Il contenuto va renderizzato come HTML (non 
+   escapato). Se il progetto è React, usa 
+   dangerouslySetInnerHTML dentro un wrapper 
+   <div class="article-body">. Se è HTML statico o 
+   template engine, stampa il contenuto raw dentro 
+   lo stesso wrapper.
+3. Sanifica l'HTML in ingresso con DOMPurify prima 
+   del render, permettendo solo questi tag: h1 h2 h3 
+   p ul ol li blockquote strong em a br hr. 
+   Per <a> permetti solo href, target, rel.
+4. NON aggiungere classi ai tag: lo stile deve 
+   arrivare dal CSS discendente di .article-body.
+
+CSS DA CREARE
+Aggiungi al foglio di stile globale un blocco 
+.article-body con questi token del brand:
+
+:root {
+  --nero: #0A0A0A;
+  --rosso: #B81D1D;
+  --rame: #B87333;
+  --testo: #E8E4DE;
+  --testo-soft: #A39E97;
+}
+
+.article-body {
+  color: var(--testo);
+  background: var(--nero);
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 1.0625rem;
+  line-height: 1.75;
+  max-width: 68ch;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 5rem;
+}
+
+.article-body h1 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(2.25rem, 7vw, 4rem);
+  line-height: 0.95;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #fff;
+  margin: 0 0 2rem;
+}
+
+.article-body h2 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(1.5rem, 4.5vw, 2.125rem);
+  line-height: 1.05;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--rame);
+  margin: 3.25rem 0 1rem;
+  padding-top: 1.75rem;
+  border-top: 1px solid rgba(184,115,51,0.22);
+}
+
+.article-body h2:first-child,
+.article-body h1 + h2 { border-top: none; 
+  padding-top: 0; margin-top: 1.5rem; }
+
+.article-body p { margin: 0 0 1.4rem; }
+
+.article-body p:first-of-type {
+  font-size: 1.1875rem;
+  color: #fff;
+  line-height: 1.65;
+}
+
+.article-body strong { color: #fff; font-weight: 600; }
+
+.article-body blockquote {
+  border-left: 3px solid var(--rosso);
+  margin: 2rem 0;
+  padding: 0.25rem 0 0.25rem 1.25rem;
+  font-size: 1.125rem;
+  color: #fff;
+}
+
+.article-body ul, .article-body ol {
+  margin: 0 0 1.6rem; padding-left: 1.25rem;
+}
+.article-body li { margin-bottom: 0.6rem; }
+.article-body li::marker { color: var(--rosso); }
+
+.article-body a {
+  color: var(--rame);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(184,115,51,0.4);
+}
+.article-body a:hover { color: #fff; 
+  border-color: #fff; }
+
+.article-body hr {
+  border: none;
+  height: 1px;
+  background: rgba(255,255,255,0.12);
+  margin: 3rem 0;
+}
+
+/* firma finale */
+.article-body p:last-of-type {
+  font-family: 'Bebas Neue', sans-serif;
+  letter-spacing: 0.18em;
+  color: var(--rosso);
+  font-size: 1.25rem;
+  margin-top: 3rem;
+}
+
+/* blocco fonti */
+.article-body .fonti,
+.article-body ul.fonti li {
+  font-size: 0.9375rem;
+  color: var(--testo-soft);
+  line-height: 1.55;
+}
+
+VINCOLI
+- Carica Bebas Neue e Inter da Google Fonts se non 
+  già presenti.
+- Mobile first: verifica che su schermo 390px il 
+  testo resti leggibile e gli h2 non vadano a capo 
+  male.
+- Non cambiare nient'altro del sito: solo la pagina 
+  articolo e il CSS.

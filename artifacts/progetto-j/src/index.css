@@ -417,6 +417,135 @@ body::before {
   letter-spacing: -0.02em;
 }
 
+/* Public article HTML — raw editor content is styled by the wrapper only. */
+:root {
+  --nero: #0A0A0A;
+  --rosso: #B81D1D;
+  --rame: #B87333;
+  --testo: #E8E4DE;
+  --testo-soft: #A39E97;
+}
+
+.article-body {
+  color: var(--testo);
+  background: var(--nero);
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 1.0625rem;
+  line-height: 1.75;
+  max-width: 68ch;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 5rem;
+}
+
+.article-body h1 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(2.25rem, 7vw, 4rem);
+  line-height: 0.95;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #fff;
+  margin: 0 0 2rem;
+}
+
+.article-body h2 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(1.5rem, 4.5vw, 2.125rem);
+  line-height: 1.05;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--rame);
+  margin: 3.25rem 0 1rem;
+  padding-top: 1.75rem;
+  border-top: 1px solid rgba(184, 115, 51, 0.22);
+}
+
+.article-body h2:first-child,
+.article-body h1 + h2 {
+  border-top: none;
+  padding-top: 0;
+  margin-top: 1.5rem;
+}
+
+.article-body h3 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.35rem;
+  line-height: 1.1;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--testo);
+  margin: 2rem 0 0.75rem;
+}
+
+.article-body p {
+  margin: 0 0 1.4rem;
+}
+
+.article-body p:first-of-type {
+  font-size: 1.1875rem;
+  color: #fff;
+  line-height: 1.65;
+}
+
+.article-body strong {
+  color: #fff;
+  font-weight: 600;
+}
+
+.article-body blockquote {
+  border-left: 3px solid var(--rosso);
+  margin: 2rem 0;
+  padding: 0.25rem 0 0.25rem 1.25rem;
+  font-size: 1.125rem;
+  color: #fff;
+}
+
+.article-body ul,
+.article-body ol {
+  margin: 0 0 1.6rem;
+  padding-left: 1.25rem;
+}
+
+.article-body li {
+  margin-bottom: 0.6rem;
+}
+
+.article-body li::marker {
+  color: var(--rosso);
+}
+
+.article-body a {
+  color: var(--rame);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(184, 115, 51, 0.4);
+}
+
+.article-body a:hover {
+  color: #fff;
+  border-color: #fff;
+}
+
+.article-body hr {
+  border: none;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.12);
+  margin: 3rem 0;
+}
+
+.article-body p:last-of-type {
+  font-family: 'Bebas Neue', sans-serif;
+  letter-spacing: 0.18em;
+  color: var(--rosso);
+  font-size: 1.25rem;
+  margin-top: 3rem;
+}
+
+.article-body .fonti,
+.article-body ul.fonti li {
+  font-size: 0.9375rem;
+  color: var(--testo-soft);
+  line-height: 1.55;
+}
+
 @keyframes pulse-trace-draw {
   from { stroke-dashoffset: 1000; }
   to { stroke-dashoffset: 0; }

@@ -7,7 +7,7 @@ import { Cross } from "@/components/Cross";
 import { SiteFooter } from "@/components/SiteFooter";
 import { getPhotoUrl } from "@workspace/object-storage-web";
 import { ArrowLeft } from "lucide-react";
-import { ArticleContent } from "@/components/ArticleContent";
+import { ArticleContent, getArticlePlainText } from "@/components/ArticleContent";
 
 function resolveImgUrl(immagine: string | null | undefined): string | null {
   if (!immagine) return null;
@@ -18,7 +18,8 @@ function resolveImgUrl(immagine: string | null | undefined): string | null {
 }
 
 function readingTime(testo: string): number {
-  const words = testo.trim() ? testo.trim().split(/\s+/).length : 0;
+  const plainText = getArticlePlainText(testo);
+  const words = plainText ? plainText.split(/\s+/).length : 0;
   return Math.max(1, Math.round(words / 200));
 }
 

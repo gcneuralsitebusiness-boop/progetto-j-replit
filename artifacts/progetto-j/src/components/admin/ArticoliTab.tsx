@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { ArticleContent } from "@/components/ArticleContent";
+import { ArticleContent, getArticlePlainText } from "@/components/ArticleContent";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   useListArticles,
@@ -52,28 +52,11 @@ export function ArticoliTab() {
 
   const PAGE_SIZE = 20;
 
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   const { uploadFile, isUploading, progress, error: uploadError } = useUpload({
     onSuccess: (res) => setForm((f) => ({ ...f, immagine: res.objectPath })),
   });
-
-  // Insert text at the textarea cursor; wraps selected text if before+after provided
-  const insertAtCursor = (before: string, after = "") => {
-    const el = textareaRef.current;
-    if (!el) return;
-    const start = el.selectionStart ?? 0;
-    const end = el.selectionEnd ?? 0;
-    const selected = form.contenuto.slice(start, end);
-    const newText =
-      form.contenuto.slice(0, start) + before + selected + after + form.contenuto.slice(end);
-    setForm((f) => ({ ...f, contenuto: newText }));
-    requestAnimationFrame(() => {
-      el.focus();
-      const cursor = start + before.length + selected.length + after.length;
-      el.setSelectionRange(cursor, cursor);
-    });
-  };
 
   const imgUrl = form.immagine
     ? (getPhotoUrl(form.immagine) ?? (form.immagine.startsWith("http") ? form.immagine : null))
@@ -104,6 +87,11 @@ export function ArticoliTab() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitError(null);
+
+    if (isUploading) {
+      setSubmitError("Attendi il completamento del caricamento dell'immagine.");
+      return;
+    }
 
     if (!form.slug.trim() || !form.titolo.trim()) {
       setSubmitError("Slug e titolo sono obbligatori.");
@@ -147,6 +135,20 @@ export function ArticoliTab() {
     });
   };
 
+  const handleImageFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setSubmitError("Seleziona un file immagine valido.");
+      return;
+    }
+
+    setSubmitError(null);
+    await uploadFile(file);
+  };
+
   const handleDelete = (id: number) => {
     if (window.confirm("Eliminare questo articolo?")) {
       del.mutate({ id }, { onSuccess: invalidate });
@@ -154,7 +156,7 @@ export function ArticoliTab() {
   };
 
   // Word count + reading time
-  const wordCount = form.contenuto.trim() ? form.contenuto.trim().split(/\s+/).length : 0;
+  const wordCount = getArticlePlainText(form.contenuto).split(/\s+/).filter(Boolean).length;
   const readMinutes = Math.max(1, Math.round(wordCount / 200));
 
   const inputCls = "bg-[#141414] border border-border p-3 text-white focus:outline-none focus:border-primary font-sans";
@@ -221,33 +223,65 @@ export function ArticoliTab() {
           <div className="flex flex-col gap-3 md:col-span-2">
             <label className="text-[11px] uppercase tracking-widest text-muted-foreground">Immagine</label>
 
+            <input
+              ref={imageInputRef}
+              type="file"
+              accept="image/*"
+              disabled={isUploading}
+              onChange={handleImageFileChange}
+              className="sr-only"
+            />
+
             {imgUrl ? (
-              <div className="relative border border-border w-fit">
-                <img src={imgUrl} alt="Anteprima" className="max-h-40 object-cover" />
-                <button
-                  type="button"
-                  onClick={() => setForm({ ...form, immagine: null })}
-                  className="absolute top-2 right-2 bg-background/90 text-[11px] uppercase tracking-wider px-2 py-1 border border-border hover:text-primary transition-colors"
-                >
-                  Rimuovi
-                </button>
+              <div className="flex flex-col sm:flex-row gap-4 items-start">
+                <div className="border border-border bg-[#141414] w-full sm:w-64 aspect-video overflow-hidden">
+                  <img src={imgUrl} alt="Anteprima immagine articolo" className="w-full h-full object-cover" />
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => imageInputRef.current?.click()}
+                    disabled={isUploading}
+                    className="border border-primary bg-primary px-4 py-2 text-[11px] uppercase tracking-wider text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+                  >
+                    Sostituisci immagine
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setForm((current) => ({ ...current, immagine: null }))}
+                    disabled={isUploading}
+                    className="border border-border px-4 py-2 text-[11px] uppercase tracking-wider text-muted-foreground hover:text-foreground hover:border-iron transition-colors disabled:opacity-50"
+                  >
+                    Rimuovi
+                  </button>
+                </div>
               </div>
             ) : (
-              <input
-                type="file"
-                accept="image/*"
-                disabled={isUploading}
-                onChange={async (e) => {
-                  const file = e.target.files?.[0];
-                  if (file) await uploadFile(file);
-                }}
-                className={`${inputCls} file:mr-4 file:bg-primary file:text-primary-foreground file:border-0 file:px-3 file:py-1 file:uppercase file:text-[11px] file:tracking-wider`}
-              />
+              <div className="border border-dashed border-border bg-[#141414] p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <p className="text-[12px] font-sans text-foreground">Carica l’immagine di copertina dal tuo computer.</p>
+                  <p className="text-[11px] font-sans text-muted-foreground mt-1">Sono accettati solo file immagine.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => imageInputRef.current?.click()}
+                  disabled={isUploading}
+                  className="border border-primary bg-primary px-4 py-2 text-[11px] uppercase tracking-wider text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+                >
+                  Scegli immagine
+                </button>
+              </div>
             )}
 
             {isUploading && (
-              <div className="w-full h-1 bg-[#262626]">
-                <div className="h-full bg-primary transition-all" style={{ width: `${progress}%` }} />
+              <div className="space-y-2">
+                <div className="flex justify-between text-[11px] font-sans uppercase tracking-wider text-muted-foreground">
+                  <span>Caricamento immagine</span>
+                  <span>{progress}%</span>
+                </div>
+                <div className="w-full h-1 bg-[#262626]">
+                  <div className="h-full bg-primary transition-all" style={{ width: `${progress}%` }} />
+                </div>
               </div>
             )}
             {uploadError && (
@@ -276,31 +310,6 @@ export function ArticoliTab() {
             </button>
           </div>
 
-          {/* Formatting toolbar — only shown when editing */}
-          {!previewMode && (
-            <div className="flex items-center gap-2 mb-1">
-              <button
-                type="button"
-                title="Inserisci titolo sezione"
-                onClick={() => insertAtCursor("**", "**")}
-                className="text-[11px] font-mono uppercase tracking-wider px-2 py-1 border border-border text-muted-foreground hover:border-primary hover:text-primary transition-colors"
-              >
-                ** Titolo **
-              </button>
-              <button
-                type="button"
-                title="Inserisci interruzione di paragrafo"
-                onClick={() => insertAtCursor("\n\n")}
-                className="text-[11px] font-sans uppercase tracking-wider px-2 py-1 border border-border text-muted-foreground hover:border-primary hover:text-primary transition-colors"
-              >
-                ¶ Paragrafo
-              </button>
-              <span className="text-[10px] font-sans text-muted-foreground/50 ml-auto hidden sm:inline">
-                seleziona testo, poi clicca un bottone
-              </span>
-            </div>
-          )}
-
           {previewMode ? (
             <div className="bg-[#141414] border border-primary/40 p-4 min-h-[260px]">
               {form.contenuto.trim() ? (
@@ -313,9 +322,8 @@ export function ArticoliTab() {
             </div>
           ) : (
             <textarea
-              ref={textareaRef}
               rows={16}
-              placeholder="Scrivi il contenuto dell'articolo..."
+              placeholder="<h2>Titolo della sezione</h2>&#10;&#10;<p>Scrivi qui il contenuto dell'articolo...</p>"
               value={form.contenuto}
               onChange={(e) => setForm({ ...form, contenuto: e.target.value })}
               style={{ fontFamily: "var(--app-font-mono, ui-monospace, monospace)" }}
@@ -329,7 +337,7 @@ export function ArticoliTab() {
               {wordCount} parole · lettura ~{readMinutes} min
             </p>
             <p className="text-[10px] font-mono text-muted-foreground/40">
-              <span className="text-muted-foreground/60">**Testo**</span> → titolo sezione &nbsp;·&nbsp; riga vuota → nuovo paragrafo
+              HTML supportato: h1, h2, h3, p, ul, ol, li, blockquote, strong, em, a, br, hr
             </p>
           </div>
         </div>
@@ -349,7 +357,7 @@ export function ArticoliTab() {
             disabled={create.isPending || update.isPending || isUploading}
             className="bg-primary text-primary-foreground font-serif text-[15px] px-6 py-2.5 tracking-wider hover:bg-primary/90 transition-colors uppercase disabled:opacity-50"
           >
-            {editing ? "Salva" : "Aggiungi"}
+            {isUploading ? "Caricamento immagine..." : editing ? "Salva" : "Aggiungi"}
           </button>
           {editing && (
             <button type="button" onClick={reset} className="border border-border px-6 py-2.5 text-[13px] font-sans uppercase tracking-wider hover:bg-[#141414] transition-colors">
