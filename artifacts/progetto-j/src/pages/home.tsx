@@ -7,6 +7,7 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { DataErrorState } from "@/components/DataErrorState";
 import { PulseTrace } from "@/components/PulseTrace";
 import { ArrowRight, Users, Flame, Dumbbell, Heart, Wallet } from "lucide-react";
+import { getPhotoUrl } from "@workspace/object-storage-web";
 
 export default function Home() {
   const { data: latestEntries, isLoading: latestLoading, isError: latestError } = useGetLatestEntries();
@@ -28,6 +29,14 @@ export default function Home() {
   const totalKm = allEntries?.reduce((sum, e) => sum + (e.km || 0), 0) ?? 0;
   const totalKcal = allEntries?.reduce((sum, e) => sum + (e.kcal || 0), 0) ?? 0;
   const totalIncome = allEntries?.reduce((sum, e) => sum + (e.entrate || 0), 0) ?? 0;
+  const remainingDays = Math.max(180 - currentDay, 0);
+  const sortedEntries = allEntries ? [...allEntries].sort((a, b) => a.numero - b.numero) : [];
+  const firstEntry = sortedEntries[0];
+  const lastEntry = sortedEntries[sortedEntries.length - 1];
+  const comparisonMetrics = [
+    { label: "PESO", unit: "KG", first: firstEntry?.peso, last: lastEntry?.peso, fraction: 1 },
+    { label: "BATTITO", unit: "BPM", first: firstEntry?.battito, last: lastEntry?.battito, fraction: 0 },
+  ].filter((metric) => metric.first != null && metric.last != null);
 
   const tickerItems = [
     { icon: Flame, label: "GIORNI", value: totalDays },
@@ -100,6 +109,17 @@ export default function Home() {
                 </p>
               ) : null;
             })()}
+            <p className="mt-4 text-[10px] font-sans uppercase tracking-[0.25em] text-muted-foreground">
+              AGGIORNATO OGNI GIORNO
+            </p>
+            {remainingDays > 0 && (
+              <div className="mt-16 text-center">
+                <div className="measured text-[clamp(40px,10vw,88px)] leading-none text-foreground">{remainingDays}</div>
+                <div className="mt-3 text-[11px] font-sans uppercase tracking-[0.25em] text-muted-foreground">
+                  GIORNI AL TRAGUARDO
+                </div>
+              </div>
+            )}
           </Reveal>
 
           {/* Scroll hint */}
@@ -114,6 +134,54 @@ export default function Home() {
           <div className="border-y border-border bg-card overflow-hidden py-3">
             {tickerContent}
           </div>
+        )}
+
+        {comparisonMetrics.length > 0 && firstEntry && lastEntry && (
+          <section className="max-w-5xl mx-auto px-5 sm:px-6 pt-24 w-full">
+            <Reveal>
+              <div className="border-t border-iron pt-8">
+                <h3 className="font-serif text-[clamp(28px,6vw,48px)] leading-none tracking-wide bebas text-foreground">
+                  GIORNO {firstEntry.numero} → GIORNO {lastEntry.numero}
+                </h3>
+                {firstEntry.foto && lastEntry.foto && (
+                  <div className="mt-8 grid grid-cols-2 gap-3">
+                    {[firstEntry, lastEntry].map((entry) => (
+                      <div key={entry.id}>
+                        <div className="aspect-[4/3] overflow-hidden border border-iron bg-[#0A0A0A]">
+                          <img src={getPhotoUrl(entry.foto) ?? undefined} alt={`Giorno ${entry.numero}`} className="h-full w-full object-cover grayscale" />
+                        </div>
+                        <div className="mt-2 text-[10px] font-sans uppercase tracking-[0.2em] text-muted-foreground">
+                          GIORNO {entry.numero}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2">
+                  <div className="text-[11px] font-sans uppercase tracking-[0.2em] text-muted-foreground">PRIMA</div>
+                  <div className="hidden text-[11px] font-sans uppercase tracking-[0.2em] text-muted-foreground sm:block">ORA</div>
+                  {comparisonMetrics.map((metric) => {
+                    const first = metric.first as number;
+                    const last = metric.last as number;
+                    const improved = last < first;
+                    return (
+                      <div key={metric.label} className="sm:col-span-2 grid grid-cols-[1fr_auto_1fr] items-end gap-4 border-t border-border pt-4">
+                        <div>
+                          <div className="text-[11px] font-sans uppercase tracking-[0.2em] text-muted-foreground">{metric.label}</div>
+                          <div className="measured mt-2 text-[clamp(32px,7vw,56px)] leading-none text-foreground">{first.toFixed(metric.fraction)} {metric.unit}</div>
+                        </div>
+                        <span className="pb-2 text-xl text-iron">→</span>
+                        <div className="text-right">
+                          <div className="text-[11px] font-sans uppercase tracking-[0.2em] text-muted-foreground">ORA</div>
+                          <div className={`measured mt-2 text-[clamp(32px,7vw,56px)] leading-none ${improved ? "text-primary" : "text-foreground"}`}>{last.toFixed(metric.fraction)} {metric.unit}</div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </Reveal>
+          </section>
         )}
 
         {/* Timeline */}

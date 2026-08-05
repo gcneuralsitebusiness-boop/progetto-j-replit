@@ -143,6 +143,41 @@ export default function Journaling() {
         </Reveal>
       )}
 
+      {/* Last seven days consistency strip */}
+      {entries && entries.length > 0 && (
+        <Reveal>
+          {(() => {
+            const currentDay = Math.max(...entries.map((entry) => entry.numero));
+            const weekDays = Array.from({ length: 7 }, (_, index) => currentDay - 6 + index);
+            const loggedCount = weekDays.filter((day) => entries.some((entry) => entry.numero === day && entry.testo != null)).length;
+            return (
+              <div className="mb-12 border-y border-border py-5">
+                <div className="flex gap-2 sm:gap-3">
+                  {weekDays.map((day) => {
+                    const logged = entries.some((entry) => entry.numero === day && entry.testo != null);
+                    return (
+                      <div
+                        key={day}
+                        className={`flex h-10 w-10 items-center justify-center measured text-[13px] ${
+                          logged
+                            ? "bg-primary text-white"
+                            : "border border-dashed border-[#333] bg-card text-[#444]"
+                        }`}
+                      >
+                        {day}
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="mt-3 text-[11px] font-sans uppercase tracking-[0.2em] text-muted-foreground">
+                  {loggedCount}/7 giorni questa settimana
+                </div>
+              </div>
+            );
+          })()}
+        </Reveal>
+      )}
+
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-12">
         <Reveal>

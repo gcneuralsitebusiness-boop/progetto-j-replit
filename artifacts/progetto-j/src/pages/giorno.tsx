@@ -1,9 +1,9 @@
-import { useState } from "react";
-import { useParams, Link } from "wouter";
+import { useEffect, useRef, useState } from "react";
+import { useParams, useSearch, Link } from "wouter";
 import { useListEntries } from "@workspace/api-client-react";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Share2 } from "lucide-react";
 import { Reveal } from "@/components/Reveal";
 import { Cross } from "@/components/Cross";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -175,20 +175,54 @@ function isSubtitleLine(line: string): { isSubtitle: true; text: string } | { is
   return { isSubtitle: false };
 }
 
-function DiaryText({ text }: { text: string }) {
+function DiaryText({ text, entryId, entryNumero }: { text: string; entryId: number; entryNumero: number }) {
   const cleaned = stripDayLabel(text);
   const lines = cleaned.split(/\r?\n/);
   const elements: JSX.Element[] = [];
-  let buffer: string[] = [];
+  const search = useSearch();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [highlightedLine, setHighlightedLine] = useState<number | null>(null);
+  const [copied, setCopied] = useState(false);
+  let buffer: { text: string; index: number }[] = [];
   let key = 0;
 
   const flush = () => {
     if (buffer.length > 0) {
-      const paragraph = buffer.join(" ").replace(/\s+/g, " ").trim();
-      if (paragraph) {
+      const paragraph = buffer.map((line) => line.text).join(" ").replace(/\s+/g, " ").trim();
+      if (paragraph && buffer.length > 0) {
         elements.push(
           <p key={key++} className="font-sans text-[16px] text-foreground leading-[1.7] max-w-[65ch] mb-4">
-            {paragraph}
+            {buffer.map((line, lineIndex) => (
+              <span
+                key={line.index}
+                data-line={line.index}
+                className="group relative inline transition-colors duration-700 box-decoration-clone"
+                style={
+                  highlightedLine === line.index
+                    ? {
+                        backgroundColor: "hsl(var(--primary) / 0.28)",
+                        borderLeft: "3px solid hsl(var(--primary))",
+                        boxShadow: "inset 0 0 0 1px hsl(var(--primary) / 0.3)",
+                        padding: "2px 8px",
+                      }
+                    : undefined
+                }
+              >
+                {line.text}
+                <button
+                  type="button"
+                  aria-label={`Condividi riga del giorno ${entryNumero}`}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    void shareLine(line.text, line.index);
+                  }}
+                  className="ml-2 inline-flex align-middle text-[10px] uppercase tracking-[0.12em] text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:text-primary"
+                >
+                  <Share2 size={11} />
+                </button>
+                {lineIndex < buffer.length - 1 ? " " : null}
+              </span>
+            ))}
           </p>
         );
       }
@@ -196,7 +230,40 @@ function DiaryText({ text }: { text: string }) {
     }
   };
 
-  lines.forEach((raw) => {
+  const shareLine = async (lineText: string, lineIndex: number) => {
+    const url = `${window.location.origin}/giorno/${entryId}?line=${lineIndex}`;
+    const title = `Giorno ${entryNumero} — Progetto J`;
+    if (typeof navigator.share === "function") {
+      try {
+        await navigator.share({ title, text: lineText, url });
+      } catch {
+        // The reader cancelled the native share sheet.
+      }
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2500);
+    } catch {
+      // Clipboard access can be unavailable in an embedded browser.
+    }
+  };
+
+  // A shared line is highlighted after the rendered diary is available, then fades out.
+  useEffect(() => {
+    const value = new URLSearchParams(search).get("line");
+    const lineIndex = value == null ? null : Number(value);
+    if (lineIndex == null || !Number.isInteger(lineIndex) || lineIndex < 0) return;
+    const target = containerRef.current?.querySelector(`[data-line="${lineIndex}"]`);
+    if (!target) return;
+    setHighlightedLine(lineIndex);
+    target.scrollIntoView({ behavior: "smooth", block: "center" });
+    const timeout = window.setTimeout(() => setHighlightedLine(null), 4000);
+    return () => window.clearTimeout(timeout);
+  }, [search]);
+
+  lines.forEach((raw, index) => {
     const line = raw.trim();
     if (!line) return;
 
@@ -212,14 +279,23 @@ function DiaryText({ text }: { text: string }) {
         </span>
       );
     } else {
-      buffer.push(line);
+      buffer.push({ text: line, index });
     }
   });
   flush();
 
   if (elements.length === 0) return null;
 
-  return <div className="border-l-2 border-iron pl-6">{elements}</div>;
+  return (
+    <>
+      <div ref={containerRef} className="border-l-2 border-iron pl-6">{elements}</div>
+      {copied && (
+        <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 border border-primary bg-[#0A0A0A] px-4 py-2 text-[11px] font-sans uppercase tracking-[0.2em] text-primary">
+          LINK COPIATO
+        </div>
+      )}
+    </>
+  );
 }
 
 // ─── Share button ─────────────────────────────────────────────────────────────
@@ -347,7 +423,12 @@ export default function GiornoDetail() {
             className="w-full h-full object-cover grayscale-[15%]"
           />
         ) : (
-          <div className="crosshatch w-full h-full" />
+          <div className="relative h-full w-full border border-iron bg-[#0A0A0A]">
+            <div className="crosshatch absolute inset-0 opacity-30" />
+            <span className="absolute inset-0 flex items-center justify-center px-4 text-center text-[11px] font-sans uppercase tracking-[0.2em] text-[#3A3A3A]">
+              NESSUNA IMMAGINE — SOLO IL LAVORO
+            </span>
+          </div>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
 
@@ -401,7 +482,7 @@ export default function GiornoDetail() {
           {entry.testo && (
             <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-[140px_1fr] gap-x-8 border-t border-iron py-10">
               <div className="font-sans text-[11px] uppercase tracking-[0.2em] text-muted-foreground md:sticky md:top-24 self-start mb-4 md:mb-0">DIARIO</div>
-              <DiaryText text={entry.testo} />
+              <DiaryText text={entry.testo} entryId={entry.id} entryNumero={entry.numero} />
             </div>
           )}
         </div>

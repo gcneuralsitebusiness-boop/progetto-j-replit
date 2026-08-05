@@ -120,7 +120,12 @@ export default function Articoli() {
                           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                         </>
                       ) : (
-                        <div className="crosshatch absolute inset-0 w-full h-full" />
+                        <div className="absolute inset-0 h-full w-full border border-iron bg-[#0A0A0A]">
+                          <div className="crosshatch absolute inset-0 opacity-30" />
+                          <span className="absolute inset-0 flex items-center justify-center text-[11px] font-sans uppercase tracking-[0.2em] text-[#3A3A3A]">
+                            NESSUNA IMMAGINE
+                          </span>
+                        </div>
                       )}
                     </div>
 

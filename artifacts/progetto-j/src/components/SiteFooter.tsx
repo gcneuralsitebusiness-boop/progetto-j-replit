@@ -10,7 +10,9 @@ export function SiteFooter() {
 
   return (
     <>
-      <EmailCapture />
+      <div id="email-capture">
+        <EmailCapture />
+      </div>
       <footer className="border-t border-border py-12 mt-12 w-full">
         <div className="max-w-5xl mx-auto px-5 sm:px-6 flex flex-col items-center gap-6">
           <Cross />

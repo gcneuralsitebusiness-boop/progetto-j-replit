@@ -89,6 +89,15 @@ export function Timeline180({ entries }: { entries: Entry[] }) {
         })}
       </div>
 
+      <div className="mt-8 border border-primary bg-transparent p-6 sm:p-8">
+        <div className="text-[11px] font-sans uppercase tracking-[0.2em] text-primary">GIORNO 180</div>
+        <div className="mt-2 font-serif text-[clamp(24px,5vw,40px)] leading-none text-foreground bebas">IL REPORT FINALE</div>
+        <p className="mt-4 text-[14px] font-sans text-muted-foreground">
+          Tutti i dati, il metodo, gli errori. Gratis, a chi lo vuole.
+        </p>
+        <a href="#email-capture" className="btn-primary mt-6 inline-flex">RICEVILO</a>
+      </div>
+
       <div className="cut-divider mt-8" />
     </div>
   );
