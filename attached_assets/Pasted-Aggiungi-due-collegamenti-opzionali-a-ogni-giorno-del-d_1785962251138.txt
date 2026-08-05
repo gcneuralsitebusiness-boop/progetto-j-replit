@@ -1,0 +1,105 @@
+Aggiungi due collegamenti opzionali a ogni giorno del 
+diario: il video Instagram di quel giorno e l'articolo 
+pubblicato in quel giorno.
+
+DATABASE
+Aggiungi due campi nullable alla tabella dei giorni 
+di diario:
+- instagram_url  (text, nullable)
+- article_slug   (text, nullable, FK logica verso 
+                  articles.slug)
+Non rendere obbligatorio nessuno dei due: molti giorni 
+non avranno né video né articolo.
+
+ADMIN (form giorno diario)
+- Campo "LINK INSTAGRAM": input testo, placeholder 
+  "https://www.instagram.com/reel/...". 
+  Validazione: se compilato deve essere un URL valido 
+  del dominio instagram.com, altrimenti errore 
+  leggibile sotto il campo.
+- Campo "ARTICOLO COLLEGATO": <select> popolato 
+  dinamicamente con gli articoli esistenti 
+  (titolo visibile, slug come valore), con opzione 
+  vuota "— nessuno —" come default. 
+  NON un campo testo libero: deve pescare dagli 
+  articoli reali per evitare link rotti.
+- Entrambi i campi vanno anche nel form di modifica.
+
+FRONTEND (pagina giorno)
+Sotto il testo del diario e sopra il countdown, 
+renderizza un blocco .day-links, mostrato SOLO se 
+almeno uno dei due campi è valorizzato. Se un campo è 
+vuoto, non mostrare la card corrispondente e non 
+lasciare spazio vuoto.
+
+Struttura:
+<div class="day-links">
+  <a class="day-link day-link--ig" href="..." 
+     target="_blank" rel="noopener noreferrer">
+    <span class="day-link__label">Video del giorno</span>
+    <span class="day-link__title">Guarda su Instagram</span>
+  </a>
+  <a class="day-link day-link--article" href="/articoli/SLUG">
+    <span class="day-link__label">Articolo</span>
+    <span class="day-link__title">TITOLO ARTICOLO</span>
+  </a>
+</div>
+
+Il titolo dell'articolo va recuperato dal database, 
+non scritto a mano.
+Il link Instagram apre in nuova scheda. Il link 
+articolo resta interno alla SPA (usa il componente 
+Link del router, non un <a> che ricarica la pagina).
+
+CSS
+.day-links {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+  margin: 2.5rem 0;
+}
+@media (min-width: 640px) {
+  .day-links { grid-template-columns: 1fr 1fr; }
+}
+.day-link {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 1rem 1.125rem;
+  background: #111;
+  border: 1px solid rgba(255,255,255,0.09);
+  border-left: 3px solid #B81D1D;
+  text-decoration: none;
+  transition: border-color .18s ease, background .18s ease;
+}
+.day-link--article { border-left-color: #B87333; }
+.day-link:hover { background: #161616; 
+  border-color: rgba(255,255,255,0.2); }
+.day-link__label {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 0.75rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #A39E97;
+}
+.day-link__title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.25rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #fff;
+  line-height: 1.1;
+}
+
+BONUS (solo se semplice)
+Nella pagina articolo, se un giorno di diario punta a 
+quell'articolo, mostra in fondo un rimando inverso: 
+"Scritto il giorno N — leggi il diario". Relazione 
+bidirezionale senza campi aggiuntivi.
+
+TEST
+1. Giorno con entrambi i link: due card affiancate su 
+   desktop, impilate su mobile.
+2. Giorno con solo Instagram: una card, nessuno spazio 
+   vuoto.
+3. Giorno senza link: blocco assente del tutto.
