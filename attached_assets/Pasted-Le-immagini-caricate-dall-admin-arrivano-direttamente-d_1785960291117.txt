@@ -1,0 +1,62 @@
+Le immagini caricate dall'admin arrivano direttamente 
+dall'iPhone, quindi pesano 3-5 MB ciascuna. Su rete 
+mobile il sito è lento. Vanno ottimizzate al momento 
+del caricamento.
+
+PIPELINE RICHIESTA
+Nell'endpoint di upload esistente, dopo aver ricevuto 
+il file e prima di salvarlo:
+
+1. Usa sharp per l'elaborazione.
+
+2. Correggi l'orientamento leggendo i dati EXIF 
+   (.rotate() senza argomenti). Senza questo, le foto 
+   scattate in verticale con iPhone appaiono ruotate.
+
+3. Rimuovi tutti i metadati EXIF dopo la rotazione. 
+   Le foto dell'iPhone contengono le coordinate GPS 
+   del luogo dello scatto: pubblicarle significa 
+   esporre la posizione dei siti di lavoro e di casa. 
+   Questo punto non è opzionale.
+
+4. Genera tre varianti in formato WebP, qualità 82, 
+   senza mai ingrandire un'immagine più piccola 
+   dell'originale (withoutEnlargement: true):
+   - thumb:  larghezza 600px   → liste e anteprime
+   - full:   larghezza 1600px  → pagina articolo
+   - og:     1200x630px, ritaglio centrato → anteprime social
+
+5. Salva le tre varianti su Replit Object Storage con 
+   nomi derivati dallo stesso uuid:
+   {uuid}-thumb.webp, {uuid}-full.webp, {uuid}-og.webp
+   Nel database salva l'uuid base, non i tre URL 
+   completi: le varianti si ricostruiscono per 
+   convenzione.
+
+6. Non conservare l'originale: dopo la conversione 
+   eliminalo per non riempire lo storage.
+
+FRONTEND
+- Liste articoli e diario → variante thumb
+- Pagina articolo → variante full
+- Meta tag og:image → variante og
+- Ogni <img> deve avere loading="lazy" (tranne quella 
+  in cima alla pagina, che va in eager), width e 
+  height espliciti per evitare che il layout salti 
+  durante il caricamento, e un alt derivato dal 
+  titolo dell'articolo.
+
+RETROCOMPATIBILITÀ
+Gli articoli già pubblicati hanno immagini nel vecchio 
+formato. Se per un record le varianti non esistono, il 
+frontend deve usare l'URL originale senza rompersi. 
+Non cancellare né rinominare nulla di esistente.
+
+TEST
+1. Carica una foto verticale da iPhone: deve apparire 
+   nel verso giusto.
+2. Controlla che il file salvato pesi meno di 300 KB.
+3. Verifica con un lettore EXIF che i dati GPS siano 
+   spariti.
+4. Apri un articolo vecchio: l'immagine deve ancora 
+   vedersi.

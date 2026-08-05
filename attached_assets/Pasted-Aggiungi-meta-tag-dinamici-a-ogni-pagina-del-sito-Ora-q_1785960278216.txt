@@ -1,0 +1,82 @@
+Aggiungi meta tag dinamici a ogni pagina del sito. Ora 
+quando condivido un link su Instagram o WhatsApp esce 
+un'anteprima vuota.
+
+COSA SERVE
+Ogni pagina deve avere <title>, <meta name="description">, 
+e i tag Open Graph e Twitter Card, generati dai dati 
+reali di quella pagina.
+
+VALORI PER TIPO DI PAGINA
+
+Articolo:
+  title:       "TITOLO ARTICOLO — Progetto J"
+  description: primi 155 caratteri del contenuto, con i 
+               tag HTML rimossi, tagliati sull'ultima 
+               parola intera + "…"
+  og:image:    immagine di copertina dell'articolo
+  og:type:     "article"
+  og:url:      URL assoluto dell'articolo
+
+Giorno di diario:
+  title:       "Giorno N — Progetto J"
+  description: primi 155 caratteri del testo del giorno
+  og:image:    cover del giorno se esiste, altrimenti 
+               l'immagine di default
+  og:type:     "article"
+
+Pagine fisse (home, articoli, sponsor, coaching):
+  title:       "NOME PAGINA — Progetto J"
+  description: testo statico definito per ciascuna
+
+TAG DA GENERARE
+<title>
+<meta name="description" content="...">
+<meta property="og:title" content="...">
+<meta property="og:description" content="...">
+<meta property="og:image" content="URL ASSOLUTO">
+<meta property="og:url" content="URL ASSOLUTO">
+<meta property="og:type" content="...">
+<meta property="og:site_name" content="Progetto J">
+<meta property="og:locale" content="it_IT">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="...">
+<meta name="twitter:description" content="...">
+<meta name="twitter:image" content="URL ASSOLUTO">
+
+VINCOLO CRITICO — leggilo prima di implementare
+og:image e og:url devono essere URL ASSOLUTI completi 
+di https:// e dominio. I percorsi relativi (/img/foto.jpg) 
+NON funzionano: i crawler li ignorano e l'anteprima 
+resta vuota. Crea una costante SITE_URL con il dominio 
+di produzione e anteponila sempre.
+
+VINCOLO CRITICO 2
+Se il sito è una SPA renderizzata solo lato client, i 
+crawler di WhatsApp, Telegram e Instagram NON eseguono 
+JavaScript: vedranno sempre i meta tag di default 
+dell'index.html, non quelli iniettati da React. 
+Verifica come è servito il sito e scegli:
+- Se c'è già un server Express che serve le pagine: 
+  inietta i meta tag lato server nell'HTML prima di 
+  inviarlo, in base alla rotta richiesta.
+- Se è puramente client-side: aggiungi un middleware 
+  che intercetta le richieste degli user-agent dei 
+  crawler (facebookexternalhat, Twitterbot, 
+  WhatsApp, TelegramBot, LinkedInBot) e restituisce 
+  loro un HTML minimo con i soli meta tag corretti.
+Dimmi quale strada hai preso e perché.
+
+IMMAGINE DI DEFAULT
+Crea /public/og-default.jpg, 1200x630px, fondo #0A0A0A 
+con la J rossa #B81D1D al centro. Usala come fallback 
+ovunque manchi una copertina.
+
+TEST OBBLIGATORIO
+1. Incolla l'URL di un articolo su 
+   https://www.opengraph.xyz e verifica che titolo, 
+   descrizione e immagine compaiano.
+2. Manda un link a te stesso su WhatsApp: deve uscire 
+   l'anteprima con immagine grande.
+3. Apri tre pagine diverse e controlla che il titolo 
+   della scheda del browser sia diverso per ognuna.
