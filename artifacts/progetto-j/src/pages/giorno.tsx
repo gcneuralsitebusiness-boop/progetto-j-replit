@@ -9,6 +9,7 @@ import { Cross } from "@/components/Cross";
 import { SiteFooter } from "@/components/SiteFooter";
 import { DataErrorState } from "@/components/DataErrorState";
 import { getPhotoUrl } from "@workspace/object-storage-web";
+import { usePageMeta } from "@/hooks/use-page-meta";
 
 function padDay(n: number) {
   return n.toString().padStart(3, "0");
@@ -339,79 +340,38 @@ function ShareButton({ entryNumero, entryTesto }: { entryNumero: number; entryTe
 
 // ─── main page ────────────────────────────────────────────────────────────────
 
-export default function GiornoDetail() {
-  const { id } = useParams<{ id: string }>();
-  const { data: entries, isLoading, isError } = useListEntries();
-
-  const requestedNumber = Number(id);
-  const entry = entries?.find((e) => e.numero === requestedNumber);
-
-  // Compute averages across all entries
-  const avg = (arr: (number | null | undefined)[]): number => {
-    const vals = arr.filter((v): v is number => v != null && v > 0);
-    return vals.length ? Math.round((vals.reduce((s, v) => s + v, 0) / vals.length) * 10) / 10 : 0;
-  };
-
-  const avgKcal = avg(entries?.map((e) => e.kcal) ?? []);
-  const avgKm = avg(entries?.map((e) => e.km) ?? []);
-  const avgSonno = avg(entries?.map((e) => e.sonno) ?? []);
-  const avgPeso = avg(entries?.map((e) => e.peso) ?? []);
-  const avgBattito = avg(entries?.map((e) => e.battito) ?? []);
-  const avgFlessioni = avg(entries?.map((e) => e.flessioni) ?? []);
-  const avgAddominali = avg(entries?.map((e) => e.addominali) ?? []);
-  const avgRound = avg(entries?.map((e) => e.round) ?? []);
-
-  // Sorted entries for prev/next navigation
-  const sorted = entries ? [...entries].sort((a, b) => b.numero - a.numero) : [];
-  const idx = entry ? sorted.findIndex((e) => e.numero === entry.numero) : -1;
-  const prevEntry = sorted[idx + 1] ?? null;
-  const nextEntry = sorted[idx - 1] ?? null;
-
-  if (isLoading) {
-    return (
-      <>
-        <div className="min-h-screen pt-24 flex items-center justify-center">
-          <span className="text-muted-foreground font-sans uppercase tracking-widest text-[12px] animate-pulse">Caricamento...</span>
-        </div>
-        <SiteFooter />
-      </>
-    );
-  }
-
-  if (isError) {
-    return (
-      <>
-        <DataErrorState />
-        <SiteFooter />
-      </>
-    );
-  }
-
-  if (!entry) {
-    return (
-      <>
-        <div className="min-h-screen pt-24 flex flex-col items-center justify-center gap-6">
-          <span className="text-[11px] font-sans uppercase tracking-[0.3em] text-muted-foreground">Giornata non trovata</span>
-          <Link href="/journaling" className="btn-primary text-[12px]">Torna al Journaling</Link>
-        </div>
-        <SiteFooter />
-      </>
-    );
-  }
-
+/** Inner component rendered only when the entry is available, so hooks run unconditionally. */
+function GiornoContent({
+  entry,
+  prevEntry,
+  nextEntry,
+  averages,
+}: {
+  entry: GiornoEntry;
+  prevEntry: GiornoEntry | null;
+  nextEntry: GiornoEntry | null;
+  averages: VsMetric[];
+}) {
   const photoUrl = getPhotoUrl(entry.foto);
   const hasPhoto = Boolean(entry.foto && photoUrl);
 
-  const averages: VsMetric[] = [
-    { label: "KCAL", value: entry.kcal ?? 0, avg: avgKcal },
-    { label: "SONNO", value: entry.sonno ?? 0, avg: avgSonno, fraction: 1 },
-    { label: "PESO", value: entry.peso ?? 0, avg: avgPeso, fraction: 1 },
-    { label: "BATTITO", value: entry.battito ?? 0, avg: avgBattito },
-    { label: "KM", value: entry.km ?? 0, avg: avgKm, fraction: 1 },
-    { label: "FLESSIONI", value: entry.flessioni ?? 0, avg: avgFlessioni },
-    { label: "ADDOMINALI", value: entry.addominali ?? 0, avg: avgAddominali },
-    { label: "ROUND", value: entry.round ?? 0, avg: avgRound },
-  ];
+  // Build a short description from the first diary sentence, falling back to the date.
+  const firstDiaryLine = entry.testo
+    ? stripDayLabel(entry.testo).split(/\r?\n/).find((l) => l.trim())?.trim()
+    : undefined;
+  const dateLabel = format(new Date(entry.data), "d MMMM yyyy", { locale: it });
+  const metaDescription = firstDiaryLine
+    ? firstDiaryLine.length > 160
+      ? firstDiaryLine.slice(0, 157) + "…"
+      : firstDiaryLine
+    : `Giorno ${entry.numero} — ${dateLabel}`;
+
+  usePageMeta({
+    title: `Giorno ${String(entry.numero).padStart(3, "0")} — Progetto J`,
+    description: metaDescription,
+    image: hasPhoto ? photoUrl : null,
+    url: `${window.location.origin}/giorno/${entry.numero}`,
+  });
 
   return (
     <div className="min-h-screen pb-24">
@@ -530,6 +490,80 @@ export default function GiornoDetail() {
       <SiteFooter />
     </div>
   );
+}
+
+export default function GiornoDetail() {
+  const { id } = useParams<{ id: string }>();
+  const { data: entries, isLoading, isError } = useListEntries();
+
+  const requestedNumber = Number(id);
+  const entry = entries?.find((e) => e.numero === requestedNumber);
+
+  // Compute averages across all entries
+  const avg = (arr: (number | null | undefined)[]): number => {
+    const vals = arr.filter((v): v is number => v != null && v > 0);
+    return vals.length ? Math.round((vals.reduce((s, v) => s + v, 0) / vals.length) * 10) / 10 : 0;
+  };
+
+  const avgKcal = avg(entries?.map((e) => e.kcal) ?? []);
+  const avgKm = avg(entries?.map((e) => e.km) ?? []);
+  const avgSonno = avg(entries?.map((e) => e.sonno) ?? []);
+  const avgPeso = avg(entries?.map((e) => e.peso) ?? []);
+  const avgBattito = avg(entries?.map((e) => e.battito) ?? []);
+  const avgFlessioni = avg(entries?.map((e) => e.flessioni) ?? []);
+  const avgAddominali = avg(entries?.map((e) => e.addominali) ?? []);
+  const avgRound = avg(entries?.map((e) => e.round) ?? []);
+
+  // Sorted entries for prev/next navigation
+  const sorted = entries ? [...entries].sort((a, b) => b.numero - a.numero) : [];
+  const idx = entry ? sorted.findIndex((e) => e.numero === entry.numero) : -1;
+  const prevEntry = sorted[idx + 1] ?? null;
+  const nextEntry = sorted[idx - 1] ?? null;
+
+  if (isLoading) {
+    return (
+      <>
+        <div className="min-h-screen pt-24 flex items-center justify-center">
+          <span className="text-muted-foreground font-sans uppercase tracking-widest text-[12px] animate-pulse">Caricamento...</span>
+        </div>
+        <SiteFooter />
+      </>
+    );
+  }
+
+  if (isError) {
+    return (
+      <>
+        <DataErrorState />
+        <SiteFooter />
+      </>
+    );
+  }
+
+  if (!entry) {
+    return (
+      <>
+        <div className="min-h-screen pt-24 flex flex-col items-center justify-center gap-6">
+          <span className="text-[11px] font-sans uppercase tracking-[0.3em] text-muted-foreground">Giornata non trovata</span>
+          <Link href="/journaling" className="btn-primary text-[12px]">Torna al Journaling</Link>
+        </div>
+        <SiteFooter />
+      </>
+    );
+  }
+
+  const averages: VsMetric[] = [
+    { label: "KCAL", value: entry.kcal ?? 0, avg: avgKcal },
+    { label: "SONNO", value: entry.sonno ?? 0, avg: avgSonno, fraction: 1 },
+    { label: "PESO", value: entry.peso ?? 0, avg: avgPeso, fraction: 1 },
+    { label: "BATTITO", value: entry.battito ?? 0, avg: avgBattito },
+    { label: "KM", value: entry.km ?? 0, avg: avgKm, fraction: 1 },
+    { label: "FLESSIONI", value: entry.flessioni ?? 0, avg: avgFlessioni },
+    { label: "ADDOMINALI", value: entry.addominali ?? 0, avg: avgAddominali },
+    { label: "ROUND", value: entry.round ?? 0, avg: avgRound },
+  ];
+
+  return <GiornoContent entry={entry} prevEntry={prevEntry} nextEntry={nextEntry} averages={averages} />;
 }
 
 // Type helpers to keep inline components tidy
