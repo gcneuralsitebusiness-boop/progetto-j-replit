@@ -10,8 +10,7 @@ import {
 } from "@workspace/api-client-react";
 import type { Article } from "@workspace/api-client-react";
 import { useUpload, getPhotoUrl } from "@workspace/object-storage-web";
-
-const CATEGORIES = ["Biohacking", "Combat", "Business", "Fede", "Mentalità"] as const;
+import { ARTICLE_CATEGORIES, isArticleCategory } from "@/constants/articleCategories";
 
 /** Max pixel dimension for the longer side of a cover image. */
 const MAX_IMAGE_PX = 1920;
@@ -23,7 +22,7 @@ const COMPRESS_THRESHOLD_BYTES = 500 * 1024; // 500 KB
 const EMPTY: Omit<Article, "id" | "createdAt" | "updatedAt"> = {
   slug: "",
   titolo: "",
-  categoria: CATEGORIES[0],
+  categoria: "",
   contenuto: "",
   immagine: null,
   pubblicato: false,
@@ -121,6 +120,8 @@ export function ArticoliTab() {
   const [page, setPage] = useState(1);
   const [previewMode, setPreviewMode] = useState(false);
   const [sortKey, setSortKey] = useState<"date-desc" | "date-asc" | "title-asc" | "title-desc" | "categoria-asc" | "categoria-desc">("date-desc");
+  const [externalImageUrl, setExternalImageUrl] = useState("");
+  const [imagePreviewError, setImagePreviewError] = useState(false);
 
   const PAGE_SIZE = 20;
 
@@ -141,6 +142,8 @@ export function ArticoliTab() {
     setForm({ ...EMPTY });
     setSlugTouched(false);
     setSubmitError(null);
+    setExternalImageUrl("");
+    setImagePreviewError(false);
   };
 
   const handleTitoloChange = (titolo: string) => {
@@ -165,8 +168,8 @@ export function ArticoliTab() {
       return;
     }
 
-    if (!form.slug.trim() || !form.titolo.trim()) {
-      setSubmitError("Slug e titolo sono obbligatori.");
+    if (!form.slug.trim() || !form.titolo.trim() || !isArticleCategory(form.categoria)) {
+      setSubmitError("Slug, titolo e categoria sono obbligatori.");
       return;
     }
 
@@ -205,6 +208,8 @@ export function ArticoliTab() {
       pubblicato: a.pubblicato,
       data: a.data,
     });
+    setExternalImageUrl("");
+    setImagePreviewError(false);
   };
 
   const handleImageFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -212,19 +217,20 @@ export function ArticoliTab() {
     event.target.value = "";
     if (!file) return;
 
-    if (!file.type.startsWith("image/")) {
-      setSubmitError("Seleziona un file immagine valido.");
+    const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
+    if (!allowedTypes.has(file.type)) {
+      setSubmitError("Sono consentite solo immagini JPG, PNG o WebP.");
       return;
     }
 
-    // Hard reject: raw files over 20 MB are almost certainly unintentional
-    const MAX_RAW_BYTES = 20 * 1024 * 1024;
-    if (file.size > MAX_RAW_BYTES) {
-      setSubmitError("L'immagine supera i 20 MB. Riduci le dimensioni prima di caricarla.");
+    const MAX_FILE_BYTES = 8 * 1024 * 1024;
+    if (file.size > MAX_FILE_BYTES) {
+      setSubmitError("L'immagine supera il limite di 8 MB. Riduci le dimensioni prima di caricarla.");
       return;
     }
 
     setSubmitError(null);
+    setImagePreviewError(false);
 
     // Compress & resize client-side before uploading
     const optimized = await optimizeImage(file);
@@ -274,17 +280,24 @@ export function ArticoliTab() {
 
           {/* Categoria */}
           <div className="flex flex-col gap-1">
-            <label className="text-[11px] uppercase tracking-widest text-muted-foreground">Categoria</label>
+            <label className="text-[11px] uppercase tracking-widest text-muted-foreground">Categoria *</label>
             <select
+              required
               value={form.categoria}
               onChange={(e) => setForm({ ...form, categoria: e.target.value })}
-              className={inputCls}
+              className={`${inputCls} appearance-none bg-no-repeat bg-[length:12px_12px] bg-[right_0.85rem_center] pr-9 font-serif uppercase tracking-wider`}
+              style={{
+                backgroundImage: "linear-gradient(45deg, transparent 50%, #B81D1D 50%), linear-gradient(135deg, #B81D1D 50%, transparent 50%)",
+                backgroundPosition: "calc(100% - 0.95rem) calc(50% - 0.15rem), calc(100% - 0.65rem) calc(50% - 0.15rem)",
+                backgroundSize: "0.3rem 0.3rem, 0.3rem 0.3rem",
+              }}
             >
+              <option value="" disabled>CATEGORIA</option>
               {/* Include current value as option if it's not in the predefined list (legacy data) */}
-              {form.categoria && !CATEGORIES.includes(form.categoria as (typeof CATEGORIES)[number]) && (
+              {form.categoria && !isArticleCategory(form.categoria) && (
                 <option key="__legacy__" value={form.categoria}>{form.categoria}</option>
               )}
-              {CATEGORIES.map((c) => (
+              {ARTICLE_CATEGORIES.map((c) => (
                 <option key={c} value={c}>{c}</option>
               ))}
             </select>
@@ -303,7 +316,7 @@ export function ArticoliTab() {
 
           {/* Immagine upload — full width */}
           <div className="flex flex-col gap-3 md:col-span-2">
-            <label className="text-[11px] uppercase tracking-widest text-muted-foreground">Immagine</label>
+            <label className="text-[11px] uppercase tracking-widest text-muted-foreground">Immagine copertina</label>
 
             <input
               ref={imageInputRef}
@@ -317,7 +330,18 @@ export function ArticoliTab() {
             {imgUrl ? (
               <div className="flex flex-col sm:flex-row gap-4 items-start">
                 <div className="border border-border bg-[#141414] w-full sm:w-64 aspect-video overflow-hidden">
-                  <img src={imgUrl} alt="Anteprima immagine articolo" className="w-full h-full object-cover" />
+                  {imagePreviewError ? (
+                    <p className="h-full flex items-center justify-center px-4 text-center text-[11px] font-sans text-muted-foreground">
+                      Impossibile visualizzare l'immagine. Verifica l'URL oppure scegli un file.
+                    </p>
+                  ) : (
+                    <img
+                      src={imgUrl}
+                      alt="Anteprima immagine articolo"
+                      onError={() => setImagePreviewError(true)}
+                      className="w-full h-full object-cover"
+                    />
+                  )}
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <button
@@ -343,7 +367,7 @@ export function ArticoliTab() {
                 <div>
                   <p className="text-[12px] font-sans text-foreground">Carica l'immagine di copertina dal tuo computer.</p>
                   <p className="text-[11px] font-sans text-muted-foreground mt-1">
-                    JPEG o WebP consigliati · max 20 MB · le immagini grandi vengono ridimensionate automaticamente a 1920 px
+                      JPG, PNG o WebP · max 8 MB · le immagini grandi vengono ridimensionate automaticamente a 1920 px
                   </p>
                 </div>
                 <button
@@ -373,6 +397,36 @@ export function ArticoliTab() {
                 Errore upload: {uploadError.message}
               </p>
             )}
+            <p className="text-[11px] font-sans text-muted-foreground">
+              File consentiti: JPG, PNG o WebP · dimensione massima 8 MB.
+            </p>
+            <div className="flex flex-col gap-1 max-w-md">
+              <label htmlFor="article-external-image" className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                Oppure incolla un URL
+              </label>
+              <input
+                id="article-external-image"
+                type="url"
+                value={externalImageUrl}
+                disabled={isUploading}
+                placeholder="https://..."
+                onChange={(event) => {
+                  const url = event.target.value;
+                  setExternalImageUrl(url);
+                  setImagePreviewError(false);
+                }}
+                onBlur={() => {
+                  const url = externalImageUrl.trim();
+                  if (url && /^https?:\/\//i.test(url)) {
+                    setForm((current) => ({ ...current, immagine: url }));
+                  } else if (!url && form.immagine === externalImageUrl) {
+                    setForm((current) => ({ ...current, immagine: null }));
+                  }
+                }}
+                className={`${inputCls} text-[12px] disabled:opacity-50`}
+              />
+              <p className="text-[10px] text-muted-foreground">Se carichi un file, il file ha la precedenza.</p>
+            </div>
           </div>
         </div>
 
@@ -471,7 +525,7 @@ export function ArticoliTab() {
             className="bg-[#141414] border border-border px-3 py-2 text-[12px] font-sans text-white focus:outline-none focus:border-primary uppercase tracking-wider"
           >
             <option value="">Tutte le categorie</option>
-            {CATEGORIES.map((c) => (
+            {ARTICLE_CATEGORIES.map((c) => (
               <option key={c} value={c}>{c}</option>
             ))}
           </select>

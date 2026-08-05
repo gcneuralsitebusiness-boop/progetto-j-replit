@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
 import { articoliTable } from "@workspace/db/schema";
+import { isArticleCategory } from "../constants/articleCategories";
 import { eq, and } from "drizzle-orm";
 
 const router = Router();
@@ -36,7 +37,11 @@ router.post("/articles", async (req, res): Promise<void> => {
 
   const { slug, titolo, categoria, contenuto, immagine, pubblicato, data } = req.body;
   if (!slug || !titolo || typeof slug !== "string" || typeof titolo !== "string") {
-    res.status(400).json({ error: "slug and titolo are required" });
+    res.status(400).json({ error: "Slug e titolo sono obbligatori." });
+    return;
+  }
+  if (!isArticleCategory(categoria)) {
+    res.status(400).json({ error: "Seleziona una categoria valida." });
     return;
   }
 
@@ -45,7 +50,7 @@ router.post("/articles", async (req, res): Promise<void> => {
     .values({
       slug,
       titolo,
-      categoria: typeof categoria === "string" ? categoria : "Generale",
+      categoria,
       contenuto: typeof contenuto === "string" ? contenuto : "",
       immagine: typeof immagine === "string" ? immagine : null,
       pubblicato: typeof pubblicato === "boolean" ? pubblicato : false,
@@ -65,6 +70,11 @@ router.put("/articles/:id", async (req, res): Promise<void> => {
   const id = Number(req.params.id);
   if (Number.isNaN(id)) {
     res.status(400).json({ error: "Invalid id" });
+    return;
+  }
+
+  if (req.body.categoria !== undefined && !isArticleCategory(req.body.categoria)) {
+    res.status(400).json({ error: "Seleziona una categoria valida." });
     return;
   }
 

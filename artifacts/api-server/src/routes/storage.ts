@@ -12,6 +12,8 @@ import {
 
 const router: IRouter = Router();
 const objectStorageService = new ObjectStorageService();
+const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
 
 function isAdmin(req: Request): boolean {
   return Boolean(req.session?.adminAuthenticated);
@@ -39,10 +41,16 @@ router.post(
       return;
     }
 
-    const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10 MB after client-side compression
+    if (!ALLOWED_IMAGE_TYPES.has(parsed.data.contentType)) {
+      res.status(400).json({
+        error: 'Sono consentite solo immagini JPG, PNG o WebP.',
+      });
+      return;
+    }
+
     if (parsed.data.size > MAX_UPLOAD_BYTES) {
       res.status(413).json({
-        error: `Il file supera il limite di 10 MB. Comprimi l'immagine prima di caricarla.`,
+        error: `Il file supera il limite di 8 MB. Riduci le dimensioni prima di caricarlo.`,
       });
       return;
     }

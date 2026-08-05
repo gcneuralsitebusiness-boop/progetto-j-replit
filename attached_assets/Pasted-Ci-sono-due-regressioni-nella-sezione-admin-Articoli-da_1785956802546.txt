@@ -1,0 +1,80 @@
+Ci sono due regressioni nella sezione admin 
+"Articoli" da correggere. Non toccare altro.
+
+PROBLEMA 1 — Immagine: serve upload, non URL
+Il campo "IMMAGINE URL" va sostituito con un vero 
+upload di file dal dispositivo.
+
+Requisiti:
+- Sostituisci l'input testuale con 
+  <input type="file" accept="image/*"> con label 
+  "IMMAGINE COPERTINA".
+- Su mobile deve aprire la galleria/fotocamera del 
+  telefono (accept="image/*" lo garantisce; non 
+  aggiungere capture, altrimenti forza la fotocamera).
+- Il file va caricato su Replit Object Storage. Crea 
+  un endpoint POST /api/upload che riceve il file 
+  multipart, lo salva con nome univoco 
+  (uuid + estensione originale) e restituisce l'URL 
+  pubblico.
+- L'URL restituito va salvato nello stesso campo 
+  database già esistente per l'immagine: NON cambiare 
+  lo schema del DB, così gli articoli già pubblicati 
+  continuano a funzionare.
+- Validazione lato server: solo jpg, jpeg, png, webp. 
+  Dimensione massima 8 MB. Se il file non è valido, 
+  restituisci un errore leggibile e mostralo sotto il 
+  campo.
+- UI: dopo la selezione mostra un'anteprima 
+  dell'immagine (max 160px di altezza) con un pulsante 
+  "RIMUOVI" per annullare la scelta. Durante l'upload 
+  mostra uno stato "CARICAMENTO..." e disabilita il 
+  pulsante AGGIUNGI.
+- Mantieni comunque la possibilità di incollare un URL 
+  esterno come opzione secondaria: sotto il file input 
+  metti un campo piccolo e opzionale 
+  "oppure incolla un URL". Se entrambi sono 
+  compilati, vince il file caricato.
+- Vale sia per la creazione che per la modifica di un 
+  articolo esistente.
+
+PROBLEMA 2 — Categoria: era una lista fissa, ora è 
+testo libero
+Il campo CATEGORIA è diventato un input libero. Deve 
+tornare a essere un menu a tendina con valori fissi.
+
+Requisiti:
+- Sostituisci l'input con un <select> obbligatorio.
+- Definisci le categorie in UN SOLO punto del codice 
+  (un array esportato, es. constants/categories.ts) 
+  e importalo sia nel form di creazione che in quello 
+  di modifica e nei filtri della pagina pubblica. 
+  Nessun valore hardcodato altrove.
+- Valori: COMBAT, FEDE, FINANZA, DISCIPLINA, LAVORO, 
+  BIOHACKING, BUSINESS.
+- Il select parte con placeholder "CATEGORIA" 
+  disabilitato e non selezionabile, così non si può 
+  salvare senza scegliere.
+- Validazione lato server: rifiuta qualsiasi categoria 
+  non presente nell'array.
+- Gli articoli già esistenti devono mantenere la loro 
+  categoria attuale. Se un articolo ha una categoria 
+  non più in lista, in modifica mostra il valore 
+  corrente come opzione temporanea invece di svuotare 
+  il campo.
+
+STILE
+Entrambi i campi devono usare lo stesso stile degli 
+altri input dell'admin: fondo #0A0A0A, bordo sottile 
+grigio scuro, testo maiuscolo Bebas Neue, accento 
+rosso #B81D1D sul focus. Il select non deve avere lo 
+stile di sistema di default su iOS: applica 
+appearance: none e una freccia custom.
+
+TEST PRIMA DI CONSEGNARE
+1. Da Safari iPhone, creare un articolo caricando una 
+   foto dalla galleria e verificare che si veda nella 
+   lista articoli e nella pagina pubblica.
+2. Modificare un articolo esistente senza toccare 
+   l'immagine e verificare che l'immagine non si perda.
+3. Provare a salvare senza categoria: deve bloccare.

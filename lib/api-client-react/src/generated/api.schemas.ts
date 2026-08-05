@@ -315,20 +315,46 @@ export interface Article {
   data: string;
 }
 
+export type ArticleInputCategoria = typeof ArticleInputCategoria[keyof typeof ArticleInputCategoria];
+
+
+export const ArticleInputCategoria = {
+  COMBAT: 'COMBAT',
+  FEDE: 'FEDE',
+  FINANZA: 'FINANZA',
+  DISCIPLINA: 'DISCIPLINA',
+  LAVORO: 'LAVORO',
+  BIOHACKING: 'BIOHACKING',
+  BUSINESS: 'BUSINESS',
+} as const;
+
 export interface ArticleInput {
   slug: string;
   titolo: string;
-  categoria?: string;
+  categoria: ArticleInputCategoria;
   contenuto?: string;
   immagine?: string | null;
   pubblicato?: boolean;
   data?: string;
 }
 
+export type ArticleUpdateCategoria = typeof ArticleUpdateCategoria[keyof typeof ArticleUpdateCategoria];
+
+
+export const ArticleUpdateCategoria = {
+  COMBAT: 'COMBAT',
+  FEDE: 'FEDE',
+  FINANZA: 'FINANZA',
+  DISCIPLINA: 'DISCIPLINA',
+  LAVORO: 'LAVORO',
+  BIOHACKING: 'BIOHACKING',
+  BUSINESS: 'BUSINESS',
+} as const;
+
 export interface ArticleUpdate {
   slug?: string;
   titolo?: string;
-  categoria?: string;
+  categoria?: ArticleUpdateCategoria;
   contenuto?: string;
   immagine?: string | null;
   pubblicato?: boolean;

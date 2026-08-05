@@ -9,6 +9,7 @@ import { DataErrorState } from "@/components/DataErrorState";
 import { getPhotoUrl } from "@workspace/object-storage-web";
 import { useMemo, useState } from "react";
 import { getArticlePlainText } from "@/components/ArticleContent";
+import { ARTICLE_CATEGORIES } from "@/constants/articleCategories";
 
 function resolveImgUrl(immagine: string | null | undefined): string | null {
   if (!immagine) return null;
@@ -35,8 +36,12 @@ export default function Articoli() {
   const [filter, setFilter] = useState<string>("Tutte");
 
   const categories = useMemo(() => {
-    const set = new Set(articles?.map((a) => a.categoria) ?? []);
-    return ["Tutte", ...Array.from(set)];
+    const legacyCategories = Array.from(new Set(
+      (articles ?? [])
+        .map((article) => article.categoria)
+        .filter((category) => !ARTICLE_CATEGORIES.includes(category as (typeof ARTICLE_CATEGORIES)[number])),
+    ));
+    return ["Tutte", ...ARTICLE_CATEGORIES, ...legacyCategories];
   }, [articles]);
 
   const filtered = useMemo(() => {

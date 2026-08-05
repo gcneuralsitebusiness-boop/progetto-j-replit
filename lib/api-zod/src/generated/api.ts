@@ -575,14 +575,13 @@ export const ListArticlesResponse = zod.array(ListArticlesResponseItem)
 /**
  * @summary Create article (admin only)
  */
-export const createArticleBodyCategoriaDefault = `Generale`;
 export const createArticleBodyContenutoDefault = ``;
 export const createArticleBodyPubblicatoDefault = false;
 
 export const CreateArticleBody = zod.object({
   "slug": zod.string(),
   "titolo": zod.string(),
-  "categoria": zod.string().default(createArticleBodyCategoriaDefault),
+  "categoria": zod.enum(['COMBAT', 'FEDE', 'FINANZA', 'DISCIPLINA', 'LAVORO', 'BIOHACKING', 'BUSINESS']),
   "contenuto": zod.string().default(createArticleBodyContenutoDefault),
   "immagine": zod.string().nullish(),
   "pubblicato": zod.boolean().default(createArticleBodyPubblicatoDefault),
@@ -630,7 +629,7 @@ export const UpdateArticleParams = zod.object({
 export const UpdateArticleBody = zod.object({
   "slug": zod.string().optional(),
   "titolo": zod.string().optional(),
-  "categoria": zod.string().optional(),
+  "categoria": zod.enum(['COMBAT', 'FEDE', 'FINANZA', 'DISCIPLINA', 'LAVORO', 'BIOHACKING', 'BUSINESS']).optional(),
   "contenuto": zod.string().optional(),
   "immagine": zod.string().nullish(),
   "pubblicato": zod.boolean().optional(),

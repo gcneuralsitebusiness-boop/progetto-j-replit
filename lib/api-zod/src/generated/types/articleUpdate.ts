@@ -5,11 +5,12 @@
  * API specification for Progetto J — 180-day transformation journal
  * OpenAPI spec version: 0.1.0
  */
+import type { ArticleUpdateCategoria } from './articleUpdateCategoria';
 
 export interface ArticleUpdate {
   slug?: string;
   titolo?: string;
-  categoria?: string;
+  categoria?: ArticleUpdateCategoria;
   contenuto?: string;
   immagine?: string | null;
   pubblicato?: boolean;
