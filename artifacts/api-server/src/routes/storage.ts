@@ -39,6 +39,14 @@ router.post(
       return;
     }
 
+    const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10 MB after client-side compression
+    if (parsed.data.size > MAX_UPLOAD_BYTES) {
+      res.status(413).json({
+        error: `Il file supera il limite di 10 MB. Comprimi l'immagine prima di caricarla.`,
+      });
+      return;
+    }
+
     try {
       const { name, size, contentType } = parsed.data;
 

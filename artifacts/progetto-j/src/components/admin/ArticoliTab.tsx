@@ -13,6 +13,13 @@ import { useUpload, getPhotoUrl } from "@workspace/object-storage-web";
 
 const CATEGORIES = ["Biohacking", "Combat", "Business", "Fede", "Mentalità"] as const;
 
+/** Max pixel dimension for the longer side of a cover image. */
+const MAX_IMAGE_PX = 1920;
+/** Target JPEG quality after compression (0–1). */
+const IMAGE_QUALITY = 0.85;
+/** Files already under this byte threshold are uploaded as-is. */
+const COMPRESS_THRESHOLD_BYTES = 500 * 1024; // 500 KB
+
 const EMPTY: Omit<Article, "id" | "createdAt" | "updatedAt"> = {
   slug: "",
   titolo: "",
@@ -31,6 +38,71 @@ function autoSlug(titolo: string): string {
     .replace(/[^a-z0-9\s-]/g, "")
     .trim()
     .replace(/\s+/g, "-");
+}
+
+/**
+ * Resize and re-encode an image file using the browser Canvas API.
+ * - Images already small enough are returned unchanged.
+ * - Larger images are drawn on a canvas (capped at MAX_IMAGE_PX on the long
+ *   side) and exported as JPEG at IMAGE_QUALITY.
+ * - GIF files are returned unchanged to preserve animation.
+ */
+async function optimizeImage(file: File): Promise<File> {
+  // Skip GIFs (animation) and already-small files
+  if (file.type === "image/gif" || file.size <= COMPRESS_THRESHOLD_BYTES) {
+    return file;
+  }
+
+  return new Promise((resolve) => {
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+
+      let { naturalWidth: w, naturalHeight: h } = img;
+      if (w > MAX_IMAGE_PX || h > MAX_IMAGE_PX) {
+        const scale = MAX_IMAGE_PX / Math.max(w, h);
+        w = Math.round(w * scale);
+        h = Math.round(h * scale);
+      }
+
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        resolve(file); // fallback: upload original
+        return;
+      }
+      ctx.drawImage(img, 0, 0, w, h);
+
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) {
+            resolve(file); // fallback
+            return;
+          }
+          // Only use the compressed version if it's actually smaller
+          if (blob.size >= file.size) {
+            resolve(file);
+            return;
+          }
+          const ext = file.name.replace(/\.[^.]+$/, "");
+          resolve(new File([blob], `${ext}.jpg`, { type: "image/jpeg" }));
+        },
+        "image/jpeg",
+        IMAGE_QUALITY,
+      );
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      resolve(file); // fallback
+    };
+
+    img.src = objectUrl;
+  });
 }
 
 export function ArticoliTab() {
@@ -145,8 +217,18 @@ export function ArticoliTab() {
       return;
     }
 
+    // Hard reject: raw files over 20 MB are almost certainly unintentional
+    const MAX_RAW_BYTES = 20 * 1024 * 1024;
+    if (file.size > MAX_RAW_BYTES) {
+      setSubmitError("L'immagine supera i 20 MB. Riduci le dimensioni prima di caricarla.");
+      return;
+    }
+
     setSubmitError(null);
-    await uploadFile(file);
+
+    // Compress & resize client-side before uploading
+    const optimized = await optimizeImage(file);
+    await uploadFile(optimized);
   };
 
   const handleDelete = (id: number) => {
@@ -155,7 +237,7 @@ export function ArticoliTab() {
     }
   };
 
-  // Word count + reading time
+  // Word count + reading time (strip HTML tags for accurate count)
   const wordCount = getArticlePlainText(form.contenuto).split(/\s+/).filter(Boolean).length;
   const readMinutes = Math.max(1, Math.round(wordCount / 200));
 
@@ -259,8 +341,10 @@ export function ArticoliTab() {
             ) : (
               <div className="border border-dashed border-border bg-[#141414] p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <p className="text-[12px] font-sans text-foreground">Carica l’immagine di copertina dal tuo computer.</p>
-                  <p className="text-[11px] font-sans text-muted-foreground mt-1">Sono accettati solo file immagine.</p>
+                  <p className="text-[12px] font-sans text-foreground">Carica l'immagine di copertina dal tuo computer.</p>
+                  <p className="text-[11px] font-sans text-muted-foreground mt-1">
+                    JPEG o WebP consigliati · max 20 MB · le immagini grandi vengono ridimensionate automaticamente a 1920 px
+                  </p>
                 </div>
                 <button
                   type="button"
