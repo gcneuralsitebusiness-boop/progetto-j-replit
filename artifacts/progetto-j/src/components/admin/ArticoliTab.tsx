@@ -48,6 +48,7 @@ export function ArticoliTab() {
   const [filterStatus, setFilterStatus] = useState<"all" | "published" | "draft">("all");
   const [page, setPage] = useState(1);
   const [previewMode, setPreviewMode] = useState(false);
+  const [sortKey, setSortKey] = useState<"date-desc" | "date-asc" | "title-asc" | "title-desc" | "categoria-asc" | "categoria-desc">("date-desc");
 
   const PAGE_SIZE = 20;
 
@@ -401,6 +402,20 @@ export function ArticoliTab() {
             ))}
           </div>
 
+          {/* Sort control */}
+          <select
+            value={sortKey}
+            onChange={(e) => { setSortKey(e.target.value as typeof sortKey); setPage(1); }}
+            className="bg-[#141414] border border-border px-3 py-2 text-[12px] font-sans text-white focus:outline-none focus:border-primary uppercase tracking-wider"
+          >
+            <option value="date-desc">Data ↓ (più recenti)</option>
+            <option value="date-asc">Data ↑ (più vecchi)</option>
+            <option value="title-asc">Titolo A → Z</option>
+            <option value="title-desc">Titolo Z → A</option>
+            <option value="categoria-asc">Categoria A → Z</option>
+            <option value="categoria-desc">Categoria Z → A</option>
+          </select>
+
           {/* Reset all filters */}
           {(search || filterCategory || filterStatus !== "all") && (
             <button
@@ -423,6 +438,14 @@ export function ArticoliTab() {
           if (filterStatus === "published" && !a.pubblicato) return false;
           if (filterStatus === "draft" && a.pubblicato) return false;
           return true;
+        }).sort((a, b) => {
+          if (sortKey === "date-desc") return (b.data ?? "").localeCompare(a.data ?? "") || a.titolo.localeCompare(b.titolo, "it");
+          if (sortKey === "date-asc") return (a.data ?? "").localeCompare(b.data ?? "") || a.titolo.localeCompare(b.titolo, "it");
+          if (sortKey === "title-asc") return a.titolo.localeCompare(b.titolo, "it");
+          if (sortKey === "title-desc") return b.titolo.localeCompare(a.titolo, "it");
+          if (sortKey === "categoria-asc") return a.categoria.localeCompare(b.categoria, "it") || a.titolo.localeCompare(b.titolo, "it");
+          if (sortKey === "categoria-desc") return b.categoria.localeCompare(a.categoria, "it") || a.titolo.localeCompare(b.titolo, "it");
+          return 0;
         });
         const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
         const safePage = Math.min(page, totalPages);
