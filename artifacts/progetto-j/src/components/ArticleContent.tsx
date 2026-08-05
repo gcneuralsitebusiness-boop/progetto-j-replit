@@ -18,6 +18,7 @@ const ALLOWED_TAGS = [
 
 const ALLOWED_ATTR = ["href", "target", "rel"] as const;
 const HTML_CONTENT_PATTERN = /<\/?[a-z][^>]*>/i;
+const ESCAPED_HTML_PATTERN = /&lt;\/?(?:h[1-3]|p|ul|ol|li|blockquote|strong|em|a|br|hr)\b/i;
 
 const sanitizeConfig = {
   ALLOWED_TAGS: [...ALLOWED_TAGS],
@@ -51,11 +52,22 @@ function legacyTextToHtml(content: string): string {
     .join("");
 }
 
+function decodeEscapedArticleHtml(content: string): string {
+  if (!ESCAPED_HTML_PATTERN.test(content)) return content;
+
+  const textarea = document.createElement("textarea");
+  textarea.innerHTML = content;
+  return textarea.value;
+}
+
 export function sanitizeArticleHtml(contenuto: string): string {
   const source = contenuto.trim();
   if (!source) return "";
 
-  const html = HTML_CONTENT_PATTERN.test(source) ? source : legacyTextToHtml(source);
+  const normalizedSource = decodeEscapedArticleHtml(source);
+  const html = HTML_CONTENT_PATTERN.test(normalizedSource)
+    ? normalizedSource
+    : legacyTextToHtml(normalizedSource);
   return DOMPurify.sanitize(html, sanitizeConfig);
 }
 
