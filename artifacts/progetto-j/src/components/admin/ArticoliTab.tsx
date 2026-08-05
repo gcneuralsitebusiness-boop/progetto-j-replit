@@ -44,6 +44,8 @@ export function ArticoliTab() {
   const [slugTouched, setSlugTouched] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [filterCategory, setFilterCategory] = useState<string>("");
+  const [filterStatus, setFilterStatus] = useState<"all" | "published" | "draft">("all");
   const [page, setPage] = useState(1);
   const [previewMode, setPreviewMode] = useState(false);
 
@@ -356,27 +358,71 @@ export function ArticoliTab() {
         </div>
       </form>
 
-      {/* Search */}
-      <div className="flex items-center gap-3">
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-          placeholder="Cerca per titolo o contenuto..."
-          className="flex-1 bg-[#141414] border border-border px-4 py-2.5 text-[13px] font-sans text-white placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary"
-        />
-        {search && (
-          <button onClick={() => { setSearch(""); setPage(1); }} className="text-[11px] uppercase tracking-wider font-sans text-muted-foreground border border-border px-3 py-2 hover:bg-[#141414] transition-colors">
-            Reset
-          </button>
-        )}
+      {/* Search + Filters */}
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center gap-3">
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            placeholder="Cerca per titolo o contenuto..."
+            className="flex-1 bg-[#141414] border border-border px-4 py-2.5 text-[13px] font-sans text-white placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary"
+          />
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Category filter */}
+          <select
+            value={filterCategory}
+            onChange={(e) => { setFilterCategory(e.target.value); setPage(1); }}
+            className="bg-[#141414] border border-border px-3 py-2 text-[12px] font-sans text-white focus:outline-none focus:border-primary uppercase tracking-wider"
+          >
+            <option value="">Tutte le categorie</option>
+            {CATEGORIES.map((c) => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
+
+          {/* Status filter */}
+          <div className="flex items-center gap-1">
+            {(["all", "published", "draft"] as const).map((s) => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => { setFilterStatus(s); setPage(1); }}
+                className={`text-[11px] uppercase tracking-wider font-sans px-3 py-2 border transition-colors ${
+                  filterStatus === s
+                    ? "border-primary text-primary bg-primary/10"
+                    : "border-border text-muted-foreground hover:border-primary hover:text-primary"
+                }`}
+              >
+                {s === "all" ? "Tutti" : s === "published" ? "Pubblicati" : "Bozze"}
+              </button>
+            ))}
+          </div>
+
+          {/* Reset all filters */}
+          {(search || filterCategory || filterStatus !== "all") && (
+            <button
+              onClick={() => { setSearch(""); setFilterCategory(""); setFilterStatus("all"); setPage(1); }}
+              className="text-[11px] uppercase tracking-wider font-sans text-muted-foreground border border-border px-3 py-2 hover:bg-[#141414] transition-colors ml-auto"
+            >
+              Reset filtri
+            </button>
+          )}
+        </div>
       </div>
 
       {(() => {
         const filtered = (articles ?? []).filter((a) => {
-          if (!search.trim()) return true;
-          const q = search.trim().toLowerCase();
-          return a.titolo.toLowerCase().includes(q) || a.contenuto.toLowerCase().includes(q);
+          if (search.trim()) {
+            const q = search.trim().toLowerCase();
+            if (!a.titolo.toLowerCase().includes(q) && !a.contenuto.toLowerCase().includes(q)) return false;
+          }
+          if (filterCategory && a.categoria !== filterCategory) return false;
+          if (filterStatus === "published" && !a.pubblicato) return false;
+          if (filterStatus === "draft" && a.pubblicato) return false;
+          return true;
         });
         const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
         const safePage = Math.min(page, totalPages);
