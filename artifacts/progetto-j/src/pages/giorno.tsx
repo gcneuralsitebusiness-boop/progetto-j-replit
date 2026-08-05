@@ -231,7 +231,7 @@ function DiaryText({ text, entryId, entryNumero }: { text: string; entryId: numb
   };
 
   const shareLine = async (lineText: string, lineIndex: number) => {
-    const url = `${window.location.origin}/giorno/${entryId}?line=${lineIndex}`;
+    const url = `${window.location.origin}/giorno/${entryNumero}?line=${lineIndex}`;
     const title = `Giorno ${entryNumero} — Progetto J`;
     if (typeof navigator.share === "function") {
       try {
@@ -343,7 +343,8 @@ export default function GiornoDetail() {
   const { id } = useParams<{ id: string }>();
   const { data: entries, isLoading, isError } = useListEntries();
 
-  const entry = entries?.find((e) => String(e.id) === id);
+  const requestedNumber = Number(id);
+  const entry = entries?.find((e) => e.numero === requestedNumber);
 
   // Compute averages across all entries
   const avg = (arr: (number | null | undefined)[]): number => {
@@ -362,7 +363,7 @@ export default function GiornoDetail() {
 
   // Sorted entries for prev/next navigation
   const sorted = entries ? [...entries].sort((a, b) => b.numero - a.numero) : [];
-  const idx = sorted.findIndex((e) => String(e.id) === id);
+  const idx = entry ? sorted.findIndex((e) => e.numero === entry.numero) : -1;
   const prevEntry = sorted[idx + 1] ?? null;
   const nextEntry = sorted[idx - 1] ?? null;
 
@@ -494,7 +495,7 @@ export default function GiornoDetail() {
         <div className="flex items-center justify-between gap-4">
           {prevEntry ? (
             <Link
-              href={`/giorno/${prevEntry.id}`}
+              href={`/giorno/${prevEntry.numero}`}
               className="flex items-center gap-2 border border-border bg-card px-5 py-3 hover:border-iron transition-colors group"
             >
               <ArrowLeft size={14} className="text-primary" />
@@ -508,7 +509,7 @@ export default function GiornoDetail() {
           )}
           {nextEntry ? (
             <Link
-              href={`/giorno/${nextEntry.id}`}
+              href={`/giorno/${nextEntry.numero}`}
               className="flex items-center gap-2 border border-border bg-card px-5 py-3 hover:border-iron transition-colors text-right group"
             >
               <div>

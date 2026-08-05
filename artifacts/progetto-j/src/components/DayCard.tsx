@@ -31,7 +31,7 @@ export function DayCard({ entry, featured = false }: { entry: Entry; featured?: 
   if (entry.uscite != null) stats.push({ label: "USCITE", value: entry.uscite, prefix: "€" });
 
   return (
-    <Link href={`/giorno/${entry.id}`} className="block">
+    <Link href={`/giorno/${entry.numero}`} className="block">
     <article
       className={`group relative border border-border bg-card bracket-hover overflow-hidden transition-all duration-300 hover:border-iron card-lift cursor-pointer ${
         featured ? "min-h-[420px]" : ""

@@ -8,3 +8,4 @@
 - [Autoscale diary day creation](autoscale-day-creation.md) — trigger idempotent day creation from requests because autoscale can sleep through midnight.
 - [Visual restyle verification](visual-restyle-verification.md) — visual-only Progetto J changes preserve data/routing and finish with build, grep, and responsive preview checks.
 - [Email notification configuration](email-notification-configuration.md) — contact and newsletter notifications require both Resend secrets; delivery is best-effort after persistence.
+- [Preview and live diary data](preview-live-diary-data.md) — compare development and production before assuming preview data was deleted; diary routes use the public day number.
