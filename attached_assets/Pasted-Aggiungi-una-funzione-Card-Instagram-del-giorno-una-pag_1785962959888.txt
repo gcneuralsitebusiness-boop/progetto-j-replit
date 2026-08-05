@@ -1,0 +1,87 @@
+Aggiungi una funzione "Card Instagram del giorno": una 
+pagina che genera automaticamente la grafica quadrata 
+verticale da pubblicare ogni giorno, prendendo i dati 
+già presenti nel database.
+
+ROTTA
+/card/:giorno   (es. /card/86)
+Pagina pubblica, senza header e senza footer del sito. 
+Solo la card.
+
+FORMATO
+Contenitore fisso 1080x1350px (rapporto 4:5), 
+sfondo #0A0A0A. Deve renderizzare identico su ogni 
+schermo: usa dimensioni in px assolute dentro un 
+contenitore scalato con transform: scale() per 
+l'anteprima, non unità responsive.
+
+LAYOUT DALL'ALTO VERSO IL BASSO
+
+1. Logo J rosso #B81D1D, centrato, altezza 180px, 
+   margine superiore 120px. Stesso identico file SVG 
+   usato nella hero del sito.
+
+2. Sotto, in Bebas Neue bianco, 96px, letterspacing 
+   0.02em, maiuscolo:
+   "GIORNO 86"
+   (il numero arriva dal parametro della rotta)
+
+3. Sotto, in Bebas Neue grigio #6E6A65, 40px, 
+   letterspacing 0.3em:
+   "/ 180 COMPLETATO"
+
+4. Sotto, la stessa sparkline rossa già presente nella 
+   hero del sito (andamento del peso), larghezza 
+   860px, altezza 180px, colore #B81D1D, tratto 3px, 
+   nessun asse, nessuna griglia, opacità 0.85.
+
+5. Sotto la sparkline, tre dati del giorno su una riga, 
+   separati da un punto medio grigio. Formato: numero 
+   in Bebas Neue bianco 52px, unità in Bebas Neue 
+   grigio #6E6A65 26px con letterspacing 0.2em.
+   Esempio: "81.3 KG · 67 BPM · 5:50 SONNO"
+   I valori arrivano dal record del giorno. Se un 
+   dato manca, ometti quella colonna e ricentra le 
+   altre invece di mostrare un vuoto.
+
+6. Spazio ampio. Poi in basso, il countdown:
+   numero enorme in Bebas Neue bianco 200px, 
+   line-height 0.85 — es. "94"
+   sotto, grigio #6E6A65, Bebas Neue 32px, 
+   letterspacing 0.32em: "GIORNI AL TRAGUARDO"
+
+7. Riga finale, a 90px dal fondo, centrata, 
+   Bebas Neue #6E6A65, 30px, letterspacing 0.28em:
+   "PROGETTOJ.IT — DIARIO COMPLETO IN BIO"
+   (sostituisci con il dominio reale)
+
+8. Sottile linea rossa #B81D1D alta 6px, larga 100%, 
+   ancorata al bordo inferiore assoluto della card.
+
+REGOLE TIPOGRAFICHE
+- Solo Bebas Neue, solo maiuscolo.
+- Niente emoji, niente icone, niente gradienti, 
+  niente ombre, niente bordi arrotondati.
+- Tutti gli elementi centrati orizzontalmente.
+- Spaziatura verticale generosa: il vuoto è parte del 
+  design, non riempirlo.
+
+DOWNLOAD
+Sulla pagina, fuori dall'area della card, un pulsante 
+"SCARICA PNG". Usa html-to-image (funzione toPng) con 
+pixelRatio 2 per esportare l'elemento card come PNG 
+1080x1350 reale, nome file "progettoj-giorno-86.png".
+Il pulsante non deve comparire nell'immagine esportata.
+
+ACCESSO RAPIDO
+Nell'admin, nella riga di ogni giorno del diario, 
+aggiungi un link "CARD" che apre /card/N in una nuova 
+scheda.
+
+TEST
+1. Aprire /card/86: i dati devono corrispondere al 
+   giorno 86 nel database.
+2. Scaricare il PNG e verificare che sia esattamente 
+   1080x1350.
+3. Aprire un giorno senza dato del sonno: la riga dati 
+   deve mostrare due valori centrati, non un buco.
