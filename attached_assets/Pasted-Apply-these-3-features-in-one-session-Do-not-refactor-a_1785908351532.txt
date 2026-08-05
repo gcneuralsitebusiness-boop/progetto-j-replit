@@ -1,0 +1,102 @@
+Apply these 3 features in one session. Do not refactor
+anything unrelated. Read the whole list first, build
+once at the end.
+
+═══════════════════════════════════════════
+FEATURE 1 — SHAREABLE QUOTE FROM A DIARY LINE
+═══════════════════════════════════════════
+
+FILE: artifacts/progetto-j/src/pages/giorno.tsx
+
+Goal: let a reader select one line of the diary text and
+share a link that reopens that day with the line
+highlighted.
+
+Implementation without extra libraries:
+
+a) When rendering the diary body, split testo into lines
+   and wrap each non-empty, non-subtitle line in a
+   <span data-line={index}>. Give each a subtle hover
+   affordance: on hover show a small "condividi" icon at
+   the end of the line (opacity 0 → 1 on group-hover),
+   Inter 10px uppercase, color var(--muted-foreground).
+
+b) Clicking that icon builds the URL:
+   `${window.location.origin}/giorno/${id}?line=${index}`
+   If navigator.share exists, call it with that URL and
+   the line text as `text`. Otherwise copy to clipboard
+   and show a toast "LINK COPIATO".
+
+c) On page load, read the `line` query param
+   (useSearch from wouter or URLSearchParams). If present,
+   scroll that span into view and apply a highlight:
+   background hsl(var(--primary) / 0.18), a 2px left
+   border var(--primary), padding 2px 8px. Remove the
+   highlight after 4 seconds with a fade, but keep the
+   scroll position.
+
+Do not alter the stripDayLabel logic or the subtitle
+parsing already in place.
+
+═══════════════════════════════════════════
+FEATURE 2 — LIVE COUNTDOWN TO DAY 180
+═══════════════════════════════════════════
+
+FILE: artifacts/progetto-j/src/pages/home.tsx
+
+In the hero, below the existing data strip and the
+"aggiornato ogni giorno" line, add a countdown element.
+
+  const currentDay = Math.max(...allEntries.map(e=>e.numero), 0);
+  const remaining = 180 - currentDay;
+
+Render, only if remaining > 0:
+  A single line, centered:
+   - the number `remaining` in .measured mono font,
+     font-size clamp(40px, 10vw, 88px), color foreground
+   - below it, Inter 11px uppercase tracking-[0.25em]
+     var(--muted-foreground): "GIORNI AL TRAGUARDO"
+
+This is NOT a per-second timer (the unit is days, and a
+ticking clock would be noise). It recomputes on each page
+load from the data. Keep it static after render.
+
+Place it so it reads as part of the hero rhythm, with
+generous top margin (mt-16) separating it from the data
+strip above.
+
+═══════════════════════════════════════════
+FEATURE 3 — EMPTY STATES WITH BRAND CHARACTER
+═══════════════════════════════════════════
+
+Replace grey placeholder blocks for missing photos with
+a branded pattern.
+
+FILE: artifacts/progetto-j/src/components/DayCard.tsx
+AND  artifacts/progetto-j/src/pages/giorno.tsx
+(wherever the crosshatch / missing-photo placeholder is
+rendered)
+
+When no photo exists, render a div with:
+  - bg #0A0A0A
+  - the existing .crosshatch texture at low opacity
+  - centered text, Inter 11px uppercase tracking-[0.2em],
+    color #3A3A3A: "NESSUNA IMMAGINE — SOLO IL LAVORO"
+  - a thin var(--iron) border
+
+Keep the same aspect ratio the photo would have had, so
+the layout does not shift.
+
+Do the same for any empty article image in
+pages/articoli.tsx (text there: "NESSUNA IMMAGINE").
+
+═══════════════════════════════════════════
+BUILD (once)
+═══════════════════════════════════════════
+cd artifacts/progetto-j && PORT=26090 BASE_PATH=/progetto-j/ pnpm run build
+
+Do NOT rebuild the API server — none of these touch it.
+
+Report the files changed and one line of verification
+each. For FEATURE 1, confirm the highlight actually
+triggers when visiting a /giorno/X?line=N URL.

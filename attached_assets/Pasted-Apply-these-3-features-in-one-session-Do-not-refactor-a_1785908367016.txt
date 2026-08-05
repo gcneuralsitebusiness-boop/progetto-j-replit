@@ -1,0 +1,115 @@
+Apply these 3 features in one session. Do not refactor
+anything else. Work through the whole list before
+building — do not build and re-read between each item,
+to save execution cycles.
+
+═══════════════════════════════════════════
+FEATURE 1 — "TU CONTRO TE" COMPARISON
+═══════════════════════════════════════════
+
+FILE: artifacts/progetto-j/src/pages/home.tsx
+
+Add a new section between the featured-metric block and
+the Timeline180 section.
+
+Compute from allEntries (already loaded via
+useListEntries — do NOT add a new API call):
+
+  const sorted = [...allEntries].sort((a,b)=>a.numero-b.numero);
+  const first = sorted[0];
+  const last = sorted[sorted.length - 1];
+
+For each of these metrics, if BOTH first and last have a
+non-null value, render a comparison row:
+  peso   (KG)
+  battito (BPM)
+
+Layout: heading in font-serif (Anton),
+clamp(28px,6vw,48px): "GIORNO {first.numero} → GIORNO {last.numero}"
+
+Below, a two-column grid (stack on mobile):
+Left column header "PRIMA", right column header "ORA",
+both Inter 11px uppercase tracking-[0.2em] muted.
+
+Each metric row:
+  label (Inter 11px uppercase muted) then the two values
+  side by side in .measured mono font, clamp(32px,7vw,56px).
+  The "ORA" value colored var(--primary) if it improved
+  (lower bpm, or weight moved toward target), else foreground.
+  Between them a small "→" in var(--iron).
+
+If first.foto and last.foto both exist, show the two
+photos above the numbers, side by side, 4:3, grayscale,
+with tiny labels "GIORNO {n}" under each.
+
+Wrap the section in <Reveal> if that component exists.
+
+═══════════════════════════════════════════
+FEATURE 2 — WEEK-IN-A-ROW CONSISTENCY STRIP
+═══════════════════════════════════════════
+
+FILE: artifacts/progetto-j/src/pages/journaling.tsx
+
+At the very top of the page, above the charts, add a
+compact strip showing the last 7 days of consistency.
+
+Logic:
+  Determine currentDay = max numero in entries.
+  For day numbers (currentDay-6) through currentDay:
+    - logged: an entry with that numero exists AND has
+      non-null testo
+    - skipped: the day number is <= currentDay but no
+      entry, or entry with null testo
+  Render 7 cells in a row, each a small square (w-10 h-10):
+    logged  → bg-primary, the day number in white .measured
+    skipped → bg-card border border-dashed border-[#333]
+              day number in #444
+  Below the row, one line Inter 11px uppercase
+  tracking-[0.2em] muted:
+    "{loggedCount}/7 giorni questa settimana"
+
+No new API call — reuse the entries already fetched.
+
+═══════════════════════════════════════════
+FEATURE 3 — DAY 180 AS EMAIL HOOK IN TIMELINE
+═══════════════════════════════════════════
+
+FILE: artifacts/progetto-j/src/components/Timeline180.tsx
+
+The cell for day 180 currently renders like any future
+cell. Make it special.
+
+When day === 180, instead of the normal cell, render a
+wider highlighted block spanning the full grid width
+BELOW the grid (not inside it — add it after the grid map):
+
+  A bordered box, border var(--primary), bg transparent,
+  padding 24px. Content:
+    - Small label Inter 11px uppercase tracking-[0.2em]
+      var(--primary): "GIORNO 180"
+    - Line font-serif (Anton) clamp(24px,5vw,40px)
+      foreground: "IL REPORT FINALE"
+    - Inter 14px muted: "Tutti i dati, il metodo, gli
+      errori. Gratis, a chi lo vuole."
+    - A link/button styled like the primary CTA:
+      "RICEVILO" that scrolls to the existing
+      EmailCapture component (use an id anchor —
+      add id="email-capture" to the EmailCapture
+      wrapper in SiteFooter, and this button is an
+      <a href="#email-capture">).
+
+Keep the normal 1–180 grid above unchanged except that
+the 180 cell can stay rendered normally or be visually
+de-emphasized — your call, but do not remove it.
+
+═══════════════════════════════════════════
+BUILD (once, at the end)
+═══════════════════════════════════════════
+cd artifacts/progetto-j && PORT=26090 BASE_PATH=/progetto-j/ pnpm run build
+
+Do NOT rebuild the API server — none of these touch it.
+
+Report the 3 files changed and one line each. If any
+metric/photo guard means a section renders empty with
+the current data, say so explicitly rather than leaving
+a blank block.
