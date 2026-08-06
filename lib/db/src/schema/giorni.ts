@@ -17,6 +17,7 @@ export const giorniTable = pgTable("giorni", {
   entrate: real("entrate"),
   uscite: real("uscite"),
   testo: text("testo"),
+  sintesi: text("sintesi"),
   foto: text("foto"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });

@@ -1,0 +1,85 @@
+Crea una pagina che genera la grafica Instagram del 
+giorno, da scaricare e pubblicare.
+
+ROTTA
+/card/:giorno  — pubblica, senza header né footer 
+del sito. Solo la card più un pulsante di download.
+
+FORMATO
+1080x1350px fissi, sfondo #0A0A0A. Dimensioni in px 
+assoluti dentro un contenitore con transform: scale() 
+per l'anteprima su mobile.
+
+SFONDO
+Se il giorno ha una foto di copertina caricata, usala 
+a piena card con object-fit: cover, sopra un overlay 
+nero all'80% di opacità e un gradiente da #0A0A0A 
+pieno in basso a trasparente al 55% dell'altezza.
+Se la foto non c'è, fondo nero pieno. Nessun errore, 
+nessuno spazio vuoto.
+
+LAYOUT (dall'alto)
+1. Logo J rosso #B81D1D centrato, altezza 150px, 
+   margine superiore 100px. Stesso SVG della hero.
+
+2. Bebas Neue bianco 120px, letterspacing 0.02em:
+   "GIORNO 86"
+
+3. Bebas Neue #6E6A65 42px, letterspacing 0.3em:
+   "COMPLETATO / 180"
+
+4. Linea rossa #B81D1D larga 120px, alta 4px, 
+   centrata, margini 50px sopra e sotto.
+
+5. DESCRIZIONE BREVE — testo bianco #E8E4DE, 
+   Inter 38px, line-height 1.5, larghezza massima 
+   820px, centrata, massimo 4 righe.
+   Il contenuto arriva da un nuovo campo del database 
+   "sintesi" (text, nullable, max 180 caratteri) da 
+   aggiungere al form del giorno nell'admin con label 
+   "SINTESI PER CARD IG".
+   Se il campo è vuoto, usa le prime 180 caratteri 
+   del testo del diario, tagliate sull'ultima parola 
+   intera.
+
+6. Spazio ampio. Poi i dati su una riga: numero in 
+   Bebas bianco 48px, unità in Bebas #6E6A65 24px 
+   letterspacing 0.2em, separati da punto medio.
+   Es. "81.3 KG · 67 BPM · 5:50 SONNO"
+   Ometti le colonne senza dato e ricentra.
+
+7. In basso, countdown: Bebas bianco 160px, 
+   line-height 0.85 — "94"
+   sotto, Bebas #6E6A65 28px letterspacing 0.32em:
+   "GIORNI AL TRAGUARDO"
+
+8. A 80px dal fondo, centrato, Bebas #6E6A65 28px, 
+   letterspacing 0.28em: il dominio del sito.
+
+9. Barra rossa #B81D1D alta 6px ancorata al bordo 
+   inferiore.
+
+REGOLE
+Solo Bebas Neue maiuscolo, tranne la descrizione in 
+Inter. Niente emoji, icone, gradienti sui testi, 
+ombre o angoli arrotondati. Tutto centrato. 
+Spaziatura generosa.
+
+DOWNLOAD
+Pulsante "SCARICA PNG" fuori dall'area card. Usa 
+html-to-image (toPng) con pixelRatio 2, nome file 
+"progettoj-giorno-86.png". Il pulsante non deve 
+comparire nell'export.
+Verifica che il PNG esportato sia realmente 
+1080x1350: se esce a dimensioni diverse, correggi 
+prima di consegnare.
+
+ACCESSO
+Nell'admin, nella riga di ogni giorno, un link 
+"CARD" che apre /card/N in nuova scheda.
+
+TEST
+1. /card/86 con foto: sfondo visibile ma testo 
+   perfettamente leggibile.
+2. /card/87 senza foto: fondo nero, nessun buco.
+3. PNG scaricato: esattamente 1080x1350.
