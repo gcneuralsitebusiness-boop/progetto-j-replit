@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useRoute, Link } from "wouter";
 import { useGetArticle } from "@workspace/api-client-react";
+import type { Article } from "@workspace/api-client-react";
 import { toPng } from "html-to-image";
 import { getPhotoUrl } from "@workspace/object-storage-web";
 import { getArticlePlainText } from "@/components/ArticleContent";
@@ -73,8 +74,6 @@ function FitTitle({ title, baseSize }: { title: string; baseSize: number }) {
     </div>
   );
 }
-
-type Article = NonNullable<ReturnType<typeof useGetArticle>["data"]>;
 
 function ArticleCard({
   article,

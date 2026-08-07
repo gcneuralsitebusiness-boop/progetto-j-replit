@@ -8,7 +8,7 @@ import {
   useDeleteArticle,
   getListArticlesQueryKey,
 } from "@workspace/api-client-react";
-import type { Article } from "@workspace/api-client-react";
+import type { Article, ArticleInput, ArticleUpdate } from "@workspace/api-client-react";
 import { useUpload, getPhotoUrl } from "@workspace/object-storage-web";
 import { ARTICLE_CATEGORIES, isArticleCategory } from "@/constants/articleCategories";
 
@@ -183,12 +183,12 @@ export function ArticoliTab() {
     };
 
     if (editing) {
-      update.mutate({ id: editing.id, data: form }, {
+      update.mutate({ id: editing.id, data: form as ArticleUpdate }, {
         onSuccess: () => { invalidate(); reset(); },
         onError: handleError,
       });
     } else {
-      create.mutate({ data: form }, {
+      create.mutate({ data: form as ArticleInput }, {
         onSuccess: () => { invalidate(); reset(); },
         onError: handleError,
       });

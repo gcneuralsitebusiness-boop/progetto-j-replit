@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactElement } from "react";
 import { useParams, useSearch, Link } from "wouter";
 import { useListEntries, useListArticles } from "@workspace/api-client-react";
+import type { Entry as ApiEntry } from "@workspace/api-client-react";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
 import { ArrowLeft, Share2 } from "lucide-react";
@@ -179,7 +180,7 @@ function isSubtitleLine(line: string): { isSubtitle: true; text: string } | { is
 function DiaryText({ text, entryId, entryNumero }: { text: string; entryId: number; entryNumero: number }) {
   const cleaned = stripDayLabel(text);
   const lines = cleaned.split(/\r?\n/);
-  const elements: JSX.Element[] = [];
+  const elements: ReactElement[] = [];
   const search = useSearch();
   const containerRef = useRef<HTMLDivElement>(null);
   const [highlightedLine, setHighlightedLine] = useState<number | null>(null);
@@ -490,7 +491,7 @@ function GiornoContent({
         </div>
 
         {/* ─── Prev / Next navigation ─── */}
-        <ShareButton entryNumero={entry.numero} entryTesto={entry.testo} />
+        <ShareButton entryNumero={entry.numero} entryTesto={entry.testo ?? null} />
 
         <div className="h-px bg-border mb-10" />
         <div className="flex items-center justify-between gap-4">
@@ -607,5 +608,5 @@ export default function GiornoDetail() {
   return <GiornoContent entry={entry} prevEntry={prevEntry} nextEntry={nextEntry} averages={averages} />;
 }
 
-// Type helpers to keep inline components tidy
-type GiornoEntry = NonNullable<ReturnType<typeof useListEntries>["data"]> extends (infer T)[] ? T : never;
+// Type alias used throughout this file for a single diary entry
+type GiornoEntry = ApiEntry;

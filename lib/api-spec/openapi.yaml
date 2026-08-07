@@ -955,6 +955,38 @@ components:
           type: ["string", "null"]
         home_community_testo:
           type: ["string", "null"]
+        social_intro:
+          type: ["string", "null"]
+        social_lavora_titolo:
+          type: ["string", "null"]
+        sponsor_intro:
+          type: ["string", "null"]
+        sponsor_cta_titolo:
+          type: ["string", "null"]
+        sponsor_cta_testo:
+          type: ["string", "null"]
+        sponsor_email:
+          type: ["string", "null"]
+        coaching_pillar_1_label:
+          type: ["string", "null"]
+        coaching_pillar_1_testo:
+          type: ["string", "null"]
+        coaching_pillar_2_label:
+          type: ["string", "null"]
+        coaching_pillar_2_testo:
+          type: ["string", "null"]
+        coaching_pillar_3_label:
+          type: ["string", "null"]
+        coaching_pillar_3_testo:
+          type: ["string", "null"]
+        coaching_pillar_4_label:
+          type: ["string", "null"]
+        coaching_pillar_4_testo:
+          type: ["string", "null"]
+        coaching_contatto_intro:
+          type: ["string", "null"]
+        global_footer_mantra:
+          type: ["string", "null"]
 
     ContentInput:
       type: object
@@ -1225,7 +1257,7 @@ components:
 
     Article:
       type: object
-      required: [id, slug, titolo, categoria, contenuto, immagine, pubblicato, data]
+      required: [id, slug, titolo, categoria, contenuto, immagine, pubblicato, data, createdAt]
       properties:
         id:
           type: integer
@@ -1245,6 +1277,9 @@ components:
         data:
           type: string
           format: date
+        createdAt:
+          type: string
+          format: date-time
 
     ArticleInput:
       type: object

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, Link } from "wouter";
 import { useListEntries } from "@workspace/api-client-react";
+import type { Entry } from "@workspace/api-client-react";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
 import { toPng } from "html-to-image";
@@ -31,8 +32,6 @@ function formatNumber(n: number, fraction = 0): string {
   return n.toLocaleString("it-IT", { minimumFractionDigits: 0, maximumFractionDigits: fraction });
 }
 
-type Entry = NonNullable<ReturnType<typeof useListEntries>["data"]> extends (infer T)[] ? T : never;
-
 function CardStat({ value, label }: { value: string; label: string }) {
   return (
     <div className="flex flex-col items-center">
@@ -42,7 +41,7 @@ function CardStat({ value, label }: { value: string; label: string }) {
   );
 }
 
-function InstagramCard({ entry, cardRef }: { entry: Entry; cardRef: React.RefObject<HTMLDivElement> }) {
+function InstagramCard({ entry, cardRef }: { entry: Entry; cardRef: React.RefObject<HTMLDivElement | null> }) {
   const photoUrl = entry.foto ? getPhotoUrl(entry.foto) : null;
   const sintesi = resolveSintesi(entry.sintesi, entry.testo);
   const remaining = Math.max(0, GOAL_DAY - entry.numero);
