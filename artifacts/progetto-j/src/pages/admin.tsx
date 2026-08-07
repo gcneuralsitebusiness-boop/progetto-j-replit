@@ -131,6 +131,7 @@ function EntryForm({ initialData, onSuccess, onCancel }: { initialData?: Entry; 
     uscite: initialData?.uscite ?? undefined,
     testo: initialData?.testo || "",
     foto: initialData?.foto || "",
+    sintesi: initialData?.sintesi || "",
   });
 
   // ─── Autosave + draft restore ──────────────────────────────────────────────
@@ -197,6 +198,7 @@ function EntryForm({ initialData, onSuccess, onCancel }: { initialData?: Entry; 
       uscite: formData.uscite != null ? Number(formData.uscite) : null,
       testo: formData.testo || null,
       foto: formData.foto || null,
+      sintesi: formData.sintesi?.trim() ? formData.sintesi.trim().slice(0, 180) : null,
     };
 
     const invalidate = () => {
@@ -348,6 +350,23 @@ function EntryForm({ initialData, onSuccess, onCancel }: { initialData?: Entry; 
         <textarea rows={6} value={formData.testo ?? ""} onChange={(e) => setFormData({ ...formData, testo: e.target.value })} className="bg-[#141414] border border-border p-3 text-white focus:outline-none focus:border-primary resize-y font-sans leading-relaxed" />
       </div>
 
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center justify-between">
+          <label className="text-[11px] uppercase tracking-widest text-muted-foreground">Sintesi per Card IG</label>
+          <span className={`text-[11px] font-sans tabular-nums ${(formData.sintesi?.length ?? 0) > 160 ? "text-primary" : "text-muted-foreground"}`}>
+            {formData.sintesi?.length ?? 0}/180
+          </span>
+        </div>
+        <textarea
+          rows={2}
+          maxLength={180}
+          value={formData.sintesi ?? ""}
+          onChange={(e) => setFormData({ ...formData, sintesi: e.target.value.slice(0, 180) })}
+          placeholder="Frase breve per la grafica Instagram. Se vuota, viene usato l'inizio del testo del diario."
+          className="bg-[#141414] border border-border p-3 text-white placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary resize-y font-sans leading-relaxed"
+        />
+      </div>
+
       {submitError && (
         <p className="text-[13px] font-sans text-primary border border-primary/40 bg-primary/10 px-4 py-3">{submitError}</p>
       )}
@@ -451,6 +470,14 @@ function DiarioTab({ scrollToEntry }: { scrollToEntry?: number }) {
               )}
             </div>
             <div className="flex gap-6">
+              <a
+                href={`${import.meta.env.BASE_URL.replace(/\/$/, "")}/card/${entry.numero}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[13px] uppercase tracking-wider font-sans text-foreground hover:text-primary transition-colors"
+              >
+                Card
+              </a>
               <button onClick={() => startEditing(entry)} className="text-[13px] uppercase tracking-wider font-sans text-foreground hover:text-primary transition-colors">Modifica</button>
               <button onClick={() => handleDelete(entry.numero)} disabled={deleteMutation.isPending} className="text-[13px] uppercase tracking-wider font-sans text-destructive hover:text-destructive/80 transition-colors">Elimina</button>
             </div>

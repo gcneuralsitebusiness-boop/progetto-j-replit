@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useSearch, Link } from "wouter";
-import { useListEntries } from "@workspace/api-client-react";
+import { useListEntries, useListArticles } from "@workspace/api-client-react";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
 import { ArrowLeft, Share2 } from "lucide-react";
@@ -299,6 +299,46 @@ function DiaryText({ text, entryId, entryNumero }: { text: string; entryId: numb
   );
 }
 
+// ─── Linked articles (matched by date) ────────────────────────────────────────
+
+function LinkedArticles({ entryData }: { entryData: string }) {
+  const { data: articles } = useListArticles();
+  const matched = (articles ?? [])
+    .filter((a) => a.data === entryData)
+    .sort((a, b) => new Date(a.createdAt ?? a.data).getTime() - new Date(b.createdAt ?? b.data).getTime());
+
+  if (matched.length === 0) return null;
+
+  return (
+    <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-[140px_1fr] gap-x-8 border-t border-iron py-10">
+      <div className="font-sans text-[11px] uppercase tracking-[0.2em] text-muted-foreground md:sticky md:top-24 self-start mb-4 md:mb-0">
+        ARTICOLI
+      </div>
+      <div className="flex flex-col gap-4">
+        {matched.map((article) => (
+          <Link
+            key={article.id}
+            href={`/a/${article.slug}`}
+            className="group border border-border bg-card px-5 py-4 hover:border-iron transition-colors"
+          >
+            <div className="flex items-center gap-3 mb-2">
+              <span className="text-[10px] font-sans uppercase tracking-[0.2em] border border-border px-2 py-0.5 text-muted-foreground">
+                {article.categoria}
+              </span>
+              <span className="text-[10px] font-sans uppercase tracking-[0.2em] text-muted-foreground">
+                Scritto questo giorno
+              </span>
+            </div>
+            <div className="font-serif text-[24px] sm:text-[28px] leading-none bebas uppercase text-foreground group-hover:text-primary transition-colors">
+              {article.titolo}
+            </div>
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ─── Share button ─────────────────────────────────────────────────────────────
 
 function ShareButton({ entryNumero, entryTesto }: { entryNumero: number; entryTesto: string | null }) {
@@ -446,6 +486,7 @@ function GiornoContent({
               <DiaryText text={entry.testo} entryId={entry.id} entryNumero={entry.numero} />
             </div>
           )}
+          <LinkedArticles entryData={entry.data} />
         </div>
 
         {/* ─── Prev / Next navigation ─── */}

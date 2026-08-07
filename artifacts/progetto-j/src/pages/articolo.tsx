@@ -1,5 +1,5 @@
 import { useRoute, Link } from "wouter";
-import { useGetArticle } from "@workspace/api-client-react";
+import { useGetArticle, useListEntries } from "@workspace/api-client-react";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
 import { Reveal } from "@/components/Reveal";
@@ -30,6 +30,8 @@ export default function Articolo() {
   const { data: article, isLoading, isError } = useGetArticle(slug, {
     query: { queryKey: ["getArticle", slug], enabled: !!slug, retry: false },
   });
+  const { data: entries } = useListEntries();
+  const linkedDay = article ? entries?.find((e) => e.data === article.data) : undefined;
 
   if (isLoading) {
     return (
@@ -91,6 +93,25 @@ export default function Articolo() {
       <Reveal>
         <ArticleContent contenuto={article.contenuto} />
       </Reveal>
+
+      {linkedDay && (
+        <Reveal>
+          <Link
+            href={`/giorno/${linkedDay.numero}`}
+            className="group mt-14 flex items-center justify-between border border-border bg-card px-5 py-4 hover:border-iron transition-colors"
+          >
+            <div>
+              <div className="text-[10px] font-sans uppercase tracking-[0.2em] text-muted-foreground mb-1">
+                Dal diario dello stesso giorno
+              </div>
+              <div className="font-serif text-[28px] leading-none bebas text-foreground group-hover:text-primary transition-colors">
+                GIORNO {String(linkedDay.numero).padStart(3, "0")}
+              </div>
+            </div>
+            <ArrowLeft size={16} className="text-primary rotate-180" />
+          </Link>
+        </Reveal>
+      )}
 
       <div className="mt-20">
         <Cross />

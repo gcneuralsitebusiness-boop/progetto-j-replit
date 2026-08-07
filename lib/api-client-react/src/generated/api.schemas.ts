@@ -56,6 +56,12 @@ export interface Entry {
      */
   testo?: string | null;
   /**
+     * Short Instagram card summary
+     * @maxLength 180
+     * @nullable
+     */
+  sintesi?: string | null;
+  /**
      * Photo URL
      * @nullable
      */
@@ -88,6 +94,11 @@ export interface EntryInput {
   uscite?: number | null;
   /** @nullable */
   testo?: string | null;
+  /**
+     * @maxLength 180
+     * @nullable
+     */
+  sintesi?: string | null;
   /** @nullable */
   foto?: string | null;
 }
@@ -116,6 +127,11 @@ export interface EntryUpdate {
   uscite?: number | null;
   /** @nullable */
   testo?: string | null;
+  /**
+     * @maxLength 180
+     * @nullable
+     */
+  sintesi?: string | null;
   /** @nullable */
   foto?: string | null;
 }

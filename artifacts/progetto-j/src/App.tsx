@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Route, Switch, Router as WouterRouter } from 'wouter';
+import { Route, Switch, Router as WouterRouter, useLocation } from 'wouter';
 import { useEffect } from 'react';
 import { Toaster } from '@/components/ui/toaster';
 import { Navbar } from '@/components/Navbar';
@@ -16,6 +16,7 @@ import Articoli from '@/pages/articoli';
 import Articolo from '@/pages/articolo';
 import Coaching from '@/pages/coaching';
 import GiornoDetail from '@/pages/giorno';
+import Card from '@/pages/card';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -35,6 +36,13 @@ const queryClient = new QueryClient({
   },
 });
 
+/** The IG card page is a clean canvas: no Navbar. */
+function ConditionalNavbar() {
+  const [location] = useLocation();
+  if (location.startsWith('/card/')) return null;
+  return <Navbar />;
+}
+
 function App() {
   useEffect(() => {
     document.documentElement.classList.add('dark');
@@ -44,7 +52,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
         <ScrollToTop />
-        <Navbar />
+        <ConditionalNavbar />
         <Switch>
           <Route path="/" component={Home} />
           <Route path="/journaling" component={Journaling} />
@@ -55,6 +63,7 @@ function App() {
           <Route path="/a/:slug" component={Articolo} />
           <Route path="/coaching" component={Coaching} />
           <Route path="/giorno/:id" component={GiornoDetail} />
+          <Route path="/card/:giorno" component={Card} />
           <Route path="/admin" component={Admin} />
           <Route path="/p/:slug" component={Pagina} />
           <Route component={NotFound} />

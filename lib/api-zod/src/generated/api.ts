@@ -21,6 +21,10 @@ export const HealthCheckResponse = zod.object({
  * Returns all entries sorted by date descending
  * @summary List all journal entries
  */
+export const listEntriesResponseSintesiMax = 180;
+
+
+
 export const ListEntriesResponseItem = zod.object({
   "id": zod.number(),
   "numero": zod.number().describe('Day number (1-180)'),
@@ -36,6 +40,7 @@ export const ListEntriesResponseItem = zod.object({
   "entrate": zod.number().nullish().describe('Daily income (€)'),
   "uscite": zod.number().nullish().describe('Daily expenses (€)'),
   "testo": zod.string().nullish().describe('Diary text'),
+  "sintesi": zod.string().max(listEntriesResponseSintesiMax).nullish().describe('Short Instagram card summary'),
   "foto": zod.string().nullish().describe('Photo URL'),
   "createdAt": zod.string().optional()
 })
@@ -45,6 +50,10 @@ export const ListEntriesResponse = zod.array(ListEntriesResponseItem)
 /**
  * @summary Create a new journal entry (admin only)
  */
+export const createEntryBodySintesiMax = 180;
+
+
+
 export const CreateEntryBody = zod.object({
   "numero": zod.number(),
   "data": zod.string(),
@@ -59,8 +68,13 @@ export const CreateEntryBody = zod.object({
   "entrate": zod.number().nullish(),
   "uscite": zod.number().nullish(),
   "testo": zod.string().nullish(),
+  "sintesi": zod.string().max(createEntryBodySintesiMax).nullish(),
   "foto": zod.string().nullish()
 })
+
+export const createEntryResponseSintesiMax = 180;
+
+
 
 export const CreateEntryResponse = zod.object({
   "id": zod.number(),
@@ -77,6 +91,7 @@ export const CreateEntryResponse = zod.object({
   "entrate": zod.number().nullish().describe('Daily income (€)'),
   "uscite": zod.number().nullish().describe('Daily expenses (€)'),
   "testo": zod.string().nullish().describe('Diary text'),
+  "sintesi": zod.string().max(createEntryResponseSintesiMax).nullish().describe('Short Instagram card summary'),
   "foto": zod.string().nullish().describe('Photo URL'),
   "createdAt": zod.string().optional()
 })
@@ -86,6 +101,10 @@ export const CreateEntryResponse = zod.object({
  * Returns the 3 most recent entries for the home page
  * @summary Get 3 most recent journal entries
  */
+export const getLatestEntriesResponseSintesiMax = 180;
+
+
+
 export const GetLatestEntriesResponseItem = zod.object({
   "id": zod.number(),
   "numero": zod.number().describe('Day number (1-180)'),
@@ -101,6 +120,7 @@ export const GetLatestEntriesResponseItem = zod.object({
   "entrate": zod.number().nullish().describe('Daily income (€)'),
   "uscite": zod.number().nullish().describe('Daily expenses (€)'),
   "testo": zod.string().nullish().describe('Diary text'),
+  "sintesi": zod.string().max(getLatestEntriesResponseSintesiMax).nullish().describe('Short Instagram card summary'),
   "foto": zod.string().nullish().describe('Photo URL'),
   "createdAt": zod.string().optional()
 })
@@ -135,6 +155,10 @@ export const UpdateEntryParams = zod.object({
   "numero": zod.coerce.number()
 })
 
+export const updateEntryBodySintesiMax = 180;
+
+
+
 export const UpdateEntryBody = zod.object({
   "data": zod.string().optional(),
   "kcal": zod.number().nullish(),
@@ -148,8 +172,13 @@ export const UpdateEntryBody = zod.object({
   "entrate": zod.number().nullish(),
   "uscite": zod.number().nullish(),
   "testo": zod.string().nullish(),
+  "sintesi": zod.string().max(updateEntryBodySintesiMax).nullish(),
   "foto": zod.string().nullish()
 })
+
+export const updateEntryResponseSintesiMax = 180;
+
+
 
 export const UpdateEntryResponse = zod.object({
   "id": zod.number(),
@@ -166,6 +195,7 @@ export const UpdateEntryResponse = zod.object({
   "entrate": zod.number().nullish().describe('Daily income (€)'),
   "uscite": zod.number().nullish().describe('Daily expenses (€)'),
   "testo": zod.string().nullish().describe('Diary text'),
+  "sintesi": zod.string().max(updateEntryResponseSintesiMax).nullish().describe('Short Instagram card summary'),
   "foto": zod.string().nullish().describe('Photo URL'),
   "createdAt": zod.string().optional()
 })

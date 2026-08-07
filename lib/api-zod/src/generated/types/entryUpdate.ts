@@ -30,6 +30,11 @@ export interface EntryUpdate {
   uscite?: number | null;
   /** @nullable */
   testo?: string | null;
+  /**
+     * @maxLength 180
+     * @nullable
+     */
+  sintesi?: string | null;
   /** @nullable */
   foto?: string | null;
 }

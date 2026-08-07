@@ -53,6 +53,12 @@ export interface Entry {
      */
   testo?: string | null;
   /**
+     * Short Instagram card summary
+     * @maxLength 180
+     * @nullable
+     */
+  sintesi?: string | null;
+  /**
      * Photo URL
      * @nullable
      */
