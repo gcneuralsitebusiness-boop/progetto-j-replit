@@ -1,4 +1,5 @@
 import type { Entry } from "@workspace/api-client-react";
+import { Link } from "wouter";
 
 export function Timeline180({ entries }: { entries: Entry[] }) {
   const completedDays = new Set(entries.map((e) => e.numero));
@@ -65,26 +66,39 @@ export function Timeline180({ entries }: { entries: Entry[] }) {
           const isCurrent = day === currentDay && currentDay > 0;
           const isSkipped = !done && day < currentDay;
           const isMilestone = [30, 60, 90, 180].includes(day);
-          return (
-            <div
-              key={day}
-              title={`Giorno ${day}${done ? " — registrato" : ""}${isCurrent ? " — corrente" : ""}`}
-              className={`measured aspect-square flex items-center justify-center text-[9px] sm:text-[10px] border transition-colors ${
-                isCurrent
-                  ? "bg-primary text-primary-foreground border-2 border-foreground"
-                  : done
-                  ? isMilestone
-                    ? "bg-[hsl(var(--bronze))] text-[hsl(var(--bronze-foreground))] border-[hsl(var(--bronze))]"
-                     : "bg-iron text-primary-foreground border-iron"
-                   : isSkipped
-                     ? "bg-card border border-dashed border-[#333333] text-[#444444]"
-                     : isMilestone
-                       ? "bg-card border-[hsl(var(--bronze))]/50 text-[hsl(var(--bronze))]"
-                       : "bg-card border-border text-muted-foreground"
-              }`}
+          const cellClass = `measured aspect-square flex items-center justify-center text-[9px] sm:text-[10px] border transition-colors ${
+            isCurrent
+              ? "bg-primary text-primary-foreground border-2 border-foreground"
+              : done
+              ? isMilestone
+                ? "bg-[hsl(var(--bronze))] text-[hsl(var(--bronze-foreground))] border-[hsl(var(--bronze))]"
+                : "bg-iron text-primary-foreground border-iron"
+              : isSkipped
+                ? "bg-card border border-dashed border-[#333333] text-[#444444]"
+                : isMilestone
+                  ? "bg-card border-[hsl(var(--bronze))]/50 text-[hsl(var(--bronze))]"
+                  : "bg-card border-border text-muted-foreground"
+          }`;
+          const label = `Giorno ${day}${done ? " — registrato" : ""}${isCurrent ? " — corrente" : ""}`;
+          const cell = (
+            <span
+              title={label}
+              aria-label={label}
+              className={cellClass}
             >
               {day}
-            </div>
+            </span>
+          );
+          return done ? (
+            <Link
+              key={day}
+              href={`/giorno/${day}`}
+              className="timeline-day-link rounded-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            >
+              {cell}
+            </Link>
+          ) : (
+            <div key={day}>{cell}</div>
           );
         })}
       </div>

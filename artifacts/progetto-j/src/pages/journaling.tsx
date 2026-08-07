@@ -11,7 +11,8 @@ import { MilestoneBadge } from "@/components/MilestoneBadge";
 import { AnimatedNumber } from "@/components/AnimatedNumber";
 import { SiteFooter } from "@/components/SiteFooter";
 import { DataErrorState } from "@/components/DataErrorState";
-import { Dumbbell, Heart, Flame, Wallet } from "lucide-react";
+import { Dumbbell, Heart, Flame, Wallet, ArrowRight } from "lucide-react";
+import { Link } from "wouter";
 
 const PAGE_SIZE = 12;
 
@@ -53,7 +54,9 @@ export default function Journaling() {
   const financeData = formattedChartData.filter((d) => d.entrate != null || d.uscite != null);
 
   // Stats computed over full dataset
-  const latest = entries && entries.length > 0 ? entries[0] : null;
+  const latest = entries && entries.length > 0
+    ? [...entries].reduce((current, entry) => entry.numero > current.numero ? entry : current)
+    : null;
   const totalEntries = entries?.length ?? 0;
   const totalCalories = entries?.reduce((sum, e) => sum + (e.kcal || 0), 0) ?? 0;
   const totalKm = entries?.reduce((sum, e) => sum + (e.km || 0), 0) ?? 0;
@@ -142,6 +145,36 @@ export default function Journaling() {
           </p>
         </Reveal>
       )}
+
+        {/* Current checkpoint: gives the newest update narrative priority. */}
+        {latest && (
+          <Reveal>
+            <section className="mb-12 border border-iron bg-card relative overflow-hidden">
+              <div className="absolute inset-y-0 left-0 w-1 bg-primary" />
+              <div className="p-6 sm:p-8 flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+                <div>
+                  <span className="page-label">ULTIMO CHECKPOINT</span>
+                  <div className="mt-3 flex items-end gap-4">
+                    <span className="font-serif text-[clamp(64px,11vw,112px)] leading-[0.72] text-primary bebas">
+                      {String(latest.numero).padStart(3, "0")}
+                    </span>
+                    <span className="pb-1 text-[11px] font-sans uppercase tracking-[0.2em] text-muted-foreground">
+                      {format(new Date(latest.data), "d MMMM yyyy", { locale: it })}
+                    </span>
+                  </div>
+                  {latest.testo && (
+                    <p className="mt-5 max-w-2xl text-[15px] font-sans leading-relaxed text-foreground/85 line-clamp-3">
+                      {latest.testo.replace(/^\s*GIORNO\s+\d+.*\n?/i, "").trim()}
+                    </p>
+                  )}
+                </div>
+                <Link href={`/giorno/${latest.numero}`} className="btn-primary shrink-0">
+                  Apri il giorno <ArrowRight size={15} />
+                </Link>
+              </div>
+            </section>
+          </Reveal>
+        )}
 
       {/* Last seven days consistency strip */}
       {entries && entries.length > 0 && (

@@ -1,4 +1,4 @@
-import { useGetLatestEntries, useListEntries, useGetCoaching, useGetSiteContent } from "@workspace/api-client-react";
+import { useGetLatestEntries, useListEntries, useGetCoaching, useGetSiteContent, useListArticles } from "@workspace/api-client-react";
 import { Link } from "wouter";
 import { Reveal } from "@/components/Reveal";
 import { Timeline180 } from "@/components/Timeline180";
@@ -8,14 +8,16 @@ import { DataErrorState } from "@/components/DataErrorState";
 import { PulseTrace } from "@/components/PulseTrace";
 import { ArrowRight, Users, Flame, Dumbbell, Heart, Wallet } from "lucide-react";
 import { getPhotoUrl } from "@workspace/object-storage-web";
+import { getArticlePlainText } from "@/components/ArticleContent";
 
 export default function Home() {
   const { data: latestEntries, isLoading: latestLoading, isError: latestError } = useGetLatestEntries();
   const { data: allEntries, isLoading: allLoading, isError: allError } = useListEntries();
   const { data: coaching, isLoading: coachingLoading, isError: coachingError } = useGetCoaching();
   const { data: siteContent, isLoading: siteContentLoading, isError: siteContentError } = useGetSiteContent();
-  const isError = latestError || allError || coachingError || siteContentError;
-  const isLoading = latestLoading || allLoading || coachingLoading || siteContentLoading;
+  const { data: articles, isLoading: articlesLoading, isError: articlesError } = useListArticles();
+  const isError = latestError || allError || coachingError || siteContentError || articlesError;
+  const isLoading = latestLoading || allLoading || coachingLoading || siteContentLoading || articlesLoading;
 
   const heroTitolo = siteContent?.home_hero_titolo || "PROGETTO J · 180 DAYS";
   const heroSottotitolo = siteContent?.home_hero_sottotitolo || "Disciplina. Tracking. Dati.";
@@ -33,6 +35,16 @@ export default function Home() {
   const sortedEntries = allEntries ? [...allEntries].sort((a, b) => a.numero - b.numero) : [];
   const firstEntry = sortedEntries[0];
   const lastEntry = sortedEntries[sortedEntries.length - 1];
+  const latestDay = lastEntry;
+  const latestArticle = articles
+    ? [...articles]
+      .filter((article) => article.pubblicato)
+      .sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime())[0]
+    : undefined;
+  const progressPercent = Math.min(100, Math.round((currentDay / 180) * 100));
+  const latestArticleExcerpt = latestArticle
+    ? getArticlePlainText(latestArticle.contenuto).slice(0, 180).replace(/\s+\S*$/, "") + (getArticlePlainText(latestArticle.contenuto).length > 180 ? "…" : "")
+    : "";
   const comparisonMetrics = [
     { label: "PESO", unit: "KG", first: firstEntry?.peso, last: lastEntry?.peso, fraction: 1 },
     { label: "BATTITO", unit: "BPM", first: firstEntry?.battito, last: lastEntry?.battito, fraction: 0 },
@@ -75,12 +87,22 @@ export default function Home() {
           {allEntries && <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 z-0"><PulseTrace entries={allEntries} variant="hero" /></div>}
           <Reveal className="relative z-10">
             <h1 className="font-serif text-[clamp(120px,28vw,280px)] leading-[0.73] text-primary bebas tracking-[0.02em]">J</h1>
-            <h2 className="font-serif text-[clamp(24px,6vw,44px)] text-foreground tracking-[0.08em] mt-4 sm:mt-6 mb-6 bebas">
+            <div className="page-label mx-auto w-fit text-primary before:!bg-primary">PERCORSO IN CORSO</div>
+            <h2 className="font-serif text-[clamp(24px,6vw,44px)] text-foreground tracking-[0.08em] mt-4 sm:mt-6 mb-4 bebas">
               {heroTitolo}
             </h2>
             <p className="text-[14px] sm:text-[15px] font-sans text-muted-foreground max-w-md mx-auto mb-10 leading-relaxed uppercase tracking-[0.12em]">
               {heroSottotitolo}
             </p>
+            {currentDay > 0 && (
+              <div className="mx-auto mb-8 max-w-md">
+                <div className="flex items-end justify-between text-[10px] font-sans uppercase tracking-[0.2em] text-muted-foreground mb-2">
+                  <span>GIORNO {String(currentDay).padStart(3, "0")} / 180</span>
+                  <span className="text-primary">{progressPercent}%</span>
+                </div>
+                <div className="h-1 bg-iron"><div className="h-full bg-primary transition-all duration-1000" style={{ width: `${progressPercent}%` }} /></div>
+              </div>
+            )}
             <Link href="/journaling" className="btn-primary">
               {ctaTesto} <ArrowRight size={16} />
             </Link>
@@ -134,6 +156,49 @@ export default function Home() {
           <div className="border-y border-border bg-card overflow-hidden py-3">
             {tickerContent}
           </div>
+        )}
+
+        {/* Latest update + editorial content */}
+        {(latestDay || latestArticle) && (
+          <section className="max-w-5xl mx-auto px-5 sm:px-6 pt-20 w-full">
+            <div className="grid grid-cols-1 lg:grid-cols-[1.15fr_0.85fr] gap-4">
+              {latestDay && (
+                <Reveal>
+                  <div>
+                    <div className="flex items-end justify-between mb-5">
+                      <div>
+                        <span className="page-label">ULTIMO AGGIORNAMENTO</span>
+                        <h3 className="font-serif text-[clamp(42px,7vw,72px)] leading-[0.82] text-foreground bebas mt-2">
+                          GIORNO {String(latestDay.numero).padStart(3, "0")}
+                        </h3>
+                      </div>
+                      <Link href={`/giorno/${latestDay.numero}`} className="hidden sm:inline-flex text-[11px] uppercase tracking-[0.2em] text-primary hover:text-foreground">
+                        APRI <ArrowRight size={14} />
+                      </Link>
+                    </div>
+                    <DayCard entry={latestDay} featured />
+                  </div>
+                </Reveal>
+              )}
+              {latestArticle && (
+                <Reveal delay={100}>
+                  <Link href={`/a/${latestArticle.slug}`} className="group block h-full border border-border bg-card p-6 sm:p-8 card-lift hover:border-iron">
+                    <span className="page-label">ULTIMO ARTICOLO</span>
+                    <div className="mt-12 flex flex-col h-[calc(100%-3rem)]">
+                      <span className="text-[10px] font-sans uppercase tracking-[0.22em] text-primary">{latestArticle.categoria}</span>
+                      <h3 className="mt-4 font-serif text-[clamp(38px,5vw,58px)] leading-[0.86] text-foreground bebas group-hover:text-primary transition-colors">
+                        {latestArticle.titolo}
+                      </h3>
+                      <p className="mt-6 text-[15px] leading-relaxed text-muted-foreground">{latestArticleExcerpt}</p>
+                      <span className="mt-auto pt-10 inline-flex items-center gap-2 text-[11px] font-sans uppercase tracking-[0.2em] text-primary">
+                        Leggi l'articolo <ArrowRight size={14} />
+                      </span>
+                    </div>
+                  </Link>
+                </Reveal>
+              )}
+            </div>
+          </section>
         )}
 
         {comparisonMetrics.length > 0 && firstEntry && lastEntry && (

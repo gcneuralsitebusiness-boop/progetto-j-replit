@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { Menu, X } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useGetSiteContent, useListPages, useListArticles } from "@workspace/api-client-react";
 import { ScrollProgress } from "@/components/ScrollProgress";
 import { cn } from "@/lib/utils";
@@ -39,6 +39,7 @@ function NavLink({
 
 export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLElement>(null);
   const { data: content } = useGetSiteContent();
   const { data: pages } = useListPages();
   const { data: articles } = useListArticles();
@@ -58,6 +59,25 @@ export function Navbar() {
   }, [mobileMenuOpen]);
 
   const closeMenu = () => setMobileMenuOpen(false);
+  const navigationItems = [
+    { href: "/chi-sono", label: "Chi Sono" },
+    { href: "/journaling", label: "Journaling" },
+    ...(articles && articles.length > 0 ? [{ href: "/articoli", label: "Articoli" }] : []),
+    { href: "/coaching", label: "Coaching" },
+    { href: "/social", label: "Social" },
+    { href: "/sponsor", label: "Sponsor" },
+    ...publishedPages.map((page) => ({ href: `/p/${page.slug}`, label: page.titolo })),
+  ];
+
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    menuRef.current?.querySelector<HTMLElement>("a, button")?.focus();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") closeMenu();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [mobileMenuOpen]);
 
   return (
     <>
@@ -73,15 +93,9 @@ export function Navbar() {
           </Link>
 
           <nav className="hidden md:flex items-center gap-8">
-            <NavLink href="/chi-sono">Chi Sono</NavLink>
-            <NavLink href="/journaling">Journaling</NavLink>
-            {articles && articles.length > 0 && <NavLink href="/articoli">Articoli</NavLink>}
-            <NavLink href="/coaching">Coaching</NavLink>
-            <NavLink href="/social">Social</NavLink>
-            <NavLink href="/sponsor">Sponsor</NavLink>
-            {publishedPages.map((page) => (
-              <NavLink key={page.id} href={`/p/${page.slug}`}>
-                {page.titolo}
+            {navigationItems.map((item) => (
+              <NavLink key={item.href} href={item.href}>
+                {item.label}
               </NavLink>
             ))}
             <a
@@ -98,7 +112,9 @@ export function Navbar() {
             className="md:hidden text-foreground hover:text-primary transition-colors"
             style={{ position: "relative", zIndex: 10000 }}
             onClick={() => setMobileMenuOpen((v) => !v)}
-            aria-label="Toggle menu"
+            aria-label={mobileMenuOpen ? "Chiudi menu" : "Apri menu"}
+            aria-expanded={mobileMenuOpen}
+            aria-controls="mobile-navigation"
           >
             {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
@@ -107,6 +123,8 @@ export function Navbar() {
 
       {mobileMenuOpen && (
         <nav
+          ref={menuRef}
+          id="mobile-navigation"
           className="md:hidden menu-slide"
           style={{
             position: "fixed",
@@ -123,15 +141,11 @@ export function Navbar() {
             overflowY: "auto",
           }}
         >
-          <NavLink href="/chi-sono" onClick={closeMenu}>Chi Sono</NavLink>
-          <NavLink href="/journaling" onClick={closeMenu}>Journaling</NavLink>
-          <NavLink href="/articoli" onClick={closeMenu}>Articoli</NavLink>
-          <NavLink href="/coaching" onClick={closeMenu}>Coaching</NavLink>
-          <NavLink href="/social" onClick={closeMenu}>Social</NavLink>
-          <NavLink href="/sponsor" onClick={closeMenu}>Sponsor</NavLink>
-          {publishedPages.map((page) => (
-            <NavLink key={page.id} href={`/p/${page.slug}`} onClick={closeMenu}>
-              {page.titolo}
+          {navigationItems.map((item, index) => (
+            <NavLink key={item.href} href={item.href} onClick={closeMenu}>
+              <span className="mobile-nav-item" style={{ animationDelay: `${80 + index * 55}ms` }}>
+                {item.label}
+              </span>
             </NavLink>
           ))}
           <a
