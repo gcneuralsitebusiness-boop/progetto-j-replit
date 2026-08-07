@@ -553,13 +553,23 @@ export function ArticoliTab() {
                 )}
                 <div className="mt-4 flex flex-wrap gap-3">
                   <a
-                    href={`${import.meta.env.BASE_URL.replace(/\/$/, "")}/a/${latest.slug}`}
+                    href={`${import.meta.env.BASE_URL.replace(/\/$/, "")}/admin/articoli/${latest.slug}/preview`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1.5 text-[11px] font-sans uppercase tracking-wider text-primary hover:text-foreground transition-colors"
                   >
-                    Apri articolo <ArrowRight size={13} />
+                    Anteprima completa <ArrowRight size={13} />
                   </a>
+                  {!isDraft && (
+                    <a
+                      href={`${import.meta.env.BASE_URL.replace(/\/$/, "")}/a/${latest.slug}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 text-[11px] font-sans uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      Apri articolo <ArrowRight size={13} />
+                    </a>
+                  )}
                   <a
                     href={`${import.meta.env.BASE_URL.replace(/\/$/, "")}/card/articolo/${latest.slug}`}
                     target="_blank"
@@ -704,6 +714,14 @@ export function ArticoliTab() {
                     <div className="text-[12px] font-sans text-muted-foreground uppercase tracking-wider">/{a.slug} · {a.categoria} · {a.pubblicato ? "pubblicato" : "bozza"}</div>
                   </div>
                   <div className="flex gap-4 flex-wrap">
+                    <a
+                      href={`${import.meta.env.BASE_URL.replace(/\/$/, "")}/admin/articoli/${a.slug}/preview`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[13px] uppercase tracking-wider font-sans text-primary hover:text-primary/80 transition-colors"
+                    >
+                      Anteprima
+                    </a>
                     <a
                       href={`${import.meta.env.BASE_URL.replace(/\/$/, "")}/card/articolo/${a.slug}`}
                       target="_blank"

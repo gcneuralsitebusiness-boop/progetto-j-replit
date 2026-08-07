@@ -29,6 +29,25 @@ router.get("/articles/:slug", async (req, res): Promise<void> => {
   res.json(row);
 });
 
+// GET /admin/articles/:slug/preview — admin-only, returns any article (draft or published)
+router.get("/admin/articles/:slug/preview", async (req, res): Promise<void> => {
+  if (!req.session?.adminAuthenticated) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  const slug = req.params.slug;
+  const [row] = await db
+    .select()
+    .from(articoliTable)
+    .where(eq(articoliTable.slug, slug))
+    .limit(1);
+  if (!row) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+  res.json(row);
+});
+
 router.post("/articles", async (req, res): Promise<void> => {
   if (!req.session?.adminAuthenticated) {
     res.status(401).json({ error: "Unauthorized" });

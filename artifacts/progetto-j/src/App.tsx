@@ -14,6 +14,7 @@ import Social from '@/pages/social';
 import Sponsor from '@/pages/sponsor';
 import Articoli from '@/pages/articoli';
 import Articolo from '@/pages/articolo';
+import ArticoloPreview from '@/pages/articolo-preview';
 import Coaching from '@/pages/coaching';
 import GiornoDetail from '@/pages/giorno';
 import Card from '@/pages/card';
@@ -37,10 +38,11 @@ const queryClient = new QueryClient({
   },
 });
 
-/** The IG card page is a clean canvas: no Navbar. */
+/** The IG card page and admin article preview are clean canvases: no Navbar. */
 function ConditionalNavbar() {
   const [location] = useLocation();
   if (location.startsWith('/card/')) return null;
+  if (location.startsWith('/admin/articoli/') && location.endsWith('/preview')) return null;
   return <Navbar />;
 }
 
@@ -67,6 +69,7 @@ function App() {
           <Route path="/card/articolo/:slug/story" component={CardArticolo} />
           <Route path="/card/articolo/:slug" component={CardArticolo} />
           <Route path="/card/:giorno" component={Card} />
+          <Route path="/admin/articoli/:slug/preview" component={ArticoloPreview} />
           <Route path="/admin" component={Admin} />
           <Route path="/p/:slug" component={Pagina} />
           <Route component={NotFound} />
