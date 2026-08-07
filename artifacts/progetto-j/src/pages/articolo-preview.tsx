@@ -94,12 +94,20 @@ export default function ArticoloPreview() {
           <span className="text-[12px] font-sans uppercase tracking-[0.2em] text-primary">
             Anteprima bozza · non visibile ai lettori
           </span>
-          <Link
-            href="/admin"
-            className="text-[11px] font-sans uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors shrink-0"
-          >
-            ← Admin
-          </Link>
+          <div className="flex items-center gap-4 shrink-0">
+            <Link
+              href={`/admin?editArticle=${encodeURIComponent(slug)}`}
+              className="text-[11px] font-sans uppercase tracking-wider text-primary border border-primary/60 px-3 py-1 hover:bg-primary/20 transition-colors"
+            >
+              Modifica
+            </Link>
+            <Link
+              href="/admin"
+              className="text-[11px] font-sans uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
+            >
+              ← Admin
+            </Link>
+          </div>
         </div>
       )}
 
@@ -108,12 +116,20 @@ export default function ArticoloPreview() {
           <span className="text-[12px] font-sans uppercase tracking-[0.2em] text-muted-foreground">
             Anteprima admin · articolo pubblicato
           </span>
-          <Link
-            href="/admin"
-            className="text-[11px] font-sans uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors shrink-0"
-          >
-            ← Admin
-          </Link>
+          <div className="flex items-center gap-4 shrink-0">
+            <Link
+              href={`/admin?editArticle=${encodeURIComponent(slug)}`}
+              className="text-[11px] font-sans uppercase tracking-wider text-muted-foreground border border-border px-3 py-1 hover:text-foreground hover:border-muted-foreground/50 transition-colors"
+            >
+              Modifica
+            </Link>
+            <Link
+              href="/admin"
+              className="text-[11px] font-sans uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
+            >
+              ← Admin
+            </Link>
+          </div>
         </div>
       )}
 

@@ -917,6 +917,18 @@ export default function Admin() {
   const logoutMutation = useAdminLogout();
   const [activeTab, setActiveTab] = useState<Tab>("oggi");
   const [diarioScrollTo, setDiarioScrollTo] = useState<number | undefined>(undefined);
+  // Read ?editArticle=slug from URL to jump straight into editing
+  const searchParams = new URLSearchParams(window.location.search);
+  const editArticleSlug = searchParams.get("editArticle") ?? undefined;
+  const [pendingEditSlug, setPendingEditSlug] = useState<string | undefined>(editArticleSlug);
+
+  useEffect(() => {
+    if (!editArticleSlug) return;
+    setActiveTab("articoli");
+    // Clean the query param from the URL without a page reload
+    const cleanUrl = window.location.pathname;
+    window.history.replaceState(null, "", cleanUrl);
+  }, []);
 
   if (adminLoading) {
     return <div className="min-h-screen flex items-center justify-center font-serif text-2xl animate-pulse text-muted-foreground pt-16">Caricamento...</div>;
@@ -973,7 +985,12 @@ export default function Admin() {
       {activeTab === "diario" && <DiarioTab scrollToEntry={diarioScrollTo} />}
       {activeTab === "sito" && <SitoTab />}
       {activeTab === "pagine" && <PagineTab />}
-      {activeTab === "articoli" && <ArticoliTab />}
+      {activeTab === "articoli" && (
+        <ArticoliTab
+          startEditSlug={pendingEditSlug}
+          onEditStarted={() => setPendingEditSlug(undefined)}
+        />
+      )}
       {activeTab === "social" && <SocialTab />}
       {activeTab === "sponsor" && <SponsorTab />}
       {activeTab === "coaching" && <CoachingTab />}

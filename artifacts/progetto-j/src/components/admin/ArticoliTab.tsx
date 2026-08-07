@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { ArticleContent, getArticlePlainText } from "@/components/ArticleContent";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -105,7 +105,7 @@ async function optimizeImage(file: File): Promise<File> {
   });
 }
 
-export function ArticoliTab() {
+export function ArticoliTab({ startEditSlug, onEditStarted }: { startEditSlug?: string; onEditStarted?: () => void }) {
   const queryClient = useQueryClient();
   const { data: articles } = useListArticles();
   const create = useCreateArticle();
@@ -131,6 +131,17 @@ export function ArticoliTab() {
   const { uploadFile, isUploading, progress, error: uploadError } = useUpload({
     onSuccess: (res) => setForm((f) => ({ ...f, immagine: res.objectPath })),
   });
+
+  // Auto-open editor when arriving from preview page via ?editArticle=slug
+  const startEditCalledRef = useRef(false);
+  useEffect(() => {
+    if (!startEditSlug || !articles || startEditCalledRef.current) return;
+    const target = articles.find((a) => a.slug === startEditSlug);
+    if (!target) return;
+    startEditCalledRef.current = true;
+    startEdit(target);
+    onEditStarted?.();
+  }, [startEditSlug, articles]);
 
   const imgUrl = form.immagine
     ? (getPhotoUrl(form.immagine) ?? (form.immagine.startsWith("http") ? form.immagine : null))
