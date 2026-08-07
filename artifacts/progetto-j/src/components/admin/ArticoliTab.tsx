@@ -173,6 +173,11 @@ export function ArticoliTab() {
       return;
     }
 
+    if (!getArticlePlainText(form.contenuto).trim()) {
+      setSubmitError("Inserisci il testo dell'articolo: serve anche per creare una card completa.");
+      return;
+    }
+
     const handleError = (err: unknown) => {
       const msg = err instanceof Error ? err.message : String(err);
       setSubmitError(

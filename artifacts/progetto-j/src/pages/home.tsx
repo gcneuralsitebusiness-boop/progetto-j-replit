@@ -1,4 +1,4 @@
-import { useGetLatestEntries, useListEntries, useGetCoaching, useGetSiteContent, useListArticles } from "@workspace/api-client-react";
+import { useGetLatestEntries, useListEntries, useGetCoaching, useGetSiteContent } from "@workspace/api-client-react";
 import { Link } from "wouter";
 import { Reveal } from "@/components/Reveal";
 import { Timeline180 } from "@/components/Timeline180";
@@ -8,16 +8,14 @@ import { DataErrorState } from "@/components/DataErrorState";
 import { PulseTrace } from "@/components/PulseTrace";
 import { ArrowRight, Users, Flame, Dumbbell, Heart, Wallet } from "lucide-react";
 import { getPhotoUrl } from "@workspace/object-storage-web";
-import { getArticlePlainText } from "@/components/ArticleContent";
 
 export default function Home() {
   const { data: latestEntries, isLoading: latestLoading, isError: latestError } = useGetLatestEntries();
   const { data: allEntries, isLoading: allLoading, isError: allError } = useListEntries();
   const { data: coaching, isLoading: coachingLoading, isError: coachingError } = useGetCoaching();
   const { data: siteContent, isLoading: siteContentLoading, isError: siteContentError } = useGetSiteContent();
-  const { data: articles, isLoading: articlesLoading, isError: articlesError } = useListArticles();
-  const isError = latestError || allError || coachingError || siteContentError || articlesError;
-  const isLoading = latestLoading || allLoading || coachingLoading || siteContentLoading || articlesLoading;
+  const isError = latestError || allError || coachingError || siteContentError;
+  const isLoading = latestLoading || allLoading || coachingLoading || siteContentLoading;
 
   const heroTitolo = siteContent?.home_hero_titolo || "PROGETTO J · 180 DAYS";
   const heroSottotitolo = siteContent?.home_hero_sottotitolo || "Disciplina. Tracking. Dati.";
@@ -36,15 +34,7 @@ export default function Home() {
   const firstEntry = sortedEntries[0];
   const lastEntry = sortedEntries[sortedEntries.length - 1];
   const latestDay = lastEntry;
-  const latestArticle = articles
-    ? [...articles]
-      .filter((article) => article.pubblicato)
-      .sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime())[0]
-    : undefined;
   const progressPercent = Math.min(100, Math.round((currentDay / 180) * 100));
-  const latestArticleExcerpt = latestArticle
-    ? getArticlePlainText(latestArticle.contenuto).slice(0, 180).replace(/\s+\S*$/, "") + (getArticlePlainText(latestArticle.contenuto).length > 180 ? "…" : "")
-    : "";
   const comparisonMetrics = [
     { label: "PESO", unit: "KG", first: firstEntry?.peso, last: lastEntry?.peso, fraction: 1 },
     { label: "BATTITO", unit: "BPM", first: firstEntry?.battito, last: lastEntry?.battito, fraction: 0 },
@@ -82,34 +72,33 @@ export default function Home() {
   return (
     <div className="min-h-screen flex flex-col">
       <main className="flex-1">
-        {/* Hero Section */}
-        <section className="min-h-[85svh] flex flex-col items-center justify-center px-5 sm:px-6 py-20 text-center relative hero-radial overflow-hidden">
-          {allEntries && <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 z-0"><PulseTrace entries={allEntries} variant="hero" /></div>}
-          <Reveal className="relative z-10">
-            <h1 className="font-serif text-[clamp(120px,28vw,280px)] leading-[0.73] text-primary bebas tracking-[0.02em]">J</h1>
-            <div className="page-label mx-auto w-fit text-primary before:!bg-primary">PERCORSO IN CORSO</div>
-            <h2 className="font-serif text-[clamp(24px,6vw,44px)] text-foreground tracking-[0.08em] mt-4 sm:mt-6 mb-4 bebas">
+        {/* A single, readable entry point into the diary. */}
+        <section className="px-5 sm:px-6 pt-28 sm:pt-36 pb-16 sm:pb-20 hero-radial">
+          <Reveal className="max-w-5xl mx-auto">
+            <div className="max-w-3xl">
+              <div className="page-label w-fit text-primary before:!bg-primary">PERCORSO IN CORSO</div>
+              <h1 className="font-serif text-[clamp(72px,14vw,148px)] leading-[0.78] text-primary bebas tracking-[0.02em] mt-5">J</h1>
+              <h2 className="font-serif text-[clamp(30px,6vw,52px)] text-foreground tracking-[0.06em] mt-3 mb-4 bebas">
               {heroTitolo}
-            </h2>
-            <p className="text-[14px] sm:text-[15px] font-sans text-muted-foreground max-w-md mx-auto mb-10 leading-relaxed uppercase tracking-[0.12em]">
+              </h2>
+              <p className="text-[14px] sm:text-[15px] font-sans text-muted-foreground max-w-xl mb-8 leading-relaxed uppercase tracking-[0.12em]">
               {heroSottotitolo}
-            </p>
-            {currentDay > 0 && (
-              <div className="mx-auto mb-8 max-w-md">
+              </p>
+              {currentDay > 0 && (
+                <div className="mb-8 max-w-xl">
                 <div className="flex items-end justify-between text-[10px] font-sans uppercase tracking-[0.2em] text-muted-foreground mb-2">
                   <span>GIORNO {String(currentDay).padStart(3, "0")} / 180</span>
                   <span className="text-primary">{progressPercent}%</span>
                 </div>
                 <div className="h-1 bg-iron"><div className="h-full bg-primary transition-all duration-1000" style={{ width: `${progressPercent}%` }} /></div>
-              </div>
-            )}
-            <Link href="/journaling" className="btn-primary">
+                </div>
+              )}
+              <Link href="/journaling" className="btn-primary">
               {ctaTesto} <ArrowRight size={16} />
-            </Link>
+              </Link>
 
-            {/* Live hero data strip */}
-            {currentDay > 0 && (
-              <div className="mt-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
+              {currentDay > 0 && (
+                <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-2">
                 <span className="hero-data-item"><strong className="measured">GG {currentDay}</strong> / 180</span>
                 <span className="text-iron text-[10px]">·</span>
                 <span className="hero-data-item"><strong className="measured">{totalKm}</strong> km</span>
@@ -121,34 +110,10 @@ export default function Home() {
                     <span className="hero-data-item"><strong className="measured">€{totalIncome.toLocaleString("it-IT")}</strong></span>
                   </>
                 )}
-              </div>
-            )}
-            {allEntries && (() => {
-              const pulse = allEntries.filter((entry) => entry.battito != null).sort((a, b) => a.numero - b.numero);
-              return pulse.length >= 2 ? (
-                <p className="mt-5 text-[10px] font-sans uppercase tracking-[0.25em] text-muted-foreground">
-                  BATTITO A RIPOSO · <span className="measured">{pulse[0].battito}</span> <span className="text-iron">→</span> <span className="measured">{pulse[pulse.length - 1].battito}</span> BPM
-                </p>
-              ) : null;
-            })()}
-            <p className="mt-4 text-[10px] font-sans uppercase tracking-[0.25em] text-muted-foreground">
-              AGGIORNATO OGNI GIORNO
-            </p>
-            {remainingDays > 0 && (
-              <div className="mt-16 text-center">
-                <div className="measured text-[clamp(40px,10vw,88px)] leading-none text-foreground">{remainingDays}</div>
-                <div className="mt-3 text-[11px] font-sans uppercase tracking-[0.25em] text-muted-foreground">
-                  GIORNI AL TRAGUARDO
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </Reveal>
-
-          {/* Scroll hint */}
-          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center z-10">
-            <span className="text-[9px] font-sans uppercase tracking-[0.3em] text-muted-foreground/60">Scorri</span>
-            <div className="scroll-hint-line" />
-          </div>
         </section>
 
         {/* Live ticker */}
@@ -158,46 +123,23 @@ export default function Home() {
           </div>
         )}
 
-        {/* Latest update + editorial content */}
-        {(latestDay || latestArticle) && (
-          <section className="max-w-5xl mx-auto px-5 sm:px-6 pt-20 w-full">
-            <div className="grid grid-cols-1 lg:grid-cols-[1.15fr_0.85fr] gap-4">
-              {latestDay && (
-                <Reveal>
-                  <div>
-                    <div className="flex items-end justify-between mb-5">
-                      <div>
-                        <span className="page-label">ULTIMO AGGIORNAMENTO</span>
-                        <h3 className="font-serif text-[clamp(42px,7vw,72px)] leading-[0.82] text-foreground bebas mt-2">
-                          GIORNO {String(latestDay.numero).padStart(3, "0")}
-                        </h3>
-                      </div>
-                      <Link href={`/giorno/${latestDay.numero}`} className="hidden sm:inline-flex text-[11px] uppercase tracking-[0.2em] text-primary hover:text-foreground">
-                        APRI <ArrowRight size={14} />
-                      </Link>
-                    </div>
-                    <DayCard entry={latestDay} featured />
-                  </div>
-                </Reveal>
-              )}
-              {latestArticle && (
-                <Reveal delay={100}>
-                  <Link href={`/a/${latestArticle.slug}`} className="group block h-full border border-border bg-card p-6 sm:p-8 card-lift hover:border-iron">
-                    <span className="page-label">ULTIMO ARTICOLO</span>
-                    <div className="mt-12 flex flex-col h-[calc(100%-3rem)]">
-                      <span className="text-[10px] font-sans uppercase tracking-[0.22em] text-primary">{latestArticle.categoria}</span>
-                      <h3 className="mt-4 font-serif text-[clamp(38px,5vw,58px)] leading-[0.86] text-foreground bebas group-hover:text-primary transition-colors">
-                        {latestArticle.titolo}
-                      </h3>
-                      <p className="mt-6 text-[15px] leading-relaxed text-muted-foreground">{latestArticleExcerpt}</p>
-                      <span className="mt-auto pt-10 inline-flex items-center gap-2 text-[11px] font-sans uppercase tracking-[0.2em] text-primary">
-                        Leggi l'articolo <ArrowRight size={14} />
-                      </span>
-                    </div>
-                  </Link>
-                </Reveal>
-              )}
-            </div>
+        {/* The latest diary day stands on its own; editorial lives in Articoli. */}
+        {latestDay && (
+          <section className="max-w-5xl mx-auto px-5 sm:px-6 pt-16 sm:pt-20 w-full">
+            <Reveal>
+              <div className="flex items-end justify-between mb-5">
+                <div>
+                  <span className="page-label">ULTIMO AGGIORNAMENTO</span>
+                  <h3 className="font-serif text-[clamp(42px,7vw,72px)] leading-[0.82] text-foreground bebas mt-2">
+                    GIORNO {String(latestDay.numero).padStart(3, "0")}
+                  </h3>
+                </div>
+                <Link href={`/giorno/${latestDay.numero}`} className="hidden sm:inline-flex text-[11px] uppercase tracking-[0.2em] text-primary hover:text-foreground">
+                  APRI <ArrowRight size={14} />
+                </Link>
+              </div>
+              <DayCard entry={latestDay} featured />
+            </Reveal>
           </section>
         )}
 
@@ -259,8 +201,6 @@ export default function Home() {
             )}
           </Reveal>
         </section>
-
-        <div className="max-w-5xl mx-auto"><PulseTrace entries={allEntries ?? []} variant="divider" /></div>
 
         {/* Latest Days */}
         <section className="max-w-5xl mx-auto px-5 sm:px-6 py-24 w-full">

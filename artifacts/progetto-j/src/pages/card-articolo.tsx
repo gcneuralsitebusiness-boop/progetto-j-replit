@@ -34,6 +34,13 @@ function wordCountLabel(contenuto: string): string {
   return `${rounded.toLocaleString("it-IT")} PAROLE`;
 }
 
+function articleExcerpt(contenuto: string, limit = 175): string {
+  const plain = getArticlePlainText(contenuto).replace(/\s+/g, " ").trim();
+  if (!plain) return "Una nuova pagina del percorso.";
+  if (plain.length <= limit) return plain;
+  return `${plain.slice(0, limit).replace(/\s+\S*$/, "")}…`;
+}
+
 /** Title that shrinks from the base size down to 76px before clamping to 4 lines with ellipsis. */
 function FitTitle({ title, baseSize }: { title: string; baseSize: number }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -87,6 +94,7 @@ function ArticleCard({
   const { height, titleSize } = FORMATS[format];
   const coverUrl = resolveCoverUrl(article.immagine);
   const words = wordCountLabel(article.contenuto);
+  const excerpt = articleExcerpt(article.contenuto, format === "feed" ? 175 : 145);
 
   const meta = (
     <div>
@@ -105,8 +113,19 @@ function ArticleCard({
         {article.categoria}
       </div>
       <FitTitle title={article.titolo} baseSize={titleSize} />
-      <div style={{ width: 90, height: 4, backgroundColor: RED, marginTop: 40 }} />
-      {format === "story" && <div style={{ marginTop: 44 }}>{meta}</div>}
+       <p
+         style={{
+           margin: "28px 0 0", maxWidth: 760, color: "#C2BFBA",
+           fontFamily: "Inter, Arial, sans-serif", fontSize: format === "feed" ? 25 : 23,
+           lineHeight: 1.45, letterSpacing: "0.015em",
+           display: "-webkit-box", WebkitLineClamp: format === "feed" ? 3 : 4,
+           WebkitBoxOrient: "vertical", overflow: "hidden",
+         }}
+       >
+         {excerpt}
+       </p>
+       <div style={{ width: 90, height: 4, backgroundColor: RED, marginTop: 30 }} />
+       {format === "story" && <div style={{ marginTop: 36 }}>{meta}</div>}
     </div>
   );
 
