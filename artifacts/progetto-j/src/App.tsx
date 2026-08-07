@@ -17,6 +17,7 @@ import Articolo from '@/pages/articolo';
 import Coaching from '@/pages/coaching';
 import GiornoDetail from '@/pages/giorno';
 import Card from '@/pages/card';
+import CardArticolo from '@/pages/card-articolo';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -63,6 +64,8 @@ function App() {
           <Route path="/a/:slug" component={Articolo} />
           <Route path="/coaching" component={Coaching} />
           <Route path="/giorno/:id" component={GiornoDetail} />
+          <Route path="/card/articolo/:slug/story" component={CardArticolo} />
+          <Route path="/card/articolo/:slug" component={CardArticolo} />
           <Route path="/card/:giorno" component={Card} />
           <Route path="/admin" component={Admin} />
           <Route path="/p/:slug" component={Pagina} />

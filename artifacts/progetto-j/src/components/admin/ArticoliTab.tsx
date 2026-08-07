@@ -613,7 +613,23 @@ export function ArticoliTab() {
                     <div className="font-serif text-[20px] tracking-wider text-foreground">{a.titolo}</div>
                     <div className="text-[12px] font-sans text-muted-foreground uppercase tracking-wider">/{a.slug} · {a.categoria} · {a.pubblicato ? "pubblicato" : "bozza"}</div>
                   </div>
-                  <div className="flex gap-4">
+                  <div className="flex gap-4 flex-wrap">
+                    <a
+                      href={`${import.meta.env.BASE_URL.replace(/\/$/, "")}/card/articolo/${a.slug}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[13px] uppercase tracking-wider font-sans text-foreground hover:text-primary transition-colors"
+                    >
+                      Card Feed
+                    </a>
+                    <a
+                      href={`${import.meta.env.BASE_URL.replace(/\/$/, "")}/card/articolo/${a.slug}/story`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[13px] uppercase tracking-wider font-sans text-foreground hover:text-primary transition-colors"
+                    >
+                      Card Story
+                    </a>
                     <button onClick={() => startEdit(a)} className="text-[13px] uppercase tracking-wider font-sans text-foreground hover:text-primary transition-colors">Modifica</button>
                     <button onClick={() => handleDelete(a.id)} disabled={del.isPending} className="text-[13px] uppercase tracking-wider font-sans text-destructive hover:text-destructive/80 transition-colors">Elimina</button>
                   </div>

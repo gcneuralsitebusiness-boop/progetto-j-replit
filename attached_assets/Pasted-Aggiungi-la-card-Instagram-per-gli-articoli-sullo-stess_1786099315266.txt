@@ -1,0 +1,92 @@
+Aggiungi la card Instagram per gli articoli, sullo 
+stesso modello della card giornaliera già esistente.
+
+ROTTE
+/card/articolo/:slug        → formato 1080x1350 (feed)
+/card/articolo/:slug/story  → formato 1080x1920 (storie)
+
+Pagine pubbliche, senza header né footer del sito. 
+Solo la card più il pulsante di download.
+
+SFONDO (identico nei due formati)
+Se l'articolo ha una copertina caricata, usala a 
+piena card con object-fit: cover, sopra un overlay 
+nero al 78% di opacità e un gradiente da #0A0A0A 
+pieno in basso a trasparente al 55% dell'altezza.
+Se la copertina non c'è, fondo nero #0A0A0A pieno. 
+Nessun errore, nessuno spazio vuoto.
+
+FORMATO FEED — 1080x1350
+Dall'alto:
+1. Logo J rosso #B81D1D, in alto a sinistra, altezza 
+   70px, margini 70px dal bordo superiore e sinistro.
+2. Blocco testo centrato verticalmente nella card:
+   - categoria in Bebas Neue #B81D1D, 34px, 
+     letterspacing 0.26em, maiuscolo
+   - titolo articolo in Bebas Neue bianco, 104px, 
+     line-height 0.94, letterspacing 0.01em, 
+     maiuscolo, allineato a sinistra, larghezza 
+     massima 880px, massimo 4 righe con ellissi
+   - linea rossa #B81D1D larga 90px alta 4px, 
+     margine superiore 40px
+3. In basso a sinistra, a 90px dal fondo:
+   - conteggio parole in Bebas Neue #6E6A65, 32px, 
+     letterspacing 0.2em — es. "1.847 PAROLE"
+     Calcolalo dal contenuto dell'articolo togliendo 
+     i tag HTML. Arrotonda al centinaio se supera 
+     1000 e formatta con il separatore delle migliaia 
+     italiano.
+   - sotto, il dominio del sito in Bebas Neue 
+     #6E6A65, 28px, letterspacing 0.26em
+4. Barra rossa #B81D1D alta 6px ancorata al bordo 
+   inferiore.
+
+FORMATO STORY — 1080x1920
+Stesso contenuto e stessa gerarchia, ma tutti gli 
+elementi di testo devono stare tra il 25% e il 72% 
+dell'altezza della card: sopra c'è il nome utente di 
+Instagram, sotto la barra di risposta, e quello che 
+esce da quella fascia viene coperto.
+Titolo a 116px. Logo J in alto a sinistra resta a 
+70px dal bordo. La riga conteggio parole e dominio 
+va appena sotto la linea rossa, non in fondo alla 
+card, per rispettare la fascia sicura.
+Lascia il terzo inferiore vuoto: ci va lo sticker 
+link.
+
+REGOLE COMUNI
+Solo Bebas Neue maiuscolo. Niente emoji, icone, 
+gradienti sui testi, ombre, angoli arrotondati. 
+Nessuna virgoletta decorativa. Dimensioni in px 
+assoluti dentro un contenitore con transform: scale() 
+per l'anteprima su mobile.
+
+TITOLI LUNGHI
+Se il titolo supera le 4 righe alla dimensione base, 
+riducilo progressivamente fino a un minimo di 76px 
+prima di troncare. Non troncare mai a metà parola.
+
+DOWNLOAD
+Su ogni pagina un pulsante "SCARICA PNG" fuori 
+dall'area della card. html-to-image con toPng, 
+pixelRatio 2. Nome file: 
+"progettoj-{slug}-feed.png" e 
+"progettoj-{slug}-story.png".
+Il pulsante non deve comparire nell'export.
+Verifica che i PNG escano realmente a 1080x1350 e 
+1080x1920: se le dimensioni sono diverse, correggi 
+prima di consegnare.
+
+ACCESSO
+Nell'admin, nella riga di ogni articolo, due link: 
+"CARD FEED" e "CARD STORY", che aprono le rispettive 
+rotte in una nuova scheda.
+
+TEST
+1. Articolo con copertina: sfondo visibile ma titolo 
+   perfettamente leggibile.
+2. Articolo senza copertina: fondo nero, nessun buco.
+3. Articolo con titolo lungo: nessun troncamento 
+   brutto, nessun testo fuori dalla card.
+4. Formato story: nessun elemento sopra il 25% o 
+   sotto il 72% dell'altezza.
