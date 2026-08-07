@@ -1,0 +1,65 @@
+Obiettivo: poter personalizzare a mano la card 
+Instagram di articoli e giorni, senza toccare i 
+contenuti pubblicati.
+
+VINCOLO CRITICO — leggilo prima di scrivere codice
+I campi della card sono SEPARATI da quelli 
+dell'articolo/giorno. Modificare una card non deve 
+mai alterare titolo, categoria, copertina o testo 
+pubblicato sul sito. Se stai per scrivere sul campo 
+originale, ti stai sbagliando.
+
+VINCOLO CRITICO 2
+Ogni campo è nullable e ricade sul valore originale 
+quando è vuoto. Nessun articolo o giorno già esistente 
+deve cambiare aspetto dopo questa modifica.
+
+1. DATABASE
+Aggiungi a entrambe le tabelle (articoli, giorni):
+  card_titolo          text, nullable, max 60
+  card_sottotitolo     text, nullable, max 24
+  card_immagine        stesso tipo del campo copertina 
+                       già esistente, nullable
+  card_overlay         integer, nullable, default 58
+  card_mostra_parole   boolean, default true
+
+2. PANNELLO DI EDITING
+Sulle rotte /card/:giorno, /card/articolo/:slug e 
+/card/articolo/:slug/story, sotto l'anteprima, un 
+pannello "PERSONALIZZA" con:
+  - TITOLO — testo, precompilato con l'originale, 
+    contatore caratteri, pulsante RIPRISTINA accanto
+  - SOTTOTITOLO — testo breve (categoria per gli 
+    articoli, "COMPLETATO / 180" per i giorni)
+  - IMMAGINE — upload dalla galleria tramite 
+    l'endpoint già esistente, con anteprima e RIMUOVI
+  - OVERLAY — slider 30-90
+  - MOSTRA CONTEGGIO PAROLE — interruttore
+
+3. COMPORTAMENTO
+  - L'anteprima si aggiorna a ogni battuta, senza 
+    ricaricare la pagina.
+  - "SALVA" scrive nel database; riaprendo la pagina 
+    i valori sono ancora lì.
+  - "SCARICA PNG" esporta esattamente ciò che si vede 
+    nell'anteprima, non i valori salvati.
+  - Feed e story dello stesso articolo condividono gli 
+    stessi campi salvati.
+  - Il pannello non deve comparire nel PNG esportato.
+
+4. TEST — esegui tutti prima di consegnare
+  a. Personalizzo il titolo della card di un articolo, 
+     salvo, apro l'articolo sul sito: il titolo 
+     pubblicato è ancora quello originale.
+  b. Ricarico la pagina card: la personalizzazione è 
+     ancora presente.
+  c. Apro la card di un articolo mai personalizzato: 
+     identica a prima di questa modifica.
+  d. Muovo lo slider overlay: l'anteprima cambia 
+     subito, il PNG scaricato riflette il valore 
+     scelto.
+  e. Il PNG esportato è esattamente 1080x1350 (feed) 
+     e 1080x1920 (story).
+
+Riferisci quali test hai eseguito e il risultato di 
+ciascuno.
