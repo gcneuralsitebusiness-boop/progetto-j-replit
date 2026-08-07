@@ -40,6 +40,7 @@ function NavLink({
 export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const menuRef = useRef<HTMLElement>(null);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
   const { data: content } = useGetSiteContent();
   const { data: pages } = useListPages();
   const { data: articles } = useListArticles();
@@ -76,7 +77,10 @@ export function Navbar() {
       if (event.key === "Escape") closeMenu();
     };
     window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      menuButtonRef.current?.focus();
+    };
   }, [mobileMenuOpen]);
 
   return (
@@ -92,7 +96,7 @@ export function Navbar() {
             J
           </Link>
 
-          <nav className="hidden md:flex items-center gap-8">
+          <nav className="hidden lg:flex items-center gap-6 xl:gap-8">
             {navigationItems.map((item) => (
               <NavLink key={item.href} href={item.href}>
                 {item.label}
@@ -109,7 +113,8 @@ export function Navbar() {
           </nav>
 
           <button
-            className="md:hidden text-foreground hover:text-primary transition-colors"
+            ref={menuButtonRef}
+            className="lg:hidden min-h-11 min-w-11 inline-flex items-center justify-center text-foreground hover:text-primary transition-colors"
             style={{ position: "relative", zIndex: 10000 }}
             onClick={() => setMobileMenuOpen((v) => !v)}
             aria-label={mobileMenuOpen ? "Chiudi menu" : "Apri menu"}
@@ -125,7 +130,8 @@ export function Navbar() {
         <nav
           ref={menuRef}
           id="mobile-navigation"
-          className="md:hidden menu-slide"
+          className="lg:hidden menu-slide"
+          aria-label="Menu di navigazione"
           style={{
             position: "fixed",
             inset: 0,
@@ -135,15 +141,15 @@ export function Navbar() {
             zIndex: 9999,
             display: "flex",
             flexDirection: "column",
-            gap: "1.25rem",
+            gap: "0.45rem",
             alignItems: "flex-start",
-            padding: "5rem 1.25rem 2rem",
+            padding: "5.5rem max(1.25rem, env(safe-area-inset-left)) max(2rem, env(safe-area-inset-bottom))",
             overflowY: "auto",
           }}
         >
           {navigationItems.map((item, index) => (
             <NavLink key={item.href} href={item.href} onClick={closeMenu}>
-              <span className="mobile-nav-item" style={{ animationDelay: `${80 + index * 55}ms` }}>
+              <span className="mobile-nav-item py-3 text-[clamp(24px,7vw,38px)] leading-none" style={{ animationDelay: `${80 + index * 45}ms` }}>
                 {item.label}
               </span>
             </NavLink>

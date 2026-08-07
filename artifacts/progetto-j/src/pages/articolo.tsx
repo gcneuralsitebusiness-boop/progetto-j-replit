@@ -6,7 +6,8 @@ import { Reveal } from "@/components/Reveal";
 import { Cross } from "@/components/Cross";
 import { SiteFooter } from "@/components/SiteFooter";
 import { getPhotoUrl } from "@workspace/object-storage-web";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Check, Share2 } from "lucide-react";
+import { useState } from "react";
 import { ArticleContent, getArticlePlainText } from "@/components/ArticleContent";
 
 function resolveImgUrl(immagine: string | null | undefined): string | null {
@@ -31,6 +32,7 @@ export default function Articolo() {
     query: { queryKey: ["getArticle", slug], enabled: !!slug, retry: false },
   });
   const { data: entries } = useListEntries();
+  const [shareFeedback, setShareFeedback] = useState(false);
   const linkedDay = article ? entries?.find((e) => e.data === article.data) : undefined;
 
   if (isLoading) {
@@ -52,9 +54,24 @@ export default function Articolo() {
 
   const imgUrl = resolveImgUrl(article.immagine);
   const minutes = readingTime(article.contenuto);
+  const shareArticle = async () => {
+    try {
+      const shareData = { title: article.titolo, text: article.titolo, url: window.location.href };
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        setShareFeedback(true);
+        window.setTimeout(() => setShareFeedback(false), 2200);
+      }
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") return;
+      setShareFeedback(false);
+    }
+  };
 
   return (
-    <div className="min-h-screen pt-20 pb-20 max-w-4xl mx-auto px-5 sm:px-6">
+    <div className="min-h-screen pt-24 pb-20 max-w-4xl mx-auto px-5 sm:px-6">
       <Reveal>
         {/* Back */}
         <div className="mb-6">
@@ -67,11 +84,17 @@ export default function Articolo() {
         </div>
 
         {/* Category badge + reading time */}
-        <div className="flex items-center gap-3 mb-4">
+        <div className="flex items-center justify-between gap-3 mb-4">
+          <div className="flex items-center gap-3">
           <span className="text-[10px] font-sans uppercase tracking-[0.2em] border border-border px-2 py-0.5 text-muted-foreground">
             {article.categoria}
           </span>
           <span className="text-[11px] font-sans text-muted-foreground">· {minutes} min di lettura</span>
+          </div>
+          <button onClick={() => void shareArticle()} className="min-h-10 inline-flex items-center justify-center gap-2 border border-border px-3 text-muted-foreground hover:border-primary hover:text-primary transition-colors" aria-label="Condividi articolo">
+            {shareFeedback ? <Check size={15} /> : <Share2 size={15} />}
+            <span className="hidden sm:inline text-[10px] font-sans uppercase tracking-[0.16em]">{shareFeedback ? "Copiato" : "Condividi"}</span>
+          </button>
         </div>
 
         <h1 className="font-serif text-[clamp(40px,8vw,72px)] leading-[0.85] tracking-wide bebas text-foreground mt-2 uppercase">
@@ -85,7 +108,7 @@ export default function Articolo() {
       {imgUrl && (
         <Reveal>
           <div className="border border-border bg-card overflow-hidden mb-10 mt-8">
-            <img src={imgUrl} alt={article.titolo} className="w-full max-h-[400px] object-cover" />
+            <img src={imgUrl} alt={article.titolo} className="w-full max-h-[520px] object-cover" />
           </div>
         </Reveal>
       )}

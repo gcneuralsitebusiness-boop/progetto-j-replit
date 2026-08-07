@@ -129,8 +129,8 @@ export default function Journaling() {
 
   return (
     <div className="min-h-screen pt-20 pb-12 max-w-5xl mx-auto px-5 sm:px-6">
-      <Reveal>
-        <div className="mb-6">
+        <Reveal>
+          <div className="mb-6">
           <span className="page-label">DIARIO OPERATIVO</span>
           <h1 className="font-serif text-[clamp(56px,12vw,112px)] leading-[0.85] tracking-wide bebas text-foreground mt-2">
             JOURNALING
@@ -140,7 +140,7 @@ export default function Journaling() {
 
       {journalingIntro && (
         <Reveal>
-          <p className="text-[15px] sm:text-[16px] font-sans text-foreground/80 leading-relaxed mb-16 max-w-2xl whitespace-pre-wrap ink-line">
+          <p className="text-[15px] sm:text-[16px] font-sans text-foreground/80 leading-relaxed mb-12 max-w-2xl whitespace-pre-wrap ink-line">
             {journalingIntro}
           </p>
         </Reveal>
@@ -185,13 +185,13 @@ export default function Journaling() {
             const loggedCount = weekDays.filter((day) => entries.some((entry) => entry.numero === day && entry.testo != null)).length;
             return (
               <div className="mb-12 border-y border-border py-5">
-                <div className="flex gap-2 sm:gap-3">
+                <div className="grid grid-cols-7 gap-1.5 sm:gap-3">
                   {weekDays.map((day) => {
                     const logged = entries.some((entry) => entry.numero === day && entry.testo != null);
                     return (
                       <div
                         key={day}
-                        className={`flex h-10 w-10 items-center justify-center measured text-[13px] ${
+                        className={`flex h-10 w-full min-w-0 items-center justify-center measured text-[13px] ${
                           logged
                             ? "bg-primary text-white"
                             : "border border-dashed border-[#333] bg-card text-[#444]"
@@ -212,7 +212,9 @@ export default function Journaling() {
       )}
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-12">
+      <section aria-labelledby="metriche-title" className="mb-12">
+        <h2 id="metriche-title" className="sr-only">Metriche del percorso</h2>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Reveal>
           <div className="kpi-card">
             <div className="flex items-center gap-2 mb-2 text-iron">
@@ -252,9 +254,10 @@ export default function Journaling() {
           </div>
         </Reveal>
       </div>
+      </section>
 
       {/* Progress rings */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-12">
+      <section aria-label="Riepilogo del percorso" className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-12">
         <Reveal>
           <div className="border border-border bg-card p-6 flex items-center justify-center">
             <ProgressRing value={maxDay} max={goalDay} label="Progresso 180 giorni" sublabel={`${maxDay}/180`} size={140} />
@@ -302,11 +305,11 @@ export default function Journaling() {
             </div>
           </div>
         </Reveal>
-      </div>
+      </section>
 
       {/* Charts — always over full dataset */}
       {formattedChartData.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-16">
+        <section aria-label="Andamento nel tempo" className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-16">
           <Reveal>
             <div className="bg-card border border-border p-5 h-full flex flex-col">
               <h3 className="text-[11px] font-sans uppercase tracking-[0.2em] text-muted-foreground mb-5">PESO NEL TEMPO</h3>
@@ -423,7 +426,7 @@ export default function Journaling() {
               </div>
             </Reveal>
           )}
-        </div>
+        </section>
       )}
 
       {formattedChartData.length > 0 && (
@@ -435,9 +438,12 @@ export default function Journaling() {
       {/* Feed with filter bar */}
       <div className="flex flex-col gap-4">
         <Reveal>
-          <h2 className="font-serif text-[clamp(40px,8vw,72px)] leading-[0.85] tracking-wide bebas text-foreground mb-6">
-            REGISTRO
-          </h2>
+          <div className="flex items-end justify-between gap-4 mb-2">
+            <h2 className="font-serif text-[clamp(40px,8vw,72px)] leading-[0.85] tracking-wide bebas text-foreground">
+              REGISTRO
+            </h2>
+            {entries && <span className="pb-1 text-[11px] font-sans uppercase tracking-[0.16em] text-muted-foreground">{filteredEntries.length} giorni</span>}
+          </div>
         </Reveal>
 
         {/* Filter bar */}

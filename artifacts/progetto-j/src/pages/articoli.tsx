@@ -8,6 +8,7 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { DataErrorState } from "@/components/DataErrorState";
 import { getPhotoUrl } from "@workspace/object-storage-web";
 import { useMemo, useState } from "react";
+import { ArrowRight } from "lucide-react";
 import { getArticlePlainText } from "@/components/ArticleContent";
 import { ARTICLE_CATEGORIES } from "@/constants/articleCategories";
 
@@ -78,12 +79,12 @@ export default function Articoli() {
 
       {/* Category filter */}
       <Reveal>
-        <div className="flex flex-wrap gap-2 mb-10">
+        <div className="no-scrollbar -mx-5 flex gap-2 overflow-x-auto px-5 pb-2 sm:mx-0 sm:flex-wrap sm:px-0 mb-10">
           {categories.map((cat) => (
             <button
               key={cat}
               onClick={() => setFilter(cat)}
-              className={`text-[11px] font-sans uppercase tracking-[0.15em] px-3 py-1.5 border transition-colors ${
+              className={`shrink-0 min-h-10 text-[11px] font-sans uppercase tracking-[0.15em] px-3 py-1.5 border transition-colors ${
                 filter === cat ? "bg-primary text-primary-foreground border-primary" : "bg-transparent text-muted-foreground border-border hover:border-iron hover:text-iron"
               }`}
             >
@@ -96,7 +97,9 @@ export default function Articoli() {
       {/* Article grid — 1-col mobile / 2-col tablet+ */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {isLoading ? (
-          <div className="col-span-full text-center py-12 text-muted-foreground">Caricamento...</div>
+          <div className="col-span-full grid grid-cols-1 md:grid-cols-2 gap-6" aria-label="Caricamento articoli">
+            {[0, 1, 2, 3].map((item) => <div key={item} className="h-[360px] border border-border bg-card animate-pulse" />)}
+          </div>
         ) : filtered.length === 0 ? (
           <div className="col-span-full text-center py-12 text-muted-foreground font-sans text-[14px] uppercase tracking-[0.2em]">
             Gli articoli arrivano presto.
@@ -110,7 +113,7 @@ export default function Articoli() {
             return (
               <Reveal key={a.id}>
                 <Link href={`/a/${a.slug}`}>
-                  <article className="group block border border-border bg-card hover:border-iron transition-colors h-full flex flex-col">
+                  <article className="group block border border-border bg-card hover:border-iron transition-colors h-full flex flex-col card-lift bracket-hover">
                     {/* Cover image — 16:9 */}
                     <div className="relative w-full overflow-hidden" style={{ paddingBottom: "56.25%" }}>
                       {imgUrl ? (
@@ -118,7 +121,7 @@ export default function Articoli() {
                           <img
                             src={imgUrl}
                             alt={a.titolo}
-                            className="absolute inset-0 w-full h-full object-cover"
+                            className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.035]"
                           />
                           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                         </>
@@ -136,7 +139,7 @@ export default function Articoli() {
                     <div className="p-5 flex flex-col flex-1">
                       {/* Category badge + date */}
                       <div className="flex items-center justify-between mb-3">
-                        <span className="text-[10px] font-sans uppercase tracking-[0.2em] border border-border px-2 py-0.5 text-muted-foreground">
+                        <span className="text-[10px] font-sans uppercase tracking-[0.2em] border border-border px-2 py-1 text-muted-foreground">
                           {a.categoria}
                         </span>
                         <span className="text-[11px] font-sans text-muted-foreground">
@@ -155,8 +158,8 @@ export default function Articoli() {
                       </p>
 
                       {/* Reading time */}
-                      <span className="text-[11px] font-sans uppercase tracking-[0.15em] text-muted-foreground/60">
-                        {minutes} min di lettura
+                      <span className="inline-flex items-center gap-1.5 text-[11px] font-sans uppercase tracking-[0.15em] text-primary">
+                        {minutes} min di lettura <ArrowRight size={13} aria-hidden="true" />
                       </span>
                     </div>
                   </article>
