@@ -165,9 +165,15 @@ export default function Card() {
     setDownloading(true);
     setDownloadError(null);
     try {
+      // Ensure fonts (Anton/Bebas) are fully loaded before capture.
+      await document.fonts.ready;
+
+      // pixelRatio:1 with explicit canvasWidth/canvasHeight guarantees the
+      // output is exactly 1080×1350. Using pixelRatio:2 would multiply the
+      // canvas dimensions by 2 (→ 2160×2700) in html-to-image ≥1.11.
       const dataUrl = await toPng(cardRef.current, {
         cacheBust: true,
-        pixelRatio: 2,
+        pixelRatio: 1,
         canvasWidth: CARD_W,
         canvasHeight: CARD_H,
         backgroundColor: "#0A0A0A",
