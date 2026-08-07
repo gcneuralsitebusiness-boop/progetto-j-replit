@@ -11,6 +11,7 @@ import {
 import type { Article, ArticleInput, ArticleUpdate } from "@workspace/api-client-react";
 import { useUpload, getPhotoUrl } from "@workspace/object-storage-web";
 import { ARTICLE_CATEGORIES, isArticleCategory } from "@/constants/articleCategories";
+import { ArrowRight, Eye } from "lucide-react";
 
 /** Max pixel dimension for the longer side of a cover image. */
 const MAX_IMAGE_PX = 1920;
@@ -509,6 +510,90 @@ export function ArticoliTab() {
           )}
         </div>
       </form>
+
+      {/* Admin preview — latest article regardless of published state */}
+      {(() => {
+        const latest = articles
+          ? [...articles].sort((a, b) => (b.data ?? "").localeCompare(a.data ?? "") || b.id - a.id)[0]
+          : undefined;
+        if (!latest) return null;
+        const excerpt = getArticlePlainText(latest.contenuto).slice(0, 180).replace(/\s+\S*$/, "") +
+          (getArticlePlainText(latest.contenuto).length > 180 ? "…" : "");
+        const coverUrl = latest.immagine
+          ? (getPhotoUrl(latest.immagine) ?? (latest.immagine.startsWith("http") ? latest.immagine : null))
+          : null;
+        const isDraft = !latest.pubblicato;
+        return (
+          <div className="border border-border bg-card p-5 sm:p-6 flex flex-col gap-4">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 text-[11px] font-sans uppercase tracking-widest text-muted-foreground">
+                <Eye size={13} />
+                <span>Anteprima ultimo articolo</span>
+              </div>
+              {isDraft && (
+                <span className="text-[10px] font-sans uppercase tracking-widest border border-primary/60 text-primary px-2 py-0.5">
+                  Bozza · non pubblicato
+                </span>
+              )}
+              {!isDraft && (
+                <span className="text-[10px] font-sans uppercase tracking-widest border border-border text-muted-foreground px-2 py-0.5">
+                  Pubblicato
+                </span>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-4 items-start">
+              <div>
+                <span className="text-[10px] font-sans uppercase tracking-[0.22em] text-primary">{latest.categoria}</span>
+                <h3 className="mt-2 font-serif text-[clamp(28px,4vw,46px)] leading-[0.88] text-foreground bebas">
+                  {latest.titolo || <span className="text-muted-foreground/40 italic">Nessun titolo</span>}
+                </h3>
+                {excerpt && (
+                  <p className="mt-3 text-[14px] leading-relaxed text-muted-foreground line-clamp-3">{excerpt}</p>
+                )}
+                <div className="mt-4 flex flex-wrap gap-3">
+                  <a
+                    href={`${import.meta.env.BASE_URL.replace(/\/$/, "")}/a/${latest.slug}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-[11px] font-sans uppercase tracking-wider text-primary hover:text-foreground transition-colors"
+                  >
+                    Apri articolo <ArrowRight size={13} />
+                  </a>
+                  <a
+                    href={`${import.meta.env.BASE_URL.replace(/\/$/, "")}/card/articolo/${latest.slug}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-[11px] font-sans uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    Card Feed <ArrowRight size={13} />
+                  </a>
+                  <a
+                    href={`${import.meta.env.BASE_URL.replace(/\/$/, "")}/card/articolo/${latest.slug}/story`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-[11px] font-sans uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    Card Story <ArrowRight size={13} />
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => startEdit(latest)}
+                    className="inline-flex items-center gap-1.5 text-[11px] font-sans uppercase tracking-wider text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    Modifica
+                  </button>
+                </div>
+              </div>
+              {coverUrl && (
+                <div className="w-full sm:w-36 aspect-video sm:aspect-square overflow-hidden border border-border bg-[#141414] shrink-0">
+                  <img src={coverUrl} alt="Copertina" className="w-full h-full object-cover" />
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Search + Filters */}
       <div className="flex flex-col gap-2">
