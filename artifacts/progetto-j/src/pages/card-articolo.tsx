@@ -1,10 +1,16 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useRoute, Link } from "wouter";
-import { useGetArticle } from "@workspace/api-client-react";
+import { useGetArticle, useUpdateArticle, useAdminMe } from "@workspace/api-client-react";
 import type { Article } from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { toPng } from "html-to-image";
 import { getPhotoUrl } from "@workspace/object-storage-web";
 import { getArticlePlainText } from "@/components/ArticleContent";
+import CardCustomizer, {
+  CARD_OVERLAY_DEFAULT,
+  customizationFromRecord,
+  type CardCustomization,
+} from "@/components/CardCustomizer";
 
 const CARD_W = 1080;
 const RED = "#B81D1D";
@@ -84,23 +90,33 @@ function FitTitle({ title, baseSize }: { title: string; baseSize: number }) {
 
 function ArticleCard({
   article,
+  custom,
   format,
   cardRef,
 }: {
   article: Article;
+  custom: CardCustomization;
   format: Format;
   cardRef: React.RefObject<HTMLDivElement | null>;
 }) {
   const { height, titleSize } = FORMATS[format];
-  const coverUrl = resolveCoverUrl(article.immagine);
+  // Customization with fallback: null fields always use the original published values.
+  const customCover = custom.cardImmagine ? getPhotoUrl(custom.cardImmagine) : null;
+  const coverUrl = customCover ?? resolveCoverUrl(article.immagine);
+  const titolo = custom.cardTitolo ?? article.titolo;
+  const categoria = custom.cardSottotitolo ?? article.categoria;
+  const overlay = Math.min(0.95, (custom.cardOverlay ?? CARD_OVERLAY_DEFAULT) / 100 + 0.2);
+  const showWords = custom.cardMostraParole ?? true;
   const words = wordCountLabel(article.contenuto);
   const excerpt = articleExcerpt(article.contenuto, format === "feed" ? 175 : 145);
 
   const meta = (
     <div>
-      <div className="bebas font-serif" style={{ fontSize: 32, letterSpacing: "0.2em", color: GREY, textTransform: "uppercase" }}>
-        {words}
-      </div>
+      {showWords && (
+        <div className="bebas font-serif" style={{ fontSize: 32, letterSpacing: "0.2em", color: GREY, textTransform: "uppercase" }}>
+          {words}
+        </div>
+      )}
       <div className="bebas font-serif" style={{ fontSize: 28, letterSpacing: "0.26em", color: GREY, marginTop: 10 }}>
         {SITE_DOMAIN}
       </div>
@@ -110,9 +126,9 @@ function ArticleCard({
   const textBlock = (
     <div>
       <div className="bebas font-serif" style={{ fontSize: 34, letterSpacing: "0.26em", color: RED, textTransform: "uppercase", marginBottom: 28 }}>
-        {article.categoria}
+        {categoria}
       </div>
-      <FitTitle title={article.titolo} baseSize={titleSize} />
+      <FitTitle title={titolo} baseSize={titleSize} />
        <p
          style={{
            margin: "28px 0 0", maxWidth: 760, color: "#C2BFBA",
@@ -142,7 +158,7 @@ function ArticleCard({
             crossOrigin="anonymous"
             style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
           />
-          <div style={{ position: "absolute", inset: 0, backgroundColor: "rgba(0,0,0,0.78)" }} />
+          <div style={{ position: "absolute", inset: 0, backgroundColor: `rgba(0,0,0,${overlay.toFixed(2)})` }} />
           <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, #0A0A0A 0%, rgba(10,10,10,0) 55%)" }} />
         </>
       )}
@@ -196,6 +212,8 @@ export default function CardArticolo() {
   const { data: article, isLoading, isError } = useGetArticle(slug, {
     query: { queryKey: ["getArticle", slug], enabled: !!slug, retry: false },
   });
+  const { data: auth } = useAdminMe();
+  const queryClient = useQueryClient();
 
   const cardRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -203,6 +221,40 @@ export default function CardArticolo() {
   const [downloading, setDownloading] = useState(false);
   const [downloadError, setDownloadError] = useState<string | null>(null);
   const height = FORMATS[format].height;
+
+  // Card customization: shared between feed and story (same saved values).
+  const [custom, setCustom] = useState<CardCustomization>(customizationFromRecord(null));
+  const [initializedFor, setInitializedFor] = useState<number | null>(null);
+  const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const updateMutation = useUpdateArticle();
+
+  useEffect(() => {
+    if (article && initializedFor !== article.id) {
+      setCustom(customizationFromRecord(article));
+      setInitializedFor(article.id);
+    }
+  }, [article, initializedFor]);
+
+  const handleCustomChange = (patch: Partial<CardCustomization>) => {
+    setCustom((c) => ({ ...c, ...patch }));
+    setSaved(false);
+  };
+
+  const handleSaveCustom = () => {
+    if (!article) return;
+    setSaveError(null);
+    updateMutation.mutate(
+      { id: article.id, data: { ...custom } },
+      {
+        onSuccess: () => {
+          setSaved(true);
+          queryClient.invalidateQueries({ queryKey: ["getArticle", slug] });
+        },
+        onError: () => setSaveError("Errore durante il salvataggio. Riprova."),
+      }
+    );
+  };
 
   useEffect(() => {
     const compute = () => {
@@ -219,9 +271,12 @@ export default function CardArticolo() {
     setDownloading(true);
     setDownloadError(null);
     try {
+      await document.fonts.ready;
+      // pixelRatio:1 + explicit canvas dimensions guarantee the exact
+      // 1080×1350 (feed) / 1080×1920 (story) output size.
       const dataUrl = await toPng(cardRef.current, {
         cacheBust: true,
-        pixelRatio: 2,
+        pixelRatio: 1,
         canvasWidth: CARD_W,
         canvasHeight: height,
         backgroundColor: "#0A0A0A",
@@ -274,10 +329,25 @@ export default function CardArticolo() {
       <div ref={wrapperRef} className="w-full flex justify-center">
         <div style={{ width: CARD_W * scale, height: height * scale }}>
           <div style={{ transform: `scale(${scale})`, transformOrigin: "top left" }}>
-            <ArticleCard article={article} format={format} cardRef={cardRef} />
+            <ArticleCard article={article} custom={custom} format={format} cardRef={cardRef} />
           </div>
         </div>
       </div>
+
+      {/* PERSONALIZZA panel — admin only, never included in the PNG export */}
+      {auth?.authenticated && (
+        <CardCustomizer
+          value={custom}
+          onChange={handleCustomChange}
+          onSave={handleSaveCustom}
+          saving={updateMutation.isPending}
+          saved={saved}
+          error={saveError}
+          titlePlaceholder={article.titolo}
+          subtitlePlaceholder={article.categoria}
+          wordToggleLabel="Mostra conteggio parole"
+        />
+      )}
     </div>
   );
 }

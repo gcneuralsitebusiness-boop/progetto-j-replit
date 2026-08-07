@@ -6,6 +6,28 @@ import { eq, and } from "drizzle-orm";
 
 const router = Router();
 
+/** Validate Instagram card customization fields. Returns an error message or null. */
+export function validateCardFields(body: Record<string, unknown>): string | null {
+  const { cardTitolo, cardSottotitolo, cardOverlay, cardMostraParole, cardImmagine } = body;
+  if (cardTitolo !== undefined && cardTitolo !== null) {
+    if (typeof cardTitolo !== "string" || cardTitolo.length > 60) return "Il titolo card può avere al massimo 60 caratteri.";
+  }
+  if (cardSottotitolo !== undefined && cardSottotitolo !== null) {
+    if (typeof cardSottotitolo !== "string" || cardSottotitolo.length > 24) return "Il sottotitolo card può avere al massimo 24 caratteri.";
+  }
+  if (cardImmagine !== undefined && cardImmagine !== null && typeof cardImmagine !== "string") {
+    return "Immagine card non valida.";
+  }
+  if (cardOverlay !== undefined && cardOverlay !== null) {
+    const n = Number(cardOverlay);
+    if (!Number.isInteger(n) || n < 30 || n > 90) return "L'overlay deve essere un intero tra 30 e 90.";
+  }
+  if (cardMostraParole !== undefined && cardMostraParole !== null && typeof cardMostraParole !== "boolean") {
+    return "cardMostraParole deve essere booleano.";
+  }
+  return null;
+}
+
 router.get("/articles", async (_req, res): Promise<void> => {
   const rows = await db
     .select()
@@ -97,9 +119,25 @@ router.put("/articles/:id", async (req, res): Promise<void> => {
     return;
   }
 
+  // Card customization fields: nullable, validated, never touching published content
+  const cardError = validateCardFields(req.body);
+  if (cardError) {
+    res.status(400).json({ error: cardError });
+    return;
+  }
+
   const updates: Partial<typeof articoliTable.$inferInsert> = {};
   for (const key of ["slug", "titolo", "categoria", "contenuto", "immagine", "data"] as const) {
     if (req.body[key] !== undefined) updates[key] = req.body[key];
+  }
+  for (const key of ["cardTitolo", "cardSottotitolo", "cardImmagine"] as const) {
+    if (req.body[key] !== undefined) updates[key] = req.body[key] === null ? null : String(req.body[key]);
+  }
+  if (req.body.cardOverlay !== undefined) {
+    updates.cardOverlay = req.body.cardOverlay === null ? null : Number(req.body.cardOverlay);
+  }
+  if (req.body.cardMostraParole !== undefined) {
+    updates.cardMostraParole = req.body.cardMostraParole === null ? null : Boolean(req.body.cardMostraParole);
   }
   if (req.body.pubblicato !== undefined) updates.pubblicato = req.body.pubblicato;
   updates.updatedAt = new Date();

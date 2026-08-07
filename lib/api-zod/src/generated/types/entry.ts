@@ -63,5 +63,34 @@ export interface Entry {
      * @nullable
      */
   foto?: string | null;
+  /**
+     * Custom Instagram card title (falls back to day number)
+     * @maxLength 60
+     * @nullable
+     */
+  cardTitolo?: string | null;
+  /**
+     * Custom Instagram card subtitle
+     * @maxLength 24
+     * @nullable
+     */
+  cardSottotitolo?: string | null;
+  /**
+     * Custom Instagram card background image path
+     * @nullable
+     */
+  cardImmagine?: string | null;
+  /**
+     * Card overlay intensity (30-90, default 58)
+     * @minimum 30
+     * @maximum 90
+     * @nullable
+     */
+  cardOverlay?: number | null;
+  /**
+     * Show stats/word count on the card (default true)
+     * @nullable
+     */
+  cardMostraParole?: boolean | null;
   createdAt?: string;
 }

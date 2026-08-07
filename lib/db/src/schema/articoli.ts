@@ -1,4 +1,4 @@
-import { pgTable, serial, text, boolean, timestamp, date } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, boolean, integer, timestamp, date } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -11,6 +11,11 @@ export const articoliTable = pgTable("articoli", {
   immagine: text("immagine"),
   pubblicato: boolean("pubblicato").notNull().default(false),
   data: date("data", { mode: "string" }).notNull().defaultNow(),
+  cardTitolo: text("card_titolo"),
+  cardSottotitolo: text("card_sottotitolo"),
+  cardImmagine: text("card_immagine"),
+  cardOverlay: integer("card_overlay"),
+  cardMostraParole: boolean("card_mostra_parole"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });

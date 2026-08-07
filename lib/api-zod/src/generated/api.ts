@@ -23,6 +23,13 @@ export const HealthCheckResponse = zod.object({
  */
 export const listEntriesResponseSintesiMax = 180;
 
+export const listEntriesResponseCardTitoloMax = 60;
+
+export const listEntriesResponseCardSottotitoloMax = 24;
+
+export const listEntriesResponseCardOverlayMin = 30;
+export const listEntriesResponseCardOverlayMax = 90;
+
 
 
 export const ListEntriesResponseItem = zod.object({
@@ -42,6 +49,11 @@ export const ListEntriesResponseItem = zod.object({
   "testo": zod.string().nullish().describe('Diary text'),
   "sintesi": zod.string().max(listEntriesResponseSintesiMax).nullish().describe('Short Instagram card summary'),
   "foto": zod.string().nullish().describe('Photo URL'),
+  "cardTitolo": zod.string().max(listEntriesResponseCardTitoloMax).nullish().describe('Custom Instagram card title (falls back to day number)'),
+  "cardSottotitolo": zod.string().max(listEntriesResponseCardSottotitoloMax).nullish().describe('Custom Instagram card subtitle'),
+  "cardImmagine": zod.string().nullish().describe('Custom Instagram card background image path'),
+  "cardOverlay": zod.number().min(listEntriesResponseCardOverlayMin).max(listEntriesResponseCardOverlayMax).nullish().describe('Card overlay intensity (30-90, default 58)'),
+  "cardMostraParole": zod.boolean().nullish().describe('Show stats\/word count on the card (default true)'),
   "createdAt": zod.string().optional()
 })
 export const ListEntriesResponse = zod.array(ListEntriesResponseItem)
@@ -74,6 +86,13 @@ export const CreateEntryBody = zod.object({
 
 export const createEntryResponseSintesiMax = 180;
 
+export const createEntryResponseCardTitoloMax = 60;
+
+export const createEntryResponseCardSottotitoloMax = 24;
+
+export const createEntryResponseCardOverlayMin = 30;
+export const createEntryResponseCardOverlayMax = 90;
+
 
 
 export const CreateEntryResponse = zod.object({
@@ -93,6 +112,11 @@ export const CreateEntryResponse = zod.object({
   "testo": zod.string().nullish().describe('Diary text'),
   "sintesi": zod.string().max(createEntryResponseSintesiMax).nullish().describe('Short Instagram card summary'),
   "foto": zod.string().nullish().describe('Photo URL'),
+  "cardTitolo": zod.string().max(createEntryResponseCardTitoloMax).nullish().describe('Custom Instagram card title (falls back to day number)'),
+  "cardSottotitolo": zod.string().max(createEntryResponseCardSottotitoloMax).nullish().describe('Custom Instagram card subtitle'),
+  "cardImmagine": zod.string().nullish().describe('Custom Instagram card background image path'),
+  "cardOverlay": zod.number().min(createEntryResponseCardOverlayMin).max(createEntryResponseCardOverlayMax).nullish().describe('Card overlay intensity (30-90, default 58)'),
+  "cardMostraParole": zod.boolean().nullish().describe('Show stats\/word count on the card (default true)'),
   "createdAt": zod.string().optional()
 })
 
@@ -102,6 +126,13 @@ export const CreateEntryResponse = zod.object({
  * @summary Get 3 most recent journal entries
  */
 export const getLatestEntriesResponseSintesiMax = 180;
+
+export const getLatestEntriesResponseCardTitoloMax = 60;
+
+export const getLatestEntriesResponseCardSottotitoloMax = 24;
+
+export const getLatestEntriesResponseCardOverlayMin = 30;
+export const getLatestEntriesResponseCardOverlayMax = 90;
 
 
 
@@ -122,6 +153,11 @@ export const GetLatestEntriesResponseItem = zod.object({
   "testo": zod.string().nullish().describe('Diary text'),
   "sintesi": zod.string().max(getLatestEntriesResponseSintesiMax).nullish().describe('Short Instagram card summary'),
   "foto": zod.string().nullish().describe('Photo URL'),
+  "cardTitolo": zod.string().max(getLatestEntriesResponseCardTitoloMax).nullish().describe('Custom Instagram card title (falls back to day number)'),
+  "cardSottotitolo": zod.string().max(getLatestEntriesResponseCardSottotitoloMax).nullish().describe('Custom Instagram card subtitle'),
+  "cardImmagine": zod.string().nullish().describe('Custom Instagram card background image path'),
+  "cardOverlay": zod.number().min(getLatestEntriesResponseCardOverlayMin).max(getLatestEntriesResponseCardOverlayMax).nullish().describe('Card overlay intensity (30-90, default 58)'),
+  "cardMostraParole": zod.boolean().nullish().describe('Show stats\/word count on the card (default true)'),
   "createdAt": zod.string().optional()
 })
 export const GetLatestEntriesResponse = zod.array(GetLatestEntriesResponseItem)
@@ -157,6 +193,13 @@ export const UpdateEntryParams = zod.object({
 
 export const updateEntryBodySintesiMax = 180;
 
+export const updateEntryBodyCardTitoloMax = 60;
+
+export const updateEntryBodyCardSottotitoloMax = 24;
+
+export const updateEntryBodyCardOverlayMin = 30;
+export const updateEntryBodyCardOverlayMax = 90;
+
 
 
 export const UpdateEntryBody = zod.object({
@@ -173,10 +216,22 @@ export const UpdateEntryBody = zod.object({
   "uscite": zod.number().nullish(),
   "testo": zod.string().nullish(),
   "sintesi": zod.string().max(updateEntryBodySintesiMax).nullish(),
-  "foto": zod.string().nullish()
+  "foto": zod.string().nullish(),
+  "cardTitolo": zod.string().max(updateEntryBodyCardTitoloMax).nullish(),
+  "cardSottotitolo": zod.string().max(updateEntryBodyCardSottotitoloMax).nullish(),
+  "cardImmagine": zod.string().nullish(),
+  "cardOverlay": zod.number().min(updateEntryBodyCardOverlayMin).max(updateEntryBodyCardOverlayMax).nullish(),
+  "cardMostraParole": zod.boolean().nullish()
 })
 
 export const updateEntryResponseSintesiMax = 180;
+
+export const updateEntryResponseCardTitoloMax = 60;
+
+export const updateEntryResponseCardSottotitoloMax = 24;
+
+export const updateEntryResponseCardOverlayMin = 30;
+export const updateEntryResponseCardOverlayMax = 90;
 
 
 
@@ -197,6 +252,11 @@ export const UpdateEntryResponse = zod.object({
   "testo": zod.string().nullish().describe('Diary text'),
   "sintesi": zod.string().max(updateEntryResponseSintesiMax).nullish().describe('Short Instagram card summary'),
   "foto": zod.string().nullish().describe('Photo URL'),
+  "cardTitolo": zod.string().max(updateEntryResponseCardTitoloMax).nullish().describe('Custom Instagram card title (falls back to day number)'),
+  "cardSottotitolo": zod.string().max(updateEntryResponseCardSottotitoloMax).nullish().describe('Custom Instagram card subtitle'),
+  "cardImmagine": zod.string().nullish().describe('Custom Instagram card background image path'),
+  "cardOverlay": zod.number().min(updateEntryResponseCardOverlayMin).max(updateEntryResponseCardOverlayMax).nullish().describe('Card overlay intensity (30-90, default 58)'),
+  "cardMostraParole": zod.boolean().nullish().describe('Show stats\/word count on the card (default true)'),
   "createdAt": zod.string().optional()
 })
 
@@ -225,7 +285,23 @@ export const GetSiteContentResponse = zod.object({
   "home_hero_titolo": zod.string().nullish(),
   "home_hero_sottotitolo": zod.string().nullish(),
   "home_cta_testo": zod.string().nullish(),
-  "home_community_testo": zod.string().nullish()
+  "home_community_testo": zod.string().nullish(),
+  "social_intro": zod.string().nullish(),
+  "social_lavora_titolo": zod.string().nullish(),
+  "sponsor_intro": zod.string().nullish(),
+  "sponsor_cta_titolo": zod.string().nullish(),
+  "sponsor_cta_testo": zod.string().nullish(),
+  "sponsor_email": zod.string().nullish(),
+  "coaching_pillar_1_label": zod.string().nullish(),
+  "coaching_pillar_1_testo": zod.string().nullish(),
+  "coaching_pillar_2_label": zod.string().nullish(),
+  "coaching_pillar_2_testo": zod.string().nullish(),
+  "coaching_pillar_3_label": zod.string().nullish(),
+  "coaching_pillar_3_testo": zod.string().nullish(),
+  "coaching_pillar_4_label": zod.string().nullish(),
+  "coaching_pillar_4_testo": zod.string().nullish(),
+  "coaching_contatto_intro": zod.string().nullish(),
+  "global_footer_mantra": zod.string().nullish()
 })
 
 
@@ -251,7 +327,23 @@ export const UpdateSiteContentResponse = zod.object({
   "home_hero_titolo": zod.string().nullish(),
   "home_hero_sottotitolo": zod.string().nullish(),
   "home_cta_testo": zod.string().nullish(),
-  "home_community_testo": zod.string().nullish()
+  "home_community_testo": zod.string().nullish(),
+  "social_intro": zod.string().nullish(),
+  "social_lavora_titolo": zod.string().nullish(),
+  "sponsor_intro": zod.string().nullish(),
+  "sponsor_cta_titolo": zod.string().nullish(),
+  "sponsor_cta_testo": zod.string().nullish(),
+  "sponsor_email": zod.string().nullish(),
+  "coaching_pillar_1_label": zod.string().nullish(),
+  "coaching_pillar_1_testo": zod.string().nullish(),
+  "coaching_pillar_2_label": zod.string().nullish(),
+  "coaching_pillar_2_testo": zod.string().nullish(),
+  "coaching_pillar_3_label": zod.string().nullish(),
+  "coaching_pillar_3_testo": zod.string().nullish(),
+  "coaching_pillar_4_label": zod.string().nullish(),
+  "coaching_pillar_4_testo": zod.string().nullish(),
+  "coaching_contatto_intro": zod.string().nullish(),
+  "global_footer_mantra": zod.string().nullish()
 })
 
 
@@ -589,6 +681,15 @@ export const DeleteSponsorResponse = zod.void()
 /**
  * @summary List public articles
  */
+export const listArticlesResponseCardTitoloMax = 60;
+
+export const listArticlesResponseCardSottotitoloMax = 24;
+
+export const listArticlesResponseCardOverlayMin = 30;
+export const listArticlesResponseCardOverlayMax = 90;
+
+
+
 export const ListArticlesResponseItem = zod.object({
   "id": zod.number(),
   "slug": zod.string(),
@@ -597,7 +698,13 @@ export const ListArticlesResponseItem = zod.object({
   "contenuto": zod.string(),
   "immagine": zod.string().nullable(),
   "pubblicato": zod.boolean(),
-  "data": zod.coerce.date()
+  "data": zod.coerce.date(),
+  "cardTitolo": zod.string().max(listArticlesResponseCardTitoloMax).nullish(),
+  "cardSottotitolo": zod.string().max(listArticlesResponseCardSottotitoloMax).nullish(),
+  "cardImmagine": zod.string().nullish(),
+  "cardOverlay": zod.number().min(listArticlesResponseCardOverlayMin).max(listArticlesResponseCardOverlayMax).nullish(),
+  "cardMostraParole": zod.boolean().nullish(),
+  "createdAt": zod.coerce.date()
 })
 export const ListArticlesResponse = zod.array(ListArticlesResponseItem)
 
@@ -618,6 +725,15 @@ export const CreateArticleBody = zod.object({
   "data": zod.coerce.date().optional()
 })
 
+export const createArticleResponseCardTitoloMax = 60;
+
+export const createArticleResponseCardSottotitoloMax = 24;
+
+export const createArticleResponseCardOverlayMin = 30;
+export const createArticleResponseCardOverlayMax = 90;
+
+
+
 export const CreateArticleResponse = zod.object({
   "id": zod.number(),
   "slug": zod.string(),
@@ -626,7 +742,13 @@ export const CreateArticleResponse = zod.object({
   "contenuto": zod.string(),
   "immagine": zod.string().nullable(),
   "pubblicato": zod.boolean(),
-  "data": zod.coerce.date()
+  "data": zod.coerce.date(),
+  "cardTitolo": zod.string().max(createArticleResponseCardTitoloMax).nullish(),
+  "cardSottotitolo": zod.string().max(createArticleResponseCardSottotitoloMax).nullish(),
+  "cardImmagine": zod.string().nullish(),
+  "cardOverlay": zod.number().min(createArticleResponseCardOverlayMin).max(createArticleResponseCardOverlayMax).nullish(),
+  "cardMostraParole": zod.boolean().nullish(),
+  "createdAt": zod.coerce.date()
 })
 
 
@@ -637,6 +759,15 @@ export const GetArticleParams = zod.object({
   "slug": zod.coerce.string()
 })
 
+export const getArticleResponseCardTitoloMax = 60;
+
+export const getArticleResponseCardSottotitoloMax = 24;
+
+export const getArticleResponseCardOverlayMin = 30;
+export const getArticleResponseCardOverlayMax = 90;
+
+
+
 export const GetArticleResponse = zod.object({
   "id": zod.number(),
   "slug": zod.string(),
@@ -645,7 +776,13 @@ export const GetArticleResponse = zod.object({
   "contenuto": zod.string(),
   "immagine": zod.string().nullable(),
   "pubblicato": zod.boolean(),
-  "data": zod.coerce.date()
+  "data": zod.coerce.date(),
+  "cardTitolo": zod.string().max(getArticleResponseCardTitoloMax).nullish(),
+  "cardSottotitolo": zod.string().max(getArticleResponseCardSottotitoloMax).nullish(),
+  "cardImmagine": zod.string().nullish(),
+  "cardOverlay": zod.number().min(getArticleResponseCardOverlayMin).max(getArticleResponseCardOverlayMax).nullish(),
+  "cardMostraParole": zod.boolean().nullish(),
+  "createdAt": zod.coerce.date()
 })
 
 
@@ -656,6 +793,15 @@ export const UpdateArticleParams = zod.object({
   "id": zod.coerce.number()
 })
 
+export const updateArticleBodyCardTitoloMax = 60;
+
+export const updateArticleBodyCardSottotitoloMax = 24;
+
+export const updateArticleBodyCardOverlayMin = 30;
+export const updateArticleBodyCardOverlayMax = 90;
+
+
+
 export const UpdateArticleBody = zod.object({
   "slug": zod.string().optional(),
   "titolo": zod.string().optional(),
@@ -663,8 +809,22 @@ export const UpdateArticleBody = zod.object({
   "contenuto": zod.string().optional(),
   "immagine": zod.string().nullish(),
   "pubblicato": zod.boolean().optional(),
-  "data": zod.coerce.date().optional()
+  "data": zod.coerce.date().optional(),
+  "cardTitolo": zod.string().max(updateArticleBodyCardTitoloMax).nullish(),
+  "cardSottotitolo": zod.string().max(updateArticleBodyCardSottotitoloMax).nullish(),
+  "cardImmagine": zod.string().nullish(),
+  "cardOverlay": zod.number().min(updateArticleBodyCardOverlayMin).max(updateArticleBodyCardOverlayMax).nullish(),
+  "cardMostraParole": zod.boolean().nullish()
 })
+
+export const updateArticleResponseCardTitoloMax = 60;
+
+export const updateArticleResponseCardSottotitoloMax = 24;
+
+export const updateArticleResponseCardOverlayMin = 30;
+export const updateArticleResponseCardOverlayMax = 90;
+
+
 
 export const UpdateArticleResponse = zod.object({
   "id": zod.number(),
@@ -674,7 +834,13 @@ export const UpdateArticleResponse = zod.object({
   "contenuto": zod.string(),
   "immagine": zod.string().nullable(),
   "pubblicato": zod.boolean(),
-  "data": zod.coerce.date()
+  "data": zod.coerce.date(),
+  "cardTitolo": zod.string().max(updateArticleResponseCardTitoloMax).nullish(),
+  "cardSottotitolo": zod.string().max(updateArticleResponseCardSottotitoloMax).nullish(),
+  "cardImmagine": zod.string().nullish(),
+  "cardOverlay": zod.number().min(updateArticleResponseCardOverlayMin).max(updateArticleResponseCardOverlayMax).nullish(),
+  "cardMostraParole": zod.boolean().nullish(),
+  "createdAt": zod.coerce.date()
 })
 
 

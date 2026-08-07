@@ -29,4 +29,36 @@ export interface SiteContent {
   home_cta_testo?: string | null;
   /** @nullable */
   home_community_testo?: string | null;
+  /** @nullable */
+  social_intro?: string | null;
+  /** @nullable */
+  social_lavora_titolo?: string | null;
+  /** @nullable */
+  sponsor_intro?: string | null;
+  /** @nullable */
+  sponsor_cta_titolo?: string | null;
+  /** @nullable */
+  sponsor_cta_testo?: string | null;
+  /** @nullable */
+  sponsor_email?: string | null;
+  /** @nullable */
+  coaching_pillar_1_label?: string | null;
+  /** @nullable */
+  coaching_pillar_1_testo?: string | null;
+  /** @nullable */
+  coaching_pillar_2_label?: string | null;
+  /** @nullable */
+  coaching_pillar_2_testo?: string | null;
+  /** @nullable */
+  coaching_pillar_3_label?: string | null;
+  /** @nullable */
+  coaching_pillar_3_testo?: string | null;
+  /** @nullable */
+  coaching_pillar_4_label?: string | null;
+  /** @nullable */
+  coaching_pillar_4_testo?: string | null;
+  /** @nullable */
+  coaching_contatto_intro?: string | null;
+  /** @nullable */
+  global_footer_mantra?: string | null;
 }

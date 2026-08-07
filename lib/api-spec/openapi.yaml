@@ -856,6 +856,25 @@ components:
         foto:
           type: ["string", "null"]
           description: Photo URL
+        cardTitolo:
+          type: ["string", "null"]
+          maxLength: 60
+          description: Custom Instagram card title (falls back to day number)
+        cardSottotitolo:
+          type: ["string", "null"]
+          maxLength: 24
+          description: Custom Instagram card subtitle
+        cardImmagine:
+          type: ["string", "null"]
+          description: Custom Instagram card background image path
+        cardOverlay:
+          type: ["integer", "null"]
+          minimum: 30
+          maximum: 90
+          description: Card overlay intensity (30-90, default 58)
+        cardMostraParole:
+          type: ["boolean", "null"]
+          description: Show stats/word count on the card (default true)
         createdAt:
           type: string
 
@@ -929,6 +948,20 @@ components:
           maxLength: 180
         foto:
           type: ["string", "null"]
+        cardTitolo:
+          type: ["string", "null"]
+          maxLength: 60
+        cardSottotitolo:
+          type: ["string", "null"]
+          maxLength: 24
+        cardImmagine:
+          type: ["string", "null"]
+        cardOverlay:
+          type: ["integer", "null"]
+          minimum: 30
+          maximum: 90
+        cardMostraParole:
+          type: ["boolean", "null"]
 
     SiteContent:
       type: object
@@ -1277,6 +1310,20 @@ components:
         data:
           type: string
           format: date
+        cardTitolo:
+          type: ["string", "null"]
+          maxLength: 60
+        cardSottotitolo:
+          type: ["string", "null"]
+          maxLength: 24
+        cardImmagine:
+          type: ["string", "null"]
+        cardOverlay:
+          type: ["integer", "null"]
+          minimum: 30
+          maximum: 90
+        cardMostraParole:
+          type: ["boolean", "null"]
         createdAt:
           type: string
           format: date-time
@@ -1325,6 +1372,20 @@ components:
         data:
           type: string
           format: date
+        cardTitolo:
+          type: ["string", "null"]
+          maxLength: 60
+        cardSottotitolo:
+          type: ["string", "null"]
+          maxLength: 24
+        cardImmagine:
+          type: ["string", "null"]
+        cardOverlay:
+          type: ["integer", "null"]
+          minimum: 30
+          maximum: 90
+        cardMostraParole:
+          type: ["boolean", "null"]
 
     Coaching:
       type: object

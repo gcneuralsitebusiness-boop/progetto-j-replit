@@ -1,11 +1,17 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, Link } from "wouter";
-import { useListEntries } from "@workspace/api-client-react";
+import { useListEntries, useUpdateEntry, useAdminMe, getListEntriesQueryKey } from "@workspace/api-client-react";
 import type { Entry } from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
 import { toPng } from "html-to-image";
 import { getPhotoUrl } from "@workspace/object-storage-web";
+import CardCustomizer, {
+  CARD_OVERLAY_DEFAULT,
+  customizationFromRecord,
+  type CardCustomization,
+} from "@/components/CardCustomizer";
 
 const CARD_W = 1080;
 const CARD_H = 1350;
@@ -41,9 +47,22 @@ function CardStat({ value, label }: { value: string; label: string }) {
   );
 }
 
-function InstagramCard({ entry, cardRef }: { entry: Entry; cardRef: React.RefObject<HTMLDivElement | null> }) {
-  const photoUrl = entry.foto ? getPhotoUrl(entry.foto) : null;
-  const sintesi = resolveSintesi(entry.sintesi, entry.testo);
+function InstagramCard({
+  entry,
+  custom,
+  cardRef,
+}: {
+  entry: Entry;
+  custom: CardCustomization;
+  cardRef: React.RefObject<HTMLDivElement | null>;
+}) {
+  // Customization with fallback: null fields always use the original values.
+  const customPhoto = custom.cardImmagine ? getPhotoUrl(custom.cardImmagine) : null;
+  const photoUrl = customPhoto ?? (entry.foto ? getPhotoUrl(entry.foto) : null);
+  const sintesi = custom.cardTitolo ?? resolveSintesi(entry.sintesi, entry.testo);
+  const dayLabel = custom.cardSottotitolo ?? "GIORNO";
+  const overlay = (custom.cardOverlay ?? CARD_OVERLAY_DEFAULT) / 100;
+  const showStats = custom.cardMostraParole ?? true;
   const remaining = Math.max(0, GOAL_DAY - entry.numero);
 
   const stats: { value: string; label: string }[] = [];
@@ -65,7 +84,13 @@ function InstagramCard({ entry, cardRef }: { entry: Entry; cardRef: React.RefObj
             crossOrigin="anonymous"
             style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: "grayscale(15%)" }}
           />
-          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.55) 45%, rgba(0,0,0,0.35) 100%)" }} />
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              background: `linear-gradient(to top, rgba(0,0,0,${Math.min(0.95, overlay + 0.34).toFixed(2)}) 0%, rgba(0,0,0,${overlay.toFixed(2)}) 45%, rgba(0,0,0,${Math.max(0, overlay - 0.2).toFixed(2)}) 100%)`,
+            }}
+          />
         </>
       ) : (
         /* Inline SVG crosshatch: avoids CSS-variable resolution failures in html-to-image */
@@ -115,7 +140,7 @@ function InstagramCard({ entry, cardRef }: { entry: Entry; cardRef: React.RefObj
         {/* Bottom block */}
         <div>
           {/* Day number */}
-          <div className="page-label" style={{ fontSize: 26, letterSpacing: "0.35em", color: "hsl(var(--primary))" }}>GIORNO</div>
+          <div className="page-label" style={{ fontSize: 26, letterSpacing: "0.35em", color: "hsl(var(--primary))" }}>{dayLabel}</div>
           <div className="bebas font-serif" style={{ fontSize: 260, lineHeight: 0.85, color: "hsl(var(--primary))" }}>
             {String(entry.numero).padStart(3, "0")}
           </div>
@@ -131,7 +156,7 @@ function InstagramCard({ entry, cardRef }: { entry: Entry; cardRef: React.RefObj
           )}
 
           {/* Stats */}
-          {stats.length > 0 && (
+          {showStats && stats.length > 0 && (
             <div style={{ display: "flex", gap: 80, marginTop: 56, borderTop: "1px solid rgba(255,255,255,0.25)", paddingTop: 44 }}>
               {stats.map((s) => (
                 <CardStat key={s.label} value={s.value} label={s.label} />
@@ -157,6 +182,8 @@ function InstagramCard({ entry, cardRef }: { entry: Entry; cardRef: React.RefObj
 export default function Card() {
   const { giorno } = useParams<{ giorno: string }>();
   const { data: entries, isLoading, isError } = useListEntries();
+  const { data: auth } = useAdminMe();
+  const queryClient = useQueryClient();
   const cardRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(0.35);
@@ -165,6 +192,40 @@ export default function Card() {
 
   const requested = Number(giorno);
   const entry = entries?.find((e) => e.numero === requested);
+
+  // Card customization: local live state, initialized from the saved values once loaded.
+  const [custom, setCustom] = useState<CardCustomization>(customizationFromRecord(null));
+  const [initializedFor, setInitializedFor] = useState<number | null>(null);
+  const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const updateMutation = useUpdateEntry();
+
+  useEffect(() => {
+    if (entry && initializedFor !== entry.numero) {
+      setCustom(customizationFromRecord(entry));
+      setInitializedFor(entry.numero);
+    }
+  }, [entry, initializedFor]);
+
+  const handleCustomChange = (patch: Partial<CardCustomization>) => {
+    setCustom((c) => ({ ...c, ...patch }));
+    setSaved(false);
+  };
+
+  const handleSaveCustom = () => {
+    if (!entry) return;
+    setSaveError(null);
+    updateMutation.mutate(
+      { numero: entry.numero, data: { ...custom } },
+      {
+        onSuccess: () => {
+          setSaved(true);
+          queryClient.invalidateQueries({ queryKey: getListEntriesQueryKey() });
+        },
+        onError: () => setSaveError("Errore durante il salvataggio. Riprova."),
+      }
+    );
+  };
 
   // Fit the 1080px card into the viewport for the on-screen preview.
   useEffect(() => {
@@ -253,10 +314,25 @@ export default function Card() {
       <div ref={wrapperRef} className="w-full flex justify-center">
         <div style={{ width: CARD_W * scale, height: CARD_H * scale }}>
           <div style={{ transform: `scale(${scale})`, transformOrigin: "top left" }}>
-            <InstagramCard entry={entry} cardRef={cardRef} />
+            <InstagramCard entry={entry} custom={custom} cardRef={cardRef} />
           </div>
         </div>
       </div>
+
+      {/* PERSONALIZZA panel — admin only, never included in the PNG export */}
+      {auth?.authenticated && (
+        <CardCustomizer
+          value={custom}
+          onChange={handleCustomChange}
+          onSave={handleSaveCustom}
+          saving={updateMutation.isPending}
+          saved={saved}
+          error={saveError}
+          titlePlaceholder={resolveSintesi(entry.sintesi, entry.testo) || "Sintesi automatica"}
+          subtitlePlaceholder="GIORNO"
+          wordToggleLabel="Mostra statistiche del giorno"
+        />
+      )}
     </div>
   );
 }

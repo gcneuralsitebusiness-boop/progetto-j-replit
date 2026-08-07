@@ -15,4 +15,24 @@ export interface ArticleUpdate {
   immagine?: string | null;
   pubblicato?: boolean;
   data?: Date;
+  /**
+     * @maxLength 60
+     * @nullable
+     */
+  cardTitolo?: string | null;
+  /**
+     * @maxLength 24
+     * @nullable
+     */
+  cardSottotitolo?: string | null;
+  /** @nullable */
+  cardImmagine?: string | null;
+  /**
+     * @minimum 30
+     * @maximum 90
+     * @nullable
+     */
+  cardOverlay?: number | null;
+  /** @nullable */
+  cardMostraParole?: boolean | null;
 }
