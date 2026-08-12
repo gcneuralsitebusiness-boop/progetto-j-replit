@@ -1,0 +1,157 @@
+Aggiungi un sistema di analytics interno al sito, 
+visibile solo nell'admin. Non usare servizi esterni 
+(no Google Analytics, no Plausible, no script di 
+terze parti). Tutto deve restare nel database del 
+sito.
+
+VINCOLO CRITICO
+Non modificare nessun componente pubblico del sito 
+in modo visibile all'utente. Il tracking deve essere 
+invisibile. Non aggiungere banner cookie: il sistema 
+traccia solo dati anonimi aggregati, nessun dato 
+personale, nessun cookie di profilazione.
+
+COSA TRACCIARE
+Per ogni pageview salva un record con:
+- timestamp
+- path (es. /diario/86, /articoli/sei-acqua)
+- referrer (da dove arriva: Instagram, Google, 
+  diretto, altro sito)
+- device (mobile o desktop, ricavato da user-agent)
+- durata approssimativa sulla pagina (calcola con 
+  un evento beforeunload o visibilitychange che 
+  invia il tempo trascorso, arrotondato ai 5 
+  secondi)
+- scroll depth (25%, 50%, 75%, 100% — invia il 
+  massimo raggiunto)
+- country (ricavalo dall'header Accept-Language, non 
+  serve un servizio di geolocalizzazione)
+
+NON tracciare: IP, cookies identificativi, 
+fingerprint del browser, nessun dato che identifichi 
+una persona specifica.
+
+IMPLEMENTAZIONE FRONTEND
+Uno script leggero (< 3 KB) caricato su tutte le 
+pagine pubbliche. Lo script invia un POST a 
+/api/analytics/event con i dati sopra. L'invio 
+avviene:
+- una volta al caricamento (pageview)
+- una volta alla chiusura o cambio pagina (durata + 
+  scroll depth)
+Usa navigator.sendBeacon per l'evento di chiusura, 
+così non rallenta la navigazione.
+
+IMPLEMENTAZIONE BACKEND
+Endpoint POST /api/analytics/event che salva nel 
+database. Rate limit: massimo 20 richieste al minuto 
+per IP per evitare spam. Non restituire errori 
+visibili all'utente se il tracking fallisce.
+
+DASHBOARD ADMIN
+Nuova tab "ANALYTICS" nella navigazione admin, dopo 
+le tab esistenti.
+
+Sezione 1 — PANORAMICA (visibile appena apri)
+- Visitatori oggi (conteggio pageview uniche per 
+  path+timestamp raggruppate per sessione di 30 min)
+- Visitatori ultimi 7 giorni
+- Visitatori ultimi 30 giorni
+- Grafico a linea con i visitatori giornalieri degli 
+  ultimi 30 giorni (asse X = data, asse Y = numero)
+  Stile: sfondo #0A0A0A, linea #B81D1D, punti 
+  #B87333, assi e testo in #6E6A65, font Bebas Neue 
+  per le label
+
+Sezione 2 — PAGINE PIÙ VISTE
+Tabella ordinata per visualizzazioni decrescenti:
+| PAGINA | VIEWS | TEMPO MEDIO | SCROLL MEDIO |
+Il tempo medio è la media della durata su quella 
+pagina. Lo scroll medio è la percentuale media 
+raggiunta. Mostra le top 20.
+
+Sezione 3 — ARTICOLI
+Come la sezione 2, ma filtrata solo per le pagine 
+che iniziano con /articoli/. Per ogni articolo 
+mostra:
+- Titolo (recuperato dal database, non dal path)
+- Visualizzazioni totali
+- Tempo medio di lettura
+- Scroll medio
+- Tasso di completamento (% di utenti che hanno 
+  raggiunto scroll 100%)
+Ordinabile per colonna cliccando sull'header.
+
+Sezione 4 — DIARIO
+Come sopra, filtrata per /diario/. Per ogni giorno:
+- Numero del giorno
+- Visualizzazioni
+- Tempo medio
+- Scroll medio
+
+Sezione 5 — PROVENIENZA
+Grafico a barre orizzontali:
+- Instagram
+- Google
+- Diretto
+- WhatsApp
+- Telegram
+- Altro
+Raggruppa i referrer per dominio. Se il referrer 
+contiene "instagram" → Instagram, "google" → Google, 
+vuoto → Diretto, ecc.
+
+Sezione 6 — DISPOSITIVI
+Due numeri grandi affiancati: % Mobile e % Desktop.
+
+Sezione 7 — TEMPO REALE
+Numero grande in alto: "N PERSONE SUL SITO ORA"
+Calcolato come pageview ricevute negli ultimi 5 
+minuti senza un evento di chiusura corrispondente.
+Sotto, lista delle pagine attualmente visualizzate.
+Aggiornamento automatico ogni 15 secondi senza 
+ricaricare la pagina.
+
+FILTRO TEMPORALE
+In cima alla dashboard, un selettore con:
+OGGI / 7 GIORNI / 30 GIORNI / TUTTO
+Tutte le sezioni si aggiornano in base al periodo 
+selezionato. Default: 7 GIORNI.
+
+PARAMETRO UTM
+Quando un URL contiene ?ref=ig o ?ref=tg o qualsiasi 
+parametro ref, salvalo nel campo referrer al posto 
+del referrer HTTP. Questo mi permette di tracciare 
+i link che metto nelle storie e nella bio con 
+precisione.
+
+STILE
+Stessa grafica dell'admin esistente: sfondo #0A0A0A, 
+testi in Bebas Neue maiuscolo per le label, Inter 
+per i numeri, colori del brand (rosso #B81D1D, rame 
+#B87333, grigio #6E6A65, testo #E8E4DE). Nessuno 
+stile diverso dal resto dell'admin.
+
+PERFORMANCE
+Il tracking non deve rallentare il sito. Lo script 
+si carica con defer. L'endpoint risponde in meno di 
+100ms. Le query della dashboard usano indici sul 
+campo timestamp e path.
+
+Se il database diventa lento con molti record, 
+aggiungi un job che ogni notte aggrega i dati più 
+vecchi di 90 giorni in una tabella di riepilogo 
+giornaliero e cancella i record grezzi.
+
+TEST — eseguili e riferisci il risultato
+a. Apro tre pagine diverse del sito da mobile: nella 
+   dashboard compaiono tre pageview con device mobile.
+b. Apro un articolo, scrollo fino in fondo e chiudo: 
+   il record mostra scroll 100% e un tempo > 0.
+c. Apro il sito con ?ref=ig nell'URL: nella sezione 
+   provenienza compare Instagram.
+d. La sezione tempo reale mostra almeno 1 persona 
+   mentre navigo.
+e. Lo script di tracking pesa meno di 3 KB.
+f. Il sito si carica alla stessa velocità di prima 
+   del tracking (controlla con Lighthouse).
