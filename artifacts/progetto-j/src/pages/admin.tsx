@@ -471,14 +471,30 @@ function DiarioTab({ scrollToEntry }: { scrollToEntry?: number }) {
                 <span className="text-[11px] uppercase tracking-widest text-primary border border-primary px-2 py-0.5 font-sans">In modifica</span>
               )}
             </div>
-            <div className="flex gap-6">
+            <div className="flex gap-5 flex-wrap">
               <a
                 href={`${import.meta.env.BASE_URL.replace(/\/$/, "")}/card/${entry.numero}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-[13px] uppercase tracking-wider font-sans text-foreground hover:text-primary transition-colors"
               >
-                Card
+                CARD
+              </a>
+              <a
+                href={`${import.meta.env.BASE_URL.replace(/\/$/, "")}/card/${entry.numero}/reel`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[13px] uppercase tracking-wider font-sans text-foreground hover:text-primary transition-colors"
+              >
+                REEL
+              </a>
+              <a
+                href={`${import.meta.env.BASE_URL.replace(/\/$/, "")}/card/${entry.numero}/reel-minimal`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[13px] uppercase tracking-wider font-sans text-foreground hover:text-primary transition-colors"
+              >
+                MINIMAL
               </a>
               <button onClick={() => startEditing(entry)} className="text-[13px] uppercase tracking-wider font-sans text-foreground hover:text-primary transition-colors">Modifica</button>
               <button onClick={() => handleDelete(entry.numero)} disabled={deleteMutation.isPending} className="text-[13px] uppercase tracking-wider font-sans text-destructive hover:text-destructive/80 transition-colors">Elimina</button>

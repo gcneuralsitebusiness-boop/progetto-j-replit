@@ -5,8 +5,8 @@ import type { Entry } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
-import { toPng } from "html-to-image";
 import { getPhotoUrl } from "@workspace/object-storage-web";
+import { toPngWithEmbeddedAssets } from "@/lib/export-image";
 import CardCustomizer, {
   CARD_OVERLAY_DEFAULT,
   customizationFromRecord,
@@ -243,13 +243,7 @@ export default function Card() {
     setDownloading(true);
     setDownloadError(null);
     try {
-      // Ensure fonts (Anton/Bebas) are fully loaded before capture.
-      await document.fonts.ready;
-
-      // pixelRatio:1 with explicit canvasWidth/canvasHeight guarantees the
-      // output is exactly 1080×1350. Using pixelRatio:2 would multiply the
-      // canvas dimensions by 2 (→ 2160×2700) in html-to-image ≥1.11.
-      const dataUrl = await toPng(cardRef.current, {
+      const dataUrl = await toPngWithEmbeddedAssets(cardRef.current, {
         cacheBust: true,
         pixelRatio: 1,
         canvasWidth: CARD_W,

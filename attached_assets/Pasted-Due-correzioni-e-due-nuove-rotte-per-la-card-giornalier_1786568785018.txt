@@ -1,0 +1,181 @@
+Due correzioni e due nuove rotte per la card 
+giornaliera. Non modificare nient'altro del sito.
+
+═══════════════════════════════════════
+FIX 1 — L'immagine di sfondo non compare nel PNG
+═══════════════════════════════════════
+
+CAUSA: html-to-image non include immagini servite da 
+un dominio diverso senza CORS. L'immagine si vede 
+nell'anteprima ma sparisce nell'export.
+
+FIX — prima di ogni chiamata a toPng:
+1. fetch dell'URL dell'immagine di sfondo
+2. converti la risposta in blob
+3. FileReader.readAsDataURL per ottenere il base64
+4. sostituisci il src (o il background-image) con il 
+   data URL
+5. attendi che l'immagine sia caricata 
+   (img.decode() oppure onload)
+6. attendi document.fonts.ready
+7. solo a quel punto chiama toPng
+
+In alternativa, se l'immagine è sullo stesso dominio, 
+aggiungi crossOrigin="anonymous" al tag img e 
+configura l'header CORS sul server.
+
+Questo fix vale per TUTTE le card esistenti e per 
+le due nuove rotte qui sotto.
+
+VERIFICA: scarica un PNG di un giorno con foto e 
+aprilo. Se lo sfondo manca, non hai risolto.
+
+═══════════════════════════════════════
+FIX 2 — I font escono sbagliati nel PNG
+═══════════════════════════════════════
+
+html-to-image esporta prima che i font siano caricati 
+e il PNG esce in Arial. Attendi sempre 
+document.fonts.ready prima dell'export.
+
+VERIFICA: apri il PNG scaricato. Se il numero non è 
+in Bebas Neue, non hai risolto.
+
+═══════════════════════════════════════
+NUOVA ROTTA A — /card/:giorno/reel
+Copertina reel completa
+═══════════════════════════════════════
+
+Formato 1080x1920px.
+
+VINCOLO CRITICO — LA FASCIA SICURA
+Instagram ritaglia questa immagine in due modi:
+- nel feed: quadrato centrale (fascia tra il 29% e 
+  il 71% dell'altezza)
+- nella griglia del profilo: rapporto 3:4 (fascia 
+  tra il 12% e l'87%)
+
+TUTTO il contenuto leggibile deve stare tra il 32% e 
+il 68% dell'altezza. Fuori da quella fascia solo 
+sfondo: mai testo, mai logo, mai numeri, mai barre.
+
+LAYOUT (percentuali dell'altezza totale)
+33% — Logo J rosso #B81D1D, altezza 60px, centrato
+38% — Numero giorno, Bebas Neue rosso #B81D1D, 180px, 
+      centrato, formato "093" con zeri iniziali
+45% — "GIORNO / 180", Bebas Neue #6E6A65, 26px, 
+      letterspacing 0.3em, centrato
+48% — Linea rossa #B81D1D, larga 100px, alta 4px, 
+      centrata
+52% — Sintesi del giorno, Inter bianco #E8E4DE, 34px, 
+      line-height 1.5, larghezza max 800px, centrata, 
+      massimo 3 righe. Se eccede, tronca sull'ultima 
+      parola intera con ellissi.
+62% — Tre dati su una riga centrata: numero in Bebas 
+      bianco 46px, unità in Bebas #6E6A65 22px 
+      letterspacing 0.2em, separati da punto medio.
+      Es. "81.7 KG · 71 BPM · 4H SONNO"
+      Ometti le colonne senza dato e ricentra.
+66% — Dominio del sito, Bebas Neue #6E6A65, 24px, 
+      letterspacing 0.26em, centrato
+
+SFONDO
+Se il giorno ha una foto: object-fit cover, overlay 
+nero al 70% di default (regolabile con slider 40-90), 
+più un gradiente radiale che scurisce ulteriormente 
+il centro dove sta il testo.
+Se non c'è foto: fondo #0A0A0A pieno. Nessun errore.
+
+Sopra il 32% e sotto il 68% NON aggiungere nessun 
+elemento. Verrebbe tagliato.
+
+ANTEPRIMA CON GUIDE
+Nella pagina, sovrapponi alla card due rettangoli 
+tratteggiati che mostrano i due ritagli di Instagram, 
+con etichette "FEED" e "PROFILO". Le guide NON devono 
+comparire nel PNG esportato.
+
+DOWNLOAD
+Pulsante "SCARICA COPERTINA REEL". toPng, pixelRatio 
+2, output reale 1080x1920, nome file 
+"progettoj-giorno-093-reel.png".
+
+═══════════════════════════════════════
+NUOVA ROTTA B — /card/:giorno/reel-minimal
+Copertina reel minimale
+═══════════════════════════════════════
+
+Formato 1080x1920px. Questa è la variante per la 
+griglia del profilo, dove la card viene vista larga 
+due centimetri e si legge una cosa sola.
+
+LAYOUT
+Fondo #0A0A0A pieno. Nessuna foto, mai.
+
+Al centro esatto del frame (50% verticale e 
+orizzontale):
+- Numero del giorno in Bebas Neue rosso #B81D1D, 
+  corpo 520px, line-height 0.85, formato "093" con 
+  zeri iniziali. Deve occupare quasi tutta la 
+  larghezza utile.
+
+Sotto il numero, a 40px di distacco:
+- "/180" in Bebas Neue #4A4744, 64px, letterspacing 
+  0.1em, centrato
+
+Nient'altro. Nessun logo, nessuna sintesi, nessun 
+dato, nessuna barra rossa, nessun dominio.
+
+Il numero deve stare interamente tra il 35% e il 
+65% dell'altezza per sopravvivere a entrambi i 
+ritagli.
+
+DOWNLOAD
+Pulsante "SCARICA MINIMAL". toPng, pixelRatio 2, 
+output 1080x1920, nome file 
+"progettoj-giorno-093-minimal.png".
+
+═══════════════════════════════════════
+ACCESSO NELL'ADMIN
+═══════════════════════════════════════
+
+Nella riga di ogni giorno del diario, aggiungi tre 
+link che aprono in nuova scheda:
+"CARD" → /card/:giorno
+"REEL" → /card/:giorno/reel
+"MINIMAL" → /card/:giorno/reel-minimal
+
+═══════════════════════════════════════
+REGOLE TIPOGRAFICHE COMUNI
+═══════════════════════════════════════
+
+Solo Bebas Neue maiuscolo, tranne la sintesi in Inter.
+Nessuna emoji, icona, gradiente sui testi, ombra o 
+angolo arrotondato.
+Colori: #0A0A0A nero, #B81D1D rosso, #B87333 rame, 
+#E8E4DE testo, #6E6A65 grigio, #4A4744 grigio scuro.
+
+Dimensioni in px assoluti sull'elemento esportato. 
+transform: scale() SOLO sul contenitore 
+dell'anteprima, mai sull'elemento che viene 
+esportato.
+
+═══════════════════════════════════════
+TEST — eseguili tutti e riferisci il risultato
+═══════════════════════════════════════
+
+a. /card/93/reel con foto: il PNG scaricato è 
+   1080x1920 esatti e lo sfondo fotografico è 
+   presente.
+b. Il numero nel PNG è in Bebas Neue, non in un font 
+   di sistema.
+c. Ritaglio il PNG reel al quadrato centrale: tutto 
+   il testo resta visibile e leggibile.
+d. Ritaglio il PNG reel a 3:4 centrato: tutto il 
+   testo resta visibile.
+e. /card/93/reel-minimal: il numero 093 è enorme, 
+   centrato, e sopravvive a entrambi i ritagli.
+f. Un giorno senza foto genera entrambe le card senza 
+   errori e senza spazi vuoti.
+g. Le guide tratteggiate dell'anteprima non compaiono 
+   nei PNG scaricati.

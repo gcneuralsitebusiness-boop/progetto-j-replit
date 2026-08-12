@@ -45,6 +45,9 @@ interface CardCustomizerProps {
   titlePlaceholder: string;
   subtitlePlaceholder: string;
   wordToggleLabel: string;
+  overlayMin?: number;
+  overlayMax?: number;
+  overlayDefault?: number;
 }
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
@@ -76,13 +79,16 @@ export default function CardCustomizer({
   titlePlaceholder,
   subtitlePlaceholder,
   wordToggleLabel,
+  overlayMin = CARD_OVERLAY_MIN,
+  overlayMax = CARD_OVERLAY_MAX,
+  overlayDefault = CARD_OVERLAY_DEFAULT,
 }: CardCustomizerProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { uploadFile, isUploading, error: uploadError } = useUpload({
     onSuccess: (res) => onChange({ cardImmagine: res.objectPath }),
   });
 
-  const overlay = value.cardOverlay ?? CARD_OVERLAY_DEFAULT;
+  const overlay = value.cardOverlay ?? overlayDefault;
   const mostraParole = value.cardMostraParole ?? true;
   const imageUrl = value.cardImmagine ? getPhotoUrl(value.cardImmagine) : null;
 
@@ -179,8 +185,8 @@ export default function CardCustomizer({
         </div>
         <input
           type="range"
-          min={CARD_OVERLAY_MIN}
-          max={CARD_OVERLAY_MAX}
+          min={overlayMin}
+          max={overlayMax}
           step={1}
           value={overlay}
           onChange={(e) => onChange({ cardOverlay: Number(e.target.value) })}

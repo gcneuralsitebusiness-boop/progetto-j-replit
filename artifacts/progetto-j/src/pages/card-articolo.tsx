@@ -3,8 +3,8 @@ import { useRoute, Link } from "wouter";
 import { useGetArticle, useUpdateArticle, useAdminMe } from "@workspace/api-client-react";
 import type { Article } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { toPng } from "html-to-image";
 import { getPhotoUrl } from "@workspace/object-storage-web";
+import { toPngWithEmbeddedAssets } from "@/lib/export-image";
 import { getArticlePlainText } from "@/components/ArticleContent";
 import CardCustomizer, {
   CARD_OVERLAY_DEFAULT,
@@ -271,10 +271,7 @@ export default function CardArticolo() {
     setDownloading(true);
     setDownloadError(null);
     try {
-      await document.fonts.ready;
-      // pixelRatio:1 + explicit canvas dimensions guarantee the exact
-      // 1080×1350 (feed) / 1080×1920 (story) output size.
-      const dataUrl = await toPng(cardRef.current, {
+      const dataUrl = await toPngWithEmbeddedAssets(cardRef.current, {
         cacheBust: true,
         pixelRatio: 1,
         canvasWidth: CARD_W,

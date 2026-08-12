@@ -19,6 +19,7 @@ import Coaching from '@/pages/coaching';
 import GiornoDetail from '@/pages/giorno';
 import Card from '@/pages/card';
 import CardArticolo from '@/pages/card-articolo';
+import CardReel from '@/pages/card-reel';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -68,6 +69,8 @@ function App() {
           <Route path="/giorno/:id" component={GiornoDetail} />
           <Route path="/card/articolo/:slug/story" component={CardArticolo} />
           <Route path="/card/articolo/:slug" component={CardArticolo} />
+          <Route path="/card/:giorno/reel-minimal" component={CardReel} />
+          <Route path="/card/:giorno/reel" component={CardReel} />
           <Route path="/card/:giorno" component={Card} />
           <Route path="/admin/articoli/:slug/preview" component={ArticoloPreview} />
           <Route path="/admin" component={Admin} />
