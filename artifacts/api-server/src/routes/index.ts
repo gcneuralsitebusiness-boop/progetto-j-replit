@@ -16,6 +16,7 @@ import backupRouter from "./backup";
 import draftsRouter from "./drafts";
 import dashboardRouter from "./dashboard";
 import analyticsRouter from "./analytics";
+import plannerRouter from "./planner";
 
 const router: IRouter = Router();
 
@@ -36,5 +37,6 @@ router.use(backupRouter);
 router.use(draftsRouter);
 router.use(dashboardRouter);
 router.use(analyticsRouter);
+router.use(plannerRouter);
 
 export default router;

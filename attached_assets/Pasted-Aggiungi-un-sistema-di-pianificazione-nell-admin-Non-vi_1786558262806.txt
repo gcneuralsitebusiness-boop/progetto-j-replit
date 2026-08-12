@@ -1,0 +1,113 @@
+Aggiungi un sistema di pianificazione nell'admin. 
+Non visibile agli utenti pubblici. Nuova tab 
+"PLANNER" nella navigazione admin, dopo ANALYTICS.
+
+Non modificare nient'altro del sito.
+
+STRUTTURA DATABASE
+Nuova tabella "tasks" con:
+- id (auto)
+- data (date, obbligatoria)
+- testo (text, max 500 caratteri)
+- tipo (text: POST, ARTICOLO, DIARIO, VIDEO, SITO, 
+  ALTRO)
+- stato (text: DA FARE, IN CORSO, FATTO)
+- priorita (integer: 1, 2, 3 — alta, media, bassa)
+- created_at (timestamp)
+
+VISTA GIORNALIERA — la prima cosa che vedo
+In cima alla pagina: la data di oggi, grande, 
+Bebas Neue bianco, con il numero del giorno attivo 
+del progetto accanto.
+
+Sotto, la lista delle task di oggi, ordinate per 
+priorità. Ogni task mostra:
+- pallino colorato per tipo (rosso POST, rame 
+  ARTICOLO, grigio DIARIO, bianco ALTRO)
+- testo della task
+- stato cliccabile: tap per cambiare 
+  DA FARE → IN CORSO → FATTO → DA FARE
+- quando è FATTO il testo diventa grigio barrato
+- pulsante X per eliminare
+
+In fondo alla lista: campo di testo + menu tipo + 
+pulsante AGGIUNGI per creare una task veloce. 
+Default: tipo ALTRO, stato DA FARE, priorità 2.
+
+Sotto la lista di oggi, una riga di navigazione:
+← IERI    OGGI    DOMANI →
+Per scorrere giorno per giorno e vedere/aggiungere 
+task su qualsiasi data.
+
+VISTA SETTIMANALE
+Sotto la vista giornaliera, blocco "QUESTA SETTIMANA" 
+che mostra 7 colonne (lun-dom) con le task di ogni 
+giorno in formato compatto: solo il pallino tipo + 
+prime 40 lettere del testo + stato.
+
+Cliccando su una task si apre in modifica inline.
+Cliccando su un giorno vuoto si apre il campo per 
+aggiungere.
+
+Su mobile le 7 colonne diventano una lista verticale 
+giorno per giorno (non una griglia — su 390px non 
+ci sta).
+
+VISTA MENSILE
+Sotto la settimanale, blocco "QUESTO MESE" — 
+calendario mensile a griglia. Ogni cella mostra:
+- numero del giorno
+- conteggio task (es. "3" con pallino rosso se ce 
+  ne sono DA FARE)
+Cliccando su una cella si apre la vista giornaliera 
+di quel giorno.
+
+Navigazione ← mese precedente / mese successivo →
+
+DRAG AND DROP
+Le task nella vista giornaliera si riordinano 
+trascinando. Nella vista settimanale si possono 
+trascinare da un giorno all'altro per spostare 
+la data.
+
+Su mobile il drag and drop non è obbligatorio: 
+basta un menu "SPOSTA A" con un selettore data.
+
+TEMPLATE RAPIDO
+In cima alla pagina, un pulsante "ROUTINE GIORNALIERA" 
+che crea in un colpo tutte le task ricorrenti che 
+definisco una volta sola. Per ora le task template 
+sono:
+- DIARIO — tipo DIARIO — priorità 1
+- CARD IG — tipo POST — priorità 1
+- STORIA IG — tipo POST — priorità 2
+
+Le template si definiscono in una sezione 
+"IMPOSTAZIONI PLANNER" dove posso aggiungere, 
+modificare, eliminare le task ricorrenti. Non 
+hardcodarle nel codice.
+
+STILE
+Stesso stile admin: sfondo #0A0A0A, Bebas Neue per 
+le label, Inter per i testi, rosso #B81D1D per gli 
+accenti, rame #B87333 per gli elementi secondari, 
+grigio #6E6A65 per il testo disattivato.
+
+Le task FATTO hanno testo in #6E6A65 barrato.
+Le task DA FARE con priorità 1 hanno un bordo 
+sinistro rosso #B81D1D.
+
+TEST
+a. Creo 3 task per oggi: compaiono ordinate per 
+   priorità.
+b. Cambio stato da DA FARE a FATTO: il testo diventa 
+   grigio barrato.
+c. Navigo a domani e aggiungo una task: tornando a 
+   oggi le task di oggi sono ancora lì.
+d. Vista settimanale su mobile: lista verticale 
+   leggibile, nessuna griglia rotta.
+e. Premo ROUTINE GIORNALIERA: le 3 task template 
+   compaiono nella lista di oggi senza duplicati 
+   se premo due volte.
+f. La pagina non è accessibile se non sono loggato 
+   come admin.

@@ -9,3 +9,4 @@ export * from "./contatti";
 export * from "./iscritti";
 export * from "./bozze";
 export * from "./pageviews";
+export * from "./tasks";
