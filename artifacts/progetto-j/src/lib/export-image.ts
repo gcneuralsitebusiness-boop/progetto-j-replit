@@ -65,6 +65,10 @@ export async function toPngWithEmbeddedAssets(
       const dataUrl = await imageToDataUrl(source);
       const previous = image.getAttribute("src");
       image.setAttribute("src", dataUrl);
+      // Wait for the browser to fully decode the new base64 src before
+      // proceeding — without this toPng can capture the element before
+      // the image is painted, producing a transparent/black background.
+      try { await image.decode(); } catch { /* non-fatal */ }
       restore.push(() => {
         if (previous == null) image.removeAttribute("src");
         else image.setAttribute("src", previous);
@@ -94,6 +98,13 @@ export async function toPngWithEmbeddedAssets(
     if (notInlined.length > 0) {
       throw new Error("Immagine di sfondo non incorporata: riprova il download");
     }
+
+    // Give the browser two animation frames to paint the decoded images
+    // before html-to-image clones the DOM — otherwise the composited
+    // layer may not yet reflect the new src and the export comes out black.
+    await new Promise<void>((resolve) =>
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+    );
 
     return await toPng(root, options);
   } finally {
