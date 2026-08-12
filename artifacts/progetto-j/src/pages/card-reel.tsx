@@ -111,7 +111,7 @@ function ReelArtwork({
               position: "absolute",
               zIndex: 2,
               inset: 0,
-              background: "radial-gradient(circle at center, #0A0A0A 0%, rgba(10,10,10,0.94) 28%, rgba(10,10,10,0) 100%)",
+              background: "radial-gradient(circle at center, rgba(10,10,10,0.55) 0%, rgba(10,10,10,0.35) 45%, rgba(10,10,10,0) 100%)",
             }}
           />
         )}
@@ -152,7 +152,7 @@ function ReelArtwork({
     : entry.foto
       ? getPhotoUrl(entry.foto)
       : null;
-  const overlay = (custom.cardOverlay ?? 70) / 100;
+  const overlay = (custom.cardOverlay ?? 55) / 100;
   const daySummary = custom.cardTitolo ?? summary(entry.testo, entry.sintesi);
   const stats: Array<{ value: string; unit: string }> = [];
   if (entry.peso != null) stats.push({ value: formatNumber(entry.peso, 1), unit: "KG" });
@@ -340,8 +340,8 @@ function MinimalControls({
         <span className="text-[10px] font-sans uppercase tracking-[0.25em] text-muted-foreground">SFOCATURA · {blur}</span>
         <input
           type="range"
-          min={20}
-          max={100}
+          min={5}
+          max={60}
           step={1}
           value={blur}
           onChange={(event) => onBlurChange(Number(event.target.value))}
@@ -353,8 +353,8 @@ function MinimalControls({
         <span className="text-[10px] font-sans uppercase tracking-[0.25em] text-muted-foreground">OVERLAY · {overlay}</span>
         <input
           type="range"
-          min={60}
-          max={95}
+          min={30}
+          max={90}
           step={1}
           value={overlay}
           onChange={(event) => onOverlayChange(Number(event.target.value))}
@@ -416,8 +416,8 @@ export default function CardReel() {
   const [scale, setScale] = useState(0.35);
   const [downloading, setDownloading] = useState(false);
   const [downloadError, setDownloadError] = useState<string | null>(null);
-  const [minimalBlur, setMinimalBlur] = useState(60);
-  const [minimalOverlay, setMinimalOverlay] = useState(82);
+  const [minimalBlur, setMinimalBlur] = useState(20);
+  const [minimalOverlay, setMinimalOverlay] = useState(55);
   const [custom, setCustom] = useState<CardCustomization>(customizationFromRecord(null));
   const [initializedFor, setInitializedFor] = useState<number | null>(null);
   const [saved, setSaved] = useState(false);
@@ -544,9 +544,9 @@ export default function CardReel() {
           titlePlaceholder={summary(entry.testo, entry.sintesi) || "Sintesi automatica"}
           subtitlePlaceholder="GIORNO"
           wordToggleLabel="Mostra dati del giorno"
-          overlayMin={40}
+          overlayMin={30}
           overlayMax={90}
-          overlayDefault={70}
+          overlayDefault={55}
         />
       )}
     </div>

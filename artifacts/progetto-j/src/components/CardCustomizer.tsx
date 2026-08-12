@@ -5,7 +5,7 @@ export const CARD_TITOLO_MAX = 60;
 export const CARD_SOTTOTITOLO_MAX = 24;
 export const CARD_OVERLAY_MIN = 30;
 export const CARD_OVERLAY_MAX = 90;
-export const CARD_OVERLAY_DEFAULT = 58;
+export const CARD_OVERLAY_DEFAULT = 55;
 
 /** Nullable card customization fields. Null = use the original published value. */
 export interface CardCustomization {

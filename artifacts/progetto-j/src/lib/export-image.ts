@@ -46,6 +46,14 @@ export async function toPngWithEmbeddedAssets(
   root: HTMLElement,
   options: Options,
 ): Promise<string> {
+  // Explicitly request the display font before waiting: fonts.ready only
+  // covers loads already in flight, and a missing Bebas Neue would export
+  // the numbers in a fallback font.
+  try {
+    await document.fonts.load('400 100px "Bebas Neue"');
+  } catch {
+    // Non-fatal: fonts.ready below is still the authoritative gate.
+  }
   await document.fonts.ready;
 
   const restore: Array<() => void> = [];
@@ -76,6 +84,17 @@ export async function toPngWithEmbeddedAssets(
     }
 
     await waitForImages(root);
+
+    // Hard guarantee: every image inside the exported element must be a
+    // data URL before toPng runs, otherwise the background is silently
+    // dropped from the PNG (cross-origin taint / async load races).
+    const notInlined = Array.from(root.querySelectorAll("img")).filter(
+      (image) => image.src && !image.src.startsWith("data:"),
+    );
+    if (notInlined.length > 0) {
+      throw new Error("Immagine di sfondo non incorporata: riprova il download");
+    }
+
     return await toPng(root, options);
   } finally {
     for (const undo of restore.reverse()) undo();
