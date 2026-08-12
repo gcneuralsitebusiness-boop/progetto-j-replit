@@ -15,6 +15,7 @@ import { CoachingTab } from "@/components/admin/CoachingTab";
 import { SitoTab } from "@/components/admin/SitoTab";
 import { ContattiTab } from "@/components/admin/ContattiTab";
 import { IscrittiTab } from "@/components/admin/IscrittiTab";
+import { AnalyticsTab } from "@/components/admin/AnalyticsTab";
 import type { Entry, EntryInput, PageItem } from "@workspace/api-client-react";
 import { useUpload, getPhotoUrl } from "@workspace/object-storage-web";
 import { format } from "date-fns";
@@ -895,7 +896,7 @@ function PagineTab() {
 
 // ─── Main Admin ───────────────────────────────────────────────────────────────
 
-type Tab = "oggi" | "diario" | "sito" | "pagine" | "bulk" | "social" | "sponsor" | "articoli" | "coaching" | "contatti" | "iscritti";
+type Tab = "oggi" | "diario" | "sito" | "pagine" | "bulk" | "social" | "sponsor" | "articoli" | "coaching" | "contatti" | "iscritti" | "analytics";
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "oggi", label: "Oggi" },
@@ -909,6 +910,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "contatti", label: "Contatti" },
   { id: "iscritti", label: "Iscritti" },
   { id: "bulk", label: "Bulk" },
+  { id: "analytics", label: "Analytics" },
 ];
 
 export default function Admin() {
@@ -997,6 +999,7 @@ export default function Admin() {
       {activeTab === "contatti" && <ContattiTab />}
       {activeTab === "iscritti" && <IscrittiTab />}
       {activeTab === "bulk" && <BulkEditTab />}
+      {activeTab === "analytics" && <AnalyticsTab />}
     </div>
   );
 }

@@ -8,3 +8,4 @@ export * from "./coaching";
 export * from "./contatti";
 export * from "./iscritti";
 export * from "./bozze";
+export * from "./pageviews";
