@@ -46,15 +46,20 @@ function ReelArtwork({
   custom,
   minimal,
   cardRef,
+  minimalBlur,
+  minimalOverlay,
 }: {
   entry: Entry;
   custom: CardCustomization;
   minimal: boolean;
   cardRef: React.RefObject<HTMLDivElement | null>;
+  minimalBlur: number;
+  minimalOverlay: number;
 }) {
   const number = String(entry.numero).padStart(3, "0");
 
   if (minimal) {
+    const photoUrl = entry.foto ? getPhotoUrl(entry.foto) : null;
     return (
       <div
         ref={cardRef}
@@ -71,9 +76,50 @@ function ReelArtwork({
           justifyContent: "center",
         }}
       >
+        {photoUrl && (
+          <img
+            src={photoUrl}
+            alt=""
+            crossOrigin="anonymous"
+            style={{
+              position: "absolute",
+              zIndex: 0,
+              inset: 0,
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              filter: `blur(${minimalBlur}px)`,
+              transform: "scale(1.15)",
+            }}
+          />
+        )}
+        {photoUrl && (
+          <div
+            aria-hidden="true"
+            style={{
+              position: "absolute",
+              zIndex: 1,
+              inset: 0,
+              backgroundColor: `rgba(0,0,0,${(minimalOverlay / 100).toFixed(2)})`,
+            }}
+          />
+        )}
+        {photoUrl && (
+          <div
+            aria-hidden="true"
+            style={{
+              position: "absolute",
+              zIndex: 2,
+              inset: 0,
+              background: "radial-gradient(circle at center, #0A0A0A 0%, rgba(10,10,10,0.94) 28%, rgba(10,10,10,0) 100%)",
+            }}
+          />
+        )}
         <div
           className="bebas"
           style={{
+            position: "relative",
+            zIndex: 3,
             fontFamily: "'Bebas Neue', sans-serif",
             fontSize: 520,
             lineHeight: 0.85,
@@ -85,6 +131,8 @@ function ReelArtwork({
         <div
           className="bebas"
           style={{
+            position: "relative",
+            zIndex: 3,
             marginTop: 40,
             color: DARK_GREY,
             fontFamily: "'Bebas Neue', sans-serif",
@@ -274,6 +322,50 @@ function ReelArtwork({
   );
 }
 
+function MinimalControls({
+  blur,
+  overlay,
+  onBlurChange,
+  onOverlayChange,
+}: {
+  blur: number;
+  overlay: number;
+  onBlurChange: (value: number) => void;
+  onOverlayChange: (value: number) => void;
+}) {
+  return (
+    <section className="w-full max-w-xl border border-border bg-card p-6 flex flex-col gap-5">
+      <h2 className="font-serif bebas text-[20px] tracking-[0.15em] text-foreground">REGOLAZIONI MINIMAL</h2>
+      <label className="flex flex-col gap-1.5">
+        <span className="text-[10px] font-sans uppercase tracking-[0.25em] text-muted-foreground">SFOCATURA · {blur}</span>
+        <input
+          type="range"
+          min={20}
+          max={100}
+          step={1}
+          value={blur}
+          onChange={(event) => onBlurChange(Number(event.target.value))}
+          className="accent-primary"
+          data-testid="slider-minimal-blur"
+        />
+      </label>
+      <label className="flex flex-col gap-1.5">
+        <span className="text-[10px] font-sans uppercase tracking-[0.25em] text-muted-foreground">OVERLAY · {overlay}</span>
+        <input
+          type="range"
+          min={60}
+          max={95}
+          step={1}
+          value={overlay}
+          onChange={(event) => onOverlayChange(Number(event.target.value))}
+          className="accent-primary"
+          data-testid="slider-minimal-overlay"
+        />
+      </label>
+    </section>
+  );
+}
+
 function Guides() {
   return (
     <>
@@ -324,6 +416,8 @@ export default function CardReel() {
   const [scale, setScale] = useState(0.35);
   const [downloading, setDownloading] = useState(false);
   const [downloadError, setDownloadError] = useState<string | null>(null);
+  const [minimalBlur, setMinimalBlur] = useState(60);
+  const [minimalOverlay, setMinimalOverlay] = useState(82);
   const [custom, setCustom] = useState<CardCustomization>(customizationFromRecord(null));
   const [initializedFor, setInitializedFor] = useState<number | null>(null);
   const [saved, setSaved] = useState(false);
@@ -417,11 +511,27 @@ export default function CardReel() {
       <div ref={wrapperRef} className="w-full flex justify-center">
         <div style={{ width: CARD_W * scale, height: CARD_H * scale, position: "relative" }}>
           <div style={{ transform: `scale(${scale})`, transformOrigin: "top left", position: "relative" }}>
-            <ReelArtwork entry={entry} custom={custom} minimal={minimal} cardRef={cardRef} />
+            <ReelArtwork
+              entry={entry}
+              custom={custom}
+              minimal={minimal}
+              cardRef={cardRef}
+              minimalBlur={minimalBlur}
+              minimalOverlay={minimalOverlay}
+            />
             {!minimal && <Guides />}
           </div>
         </div>
       </div>
+
+      {minimal && auth?.authenticated && (
+        <MinimalControls
+          blur={minimalBlur}
+          overlay={minimalOverlay}
+          onBlurChange={setMinimalBlur}
+          onOverlayChange={setMinimalOverlay}
+        />
+      )}
 
       {!minimal && auth?.authenticated && (
         <CardCustomizer
