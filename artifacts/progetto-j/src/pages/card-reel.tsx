@@ -3,7 +3,7 @@ import { useParams, useRoute, Link } from "wouter";
 import { useListEntries, useAdminMe, useUpdateEntry, getListEntriesQueryKey } from "@workspace/api-client-react";
 import type { Entry } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { toPngWithEmbeddedAssets } from "@/lib/export-image";
+import { downloadMinimalCanvasCard, downloadReelCanvasCard } from "@/lib/canvas-card-export";
 import { getPhotoUrl } from "@workspace/object-storage-web";
 import CardCustomizer, {
   customizationFromRecord,
@@ -446,17 +446,33 @@ export default function CardReel() {
     setDownloading(true);
     setDownloadError(null);
     try {
-      const dataUrl = await toPngWithEmbeddedAssets(cardRef.current, {
-        cacheBust: true,
-        pixelRatio: 2,
-        canvasWidth: CARD_W / 2,
-        canvasHeight: CARD_H / 2,
-        backgroundColor: BLACK,
-      });
-      const a = document.createElement("a");
-      a.href = dataUrl;
-      a.download = `progettoj-giorno-${String(requested).padStart(3, "0")}-${minimal ? "minimal" : "reel"}.png`;
-      a.click();
+      const photoUrl = minimal
+        ? (entry.foto ? getPhotoUrl(entry.foto) : null)
+        : (custom.cardImmagine
+          ? getPhotoUrl(custom.cardImmagine)
+          : (entry.foto ? getPhotoUrl(entry.foto) : null));
+      if (minimal) {
+        await downloadMinimalCanvasCard({
+          filename: `progettoj-giorno-${String(requested).padStart(3, "0")}-minimal.png`,
+          photoUrl,
+          blur: minimalBlur,
+          overlay: minimalOverlay,
+          dayNumber: entry.numero,
+        });
+      } else {
+        const stats: Array<{ value: string; label: string }> = [];
+        if (entry.peso != null) stats.push({ value: formatNumber(entry.peso, 1), label: "KG" });
+        if (entry.battito != null) stats.push({ value: formatNumber(entry.battito), label: "BPM" });
+        if (entry.sonno != null) stats.push({ value: formatNumber(entry.sonno, 1), label: "H SONNO" });
+        await downloadReelCanvasCard({
+          filename: `progettoj-giorno-${String(requested).padStart(3, "0")}-reel.png`,
+          photoUrl,
+          overlay: (custom.cardOverlay ?? 55) / 100,
+          dayNumber: entry.numero,
+          summary: custom.cardTitolo ?? summary(entry.testo, entry.sintesi),
+          stats: custom.cardMostraParole !== false ? stats : [],
+        });
+      }
     } catch {
       setDownloadError("Errore durante la generazione del PNG. Verifica l'immagine e riprova.");
     } finally {

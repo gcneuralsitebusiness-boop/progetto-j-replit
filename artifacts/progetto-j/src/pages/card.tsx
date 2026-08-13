@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
 import { getPhotoUrl } from "@workspace/object-storage-web";
-import { toPngWithEmbeddedAssets } from "@/lib/export-image";
+import { downloadDailyCanvasCard } from "@/lib/canvas-card-export";
 import CardCustomizer, {
   CARD_OVERLAY_DEFAULT,
   customizationFromRecord,
@@ -243,17 +243,27 @@ export default function Card() {
     setDownloading(true);
     setDownloadError(null);
     try {
-      const dataUrl = await toPngWithEmbeddedAssets(cardRef.current, {
-        cacheBust: true,
-        pixelRatio: 1,
-        canvasWidth: CARD_W,
-        canvasHeight: CARD_H,
-        backgroundColor: "#0A0A0A",
+      const customPhoto = custom.cardImmagine ? getPhotoUrl(custom.cardImmagine) : null;
+      const photoUrl = customPhoto ?? (entry.foto ? getPhotoUrl(entry.foto) : null);
+      const sintesi = custom.cardTitolo ?? resolveSintesi(entry.sintesi, entry.testo);
+      const dayLabel = custom.cardSottotitolo ?? "GIORNO";
+      const overlay = (custom.cardOverlay ?? CARD_OVERLAY_DEFAULT) / 100;
+      const stats: { value: string; label: string }[] = [];
+      if (entry.peso != null) stats.push({ value: `${formatNumber(entry.peso, 1)}KG`, label: "PESO" });
+      if (entry.battito != null) stats.push({ value: `${formatNumber(entry.battito)}BPM`, label: "BATTITO" });
+      if (entry.sonno != null) stats.push({ value: `${formatNumber(entry.sonno, 1)}H`, label: "SONNO" });
+      await downloadDailyCanvasCard({
+        filename: `progetto-j-giorno-${String(requested).padStart(3, "0")}.png`,
+        photoUrl,
+        overlay,
+        dayNumber: entry.numero,
+        dayLabel,
+        dateLabel: format(new Date(entry.data), "d MMMM yyyy", { locale: it }).toUpperCase(),
+        summary: sintesi,
+        stats,
+        showStats: custom.cardMostraParole ?? true,
+        remaining: Math.max(0, GOAL_DAY - entry.numero),
       });
-      const a = document.createElement("a");
-      a.href = dataUrl;
-      a.download = `progetto-j-giorno-${String(requested).padStart(3, "0")}.png`;
-      a.click();
     } catch {
       setDownloadError("Errore durante la generazione del PNG. Riprova.");
     } finally {
