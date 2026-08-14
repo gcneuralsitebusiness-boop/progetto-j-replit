@@ -1,0 +1,244 @@
+Aggiungi il sistema completo di tracking allenamento, 
+nutrizione e correlazioni al sito. Non toccare nessun 
+componente esistente — questa è una feature nuova.
+
+═══════════════════════════════════════════
+PARTE 1 — NUOVI CAMPI NEL FORM GIORNO (ADMIN)
+═══════════════════════════════════════════
+
+Aggiungi questi campi opzionali al form del giorno 
+di diario, in un blocco separato sotto i campi 
+esistenti (peso, battito, sonno), con label 
+"TRACKING GIORNALIERO":
+
+NUTRIZIONE:
+- KCAL — numero intero (placeholder: "es. 2100")
+- PASTI — numero intero 1-6 (quanti pasti nel giorno)
+- ALCOL — checkbox sì/no
+- ACQUA — numero in litri con decimale (placeholder: 
+  "es. 2.5")
+
+ALLENAMENTO:
+- TIPO ALLENAMENTO — dropdown: NESSUNO / MMA / 
+  MUAY THAI / BJJ / CALISTHENICS / CORSA / SPARRING / 
+  MISTO
+- DURATA — numero in minuti
+- INTENSITÀ — slider 1-5 (1=leggero, 5=guerra)
+
+ROUTINE GIORNALIERA:
+- TIPO GIORNO — radio button: A / B / RECUPERO
+- ROUTINE COMPLETATA — checkbox
+- FLESSIONI — campo testo (es. "3x18 diamante")
+- TRAZIONI — campo testo (es. "3x8 australian")
+- SQUAT — campo testo (es. "3x20")
+- PLANK — numero in secondi totali
+- COLLO — checkbox completato sì/no
+- MOBILITÀ — checkbox completata sì/no
+- SOLLEVAMENTO GAMBA — dropdown: ANCA / PETTO / 
+  TESTA / OLTRE (traccia progresso calci alti)
+- GRAPPLING A VUOTO — checkbox completato sì/no
+
+STATO GENERALE:
+- ENERGIA — slider 1-5 (1=morto, 5=esplosivo)
+- NOTE ALLENAMENTO — campo testo libero
+
+Tutti i campi sono nullable. Se non compilati, il 
+sito non mostra nulla per quel campo. Nessun campo 
+vuoto visibile al pubblico.
+
+═══════════════════════════════════════════
+PARTE 2 — VISUALIZZAZIONE PUBBLICA GIORNO
+═══════════════════════════════════════════
+
+Nella pagina del giorno (/diario/:giorno), sotto la 
+riga esistente peso/battito/sonno, aggiungi due righe 
+aggiuntive. Mostra solo i campi compilati, ometti 
+quelli vuoti.
+
+RIGA 2 — NUTRIZIONE + ENERGIA:
+  KCAL 2100 · ACQUA 2.5L · ENERGIA 4/5
+  Se alcol = sì, aggiungi un piccolo indicatore 
+  rosso "ALC" alla fine della riga.
+
+RIGA 3 — ALLENAMENTO + ROUTINE:
+  MMA 45MIN ⚡3 · ROUTINE A ✓ · STREAK 14
+  Dove ⚡3 è l'intensità, e STREAK è il conteggio 
+  giorni consecutivi con routine completata.
+
+Se la routine non è completata:
+  ROUTINE — · STREAK RESET
+
+Font dati: JetBrains Mono.
+Check completati: colore verde acido #00FF41.
+Mancati/reset: colore rosso #B81D1D.
+Label: Bebas Neue, grigio #6E6A65.
+Tutto il resto: estetica esistente del sito.
+
+═══════════════════════════════════════════
+PARTE 3 — PAGINA /STATISTICHE (nuova, pubblica)
+═══════════════════════════════════════════
+
+Crea una nuova pagina pubblica /statistiche con 
+5 sezioni. Sfondo #0A0A0A, stessa navigazione del 
+sito.
+
+SEZIONE 1 — HERO STATS (prima cosa visibile)
+Quattro blocchi grandi affiancati (2x2 su mobile):
+
+  STREAK ATTUALE        STREAK RECORD
+  [numero grande]       [numero grande]
+  giorni consecutivi    massimo storico
+
+  SESSIONI TOTALI       PESO PERSO
+  [numero grande]       [numero grande]
+  allenamenti           dal giorno 1
+
+Numeri in Bebas Neue bianco 72px. Label in Bebas 
+grigio #6E6A65 24px. Sfondo dei blocchi #111111 con 
+bordo sinistro 3px rosso #B81D1D.
+
+SEZIONE 2 — GRAFICO CORPO (ultimi 30 giorni)
+Un grafico a linee sovrapposte con due assi Y:
+
+Asse sinistro (peso): linea #B81D1D, punti pieni
+Asse destro (battito a riposo): linea #B87333, 
+  punti vuoti
+Asse X: date, Bebas Neue grigio #6E6A65
+
+Sotto ogni data sull'asse X, mostra tre indicatori 
+a pallino:
+- Verde #00FF41 = allenamento fatto
+- Grigio #333 = nessun allenamento  
+- Rosso #B81D1D = alcol (sovrapposto se presente)
+
+Sotto il grafico, una linea sottile grigia con le 
+ore di sonno in area chart semitrasparente #6E6A65 
+opacità 20%.
+
+Nessuna griglia pesante. Sfondo trasparente. Linee 
+sottili 2px. Tooltip al tocco/hover che mostra tutti 
+i dati di quel giorno.
+
+SEZIONE 3 — GRAFICO PROGRESSIONE FORZA
+Tre linee sullo stesso grafico, ultimi 60 giorni:
+
+- Flessioni: rep totali per sessione (somma delle 
+  serie), linea #B81D1D
+- Plank: secondi totali, linea #B87333
+- Mobilità gamba: convertita in numero (ANCA=1, 
+  PETTO=2, TESTA=3, OLTRE=4), linea #E8E4DE
+
+Asse X: giorni. Mostra solo i giorni in cui il dato 
+esiste (non interpolare i vuoti — lascia il gap).
+
+Label: "PROGRESSIONE FORZA" in Bebas Neue 
+letterspacing 0.3em.
+
+SEZIONE 4 — CORRELAZIONI (calcolate automaticamente)
+Quattro card in colonna, ciascuna con:
+- Titolo della correlazione
+- Due numeri a confronto
+- Indicatore se la differenza è significativa
+
+Card 1: BATTITO × ALLENAMENTO
+  "Battito medio nei giorni con allenamento: X BPM"
+  "Battito medio nei giorni senza: X BPM"
+  Differenza in verde se il battito è più basso con 
+  allenamento (= buono), rosso se più alto.
+
+Card 2: PESO × SONNO
+  "Peso medio con 6+ ore di sonno: X kg"
+  "Peso medio con meno di 6 ore: X kg"
+
+Card 3: ENERGIA × SONNO
+  "Energia media con 6+ ore: X/5"
+  "Energia media con meno di 6: X/5"
+
+Card 4: KCAL × PESO (con ritardo di 3 giorni)
+  "Peso medio 3 giorni dopo giornate sopra 2500 kcal: X"
+  "Peso medio 3 giorni dopo giornate sotto 2000 kcal: X"
+  Questo mostra l'effetto reale delle calorie sul 
+  peso, con il ritardo fisiologico.
+
+Sfondo card: #111111. Bordo sinistro: rame #B87333. 
+Numeri grandi in Bebas Neue bianco 48px. Label in 
+Inter grigio 14px.
+
+Mostra le card solo quando ci sono almeno 14 giorni 
+di dati per quella correlazione. Prima di 14 giorni 
+mostra "Servono più dati — [N] giorni rimasti".
+
+SEZIONE 5 — CALENDARIO HEATMAP
+Griglia mensile (stile GitHub contributions) dove 
+ogni giorno è un quadrato:
+
+- Verde scuro #00FF41 = routine completata + 
+  allenamento
+- Verde chiaro #00FF41 opacità 40% = solo routine 
+  o solo allenamento
+- Grigio #333 = nessuno dei due
+- Rosso #B81D1D = giorno con alcol
+
+Al tocco mostra i dati di quel giorno in un tooltip.
+Mesi da maggio 2026 in poi, scorrevoli 
+orizzontalmente su mobile.
+
+═══════════════════════════════════════════
+PARTE 4 — CARD IG AGGIORNATA
+═══════════════════════════════════════════
+
+Nella card IG (/card/:giorno), sotto la riga 
+peso/battito/sonno esistente, aggiungi:
+
+ROUTINE [A/B/R] ✓ · STREAK [N]
+
+In verde acido se completata, rosso se reset.
+Stessa dimensione del testo PROGETTOJ.IT in fondo.
+Font: JetBrains Mono.
+
+═══════════════════════════════════════════
+PARTE 5 — LINK NAVIGAZIONE
+═══════════════════════════════════════════
+
+Aggiungi "STATISTICHE" nella navigazione pubblica 
+del sito, dopo DIARIO e ARTICOLI. Stessa estetica 
+delle voci esistenti.
+
+═══════════════════════════════════════════
+STILE GLOBALE — rispetta questi vincoli
+═══════════════════════════════════════════
+
+Sfondo: #0A0A0A
+Rosso: #B81D1D
+Rame: #B87333  
+Testo: #E8E4DE
+Grigio: #6E6A65
+Verde acido: #00FF41
+Font titoli/label: Bebas Neue, maiuscolo
+Font dati/numeri: JetBrains Mono
+Font corpo: Inter
+Nessun bordo arrotondato. Nessuna ombra. Nessun 
+gradiente decorativo. Nessun emoji.
+
+═══════════════════════════════════════════
+TEST — eseguili tutti e riporta i risultati
+═══════════════════════════════════════════
+
+a. Creo un giorno con tutti i campi compilati: 
+   la pagina pubblica mostra tutte e tre le righe 
+   dati senza errori.
+b. Creo un giorno con solo peso e sonno: le righe 
+   nutrizione e allenamento non compaiono.
+c. Apro /statistiche con almeno 14 giorni di dati: 
+   tutti i grafici si renderizzano e le correlazioni 
+   mostrano numeri reali.
+d. Apro /statistiche con meno di 14 giorni: le card 
+   correlazioni mostrano "Servono più dati".
+e. Completo la routine per 5 giorni consecutivi: 
+   lo streak mostra 5. Salto un giorno: mostra 
+   STREAK RESET.
+f. La card IG mostra la riga routine e streak.
+g. Il calendario heatmap mostra i colori corretti 
+   per giorni con/senza allenamento.
+h. Su mobile tutto è leggibile e i grafici si 
+   ridimensionano senza tagliare i dati.
