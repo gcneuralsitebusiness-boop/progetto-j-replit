@@ -13,3 +13,4 @@
 - [SPA route scroll restoration](route-scroll-restoration.md) — reset on pathname navigation, preserve query/hash changes and native browser POP restoration.
 - [PNG export with html-to-image](png-export-html-to-image.md) — external stylesheets need `crossorigin="anonymous"` or export dies on cssRules; inline all images as data URLs before toPng.
 - [Daily tracking fields](daily-tracking-fields.md) — keep new routine text fields separate from legacy numeric exercise counters; automatic blank days must not count as tracking data.
+- [Optional admin input normalization](optional-admin-input-normalization.md) — normalize blank draft/form values to null at the API boundary before Zod and Drizzle.

@@ -836,7 +836,7 @@ components:
           type: ["string", "null"]
           enum: [NESSUNO, MMA, MUAY THAI, BJJ, CALISTHENICS, CORSA, SPARRING, MISTO, null]
         durata:
-          type: ["integer", "null"]
+          type: ["number", "null"]
           minimum: 0
         intensita:
           type: ["integer", "null"]
@@ -951,7 +951,7 @@ components:
           type: ["string", "null"]
           enum: [NESSUNO, MMA, MUAY THAI, BJJ, CALISTHENICS, CORSA, SPARRING, MISTO, null]
         durata:
-          type: ["integer", "null"]
+          type: ["number", "null"]
           minimum: 0
         intensita:
           type: ["integer", "null"]
@@ -1030,7 +1030,7 @@ components:
           type: ["string", "null"]
           enum: [NESSUNO, MMA, MUAY THAI, BJJ, CALISTHENICS, CORSA, SPARRING, MISTO, null]
         durata:
-          type: ["integer", "null"]
+          type: ["number", "null"]
           minimum: 0
         intensita:
           type: ["integer", "null"]

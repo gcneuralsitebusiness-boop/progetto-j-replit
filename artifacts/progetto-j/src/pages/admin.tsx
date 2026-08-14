@@ -29,6 +29,12 @@ const CLIENT_RANGES: Record<string, [number, number, string]> = {
   battito:    [30,  220,    "30–220 bpm"],
   sonno:      [0,   24,     "0–24 h"],
   kcal:       [0,   15000,  "0–15 000"],
+  pasti:      [1,   6,      "1–6"],
+  acqua:      [0,   20,     "0–20 litri"],
+  durata:     [0,   1440,   "0–1440"],
+  intensita:  [1,   5,      "1–5"],
+  plank:      [0,   3600,   "0–3600 secondi"],
+  energia:    [1,   5,      "1–5"],
   km:         [0,   100,    "0–100"],
   flessioni:  [0,   2000,   "0–2000"],
   addominali: [0,   2000,   "0–2000"],
@@ -413,7 +419,7 @@ function EntryForm({ initialData, onSuccess, onCancel }: { initialData?: Entry; 
                 {["NESSUNO", "MMA", "MUAY THAI", "BJJ", "CALISTHENICS", "CORSA", "SPARRING", "MISTO"].map((value) => <option key={value} value={value}>{value}</option>)}
               </select>
             </div>
-            {field("Durata (minuti)", "durata")}
+            {field("Durata (minuti)", "durata", "0.1")}
             <div className="flex flex-col gap-1.5">
               <label className="text-[11px] uppercase tracking-widest text-muted-foreground">Intensità: {formData.intensita ?? "—"}/5</label>
               <input type="range" min="1" max="5" step="1" value={formData.intensita ?? 3} onChange={(e) => setFormData({ ...formData, intensita: Number(e.target.value) })} className="accent-[hsl(var(--primary))] mt-3" />

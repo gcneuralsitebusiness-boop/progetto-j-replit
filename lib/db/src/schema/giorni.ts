@@ -11,7 +11,7 @@ export const giorniTable = pgTable("giorni", {
   alcol: boolean("alcol"),
   acqua: real("acqua"),
   tipoAllenamento: text("tipo_allenamento"),
-  durata: integer("durata"),
+  durata: real("durata"),
   intensita: integer("intensita"),
   tipoGiorno: text("tipo_giorno"),
   routineCompletata: boolean("routine_completata"),

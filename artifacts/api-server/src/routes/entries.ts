@@ -62,6 +62,85 @@ const RANGES: Record<string, [number, number]> = {
   uscite: [0, 100000],
 };
 
+const OPTIONAL_NUMERIC_FIELDS = new Set([
+  "kcal",
+  "pasti",
+  "acqua",
+  "durata",
+  "intensita",
+  "plank",
+  "energia",
+  "sonno",
+  "flessioni",
+  "addominali",
+  "round",
+  "km",
+  "peso",
+  "battito",
+  "entrate",
+  "uscite",
+]);
+
+const OPTIONAL_BOOLEAN_FIELDS = new Set([
+  "alcol",
+  "routineCompletata",
+  "collo",
+  "mobilita",
+  "grapplingVuoto",
+]);
+
+const OPTIONAL_TEXT_FIELDS = new Set([
+  "tipoAllenamento",
+  "tipoGiorno",
+  "routineFlessioni",
+  "routineTrazioni",
+  "routineSquat",
+  "sollevamentoGamba",
+  "noteAllenamento",
+  "testo",
+  "sintesi",
+  "foto",
+]);
+
+/**
+ * Admin forms and older saved drafts can contain empty strings for optional
+ * controls. PostgreSQL does not treat "" as SQL NULL, especially for boolean
+ * and numeric columns, so normalize those values at the API boundary.
+ */
+function normalizeEntryBody(input: unknown): unknown {
+  if (input === null || typeof input !== "object" || Array.isArray(input)) return input;
+
+  const normalized: Record<string, unknown> = { ...(input as Record<string, unknown>) };
+
+  for (const field of OPTIONAL_NUMERIC_FIELDS) {
+    if (!(field in normalized)) continue;
+    const value = normalized[field];
+    if (value === null || value === undefined) continue;
+    if (typeof value === "string") {
+      const trimmed = value.trim();
+      normalized[field] = trimmed === "" ? null : Number(trimmed);
+    }
+  }
+
+  for (const field of OPTIONAL_BOOLEAN_FIELDS) {
+    if (!(field in normalized)) continue;
+    const value = normalized[field];
+    if (value === null || value === undefined || typeof value === "boolean") continue;
+    if (typeof value === "string") {
+      const trimmed = value.trim().toLowerCase();
+      normalized[field] = trimmed === "" ? null : trimmed === "true" ? true : trimmed === "false" ? false : value;
+    }
+  }
+
+  for (const field of OPTIONAL_TEXT_FIELDS) {
+    if (!(field in normalized)) continue;
+    const value = normalized[field];
+    if (typeof value === "string" && value.trim() === "") normalized[field] = null;
+  }
+
+  return normalized;
+}
+
 function validateRanges(data: Record<string, unknown>): string | null {
   for (const [field, [min, max]] of Object.entries(RANGES)) {
     const val = data[field];
@@ -82,7 +161,7 @@ router.post("/entries", async (req, res): Promise<void> => {
     return;
   }
 
-  const parsed = CreateEntryBody.safeParse(req.body);
+  const parsed = CreateEntryBody.safeParse(normalizeEntryBody(req.body));
   if (!parsed.success) {
     req.log.warn({ errors: parsed.error.message }, "Invalid entry body");
     res.status(400).json({ error: parsed.error.message });
@@ -122,7 +201,7 @@ router.patch("/entries/:numero", async (req, res): Promise<void> => {
     return;
   }
 
-  const body = UpdateEntryBody.safeParse(req.body);
+  const body = UpdateEntryBody.safeParse(normalizeEntryBody(req.body));
   if (!body.success) {
     res.status(400).json({ error: body.error.message });
     return;
