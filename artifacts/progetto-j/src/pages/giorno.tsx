@@ -82,6 +82,45 @@ function DataStrip({ entry }: { entry: GiornoEntry }) {
   );
 }
 
+function TrackingRows({ entry, routineStreak }: { entry: GiornoEntry; routineStreak: number }) {
+  const hasNutrition = entry.kcal != null || entry.pasti != null || entry.acqua != null || entry.energia != null || entry.alcol === true;
+  const hasTraining = entry.tipoAllenamento != null || entry.durata != null || entry.intensita != null ||
+    entry.tipoGiorno != null || entry.routineCompletata != null || entry.routineFlessioni != null ||
+    entry.routineTrazioni != null || entry.routineSquat != null || entry.plank != null ||
+    entry.collo != null || entry.mobilita != null || entry.sollevamentoGamba != null || entry.grapplingVuoto != null;
+
+  if (!hasNutrition && !hasTraining) return null;
+
+  return (
+    <div className="mt-4 space-y-3 border-t border-border pt-4 font-mono text-[12px] uppercase tracking-[0.08em]">
+      {hasNutrition && (
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <span className="text-[10px] font-sans tracking-[0.16em] text-muted-foreground">NUTRIZIONE</span>
+          {entry.kcal != null && <span>KCAL {formatNumber(entry.kcal)}</span>}
+          {entry.pasti != null && <span>PASTI {entry.pasti}</span>}
+          {entry.acqua != null && <span>ACQUA {formatNumber(entry.acqua, 1)}L</span>}
+          {entry.energia != null && <span>ENERGIA {entry.energia}/5</span>}
+          {entry.alcol === true && <span className="text-primary">ALC</span>}
+        </div>
+      )}
+      {hasTraining && (
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <span className="text-[10px] font-sans tracking-[0.16em] text-muted-foreground">ALLENAMENTO</span>
+          {entry.tipoAllenamento && entry.tipoAllenamento !== "NESSUNO" && <span>{entry.tipoAllenamento}</span>}
+          {entry.durata != null && <span>{entry.durata}MIN</span>}
+          {entry.intensita != null && <span>INT {entry.intensita}</span>}
+          {entry.tipoGiorno && <span>ROUTINE {entry.tipoGiorno === "RECUPERO" ? "R" : entry.tipoGiorno}</span>}
+          {entry.routineCompletata === true ? (
+            <span className="text-[hsl(var(--acid))]">✓ COMPLETATA · STREAK {routineStreak}</span>
+          ) : entry.routineCompletata === false ? (
+            <span className="text-primary">ROUTINE — · STREAK RESET</span>
+          ) : null}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Finance row ──────────────────────────────────────────────────────────────
 
 function FinanceRow({ entry }: { entry: GiornoEntry }) {
@@ -387,11 +426,13 @@ function GiornoContent({
   prevEntry,
   nextEntry,
   averages,
+  routineStreak,
 }: {
   entry: GiornoEntry;
   prevEntry: GiornoEntry | null;
   nextEntry: GiornoEntry | null;
   averages: VsMetric[];
+  routineStreak: number;
 }) {
   const photoUrl = getPhotoUrl(entry.foto);
   const hasPhoto = Boolean(entry.foto && photoUrl);
@@ -471,7 +512,10 @@ function GiornoContent({
         <div className="grid grid-cols-1 md:grid-cols-[140px_1fr] gap-x-8 gap-y-0 max-w-4xl mx-auto px-5">
           <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-[140px_1fr] gap-x-8 border-t border-iron py-10">
             <div className="font-sans text-[11px] uppercase tracking-[0.2em] text-muted-foreground md:sticky md:top-24 self-start mb-4 md:mb-0">DATI</div>
-            <DataStrip entry={entry} />
+            <div>
+              <DataStrip entry={entry} />
+              <TrackingRows entry={entry} routineStreak={routineStreak} />
+            </div>
           </div>
           <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-[140px_1fr] gap-x-8 border-t border-iron py-10">
             <div className="font-sans text-[11px] uppercase tracking-[0.2em] text-muted-foreground md:sticky md:top-24 self-start mb-4 md:mb-0">FINANZE</div>
@@ -562,6 +606,14 @@ export default function GiornoDetail() {
   const prevEntry = sorted[idx + 1] ?? null;
   const nextEntry = sorted[idx - 1] ?? null;
 
+  let routineStreak = 0;
+  if (entry?.routineCompletata) {
+    const byNumber = new Map((entries ?? []).map((item) => [item.numero, item]));
+    for (let day = entry.numero; byNumber.get(day)?.routineCompletata === true; day -= 1) {
+      routineStreak += 1;
+    }
+  }
+
   if (isLoading) {
     return (
       <>
@@ -605,7 +657,7 @@ export default function GiornoDetail() {
     { label: "ROUND", value: entry.round ?? 0, avg: avgRound },
   ];
 
-  return <GiornoContent entry={entry} prevEntry={prevEntry} nextEntry={nextEntry} averages={averages} />;
+  return <GiornoContent entry={entry} prevEntry={prevEntry} nextEntry={nextEntry} averages={averages} routineStreak={routineStreak} />;
 }
 
 // Type alias used throughout this file for a single diary entry

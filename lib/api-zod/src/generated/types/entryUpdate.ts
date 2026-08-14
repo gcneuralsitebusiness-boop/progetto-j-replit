@@ -5,9 +5,69 @@
  * API specification for Progetto J — 180-day transformation journal
  * OpenAPI spec version: 0.1.0
  */
+import type { EntryUpdateSollevamentoGamba } from './entryUpdateSollevamentoGamba';
+import type { EntryUpdateTipoAllenamento } from './entryUpdateTipoAllenamento';
+import type { EntryUpdateTipoGiorno } from './entryUpdateTipoGiorno';
 
 export interface EntryUpdate {
   data?: string;
+  /**
+     * @minimum 1
+     * @maximum 6
+     * @nullable
+     */
+  pasti?: number | null;
+  /** @nullable */
+  alcol?: boolean | null;
+  /**
+     * @minimum 0
+     * @nullable
+     */
+  acqua?: number | null;
+  /** @nullable */
+  tipoAllenamento?: EntryUpdateTipoAllenamento;
+  /**
+     * @minimum 0
+     * @nullable
+     */
+  durata?: number | null;
+  /**
+     * @minimum 1
+     * @maximum 5
+     * @nullable
+     */
+  intensita?: number | null;
+  /** @nullable */
+  tipoGiorno?: EntryUpdateTipoGiorno;
+  /** @nullable */
+  routineCompletata?: boolean | null;
+  /** @nullable */
+  routineFlessioni?: string | null;
+  /** @nullable */
+  routineTrazioni?: string | null;
+  /** @nullable */
+  routineSquat?: string | null;
+  /**
+     * @minimum 0
+     * @nullable
+     */
+  plank?: number | null;
+  /** @nullable */
+  collo?: boolean | null;
+  /** @nullable */
+  mobilita?: boolean | null;
+  /** @nullable */
+  sollevamentoGamba?: EntryUpdateSollevamentoGamba;
+  /** @nullable */
+  grapplingVuoto?: boolean | null;
+  /**
+     * @minimum 1
+     * @maximum 5
+     * @nullable
+     */
+  energia?: number | null;
+  /** @nullable */
+  noteAllenamento?: string | null;
   /** @nullable */
   kcal?: number | null;
   /** @nullable */

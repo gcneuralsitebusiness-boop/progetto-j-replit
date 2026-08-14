@@ -823,6 +823,54 @@ components:
           description: ISO date string (YYYY-MM-DD)
         kcal:
           type: ["integer", "null"]
+        pasti:
+          type: ["integer", "null"]
+          minimum: 1
+          maximum: 6
+        alcol:
+          type: ["boolean", "null"]
+        acqua:
+          type: ["number", "null"]
+          minimum: 0
+        tipoAllenamento:
+          type: ["string", "null"]
+          enum: [NESSUNO, MMA, MUAY THAI, BJJ, CALISTHENICS, CORSA, SPARRING, MISTO, null]
+        durata:
+          type: ["integer", "null"]
+          minimum: 0
+        intensita:
+          type: ["integer", "null"]
+          minimum: 1
+          maximum: 5
+        tipoGiorno:
+          type: ["string", "null"]
+          enum: [A, B, RECUPERO, null]
+        routineCompletata:
+          type: ["boolean", "null"]
+        routineFlessioni:
+          type: ["string", "null"]
+        routineTrazioni:
+          type: ["string", "null"]
+        routineSquat:
+          type: ["string", "null"]
+        plank:
+          type: ["integer", "null"]
+          minimum: 0
+        collo:
+          type: ["boolean", "null"]
+        mobilita:
+          type: ["boolean", "null"]
+        sollevamentoGamba:
+          type: ["string", "null"]
+          enum: [ANCA, PETTO, TESTA, OLTRE, null]
+        grapplingVuoto:
+          type: ["boolean", "null"]
+        energia:
+          type: ["integer", "null"]
+          minimum: 1
+          maximum: 5
+        noteAllenamento:
+          type: ["string", "null"]
         sonno:
           type: ["number", "null"]
           description: Hours of sleep
@@ -890,6 +938,54 @@ components:
           type: string
         kcal:
           type: ["integer", "null"]
+        pasti:
+          type: ["integer", "null"]
+          minimum: 1
+          maximum: 6
+        alcol:
+          type: ["boolean", "null"]
+        acqua:
+          type: ["number", "null"]
+          minimum: 0
+        tipoAllenamento:
+          type: ["string", "null"]
+          enum: [NESSUNO, MMA, MUAY THAI, BJJ, CALISTHENICS, CORSA, SPARRING, MISTO, null]
+        durata:
+          type: ["integer", "null"]
+          minimum: 0
+        intensita:
+          type: ["integer", "null"]
+          minimum: 1
+          maximum: 5
+        tipoGiorno:
+          type: ["string", "null"]
+          enum: [A, B, RECUPERO, null]
+        routineCompletata:
+          type: ["boolean", "null"]
+        routineFlessioni:
+          type: ["string", "null"]
+        routineTrazioni:
+          type: ["string", "null"]
+        routineSquat:
+          type: ["string", "null"]
+        plank:
+          type: ["integer", "null"]
+          minimum: 0
+        collo:
+          type: ["boolean", "null"]
+        mobilita:
+          type: ["boolean", "null"]
+        sollevamentoGamba:
+          type: ["string", "null"]
+          enum: [ANCA, PETTO, TESTA, OLTRE, null]
+        grapplingVuoto:
+          type: ["boolean", "null"]
+        energia:
+          type: ["integer", "null"]
+          minimum: 1
+          maximum: 5
+        noteAllenamento:
+          type: ["string", "null"]
         sonno:
           type: ["number", "null"]
         flessioni:
@@ -921,6 +1017,54 @@ components:
       properties:
         data:
           type: string
+        pasti:
+          type: ["integer", "null"]
+          minimum: 1
+          maximum: 6
+        alcol:
+          type: ["boolean", "null"]
+        acqua:
+          type: ["number", "null"]
+          minimum: 0
+        tipoAllenamento:
+          type: ["string", "null"]
+          enum: [NESSUNO, MMA, MUAY THAI, BJJ, CALISTHENICS, CORSA, SPARRING, MISTO, null]
+        durata:
+          type: ["integer", "null"]
+          minimum: 0
+        intensita:
+          type: ["integer", "null"]
+          minimum: 1
+          maximum: 5
+        tipoGiorno:
+          type: ["string", "null"]
+          enum: [A, B, RECUPERO, null]
+        routineCompletata:
+          type: ["boolean", "null"]
+        routineFlessioni:
+          type: ["string", "null"]
+        routineTrazioni:
+          type: ["string", "null"]
+        routineSquat:
+          type: ["string", "null"]
+        plank:
+          type: ["integer", "null"]
+          minimum: 0
+        collo:
+          type: ["boolean", "null"]
+        mobilita:
+          type: ["boolean", "null"]
+        sollevamentoGamba:
+          type: ["string", "null"]
+          enum: [ANCA, PETTO, TESTA, OLTRE, null]
+        grapplingVuoto:
+          type: ["boolean", "null"]
+        energia:
+          type: ["integer", "null"]
+          minimum: 1
+          maximum: 5
+        noteAllenamento:
+          type: ["string", "null"]
         kcal:
           type: ["integer", "null"]
         sonno:

@@ -38,6 +38,13 @@ function formatNumber(n: number, fraction = 0): string {
   return n.toLocaleString("it-IT", { minimumFractionDigits: 0, maximumFractionDigits: fraction });
 }
 
+function getRoutineStreak(entries: Entry[], numero: number): number {
+  const byNumber = new Map(entries.map((entry) => [entry.numero, entry]));
+  let streak = 0;
+  for (let day = numero; byNumber.get(day)?.routineCompletata === true; day -= 1) streak += 1;
+  return streak;
+}
+
 function CardStat({ value, label }: { value: string; label: string }) {
   return (
     <div className="flex flex-col items-center">
@@ -51,10 +58,12 @@ function InstagramCard({
   entry,
   custom,
   cardRef,
+  routineStreak,
 }: {
   entry: Entry;
   custom: CardCustomization;
   cardRef: React.RefObject<HTMLDivElement | null>;
+  routineStreak: number;
 }) {
   // Customization with fallback: null fields always use the original values.
   const customPhoto = custom.cardImmagine ? getPhotoUrl(custom.cardImmagine) : null;
@@ -69,6 +78,12 @@ function InstagramCard({
   if (entry.peso != null) stats.push({ value: `${formatNumber(entry.peso, 1)}KG`, label: "PESO" });
   if (entry.battito != null) stats.push({ value: `${formatNumber(entry.battito)}BPM`, label: "BATTITO" });
   if (entry.sonno != null) stats.push({ value: `${formatNumber(entry.sonno, 1)}H`, label: "SONNO" });
+  const hasRoutine = entry.tipoGiorno != null || entry.routineCompletata != null;
+  const routineText = entry.routineCompletata === true
+    ? `ROUTINE ${entry.tipoGiorno === "RECUPERO" ? "R" : (entry.tipoGiorno ?? "—")} ✓ · STREAK ${routineStreak}`
+    : entry.routineCompletata === false
+      ? "ROUTINE — · STREAK RESET"
+      : "";
 
   return (
     <div
@@ -163,6 +178,11 @@ function InstagramCard({
               ))}
             </div>
           )}
+          {hasRoutine && (
+            <div className="font-mono uppercase" style={{ marginTop: 24, fontSize: 22, letterSpacing: "0.12em", color: entry.routineCompletata ? "#00FF41" : "#B81D1D" }}>
+              {routineText}
+            </div>
+          )}
 
           {/* Countdown */}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 56 }}>
@@ -243,6 +263,7 @@ export default function Card() {
     setDownloading(true);
     setDownloadError(null);
     try {
+      if (!entry) throw new Error("Entry non disponibile");
       const customPhoto = custom.cardImmagine ? getPhotoUrl(custom.cardImmagine) : null;
       const photoUrl = customPhoto ?? (entry.foto ? getPhotoUrl(entry.foto) : null);
       const sintesi = custom.cardTitolo ?? resolveSintesi(entry.sintesi, entry.testo);
@@ -252,6 +273,11 @@ export default function Card() {
       if (entry.peso != null) stats.push({ value: `${formatNumber(entry.peso, 1)}KG`, label: "PESO" });
       if (entry.battito != null) stats.push({ value: `${formatNumber(entry.battito)}BPM`, label: "BATTITO" });
       if (entry.sonno != null) stats.push({ value: `${formatNumber(entry.sonno, 1)}H`, label: "SONNO" });
+      const routineLine = entry.routineCompletata === true
+        ? { text: `ROUTINE ${entry.tipoGiorno === "RECUPERO" ? "R" : (entry.tipoGiorno ?? "—")} ✓ · STREAK ${getRoutineStreak(entries ?? [], entry.numero)}`, completed: true }
+        : entry.routineCompletata === false
+          ? { text: "ROUTINE — · STREAK RESET", completed: false }
+          : undefined;
       await downloadDailyCanvasCard({
         filename: `progetto-j-giorno-${String(requested).padStart(3, "0")}.png`,
         photoUrl,
@@ -263,6 +289,7 @@ export default function Card() {
         stats,
         showStats: custom.cardMostraParole ?? true,
         remaining: Math.max(0, GOAL_DAY - entry.numero),
+        routineLine,
       });
     } catch {
       setDownloadError("Errore durante la generazione del PNG. Riprova.");
@@ -318,7 +345,7 @@ export default function Card() {
       <div ref={wrapperRef} className="w-full flex justify-center">
         <div style={{ width: CARD_W * scale, height: CARD_H * scale }}>
           <div style={{ transform: `scale(${scale})`, transformOrigin: "top left" }}>
-            <InstagramCard entry={entry} custom={custom} cardRef={cardRef} />
+            <InstagramCard entry={entry} custom={custom} cardRef={cardRef} routineStreak={getRoutineStreak(entries ?? [], entry.numero)} />
           </div>
         </div>
       </div>

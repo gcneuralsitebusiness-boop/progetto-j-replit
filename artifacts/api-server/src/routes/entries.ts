@@ -44,6 +44,12 @@ router.get("/entries/latest", async (_req, res): Promise<void> => {
 // ─── Range validation ──────────────────────────────────────────────────────────
 
 const RANGES: Record<string, [number, number]> = {
+  pasti: [1, 6],
+  acqua: [0, 20],
+  durata: [0, 1440],
+  intensita: [1, 5],
+  plank: [0, 3600],
+  energia: [1, 5],
   peso: [30, 200],
   battito: [30, 220],
   sonno: [0, 24],

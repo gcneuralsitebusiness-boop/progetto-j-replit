@@ -63,6 +63,7 @@ export function Navbar() {
   const navigationItems = [
     { href: "/chi-sono", label: "Chi Sono" },
     { href: "/journaling", label: "Journaling" },
+    { href: "/statistiche", label: "Statistiche" },
     ...(articles && articles.length > 0 ? [{ href: "/articoli", label: "Articoli" }] : []),
     { href: "/coaching", label: "Coaching" },
     { href: "/social", label: "Social" },

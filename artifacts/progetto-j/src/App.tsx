@@ -6,6 +6,7 @@ import { Navbar } from '@/components/Navbar';
 import { ScrollToTop } from '@/components/ScrollToTop';
 import Home from '@/pages/home';
 import Journaling from '@/pages/journaling';
+import Statistiche from '@/pages/statistiche';
 import ChiSono from '@/pages/chi-sono';
 import Admin from '@/pages/admin';
 import NotFound from '@/pages/not-found';
@@ -60,6 +61,7 @@ function App() {
         <Switch>
           <Route path="/" component={Home} />
           <Route path="/journaling" component={Journaling} />
+          <Route path="/statistiche" component={Statistiche} />
           <Route path="/chi-sono" component={ChiSono} />
           <Route path="/social" component={Social} />
           <Route path="/sponsor" component={Sponsor} />

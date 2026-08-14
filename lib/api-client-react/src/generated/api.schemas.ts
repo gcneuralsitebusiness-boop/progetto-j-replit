@@ -9,6 +9,48 @@ export interface HealthStatus {
   status: string;
 }
 
+/**
+ * @nullable
+ */
+export type EntryTipoAllenamento = typeof EntryTipoAllenamento[keyof typeof EntryTipoAllenamento] | null;
+
+
+export const EntryTipoAllenamento = {
+  NESSUNO: 'NESSUNO',
+  MMA: 'MMA',
+  MUAY_THAI: 'MUAY THAI',
+  BJJ: 'BJJ',
+  CALISTHENICS: 'CALISTHENICS',
+  CORSA: 'CORSA',
+  SPARRING: 'SPARRING',
+  MISTO: 'MISTO',
+} as const;
+
+/**
+ * @nullable
+ */
+export type EntryTipoGiorno = typeof EntryTipoGiorno[keyof typeof EntryTipoGiorno] | null;
+
+
+export const EntryTipoGiorno = {
+  A: 'A',
+  B: 'B',
+  RECUPERO: 'RECUPERO',
+} as const;
+
+/**
+ * @nullable
+ */
+export type EntrySollevamentoGamba = typeof EntrySollevamentoGamba[keyof typeof EntrySollevamentoGamba] | null;
+
+
+export const EntrySollevamentoGamba = {
+  ANCA: 'ANCA',
+  PETTO: 'PETTO',
+  TESTA: 'TESTA',
+  OLTRE: 'OLTRE',
+} as const;
+
 export interface Entry {
   id: number;
   /** Day number (1-180) */
@@ -17,6 +59,63 @@ export interface Entry {
   data: string;
   /** @nullable */
   kcal?: number | null;
+  /**
+     * @minimum 1
+     * @maximum 6
+     * @nullable
+     */
+  pasti?: number | null;
+  /** @nullable */
+  alcol?: boolean | null;
+  /**
+     * @minimum 0
+     * @nullable
+     */
+  acqua?: number | null;
+  /** @nullable */
+  tipoAllenamento?: EntryTipoAllenamento;
+  /**
+     * @minimum 0
+     * @nullable
+     */
+  durata?: number | null;
+  /**
+     * @minimum 1
+     * @maximum 5
+     * @nullable
+     */
+  intensita?: number | null;
+  /** @nullable */
+  tipoGiorno?: EntryTipoGiorno;
+  /** @nullable */
+  routineCompletata?: boolean | null;
+  /** @nullable */
+  routineFlessioni?: string | null;
+  /** @nullable */
+  routineTrazioni?: string | null;
+  /** @nullable */
+  routineSquat?: string | null;
+  /**
+     * @minimum 0
+     * @nullable
+     */
+  plank?: number | null;
+  /** @nullable */
+  collo?: boolean | null;
+  /** @nullable */
+  mobilita?: boolean | null;
+  /** @nullable */
+  sollevamentoGamba?: EntrySollevamentoGamba;
+  /** @nullable */
+  grapplingVuoto?: boolean | null;
+  /**
+     * @minimum 1
+     * @maximum 5
+     * @nullable
+     */
+  energia?: number | null;
+  /** @nullable */
+  noteAllenamento?: string | null;
   /**
      * Hours of sleep
      * @nullable
@@ -98,11 +197,110 @@ export interface Entry {
   createdAt?: string;
 }
 
+/**
+ * @nullable
+ */
+export type EntryInputTipoAllenamento = typeof EntryInputTipoAllenamento[keyof typeof EntryInputTipoAllenamento] | null;
+
+
+export const EntryInputTipoAllenamento = {
+  NESSUNO: 'NESSUNO',
+  MMA: 'MMA',
+  MUAY_THAI: 'MUAY THAI',
+  BJJ: 'BJJ',
+  CALISTHENICS: 'CALISTHENICS',
+  CORSA: 'CORSA',
+  SPARRING: 'SPARRING',
+  MISTO: 'MISTO',
+} as const;
+
+/**
+ * @nullable
+ */
+export type EntryInputTipoGiorno = typeof EntryInputTipoGiorno[keyof typeof EntryInputTipoGiorno] | null;
+
+
+export const EntryInputTipoGiorno = {
+  A: 'A',
+  B: 'B',
+  RECUPERO: 'RECUPERO',
+} as const;
+
+/**
+ * @nullable
+ */
+export type EntryInputSollevamentoGamba = typeof EntryInputSollevamentoGamba[keyof typeof EntryInputSollevamentoGamba] | null;
+
+
+export const EntryInputSollevamentoGamba = {
+  ANCA: 'ANCA',
+  PETTO: 'PETTO',
+  TESTA: 'TESTA',
+  OLTRE: 'OLTRE',
+} as const;
+
 export interface EntryInput {
   numero: number;
   data: string;
   /** @nullable */
   kcal?: number | null;
+  /**
+     * @minimum 1
+     * @maximum 6
+     * @nullable
+     */
+  pasti?: number | null;
+  /** @nullable */
+  alcol?: boolean | null;
+  /**
+     * @minimum 0
+     * @nullable
+     */
+  acqua?: number | null;
+  /** @nullable */
+  tipoAllenamento?: EntryInputTipoAllenamento;
+  /**
+     * @minimum 0
+     * @nullable
+     */
+  durata?: number | null;
+  /**
+     * @minimum 1
+     * @maximum 5
+     * @nullable
+     */
+  intensita?: number | null;
+  /** @nullable */
+  tipoGiorno?: EntryInputTipoGiorno;
+  /** @nullable */
+  routineCompletata?: boolean | null;
+  /** @nullable */
+  routineFlessioni?: string | null;
+  /** @nullable */
+  routineTrazioni?: string | null;
+  /** @nullable */
+  routineSquat?: string | null;
+  /**
+     * @minimum 0
+     * @nullable
+     */
+  plank?: number | null;
+  /** @nullable */
+  collo?: boolean | null;
+  /** @nullable */
+  mobilita?: boolean | null;
+  /** @nullable */
+  sollevamentoGamba?: EntryInputSollevamentoGamba;
+  /** @nullable */
+  grapplingVuoto?: boolean | null;
+  /**
+     * @minimum 1
+     * @maximum 5
+     * @nullable
+     */
+  energia?: number | null;
+  /** @nullable */
+  noteAllenamento?: string | null;
   /** @nullable */
   sonno?: number | null;
   /** @nullable */
@@ -132,8 +330,107 @@ export interface EntryInput {
   foto?: string | null;
 }
 
+/**
+ * @nullable
+ */
+export type EntryUpdateTipoAllenamento = typeof EntryUpdateTipoAllenamento[keyof typeof EntryUpdateTipoAllenamento] | null;
+
+
+export const EntryUpdateTipoAllenamento = {
+  NESSUNO: 'NESSUNO',
+  MMA: 'MMA',
+  MUAY_THAI: 'MUAY THAI',
+  BJJ: 'BJJ',
+  CALISTHENICS: 'CALISTHENICS',
+  CORSA: 'CORSA',
+  SPARRING: 'SPARRING',
+  MISTO: 'MISTO',
+} as const;
+
+/**
+ * @nullable
+ */
+export type EntryUpdateTipoGiorno = typeof EntryUpdateTipoGiorno[keyof typeof EntryUpdateTipoGiorno] | null;
+
+
+export const EntryUpdateTipoGiorno = {
+  A: 'A',
+  B: 'B',
+  RECUPERO: 'RECUPERO',
+} as const;
+
+/**
+ * @nullable
+ */
+export type EntryUpdateSollevamentoGamba = typeof EntryUpdateSollevamentoGamba[keyof typeof EntryUpdateSollevamentoGamba] | null;
+
+
+export const EntryUpdateSollevamentoGamba = {
+  ANCA: 'ANCA',
+  PETTO: 'PETTO',
+  TESTA: 'TESTA',
+  OLTRE: 'OLTRE',
+} as const;
+
 export interface EntryUpdate {
   data?: string;
+  /**
+     * @minimum 1
+     * @maximum 6
+     * @nullable
+     */
+  pasti?: number | null;
+  /** @nullable */
+  alcol?: boolean | null;
+  /**
+     * @minimum 0
+     * @nullable
+     */
+  acqua?: number | null;
+  /** @nullable */
+  tipoAllenamento?: EntryUpdateTipoAllenamento;
+  /**
+     * @minimum 0
+     * @nullable
+     */
+  durata?: number | null;
+  /**
+     * @minimum 1
+     * @maximum 5
+     * @nullable
+     */
+  intensita?: number | null;
+  /** @nullable */
+  tipoGiorno?: EntryUpdateTipoGiorno;
+  /** @nullable */
+  routineCompletata?: boolean | null;
+  /** @nullable */
+  routineFlessioni?: string | null;
+  /** @nullable */
+  routineTrazioni?: string | null;
+  /** @nullable */
+  routineSquat?: string | null;
+  /**
+     * @minimum 0
+     * @nullable
+     */
+  plank?: number | null;
+  /** @nullable */
+  collo?: boolean | null;
+  /** @nullable */
+  mobilita?: boolean | null;
+  /** @nullable */
+  sollevamentoGamba?: EntryUpdateSollevamentoGamba;
+  /** @nullable */
+  grapplingVuoto?: boolean | null;
+  /**
+     * @minimum 1
+     * @maximum 5
+     * @nullable
+     */
+  energia?: number | null;
+  /** @nullable */
+  noteAllenamento?: string | null;
   /** @nullable */
   kcal?: number | null;
   /** @nullable */

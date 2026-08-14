@@ -122,6 +122,24 @@ function EntryForm({ initialData, onSuccess, onCancel }: { initialData?: Entry; 
     numero: initialData?.numero || 1,
     data: initialData?.data || new Date().toISOString().split("T")[0],
     kcal: initialData?.kcal ?? undefined,
+    pasti: initialData?.pasti ?? undefined,
+    alcol: initialData?.alcol ?? undefined,
+    acqua: initialData?.acqua ?? undefined,
+    tipoAllenamento: initialData?.tipoAllenamento ?? undefined,
+    durata: initialData?.durata ?? undefined,
+    intensita: initialData?.intensita ?? undefined,
+    tipoGiorno: initialData?.tipoGiorno ?? undefined,
+    routineCompletata: initialData?.routineCompletata ?? undefined,
+    routineFlessioni: initialData?.routineFlessioni ?? "",
+    routineTrazioni: initialData?.routineTrazioni ?? "",
+    routineSquat: initialData?.routineSquat ?? "",
+    plank: initialData?.plank ?? undefined,
+    collo: initialData?.collo ?? undefined,
+    mobilita: initialData?.mobilita ?? undefined,
+    sollevamentoGamba: initialData?.sollevamentoGamba ?? undefined,
+    grapplingVuoto: initialData?.grapplingVuoto ?? undefined,
+    energia: initialData?.energia ?? undefined,
+    noteAllenamento: initialData?.noteAllenamento ?? "",
     sonno: initialData?.sonno ?? undefined,
     flessioni: initialData?.flessioni ?? undefined,
     addominali: initialData?.addominali ?? undefined,
@@ -189,6 +207,24 @@ function EntryForm({ initialData, onSuccess, onCancel }: { initialData?: Entry; 
       numero: Number(formData.numero),
       data: formData.data as string,
       kcal: formData.kcal != null ? Number(formData.kcal) : null,
+      pasti: formData.pasti != null ? Number(formData.pasti) : null,
+      alcol: formData.alcol ?? null,
+      acqua: formData.acqua != null ? Number(formData.acqua) : null,
+      tipoAllenamento: formData.tipoAllenamento ?? null,
+      durata: formData.durata != null ? Number(formData.durata) : null,
+      intensita: formData.intensita != null ? Number(formData.intensita) : null,
+      tipoGiorno: formData.tipoGiorno ?? null,
+      routineCompletata: formData.routineCompletata ?? null,
+      routineFlessioni: formData.routineFlessioni?.trim() || null,
+      routineTrazioni: formData.routineTrazioni?.trim() || null,
+      routineSquat: formData.routineSquat?.trim() || null,
+      plank: formData.plank != null ? Number(formData.plank) : null,
+      collo: formData.collo ?? null,
+      mobilita: formData.mobilita ?? null,
+      sollevamentoGamba: formData.sollevamentoGamba ?? null,
+      grapplingVuoto: formData.grapplingVuoto ?? null,
+      energia: formData.energia != null ? Number(formData.energia) : null,
+      noteAllenamento: formData.noteAllenamento?.trim() || null,
       sonno: formData.sonno != null ? Number(formData.sonno) : null,
       flessioni: formData.flessioni != null ? Number(formData.flessioni) : null,
       addominali: formData.addominali != null ? Number(formData.addominali) : null,
@@ -225,7 +261,13 @@ function EntryForm({ initialData, onSuccess, onCancel }: { initialData?: Entry; 
           setFormData({
             numero: Number(formData.numero) + 1,
             data: new Date().toISOString().split("T")[0],
-            kcal: undefined, sonno: undefined, flessioni: undefined, addominali: undefined,
+            kcal: undefined, pasti: undefined, alcol: undefined, acqua: undefined,
+            tipoAllenamento: undefined, durata: undefined, intensita: undefined,
+            tipoGiorno: undefined, routineCompletata: undefined, routineFlessioni: "",
+            routineTrazioni: "", routineSquat: "", plank: undefined, collo: undefined,
+            mobilita: undefined, sollevamentoGamba: undefined, grapplingVuoto: undefined,
+            energia: undefined, noteAllenamento: "",
+            sonno: undefined, flessioni: undefined, addominali: undefined,
             round: undefined, km: undefined, peso: undefined, battito: undefined,
             entrate: undefined, uscite: undefined,
             testo: "", foto: "",
@@ -268,6 +310,31 @@ function EntryForm({ initialData, onSuccess, onCancel }: { initialData?: Entry; 
     );
   };
 
+  const textField = (label: string, key: "routineFlessioni" | "routineTrazioni" | "routineSquat", placeholder?: string) => (
+    <div className="flex flex-col gap-1.5">
+      <label className="text-[11px] uppercase tracking-widest text-muted-foreground">{label}</label>
+      <input
+        type="text"
+        placeholder={placeholder}
+        value={(formData[key] as string | undefined) ?? ""}
+        onChange={(e) => setFormData({ ...formData, [key]: e.target.value })}
+        className="bg-[#141414] border border-border p-2.5 text-white placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary"
+      />
+    </div>
+  );
+
+  const checkField = (label: string, key: "alcol" | "routineCompletata" | "collo" | "mobilita" | "grapplingVuoto") => (
+    <label className="flex items-center gap-3 min-h-[42px] cursor-pointer text-[11px] uppercase tracking-widest text-muted-foreground">
+      <input
+        type="checkbox"
+        checked={Boolean(formData[key])}
+        onChange={(e) => setFormData({ ...formData, [key]: e.target.checked })}
+        className="h-4 w-4 accent-[hsl(var(--primary))]"
+      />
+      {label}
+    </label>
+  );
+
   return (
     <form onSubmit={handleSubmit} className="bg-card border border-border p-6 md:p-8 flex flex-col gap-6">
       {/* Draft restore bar */}
@@ -305,7 +372,6 @@ function EntryForm({ initialData, onSuccess, onCancel }: { initialData?: Entry; 
           <label className="text-[11px] uppercase tracking-widest text-muted-foreground">Data *</label>
           <input type="date" required value={formData.data ?? ""} onChange={(e) => setFormData({ ...formData, data: e.target.value })} className="bg-[#141414] border border-border p-2.5 text-white focus:outline-none focus:border-primary tabular-nums" />
         </div>
-        {field("Kcal", "kcal")}
         {field("Sonno (h)", "sonno", "0.5")}
         {field("Flessioni", "flessioni")}
         {field("Addominali", "addominali")}
@@ -316,6 +382,91 @@ function EntryForm({ initialData, onSuccess, onCancel }: { initialData?: Entry; 
         {field("Entrate (€)", "entrate", "0.01")}
         {field("Uscite (€)", "uscite", "0.01")}
       </div>
+
+      <section className="border-t border-border pt-6 space-y-6">
+        <div>
+          <h3 className="font-serif text-[24px] tracking-wider text-primary">TRACKING GIORNALIERO</h3>
+          <p className="mt-1 text-[12px] font-sans text-muted-foreground">Tutti i campi sono opzionali e vengono mostrati pubblicamente solo se compilati.</p>
+        </div>
+
+        <div className="space-y-4">
+          <h4 className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground">Nutrizione</h4>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+            {field("Kcal", "kcal", "1")}
+            {field("Pasti (1–6)", "pasti")}
+            {field("Acqua (litri)", "acqua", "0.1")}
+            <div className="flex items-end">{checkField("Alcol", "alcol")}</div>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <h4 className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground">Allenamento</h4>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[11px] uppercase tracking-widest text-muted-foreground">Tipo allenamento</label>
+              <select
+                value={formData.tipoAllenamento ?? ""}
+                onChange={(e) => setFormData({ ...formData, tipoAllenamento: (e.target.value || null) as EntryInput["tipoAllenamento"] })}
+                className="bg-[#141414] border border-border p-2.5 text-white focus:outline-none focus:border-primary"
+              >
+                <option value="">Non indicato</option>
+                {["NESSUNO", "MMA", "MUAY THAI", "BJJ", "CALISTHENICS", "CORSA", "SPARRING", "MISTO"].map((value) => <option key={value} value={value}>{value}</option>)}
+              </select>
+            </div>
+            {field("Durata (minuti)", "durata")}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[11px] uppercase tracking-widest text-muted-foreground">Intensità: {formData.intensita ?? "—"}/5</label>
+              <input type="range" min="1" max="5" step="1" value={formData.intensita ?? 3} onChange={(e) => setFormData({ ...formData, intensita: Number(e.target.value) })} className="accent-[hsl(var(--primary))] mt-3" />
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <h4 className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground">Routine giornaliera</h4>
+          <div className="flex flex-wrap items-center gap-5">
+            <span className="text-[11px] uppercase tracking-widest text-muted-foreground">Tipo giorno</span>
+            {["A", "B", "RECUPERO"].map((value) => (
+              <label key={value} className="flex items-center gap-2 text-[11px] uppercase tracking-widest text-muted-foreground cursor-pointer">
+                <input type="radio" name="tipoGiorno" value={value} checked={formData.tipoGiorno === value} onChange={() => setFormData({ ...formData, tipoGiorno: value as EntryInput["tipoGiorno"] })} className="accent-[hsl(var(--primary))]" />
+                {value}
+              </label>
+            ))}
+            {checkField("Routine completata", "routineCompletata")}
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+            {textField("Flessioni", "routineFlessioni", "es. 3x18 diamante")}
+            {textField("Trazioni", "routineTrazioni", "es. 3x8 australian")}
+            {textField("Squat", "routineSquat", "es. 3x20")}
+            {field("Plank (secondi)", "plank")}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[11px] uppercase tracking-widest text-muted-foreground">Sollevamento gamba</label>
+              <select value={formData.sollevamentoGamba ?? ""} onChange={(e) => setFormData({ ...formData, sollevamentoGamba: (e.target.value || null) as EntryInput["sollevamentoGamba"] })} className="bg-[#141414] border border-border p-2.5 text-white focus:outline-none focus:border-primary">
+                <option value="">Non indicato</option>
+                {["ANCA", "PETTO", "TESTA", "OLTRE"].map((value) => <option key={value} value={value}>{value}</option>)}
+              </select>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-x-6 gap-y-2">
+            {checkField("Collo", "collo")}
+            {checkField("Mobilità", "mobilita")}
+            {checkField("Grappling a vuoto", "grapplingVuoto")}
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <h4 className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground">Stato generale</h4>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[11px] uppercase tracking-widest text-muted-foreground">Energia: {formData.energia ?? "—"}/5</label>
+              <input type="range" min="1" max="5" step="1" value={formData.energia ?? 3} onChange={(e) => setFormData({ ...formData, energia: Number(e.target.value) })} className="accent-[hsl(var(--primary))] mt-3" />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[11px] uppercase tracking-widest text-muted-foreground">Note allenamento</label>
+              <input type="text" value={formData.noteAllenamento ?? ""} onChange={(e) => setFormData({ ...formData, noteAllenamento: e.target.value })} className="bg-[#141414] border border-border p-2.5 text-white focus:outline-none focus:border-primary" />
+            </div>
+          </div>
+        </div>
+      </section>
 
       <div className="flex flex-col gap-2 mt-2">
         <label className="text-[11px] uppercase tracking-widest text-muted-foreground">Foto</label>

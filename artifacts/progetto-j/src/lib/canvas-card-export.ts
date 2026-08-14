@@ -130,6 +130,7 @@ export async function downloadDailyCanvasCard({
   stats,
   showStats,
   remaining,
+  routineLine,
 }: {
   filename: string;
   photoUrl: string | null;
@@ -141,6 +142,7 @@ export async function downloadDailyCanvasCard({
   stats: CanvasStat[];
   showStats: boolean;
   remaining: number;
+  routineLine?: { text: string; completed: boolean };
 }) {
   await waitForCanvasFonts();
   const { canvas, context: ctx } = prepareCanvas(1080, 1350);
@@ -182,6 +184,13 @@ export async function downloadDailyCanvasCard({
   ctx.fillStyle = RED;
   ctx.textAlign = "right";
   drawSpacedText(ctx, "PROGETTOJ.IT", 1008, bottom, 5.5, "right");
+
+  if (routineLine) {
+    setFont(ctx, 22, "Inter");
+    ctx.fillStyle = routineLine.completed ? "#00FF41" : RED;
+    ctx.textAlign = "left";
+    drawSpacedText(ctx, routineLine.text, 72, bottom - 48, 4.5);
+  }
 
   if (showStats && stats.length > 0) {
     const statBaseline = bottom - 153;

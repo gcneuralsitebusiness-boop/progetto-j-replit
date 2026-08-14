@@ -21,6 +21,18 @@ export const HealthCheckResponse = zod.object({
  * Returns all entries sorted by date descending
  * @summary List all journal entries
  */
+export const listEntriesResponsePastiMax = 6;
+
+export const listEntriesResponseAcquaMin = 0;
+
+export const listEntriesResponseDurataMin = 0;
+
+export const listEntriesResponseIntensitaMax = 5;
+
+export const listEntriesResponsePlankMin = 0;
+
+export const listEntriesResponseEnergiaMax = 5;
+
 export const listEntriesResponseSintesiMax = 180;
 
 export const listEntriesResponseCardTitoloMax = 60;
@@ -37,6 +49,24 @@ export const ListEntriesResponseItem = zod.object({
   "numero": zod.number().describe('Day number (1-180)'),
   "data": zod.string().describe('ISO date string (YYYY-MM-DD)'),
   "kcal": zod.number().nullish(),
+  "pasti": zod.number().min(1).max(listEntriesResponsePastiMax).nullish(),
+  "alcol": zod.boolean().nullish(),
+  "acqua": zod.number().min(listEntriesResponseAcquaMin).nullish(),
+  "tipoAllenamento": zod.union([zod.literal('NESSUNO'),zod.literal('MMA'),zod.literal('MUAY THAI'),zod.literal('BJJ'),zod.literal('CALISTHENICS'),zod.literal('CORSA'),zod.literal('SPARRING'),zod.literal('MISTO'),zod.literal(null)]).nullish(),
+  "durata": zod.number().min(listEntriesResponseDurataMin).nullish(),
+  "intensita": zod.number().min(1).max(listEntriesResponseIntensitaMax).nullish(),
+  "tipoGiorno": zod.union([zod.literal('A'),zod.literal('B'),zod.literal('RECUPERO'),zod.literal(null)]).nullish(),
+  "routineCompletata": zod.boolean().nullish(),
+  "routineFlessioni": zod.string().nullish(),
+  "routineTrazioni": zod.string().nullish(),
+  "routineSquat": zod.string().nullish(),
+  "plank": zod.number().min(listEntriesResponsePlankMin).nullish(),
+  "collo": zod.boolean().nullish(),
+  "mobilita": zod.boolean().nullish(),
+  "sollevamentoGamba": zod.union([zod.literal('ANCA'),zod.literal('PETTO'),zod.literal('TESTA'),zod.literal('OLTRE'),zod.literal(null)]).nullish(),
+  "grapplingVuoto": zod.boolean().nullish(),
+  "energia": zod.number().min(1).max(listEntriesResponseEnergiaMax).nullish(),
+  "noteAllenamento": zod.string().nullish(),
   "sonno": zod.number().nullish().describe('Hours of sleep'),
   "flessioni": zod.number().nullish(),
   "addominali": zod.number().nullish(),
@@ -62,6 +92,18 @@ export const ListEntriesResponse = zod.array(ListEntriesResponseItem)
 /**
  * @summary Create a new journal entry (admin only)
  */
+export const createEntryBodyPastiMax = 6;
+
+export const createEntryBodyAcquaMin = 0;
+
+export const createEntryBodyDurataMin = 0;
+
+export const createEntryBodyIntensitaMax = 5;
+
+export const createEntryBodyPlankMin = 0;
+
+export const createEntryBodyEnergiaMax = 5;
+
 export const createEntryBodySintesiMax = 180;
 
 
@@ -70,6 +112,24 @@ export const CreateEntryBody = zod.object({
   "numero": zod.number(),
   "data": zod.string(),
   "kcal": zod.number().nullish(),
+  "pasti": zod.number().min(1).max(createEntryBodyPastiMax).nullish(),
+  "alcol": zod.boolean().nullish(),
+  "acqua": zod.number().min(createEntryBodyAcquaMin).nullish(),
+  "tipoAllenamento": zod.union([zod.literal('NESSUNO'),zod.literal('MMA'),zod.literal('MUAY THAI'),zod.literal('BJJ'),zod.literal('CALISTHENICS'),zod.literal('CORSA'),zod.literal('SPARRING'),zod.literal('MISTO'),zod.literal(null)]).nullish(),
+  "durata": zod.number().min(createEntryBodyDurataMin).nullish(),
+  "intensita": zod.number().min(1).max(createEntryBodyIntensitaMax).nullish(),
+  "tipoGiorno": zod.union([zod.literal('A'),zod.literal('B'),zod.literal('RECUPERO'),zod.literal(null)]).nullish(),
+  "routineCompletata": zod.boolean().nullish(),
+  "routineFlessioni": zod.string().nullish(),
+  "routineTrazioni": zod.string().nullish(),
+  "routineSquat": zod.string().nullish(),
+  "plank": zod.number().min(createEntryBodyPlankMin).nullish(),
+  "collo": zod.boolean().nullish(),
+  "mobilita": zod.boolean().nullish(),
+  "sollevamentoGamba": zod.union([zod.literal('ANCA'),zod.literal('PETTO'),zod.literal('TESTA'),zod.literal('OLTRE'),zod.literal(null)]).nullish(),
+  "grapplingVuoto": zod.boolean().nullish(),
+  "energia": zod.number().min(1).max(createEntryBodyEnergiaMax).nullish(),
+  "noteAllenamento": zod.string().nullish(),
   "sonno": zod.number().nullish(),
   "flessioni": zod.number().nullish(),
   "addominali": zod.number().nullish(),
@@ -83,6 +143,18 @@ export const CreateEntryBody = zod.object({
   "sintesi": zod.string().max(createEntryBodySintesiMax).nullish(),
   "foto": zod.string().nullish()
 })
+
+export const createEntryResponsePastiMax = 6;
+
+export const createEntryResponseAcquaMin = 0;
+
+export const createEntryResponseDurataMin = 0;
+
+export const createEntryResponseIntensitaMax = 5;
+
+export const createEntryResponsePlankMin = 0;
+
+export const createEntryResponseEnergiaMax = 5;
 
 export const createEntryResponseSintesiMax = 180;
 
@@ -100,6 +172,24 @@ export const CreateEntryResponse = zod.object({
   "numero": zod.number().describe('Day number (1-180)'),
   "data": zod.string().describe('ISO date string (YYYY-MM-DD)'),
   "kcal": zod.number().nullish(),
+  "pasti": zod.number().min(1).max(createEntryResponsePastiMax).nullish(),
+  "alcol": zod.boolean().nullish(),
+  "acqua": zod.number().min(createEntryResponseAcquaMin).nullish(),
+  "tipoAllenamento": zod.union([zod.literal('NESSUNO'),zod.literal('MMA'),zod.literal('MUAY THAI'),zod.literal('BJJ'),zod.literal('CALISTHENICS'),zod.literal('CORSA'),zod.literal('SPARRING'),zod.literal('MISTO'),zod.literal(null)]).nullish(),
+  "durata": zod.number().min(createEntryResponseDurataMin).nullish(),
+  "intensita": zod.number().min(1).max(createEntryResponseIntensitaMax).nullish(),
+  "tipoGiorno": zod.union([zod.literal('A'),zod.literal('B'),zod.literal('RECUPERO'),zod.literal(null)]).nullish(),
+  "routineCompletata": zod.boolean().nullish(),
+  "routineFlessioni": zod.string().nullish(),
+  "routineTrazioni": zod.string().nullish(),
+  "routineSquat": zod.string().nullish(),
+  "plank": zod.number().min(createEntryResponsePlankMin).nullish(),
+  "collo": zod.boolean().nullish(),
+  "mobilita": zod.boolean().nullish(),
+  "sollevamentoGamba": zod.union([zod.literal('ANCA'),zod.literal('PETTO'),zod.literal('TESTA'),zod.literal('OLTRE'),zod.literal(null)]).nullish(),
+  "grapplingVuoto": zod.boolean().nullish(),
+  "energia": zod.number().min(1).max(createEntryResponseEnergiaMax).nullish(),
+  "noteAllenamento": zod.string().nullish(),
   "sonno": zod.number().nullish().describe('Hours of sleep'),
   "flessioni": zod.number().nullish(),
   "addominali": zod.number().nullish(),
@@ -125,6 +215,18 @@ export const CreateEntryResponse = zod.object({
  * Returns the 3 most recent entries for the home page
  * @summary Get 3 most recent journal entries
  */
+export const getLatestEntriesResponsePastiMax = 6;
+
+export const getLatestEntriesResponseAcquaMin = 0;
+
+export const getLatestEntriesResponseDurataMin = 0;
+
+export const getLatestEntriesResponseIntensitaMax = 5;
+
+export const getLatestEntriesResponsePlankMin = 0;
+
+export const getLatestEntriesResponseEnergiaMax = 5;
+
 export const getLatestEntriesResponseSintesiMax = 180;
 
 export const getLatestEntriesResponseCardTitoloMax = 60;
@@ -141,6 +243,24 @@ export const GetLatestEntriesResponseItem = zod.object({
   "numero": zod.number().describe('Day number (1-180)'),
   "data": zod.string().describe('ISO date string (YYYY-MM-DD)'),
   "kcal": zod.number().nullish(),
+  "pasti": zod.number().min(1).max(getLatestEntriesResponsePastiMax).nullish(),
+  "alcol": zod.boolean().nullish(),
+  "acqua": zod.number().min(getLatestEntriesResponseAcquaMin).nullish(),
+  "tipoAllenamento": zod.union([zod.literal('NESSUNO'),zod.literal('MMA'),zod.literal('MUAY THAI'),zod.literal('BJJ'),zod.literal('CALISTHENICS'),zod.literal('CORSA'),zod.literal('SPARRING'),zod.literal('MISTO'),zod.literal(null)]).nullish(),
+  "durata": zod.number().min(getLatestEntriesResponseDurataMin).nullish(),
+  "intensita": zod.number().min(1).max(getLatestEntriesResponseIntensitaMax).nullish(),
+  "tipoGiorno": zod.union([zod.literal('A'),zod.literal('B'),zod.literal('RECUPERO'),zod.literal(null)]).nullish(),
+  "routineCompletata": zod.boolean().nullish(),
+  "routineFlessioni": zod.string().nullish(),
+  "routineTrazioni": zod.string().nullish(),
+  "routineSquat": zod.string().nullish(),
+  "plank": zod.number().min(getLatestEntriesResponsePlankMin).nullish(),
+  "collo": zod.boolean().nullish(),
+  "mobilita": zod.boolean().nullish(),
+  "sollevamentoGamba": zod.union([zod.literal('ANCA'),zod.literal('PETTO'),zod.literal('TESTA'),zod.literal('OLTRE'),zod.literal(null)]).nullish(),
+  "grapplingVuoto": zod.boolean().nullish(),
+  "energia": zod.number().min(1).max(getLatestEntriesResponseEnergiaMax).nullish(),
+  "noteAllenamento": zod.string().nullish(),
   "sonno": zod.number().nullish().describe('Hours of sleep'),
   "flessioni": zod.number().nullish(),
   "addominali": zod.number().nullish(),
@@ -191,6 +311,18 @@ export const UpdateEntryParams = zod.object({
   "numero": zod.coerce.number()
 })
 
+export const updateEntryBodyPastiMax = 6;
+
+export const updateEntryBodyAcquaMin = 0;
+
+export const updateEntryBodyDurataMin = 0;
+
+export const updateEntryBodyIntensitaMax = 5;
+
+export const updateEntryBodyPlankMin = 0;
+
+export const updateEntryBodyEnergiaMax = 5;
+
 export const updateEntryBodySintesiMax = 180;
 
 export const updateEntryBodyCardTitoloMax = 60;
@@ -204,6 +336,24 @@ export const updateEntryBodyCardOverlayMax = 90;
 
 export const UpdateEntryBody = zod.object({
   "data": zod.string().optional(),
+  "pasti": zod.number().min(1).max(updateEntryBodyPastiMax).nullish(),
+  "alcol": zod.boolean().nullish(),
+  "acqua": zod.number().min(updateEntryBodyAcquaMin).nullish(),
+  "tipoAllenamento": zod.union([zod.literal('NESSUNO'),zod.literal('MMA'),zod.literal('MUAY THAI'),zod.literal('BJJ'),zod.literal('CALISTHENICS'),zod.literal('CORSA'),zod.literal('SPARRING'),zod.literal('MISTO'),zod.literal(null)]).nullish(),
+  "durata": zod.number().min(updateEntryBodyDurataMin).nullish(),
+  "intensita": zod.number().min(1).max(updateEntryBodyIntensitaMax).nullish(),
+  "tipoGiorno": zod.union([zod.literal('A'),zod.literal('B'),zod.literal('RECUPERO'),zod.literal(null)]).nullish(),
+  "routineCompletata": zod.boolean().nullish(),
+  "routineFlessioni": zod.string().nullish(),
+  "routineTrazioni": zod.string().nullish(),
+  "routineSquat": zod.string().nullish(),
+  "plank": zod.number().min(updateEntryBodyPlankMin).nullish(),
+  "collo": zod.boolean().nullish(),
+  "mobilita": zod.boolean().nullish(),
+  "sollevamentoGamba": zod.union([zod.literal('ANCA'),zod.literal('PETTO'),zod.literal('TESTA'),zod.literal('OLTRE'),zod.literal(null)]).nullish(),
+  "grapplingVuoto": zod.boolean().nullish(),
+  "energia": zod.number().min(1).max(updateEntryBodyEnergiaMax).nullish(),
+  "noteAllenamento": zod.string().nullish(),
   "kcal": zod.number().nullish(),
   "sonno": zod.number().nullish(),
   "flessioni": zod.number().nullish(),
@@ -224,6 +374,18 @@ export const UpdateEntryBody = zod.object({
   "cardMostraParole": zod.boolean().nullish()
 })
 
+export const updateEntryResponsePastiMax = 6;
+
+export const updateEntryResponseAcquaMin = 0;
+
+export const updateEntryResponseDurataMin = 0;
+
+export const updateEntryResponseIntensitaMax = 5;
+
+export const updateEntryResponsePlankMin = 0;
+
+export const updateEntryResponseEnergiaMax = 5;
+
 export const updateEntryResponseSintesiMax = 180;
 
 export const updateEntryResponseCardTitoloMax = 60;
@@ -240,6 +402,24 @@ export const UpdateEntryResponse = zod.object({
   "numero": zod.number().describe('Day number (1-180)'),
   "data": zod.string().describe('ISO date string (YYYY-MM-DD)'),
   "kcal": zod.number().nullish(),
+  "pasti": zod.number().min(1).max(updateEntryResponsePastiMax).nullish(),
+  "alcol": zod.boolean().nullish(),
+  "acqua": zod.number().min(updateEntryResponseAcquaMin).nullish(),
+  "tipoAllenamento": zod.union([zod.literal('NESSUNO'),zod.literal('MMA'),zod.literal('MUAY THAI'),zod.literal('BJJ'),zod.literal('CALISTHENICS'),zod.literal('CORSA'),zod.literal('SPARRING'),zod.literal('MISTO'),zod.literal(null)]).nullish(),
+  "durata": zod.number().min(updateEntryResponseDurataMin).nullish(),
+  "intensita": zod.number().min(1).max(updateEntryResponseIntensitaMax).nullish(),
+  "tipoGiorno": zod.union([zod.literal('A'),zod.literal('B'),zod.literal('RECUPERO'),zod.literal(null)]).nullish(),
+  "routineCompletata": zod.boolean().nullish(),
+  "routineFlessioni": zod.string().nullish(),
+  "routineTrazioni": zod.string().nullish(),
+  "routineSquat": zod.string().nullish(),
+  "plank": zod.number().min(updateEntryResponsePlankMin).nullish(),
+  "collo": zod.boolean().nullish(),
+  "mobilita": zod.boolean().nullish(),
+  "sollevamentoGamba": zod.union([zod.literal('ANCA'),zod.literal('PETTO'),zod.literal('TESTA'),zod.literal('OLTRE'),zod.literal(null)]).nullish(),
+  "grapplingVuoto": zod.boolean().nullish(),
+  "energia": zod.number().min(1).max(updateEntryResponseEnergiaMax).nullish(),
+  "noteAllenamento": zod.string().nullish(),
   "sonno": zod.number().nullish().describe('Hours of sleep'),
   "flessioni": zod.number().nullish(),
   "addominali": zod.number().nullish(),
