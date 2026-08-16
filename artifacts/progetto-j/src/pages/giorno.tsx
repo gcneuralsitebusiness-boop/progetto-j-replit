@@ -33,6 +33,7 @@ function hasNutritionData(entry: GiornoEntry): boolean {
   return entry.kcal != null
     || entry.pasti != null
     || entry.acqua != null
+    || entry.acquaAllenamento != null
     || entry.energia != null
     || entry.alcol === true;
 }
@@ -138,6 +139,7 @@ function TrackingRows({ entry, routineStreak }: { entry: GiornoEntry; routineStr
             {entry.kcal != null && cell(formatNumber(entry.kcal), "KCAL")}
             {entry.pasti != null && cell(String(entry.pasti), "PASTI")}
             {entry.acqua != null && cell(`${formatNumber(entry.acqua, 1)}L`, "ACQUA")}
+            {entry.acquaAllenamento != null && cell(`${formatNumber(entry.acquaAllenamento, 2)}L`, "ACQUA ALLENAMENTO")}
             {entry.energia != null && cell(`${entry.energia}/5`, "ENERGIA")}
             {entry.alcol === true && cell("SÌ", "ALCOL", "primary")}
           </div>

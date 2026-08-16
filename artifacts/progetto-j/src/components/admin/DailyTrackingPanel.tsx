@@ -7,6 +7,7 @@ export type TrackingKey =
   | "kcal"
   | "pasti"
   | "acqua"
+  | "acquaAllenamento"
   | "alcol"
   | "tipoAllenamento"
   | "durata"
@@ -34,6 +35,7 @@ const ENERGY = [
   { value: 4, icon: "💪" },
   { value: 5, icon: "🔥" },
 ] as const;
+const WATER_PRESETS = [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5] as const;
 
 function initialStatus(entry?: Entry): QuickStatus | null {
   if (!entry) return null;
@@ -156,6 +158,13 @@ export function DailyTrackingPanel({
   const intensity = typeof formData.intensita === "number" ? formData.intensita : 3;
   const kcal = typeof formData.kcal === "number" ? formData.kcal : null;
   const acqua = typeof formData.acqua === "number" ? formData.acqua : null;
+  const acquaAllenamento = typeof formData.acquaAllenamento === "number" ? formData.acquaAllenamento : null;
+  const waterLiters = acqua;
+
+  const setHydrationFromLiters = (liters: number) => {
+    const normalized = Math.max(0, Math.min(20, Number(liters.toFixed(2))));
+    setField("acqua", normalized);
+  };
 
   const applyWeeklyMax = () => {
     setField("flessioni", weeklyFlessioni);
@@ -277,43 +286,70 @@ export function DailyTrackingPanel({
 
       <div className="border-t border-[#262626] py-4">
         <div className="mb-3 font-serif text-[11px] tracking-[0.2em] text-[#6E6A65]">NUTRIZIONE</div>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1.2fr_1fr_auto] sm:items-center">
-          <div className="flex items-center gap-2">
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1.3fr_1fr_auto] lg:items-start">
+          <div>
             <span className="w-12 font-serif text-[11px] text-[#6E6A65]">KCAL</span>
-            {[1500, 2000, 2500, 3000].map((value) => (
-              <PresetButton
-                key={value}
-                label={String(value)}
-                value={value}
-                active={kcal === value}
-                onSelect={() => setField("kcal", value)}
-                onLongPress={() => longPressPrompt("Kcal", kcal ?? value, (next) => setField("kcal", next))}
-              />
-            ))}
+            <div className="mt-2 flex flex-wrap gap-2">
+              {[1500, 1800, 2000, 2100, 2200, 2300, 2400, 2500, 2700, 3000].map((value) => (
+                <PresetButton
+                  key={value}
+                  label={String(value)}
+                  value={value}
+                  active={kcal === value}
+                  onSelect={() => setField("kcal", value)}
+                  onLongPress={() => longPressPrompt("Kcal", kcal ?? value, (next) => setField("kcal", next))}
+                />
+              ))}
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="w-12 font-serif text-[11px] text-[#6E6A65]">ACQUA</span>
-            {[1, 2, 3].map((value) => (
-              <PresetButton
-                key={value}
-                label={`${value}L`}
-                value={value}
-                active={acqua === value}
-                onSelect={() => setField("acqua", value)}
-                onLongPress={() => longPressPrompt("Acqua in litri", acqua ?? value, (next) => setField("acqua", next))}
-              />
-            ))}
+          <div className="border-l-2 border-[#00A8A8] pl-3">
+            <div className="flex items-baseline justify-between gap-3">
+              <span className="font-serif text-[11px] tracking-[0.18em] text-[#6E6A65]">ACQUA</span>
+              <span className="font-mono text-[15px] text-[#E8E4DE]">
+                {waterLiters == null ? "—" : `${waterLiters.toLocaleString("it-IT", { maximumFractionDigits: 2 })} L`}
+              </span>
+            </div>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {WATER_PRESETS.map((value) => (
+                <PresetButton
+                  key={value}
+                  label={`${value}L`}
+                  value={value}
+                  active={waterLiters === value}
+                  onSelect={() => setHydrationFromLiters(value)}
+                  onLongPress={() => longPressPrompt("Acqua in litri", waterLiters ?? value, setHydrationFromLiters)}
+                />
+              ))}
+            </div>
+            <p className="mt-3 font-sans text-[10px] leading-relaxed text-[#6E6A65]">Preset da 1 a 5 litri; tieni premuto un valore per inserire una quantità personalizzata.</p>
           </div>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={Boolean(formData.alcol)}
-            onClick={() => setField("alcol", formData.alcol ? null : true)}
-            className={`flex min-h-11 items-center justify-center gap-2 border px-4 font-serif text-[11px] tracking-wider ${formData.alcol ? "border-[#B81D1D] text-[#B81D1D]" : "border-[#333] text-[#6E6A65]"}`}
-          >
-            🥃 <span>ALCOL</span>
-            <span className={`h-3 w-6 border ${formData.alcol ? "border-[#00FF41] bg-[#00FF41]" : "border-[#333] bg-[#333]"}`} />
-          </button>
+          <div className="flex flex-col gap-3">
+            <div>
+              <div className="mb-2 font-serif text-[11px] tracking-[0.18em] text-[#6E6A65]">DURANTE ALLENAMENTO</div>
+              <div className="flex flex-wrap gap-2">
+                {[0.25, 0.5, 0.75, 1].map((value) => (
+                  <PresetButton
+                    key={value}
+                    label={`${value}L`}
+                    value={value}
+                    active={acquaAllenamento === value}
+                    onSelect={() => setField("acquaAllenamento", value)}
+                    onLongPress={() => longPressPrompt("Acqua durante allenamento", acquaAllenamento ?? value, (next) => setField("acquaAllenamento", next))}
+                  />
+                ))}
+              </div>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={Boolean(formData.alcol)}
+              onClick={() => setField("alcol", formData.alcol ? null : true)}
+              className={`flex min-h-11 items-center justify-center gap-2 border px-4 font-serif text-[11px] tracking-wider ${formData.alcol ? "border-[#B81D1D] text-[#B81D1D]" : "border-[#333] text-[#6E6A65]"}`}
+            >
+              🥃 <span>ALCOL</span>
+              <span className={`h-3 w-6 border ${formData.alcol ? "border-[#00FF41] bg-[#00FF41]" : "border-[#333] bg-[#333]"}`} />
+            </button>
+          </div>
         </div>
       </div>
 

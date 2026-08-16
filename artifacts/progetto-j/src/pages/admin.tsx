@@ -18,6 +18,7 @@ import { IscrittiTab } from "@/components/admin/IscrittiTab";
 import { AnalyticsTab } from "@/components/admin/AnalyticsTab";
 import { PlannerTab } from "@/components/admin/PlannerTab";
 import { DailyTrackingPanel, type TrackingKey } from "@/components/admin/DailyTrackingPanel";
+import { DiaryHtmlEditor } from "@/components/admin/DiaryHtmlEditor";
 import type { Entry, EntryInput, PageItem } from "@workspace/api-client-react";
 import { useUpload, getPhotoUrl } from "@workspace/object-storage-web";
 import { format } from "date-fns";
@@ -32,6 +33,7 @@ const CLIENT_RANGES: Record<string, [number, number, string]> = {
   kcal:       [0,   15000,  "0–15 000"],
   pasti:      [1,   6,      "1–6"],
   acqua:      [0,   20,     "0–20 litri"],
+  acquaAllenamento: [0, 10, "0–10 litri"],
   durata:     [0,   1440,   "0–1440"],
   intensita:  [1,   5,      "1–5"],
   plank:      [0,   3600,   "0–3600 secondi"],
@@ -132,6 +134,7 @@ function EntryForm({ initialData, previousEntry, onSuccess, onCancel }: { initia
     pasti: initialData?.pasti ?? undefined,
     alcol: initialData?.alcol ?? undefined,
     acqua: initialData?.acqua ?? undefined,
+    acquaAllenamento: initialData?.acquaAllenamento ?? undefined,
     tipoAllenamento: initialData?.tipoAllenamento ?? undefined,
     durata: initialData?.durata ?? undefined,
     intensita: initialData?.intensita ?? undefined,
@@ -189,6 +192,7 @@ function EntryForm({ initialData, previousEntry, onSuccess, onCancel }: { initia
       pasti: previousEntry.pasti ?? undefined,
       alcol: previousEntry.alcol ?? undefined,
       acqua: previousEntry.acqua ?? undefined,
+      acquaAllenamento: previousEntry.acquaAllenamento ?? undefined,
       tipoAllenamento: previousEntry.tipoAllenamento ?? undefined,
       durata: previousEntry.durata ?? undefined,
       intensita: previousEntry.intensita ?? undefined,
@@ -218,7 +222,7 @@ function EntryForm({ initialData, previousEntry, onSuccess, onCancel }: { initia
       sintesi: previousEntry.sintesi ?? "",
     }));
     markManyTouched([
-      "kcal", "pasti", "acqua", "alcol", "tipoAllenamento", "durata", "intensita",
+      "kcal", "pasti", "acqua", "acquaAllenamento", "alcol", "tipoAllenamento", "durata", "intensita",
       "routineCompletata", "routineForza", "routineFlessioni", "routineTrazioni",
       "routineSquat", "plank", "collo", "mobilita", "sollevamentoGamba",
       "grapplingVuoto", "energia", "flessioni",
@@ -268,7 +272,7 @@ function EntryForm({ initialData, previousEntry, onSuccess, onCancel }: { initia
     if (Object.keys(errors).length > 0) return;
 
     const optionalKeys: (keyof EntryInput)[] = [
-      "kcal", "pasti", "alcol", "acqua", "tipoAllenamento", "durata", "intensita",
+      "kcal", "pasti", "alcol", "acqua", "acquaAllenamento", "tipoAllenamento", "durata", "intensita",
       "tipoGiorno", "routineCompletata", "routineForza", "routineFlessioni",
       "routineTrazioni", "routineSquat", "plank", "collo", "mobilita",
       "sollevamentoGamba", "grapplingVuoto", "energia", "noteAllenamento",
@@ -318,7 +322,7 @@ function EntryForm({ initialData, previousEntry, onSuccess, onCancel }: { initia
           setFormData({
             numero: Number(formData.numero) + 1,
             data: new Date().toISOString().split("T")[0],
-            kcal: undefined, pasti: undefined, alcol: undefined, acqua: undefined,
+            kcal: undefined, pasti: undefined, alcol: undefined, acqua: undefined, acquaAllenamento: undefined,
             tipoAllenamento: undefined, durata: undefined, intensita: undefined,
             tipoGiorno: undefined, routineCompletata: undefined, routineForza: undefined, routineFlessioni: "",
             routineTrazioni: "", routineSquat: "", plank: undefined, collo: undefined,
@@ -488,14 +492,7 @@ function EntryForm({ initialData, previousEntry, onSuccess, onCancel }: { initia
 
       <div className="flex flex-col gap-2">
         <label className="text-[11px] uppercase tracking-widest text-muted-foreground">Testo</label>
-        <textarea
-          rows={18}
-          spellCheck={false}
-          value={formData.testo ?? ""}
-          onChange={(e) => setFormData({ ...formData, testo: e.target.value })}
-          placeholder="<h2>Titolo della sezione</h2>&#10;<p>Testo del diario...</p>"
-          className="min-h-[280px] bg-[#141414] border border-border p-3 text-white focus:outline-none focus:border-primary resize-y font-mono text-[13px] leading-relaxed"
-        />
+        <DiaryHtmlEditor value={formData.testo ?? ""} onChange={(testo) => setFormData((current) => ({ ...current, testo }))} />
       </div>
 
       <div className="flex flex-col gap-2">

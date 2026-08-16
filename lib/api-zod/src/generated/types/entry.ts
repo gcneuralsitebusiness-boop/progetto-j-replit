@@ -13,7 +13,10 @@ export interface Entry {
   id: number;
   /** Day number (1-180) */
   numero: number;
-  /** ISO date string (YYYY-MM-DD) */
+  /**
+     * ISO date string (YYYY-MM-DD)
+     * @pattern ^\d{4}-\d{2}-\d{2}$
+     */
   data: string;
   /** @nullable */
   kcal?: number | null;
@@ -27,9 +30,17 @@ export interface Entry {
   alcol?: boolean | null;
   /**
      * @minimum 0
+     * @maximum 20
      * @nullable
      */
   acqua?: number | null;
+  /**
+     * Liters of water consumed around training
+     * @minimum 0
+     * @maximum 10
+     * @nullable
+     */
+  acquaAllenamento?: number | null;
   /** @nullable */
   tipoAllenamento?: EntryTipoAllenamento;
   /**

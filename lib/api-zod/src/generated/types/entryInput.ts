@@ -11,6 +11,7 @@ import type { EntryInputTipoGiorno } from './entryInputTipoGiorno';
 
 export interface EntryInput {
   numero: number;
+  /** @pattern ^\d{4}-\d{2}-\d{2}$ */
   data: string;
   /** @nullable */
   kcal?: number | null;
@@ -24,9 +25,16 @@ export interface EntryInput {
   alcol?: boolean | null;
   /**
      * @minimum 0
+     * @maximum 20
      * @nullable
      */
   acqua?: number | null;
+  /**
+     * @minimum 0
+     * @maximum 10
+     * @nullable
+     */
+  acquaAllenamento?: number | null;
   /** @nullable */
   tipoAllenamento?: EntryInputTipoAllenamento;
   /**

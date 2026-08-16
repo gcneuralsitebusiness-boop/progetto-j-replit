@@ -10,6 +10,7 @@ export const giorniTable = pgTable("giorni", {
   pasti: integer("pasti"),
   alcol: boolean("alcol"),
   acqua: real("acqua"),
+  acquaAllenamento: real("acqua_allenamento"),
   tipoAllenamento: text("tipo_allenamento"),
   durata: real("durata"),
   intensita: integer("intensita"),

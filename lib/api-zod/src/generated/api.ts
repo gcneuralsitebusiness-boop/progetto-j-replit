@@ -21,9 +21,14 @@ export const HealthCheckResponse = zod.object({
  * Returns all entries sorted by date descending
  * @summary List all journal entries
  */
+export const listEntriesResponseDataRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
 export const listEntriesResponsePastiMax = 6;
 
 export const listEntriesResponseAcquaMin = 0;
+export const listEntriesResponseAcquaMax = 20;
+
+export const listEntriesResponseAcquaAllenamentoMin = 0;
+export const listEntriesResponseAcquaAllenamentoMax = 10;
 
 export const listEntriesResponseDurataMin = 0;
 
@@ -47,11 +52,12 @@ export const listEntriesResponseCardOverlayMax = 90;
 export const ListEntriesResponseItem = zod.object({
   "id": zod.number(),
   "numero": zod.number().describe('Day number (1-180)'),
-  "data": zod.string().describe('ISO date string (YYYY-MM-DD)'),
+  "data": zod.string().regex(listEntriesResponseDataRegExp).describe('ISO date string (YYYY-MM-DD)'),
   "kcal": zod.number().nullish(),
   "pasti": zod.number().min(1).max(listEntriesResponsePastiMax).nullish(),
   "alcol": zod.boolean().nullish(),
-  "acqua": zod.number().min(listEntriesResponseAcquaMin).nullish(),
+  "acqua": zod.number().min(listEntriesResponseAcquaMin).max(listEntriesResponseAcquaMax).nullish(),
+  "acquaAllenamento": zod.number().min(listEntriesResponseAcquaAllenamentoMin).max(listEntriesResponseAcquaAllenamentoMax).nullish().describe('Liters of water consumed around training'),
   "tipoAllenamento": zod.union([zod.literal('NESSUNO'),zod.literal('MMA'),zod.literal('MUAY THAI'),zod.literal('BJJ'),zod.literal('CALISTHENICS'),zod.literal('CORSA'),zod.literal('SPARRING'),zod.literal('MISTO'),zod.literal(null)]).nullish(),
   "durata": zod.number().min(listEntriesResponseDurataMin).nullish(),
   "intensita": zod.number().min(1).max(listEntriesResponseIntensitaMax).nullish(),
@@ -93,9 +99,14 @@ export const ListEntriesResponse = zod.array(ListEntriesResponseItem)
 /**
  * @summary Create a new journal entry (admin only)
  */
+export const createEntryBodyDataRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
 export const createEntryBodyPastiMax = 6;
 
 export const createEntryBodyAcquaMin = 0;
+export const createEntryBodyAcquaMax = 20;
+
+export const createEntryBodyAcquaAllenamentoMin = 0;
+export const createEntryBodyAcquaAllenamentoMax = 10;
 
 export const createEntryBodyDurataMin = 0;
 
@@ -111,11 +122,12 @@ export const createEntryBodySintesiMax = 180;
 
 export const CreateEntryBody = zod.object({
   "numero": zod.number(),
-  "data": zod.string(),
+  "data": zod.string().regex(createEntryBodyDataRegExp),
   "kcal": zod.number().nullish(),
   "pasti": zod.number().min(1).max(createEntryBodyPastiMax).nullish(),
   "alcol": zod.boolean().nullish(),
-  "acqua": zod.number().min(createEntryBodyAcquaMin).nullish(),
+  "acqua": zod.number().min(createEntryBodyAcquaMin).max(createEntryBodyAcquaMax).nullish(),
+  "acquaAllenamento": zod.number().min(createEntryBodyAcquaAllenamentoMin).max(createEntryBodyAcquaAllenamentoMax).nullish(),
   "tipoAllenamento": zod.union([zod.literal('NESSUNO'),zod.literal('MMA'),zod.literal('MUAY THAI'),zod.literal('BJJ'),zod.literal('CALISTHENICS'),zod.literal('CORSA'),zod.literal('SPARRING'),zod.literal('MISTO'),zod.literal(null)]).nullish(),
   "durata": zod.number().min(createEntryBodyDurataMin).nullish(),
   "intensita": zod.number().min(1).max(createEntryBodyIntensitaMax).nullish(),
@@ -146,9 +158,14 @@ export const CreateEntryBody = zod.object({
   "foto": zod.string().nullish()
 })
 
+export const createEntryResponseDataRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
 export const createEntryResponsePastiMax = 6;
 
 export const createEntryResponseAcquaMin = 0;
+export const createEntryResponseAcquaMax = 20;
+
+export const createEntryResponseAcquaAllenamentoMin = 0;
+export const createEntryResponseAcquaAllenamentoMax = 10;
 
 export const createEntryResponseDurataMin = 0;
 
@@ -172,11 +189,12 @@ export const createEntryResponseCardOverlayMax = 90;
 export const CreateEntryResponse = zod.object({
   "id": zod.number(),
   "numero": zod.number().describe('Day number (1-180)'),
-  "data": zod.string().describe('ISO date string (YYYY-MM-DD)'),
+  "data": zod.string().regex(createEntryResponseDataRegExp).describe('ISO date string (YYYY-MM-DD)'),
   "kcal": zod.number().nullish(),
   "pasti": zod.number().min(1).max(createEntryResponsePastiMax).nullish(),
   "alcol": zod.boolean().nullish(),
-  "acqua": zod.number().min(createEntryResponseAcquaMin).nullish(),
+  "acqua": zod.number().min(createEntryResponseAcquaMin).max(createEntryResponseAcquaMax).nullish(),
+  "acquaAllenamento": zod.number().min(createEntryResponseAcquaAllenamentoMin).max(createEntryResponseAcquaAllenamentoMax).nullish().describe('Liters of water consumed around training'),
   "tipoAllenamento": zod.union([zod.literal('NESSUNO'),zod.literal('MMA'),zod.literal('MUAY THAI'),zod.literal('BJJ'),zod.literal('CALISTHENICS'),zod.literal('CORSA'),zod.literal('SPARRING'),zod.literal('MISTO'),zod.literal(null)]).nullish(),
   "durata": zod.number().min(createEntryResponseDurataMin).nullish(),
   "intensita": zod.number().min(1).max(createEntryResponseIntensitaMax).nullish(),
@@ -218,9 +236,14 @@ export const CreateEntryResponse = zod.object({
  * Returns the 3 most recent entries for the home page
  * @summary Get 3 most recent journal entries
  */
+export const getLatestEntriesResponseDataRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
 export const getLatestEntriesResponsePastiMax = 6;
 
 export const getLatestEntriesResponseAcquaMin = 0;
+export const getLatestEntriesResponseAcquaMax = 20;
+
+export const getLatestEntriesResponseAcquaAllenamentoMin = 0;
+export const getLatestEntriesResponseAcquaAllenamentoMax = 10;
 
 export const getLatestEntriesResponseDurataMin = 0;
 
@@ -244,11 +267,12 @@ export const getLatestEntriesResponseCardOverlayMax = 90;
 export const GetLatestEntriesResponseItem = zod.object({
   "id": zod.number(),
   "numero": zod.number().describe('Day number (1-180)'),
-  "data": zod.string().describe('ISO date string (YYYY-MM-DD)'),
+  "data": zod.string().regex(getLatestEntriesResponseDataRegExp).describe('ISO date string (YYYY-MM-DD)'),
   "kcal": zod.number().nullish(),
   "pasti": zod.number().min(1).max(getLatestEntriesResponsePastiMax).nullish(),
   "alcol": zod.boolean().nullish(),
-  "acqua": zod.number().min(getLatestEntriesResponseAcquaMin).nullish(),
+  "acqua": zod.number().min(getLatestEntriesResponseAcquaMin).max(getLatestEntriesResponseAcquaMax).nullish(),
+  "acquaAllenamento": zod.number().min(getLatestEntriesResponseAcquaAllenamentoMin).max(getLatestEntriesResponseAcquaAllenamentoMax).nullish().describe('Liters of water consumed around training'),
   "tipoAllenamento": zod.union([zod.literal('NESSUNO'),zod.literal('MMA'),zod.literal('MUAY THAI'),zod.literal('BJJ'),zod.literal('CALISTHENICS'),zod.literal('CORSA'),zod.literal('SPARRING'),zod.literal('MISTO'),zod.literal(null)]).nullish(),
   "durata": zod.number().min(getLatestEntriesResponseDurataMin).nullish(),
   "intensita": zod.number().min(1).max(getLatestEntriesResponseIntensitaMax).nullish(),
@@ -315,9 +339,14 @@ export const UpdateEntryParams = zod.object({
   "numero": zod.coerce.number()
 })
 
+export const updateEntryBodyDataRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
 export const updateEntryBodyPastiMax = 6;
 
 export const updateEntryBodyAcquaMin = 0;
+export const updateEntryBodyAcquaMax = 20;
+
+export const updateEntryBodyAcquaAllenamentoMin = 0;
+export const updateEntryBodyAcquaAllenamentoMax = 10;
 
 export const updateEntryBodyDurataMin = 0;
 
@@ -339,10 +368,11 @@ export const updateEntryBodyCardOverlayMax = 90;
 
 
 export const UpdateEntryBody = zod.object({
-  "data": zod.string().optional(),
+  "data": zod.string().regex(updateEntryBodyDataRegExp).optional(),
   "pasti": zod.number().min(1).max(updateEntryBodyPastiMax).nullish(),
   "alcol": zod.boolean().nullish(),
-  "acqua": zod.number().min(updateEntryBodyAcquaMin).nullish(),
+  "acqua": zod.number().min(updateEntryBodyAcquaMin).max(updateEntryBodyAcquaMax).nullish(),
+  "acquaAllenamento": zod.number().min(updateEntryBodyAcquaAllenamentoMin).max(updateEntryBodyAcquaAllenamentoMax).nullish(),
   "tipoAllenamento": zod.union([zod.literal('NESSUNO'),zod.literal('MMA'),zod.literal('MUAY THAI'),zod.literal('BJJ'),zod.literal('CALISTHENICS'),zod.literal('CORSA'),zod.literal('SPARRING'),zod.literal('MISTO'),zod.literal(null)]).nullish(),
   "durata": zod.number().min(updateEntryBodyDurataMin).nullish(),
   "intensita": zod.number().min(1).max(updateEntryBodyIntensitaMax).nullish(),
@@ -379,9 +409,14 @@ export const UpdateEntryBody = zod.object({
   "cardMostraParole": zod.boolean().nullish()
 })
 
+export const updateEntryResponseDataRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
 export const updateEntryResponsePastiMax = 6;
 
 export const updateEntryResponseAcquaMin = 0;
+export const updateEntryResponseAcquaMax = 20;
+
+export const updateEntryResponseAcquaAllenamentoMin = 0;
+export const updateEntryResponseAcquaAllenamentoMax = 10;
 
 export const updateEntryResponseDurataMin = 0;
 
@@ -405,11 +440,12 @@ export const updateEntryResponseCardOverlayMax = 90;
 export const UpdateEntryResponse = zod.object({
   "id": zod.number(),
   "numero": zod.number().describe('Day number (1-180)'),
-  "data": zod.string().describe('ISO date string (YYYY-MM-DD)'),
+  "data": zod.string().regex(updateEntryResponseDataRegExp).describe('ISO date string (YYYY-MM-DD)'),
   "kcal": zod.number().nullish(),
   "pasti": zod.number().min(1).max(updateEntryResponsePastiMax).nullish(),
   "alcol": zod.boolean().nullish(),
-  "acqua": zod.number().min(updateEntryResponseAcquaMin).nullish(),
+  "acqua": zod.number().min(updateEntryResponseAcquaMin).max(updateEntryResponseAcquaMax).nullish(),
+  "acquaAllenamento": zod.number().min(updateEntryResponseAcquaAllenamentoMin).max(updateEntryResponseAcquaAllenamentoMax).nullish().describe('Liters of water consumed around training'),
   "tipoAllenamento": zod.union([zod.literal('NESSUNO'),zod.literal('MMA'),zod.literal('MUAY THAI'),zod.literal('BJJ'),zod.literal('CALISTHENICS'),zod.literal('CORSA'),zod.literal('SPARRING'),zod.literal('MISTO'),zod.literal(null)]).nullish(),
   "durata": zod.number().min(updateEntryResponseDurataMin).nullish(),
   "intensita": zod.number().min(1).max(updateEntryResponseIntensitaMax).nullish(),

@@ -10,6 +10,7 @@ import type { EntryUpdateTipoAllenamento } from './entryUpdateTipoAllenamento';
 import type { EntryUpdateTipoGiorno } from './entryUpdateTipoGiorno';
 
 export interface EntryUpdate {
+  /** @pattern ^\d{4}-\d{2}-\d{2}$ */
   data?: string;
   /**
      * @minimum 1
@@ -21,9 +22,16 @@ export interface EntryUpdate {
   alcol?: boolean | null;
   /**
      * @minimum 0
+     * @maximum 20
      * @nullable
      */
   acqua?: number | null;
+  /**
+     * @minimum 0
+     * @maximum 10
+     * @nullable
+     */
+  acquaAllenamento?: number | null;
   /** @nullable */
   tipoAllenamento?: EntryUpdateTipoAllenamento;
   /**
