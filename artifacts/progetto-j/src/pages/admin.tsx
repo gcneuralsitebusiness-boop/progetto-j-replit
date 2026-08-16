@@ -293,7 +293,7 @@ function EntryForm({ initialData, previousEntry, onSuccess, onCancel }: { initia
       const value = formData[key];
       const previousValue = initialData?.[key as keyof Entry];
       const shouldSend = initialData ? !sameValue(value, previousValue) : hasValue(value);
-      if (shouldSend) (payload as Record<string, unknown>)[key] = normalizeValue(value);
+      if (shouldSend) (payload as unknown as Record<string, unknown>)[key] = normalizeValue(value);
     }
 
     const invalidate = () => {
@@ -1053,21 +1053,52 @@ function PagineTab() {
 
 type Tab = "oggi" | "diario" | "sito" | "pagine" | "bulk" | "social" | "sponsor" | "articoli" | "coaching" | "contatti" | "iscritti" | "analytics" | "planner";
 
-const TABS: { id: Tab; label: string }[] = [
-  { id: "oggi", label: "Oggi" },
-  { id: "diario", label: "Diario" },
-  { id: "sito", label: "Sito" },
-  { id: "pagine", label: "Pagine" },
-  { id: "articoli", label: "Articoli" },
-  { id: "social", label: "Social" },
-  { id: "sponsor", label: "Sponsor" },
-  { id: "coaching", label: "Coaching" },
-  { id: "contatti", label: "Contatti" },
-  { id: "iscritti", label: "Iscritti" },
-  { id: "bulk", label: "Bulk" },
-  { id: "analytics", label: "Analytics" },
-  { id: "planner", label: "Planner" },
+type TabGroup = { id: string; label: string; tabs: { id: Tab; label: string }[] };
+
+/** The 13 tabs grouped into 4 areas so the mobile nav stays manageable. */
+const TAB_GROUPS: TabGroup[] = [
+  {
+    id: "giornata",
+    label: "Oggi",
+    tabs: [
+      { id: "oggi", label: "Oggi" },
+      { id: "diario", label: "Diario" },
+      { id: "planner", label: "Planner" },
+    ],
+  },
+  {
+    id: "contenuti",
+    label: "Contenuti",
+    tabs: [
+      { id: "articoli", label: "Articoli" },
+      { id: "pagine", label: "Pagine" },
+      { id: "bulk", label: "Bulk" },
+    ],
+  },
+  {
+    id: "sito",
+    label: "Sito",
+    tabs: [
+      { id: "sito", label: "Sito" },
+      { id: "social", label: "Social" },
+      { id: "sponsor", label: "Sponsor" },
+      { id: "coaching", label: "Coaching" },
+    ],
+  },
+  {
+    id: "dati",
+    label: "Dati",
+    tabs: [
+      { id: "analytics", label: "Analytics" },
+      { id: "contatti", label: "Contatti" },
+      { id: "iscritti", label: "Iscritti" },
+    ],
+  },
 ];
+
+function groupOfTab(tab: Tab): string {
+  return TAB_GROUPS.find((group) => group.tabs.some((t) => t.id === tab))?.id ?? TAB_GROUPS[0].id;
+}
 
 export default function Admin() {
   const queryClient = useQueryClient();
@@ -1121,9 +1152,25 @@ export default function Admin() {
         </div>
       </div>
 
-      {/* Tabs — scrollable on mobile */}
+      {/* Two-level nav: 4 areas on top, the area's tabs below. */}
+      <div className="mb-3 grid grid-cols-4 border border-border">
+        {TAB_GROUPS.map((group) => {
+          const isActive = groupOfTab(activeTab) === group.id;
+          return (
+            <button
+              key={group.id}
+              onClick={() => setActiveTab(group.tabs[0].id)}
+              className={`min-h-12 px-2 font-serif text-[13px] sm:text-[14px] tracking-[0.1em] uppercase transition-colors ${
+                isActive ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {group.label}
+            </button>
+          );
+        })}
+      </div>
       <div className="flex gap-0 mb-12 border-b border-border overflow-x-auto no-scrollbar">
-        {TABS.map((tab) => (
+        {(TAB_GROUPS.find((group) => group.id === groupOfTab(activeTab))?.tabs ?? []).map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}

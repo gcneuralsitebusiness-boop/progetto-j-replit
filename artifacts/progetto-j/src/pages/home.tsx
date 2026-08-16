@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import { Reveal } from "@/components/Reveal";
 import { Timeline180 } from "@/components/Timeline180";
 import { DayCard } from "@/components/DayCard";
+import { DayCardSkeleton } from "@/components/DayCardSkeleton";
 import { SiteFooter } from "@/components/SiteFooter";
 import { DataErrorState } from "@/components/DataErrorState";
 import { PulseTrace } from "@/components/PulseTrace";
@@ -96,22 +97,6 @@ export default function Home() {
               <Link href="/journaling" className="btn-primary">
               {ctaTesto} <ArrowRight size={16} />
               </Link>
-
-              {currentDay > 0 && (
-                <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-2">
-                <span className="hero-data-item"><strong className="measured">GG {currentDay}</strong> / 180</span>
-                <span className="text-iron text-[10px]">·</span>
-                <span className="hero-data-item"><strong className="measured">{totalKm}</strong> km</span>
-                <span className="text-iron text-[10px]">·</span>
-                <span className="hero-data-item"><strong className="measured">{totalKcal.toLocaleString("it-IT")}</strong> kcal</span>
-                {totalIncome > 0 && (
-                  <>
-                    <span className="text-iron text-[10px]">·</span>
-                    <span className="hero-data-item"><strong className="measured">€{totalIncome.toLocaleString("it-IT")}</strong></span>
-                  </>
-                )}
-                </div>
-              )}
             </div>
           </Reveal>
         </section>
@@ -195,7 +180,7 @@ export default function Home() {
         <section className="max-w-5xl mx-auto px-5 sm:px-6 py-24 w-full">
           <Reveal>
             {allLoading ? (
-              <div className="text-center text-muted-foreground italic font-serif text-xl py-20">Caricamento...</div>
+              <div className="h-24 animate-pulse bg-iron/20" aria-hidden="true" />
             ) : (
               <Timeline180 entries={allEntries ?? []} />
             )}
@@ -220,9 +205,11 @@ export default function Home() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {latestLoading || !latestEntries ? (
-              <Reveal>
-                <p className="text-center text-muted-foreground italic font-serif text-xl py-12 md:col-span-3">Caricamento...</p>
-              </Reveal>
+              <>
+                <DayCardSkeleton />
+                <DayCardSkeleton />
+                <DayCardSkeleton />
+              </>
             ) : latestEntries.length === 0 ? (
               <Reveal>
                 <p className="text-center text-muted-foreground italic text-xl py-12 md:col-span-3 font-serif">

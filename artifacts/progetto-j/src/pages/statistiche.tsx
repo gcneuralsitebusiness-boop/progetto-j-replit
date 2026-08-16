@@ -1,7 +1,9 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "wouter";
 import {
   Area,
+  Bar,
+  BarChart,
   CartesianGrid,
   Line,
   LineChart,
@@ -60,6 +62,28 @@ function liftLevel(value: Entry["sollevamentoGamba"]): number | null {
   return value ? ({ ANCA: 1, PETTO: 2, TESTA: 3, OLTRE: 4 }[value] ?? null) : null;
 }
 
+/** Weekly training load: sum of minutes × intensity, grouped by ISO week start (Monday). */
+function buildWeeklyLoad(all: Entry[]) {
+  const weeks = new Map<string, { label: string; load: number; minuti: number }>();
+  for (const entry of all) {
+    if (entry.durata == null || !entry.tipoAllenamento || entry.tipoAllenamento === "NESSUNO") continue;
+    const date = parseISO(entry.data);
+    const day = date.getDay();
+    const monday = new Date(date);
+    monday.setDate(date.getDate() + (day === 0 ? -6 : 1 - day));
+    const key = format(monday, "yyyy-MM-dd");
+    const current = weeks.get(key) ?? { label: format(monday, "d MMM", { locale: it }), load: 0, minuti: 0 };
+    current.load += entry.durata * (entry.intensita ?? 3);
+    current.minuti += entry.durata;
+    weeks.set(key, current);
+  }
+  return [...weeks.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([, value]) => ({
+    ...value,
+    load: Math.round(value.load),
+    minuti: Math.round(value.minuti),
+  }));
+}
+
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="border-t border-iron py-10">
@@ -116,13 +140,23 @@ function CorrelationCard({
   );
 }
 
+const PERIODS = [
+  { id: 7, label: "7G" },
+  { id: 30, label: "30G" },
+  { id: 90, label: "90G" },
+  { id: 0, label: "TUTTO" },
+] as const;
+
 export default function Statistiche() {
   const { data: entries, isLoading, isError } = useListEntries();
+  const [period, setPeriod] = useState<number>(30);
 
   const data = useMemo(() => {
     const all = [...(entries ?? [])].sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime());
-    const recent30 = all.slice(-30);
-    const recent60 = all.slice(-60);
+    // One period-filtered dataset drives every period-scoped chart.
+    const recent = period === 0 ? all : all.slice(-period);
+    const recent30 = recent;
+    const recent60 = recent;
     const tracked = all.filter((entry) =>
       entry.kcal != null ||
       entry.pasti != null ||
@@ -182,8 +216,9 @@ export default function Statistiche() {
       sleepWeight: [average(goodSleep, (entry) => entry.peso), average(poorSleep, (entry) => entry.peso)] as const,
       sleepEnergy: [average(goodSleep, (entry) => entry.energia), average(poorSleep, (entry) => entry.energia)] as const,
       kcalWeight: [highKcalWeights.length ? highKcalWeights.reduce((a, b) => a + b, 0) / highKcalWeights.length : null, lowKcalWeights.length ? lowKcalWeights.reduce((a, b) => a + b, 0) / lowKcalWeights.length : null] as const,
+      weeklyLoad: buildWeeklyLoad(recent),
     };
-  }, [entries]);
+  }, [entries, period]);
 
   if (isLoading) return <div className="min-h-screen pt-24 flex items-center justify-center text-[12px] uppercase tracking-widest text-muted-foreground">Caricamento...</div>;
   if (isError) return <><DataErrorState /><SiteFooter /></>;
@@ -204,6 +239,21 @@ export default function Statistiche() {
           <span className="page-label">DATI DEL PERCORSO</span>
           <h1 className="mt-2 font-serif text-[clamp(56px,12vw,112px)] leading-[0.85] tracking-wide text-foreground bebas">STATISTICHE</h1>
           <p className="mt-5 max-w-xl font-sans text-[15px] leading-relaxed text-muted-foreground">Allenamento, routine e recupero misurati nel tempo.</p>
+          <div className="mt-6 inline-flex border border-border">
+            {PERIODS.map((option) => (
+              <button
+                key={option.id}
+                type="button"
+                onClick={() => setPeriod(option.id)}
+                className={`min-h-10 px-4 font-mono text-[11px] tracking-[0.16em] transition-colors ${
+                  period === option.id ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                }`}
+                aria-pressed={period === option.id}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         <Section title="Hero stats">
@@ -223,7 +273,7 @@ export default function Statistiche() {
           </div>
         </Section>
 
-        <Section title="Grafico corpo — ultimi 30 giorni">
+        <Section title={period === 0 ? "Grafico corpo — tutto il percorso" : `Grafico corpo — ultimi ${period} giorni`}>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={data.body} margin={{ top: 10, right: 8, left: -20, bottom: 0 }}>
@@ -259,14 +309,34 @@ export default function Statistiche() {
           </div>
         </Section>
 
-        <Section title="Correlazioni">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <CorrelationCard title="Battito × allenamento" firstLabel="media con allenamento (BPM)" firstValue={data.trainingPulse[0]} secondLabel="media senza (BPM)" secondValue={data.trainingPulse[1]} goodWhenLower ready={ready} remaining={Math.max(0, 14 - data.tracked.length)} />
-            <CorrelationCard title="Peso × sonno" firstLabel="peso medio con 6+ ore (kg)" firstValue={data.sleepWeight[0]} secondLabel="peso medio con meno di 6 (kg)" secondValue={data.sleepWeight[1]} ready={ready} remaining={Math.max(0, 14 - data.tracked.length)} />
-            <CorrelationCard title="Energia × sonno" firstLabel="energia media con 6+ ore" firstValue={data.sleepEnergy[0]} secondLabel="energia media con meno di 6" secondValue={data.sleepEnergy[1]} ready={ready} remaining={Math.max(0, 14 - data.tracked.length)} />
-            <CorrelationCard title="Kcal × peso — ritardo 3 giorni" firstLabel="peso dopo giornate sopra 2500 kcal" firstValue={data.kcalWeight[0]} secondLabel="peso dopo giornate sotto 2000 kcal" secondValue={data.kcalWeight[1]} ready={ready} remaining={Math.max(0, 14 - data.tracked.length)} />
-          </div>
-        </Section>
+        {data.weeklyLoad.length > 0 && (
+          <Section title="Carico settimanale">
+            <div className="h-[260px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={data.weeklyLoad} margin={{ top: 10, right: 8, left: -20, bottom: 0 }}>
+                  <CartesianGrid vertical={false} stroke="#333" strokeDasharray="2 5" />
+                  <XAxis dataKey="label" tick={{ fill: COLORS.gray, fontSize: 10 }} tickLine={false} axisLine={false} />
+                  <YAxis tick={{ fill: COLORS.gray, fontSize: 10 }} tickLine={false} axisLine={false} />
+                  <Tooltip contentStyle={tooltipStyle} formatter={(value: number, name: string) => [value, name === "load" ? "Carico (min × int)" : "Minuti"]} />
+                  <Bar dataKey="load" name="Carico" fill={COLORS.red} />
+                  <Bar dataKey="minuti" name="Minuti" fill={COLORS.copper} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            <p className="mt-3 text-[11px] uppercase tracking-widest text-muted-foreground">Carico = minuti × intensità, per settimana</p>
+          </Section>
+        )}
+
+        {ready && (
+          <Section title="Correlazioni">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <CorrelationCard title="Battito × allenamento" firstLabel="media con allenamento (BPM)" firstValue={data.trainingPulse[0]} secondLabel="media senza (BPM)" secondValue={data.trainingPulse[1]} goodWhenLower ready={ready} remaining={0} />
+              <CorrelationCard title="Peso × sonno" firstLabel="peso medio con 6+ ore (kg)" firstValue={data.sleepWeight[0]} secondLabel="peso medio con meno di 6 (kg)" secondValue={data.sleepWeight[1]} ready={ready} remaining={0} />
+              <CorrelationCard title="Energia × sonno" firstLabel="energia media con 6+ ore" firstValue={data.sleepEnergy[0]} secondLabel="energia media con meno di 6" secondValue={data.sleepEnergy[1]} ready={ready} remaining={0} />
+              <CorrelationCard title="Kcal × peso — ritardo 3 giorni" firstLabel="peso dopo giornate sopra 2500 kcal" firstValue={data.kcalWeight[0]} secondLabel="peso dopo giornate sotto 2000 kcal" secondValue={data.kcalWeight[1]} ready={ready} remaining={0} />
+            </div>
+          </Section>
+        )}
 
         <Section title="Calendario heatmap">
           <div className="flex gap-8 overflow-x-auto pb-3">

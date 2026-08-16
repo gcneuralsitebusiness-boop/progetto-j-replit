@@ -315,8 +315,8 @@ export function PlannerTab() {
           </div>
           <div className="mt-3 space-y-2">
             {FIXED_TASKS.map((task) => (
-              <div key={task} className={`font-sans text-[15px] ${selectedSummary.has(task) ? "text-[#00FF41]" : "text-[#6E6A65]"}`}>
-                {selectedSummary.has(task) ? "✓" : "□"} {task}
+              <div key={task} className={`font-sans text-[15px] ${selectedSummary[task] ? "text-[#00FF41]" : "text-[#6E6A65]"}`}>
+                {selectedSummary[task] ? "✓" : "□"} {task}
               </div>
             ))}
           </div>

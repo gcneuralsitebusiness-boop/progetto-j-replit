@@ -1,26 +1,27 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Route, Switch, Router as WouterRouter, useLocation } from 'wouter';
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect, useRef, type ReactNode } from 'react';
 import { Toaster } from '@/components/ui/toaster';
 import { Navbar } from '@/components/Navbar';
 import { ScrollToTop } from '@/components/ScrollToTop';
-import Home from '@/pages/home';
-import Journaling from '@/pages/journaling';
-import Statistiche from '@/pages/statistiche';
-import ChiSono from '@/pages/chi-sono';
-import Admin from '@/pages/admin';
-import NotFound from '@/pages/not-found';
-import Pagina from '@/pages/Pagina';
-import Social from '@/pages/social';
-import Sponsor from '@/pages/sponsor';
-import Articoli from '@/pages/articoli';
-import Articolo from '@/pages/articolo';
-import ArticoloPreview from '@/pages/articolo-preview';
-import Coaching from '@/pages/coaching';
-import GiornoDetail from '@/pages/giorno';
-import Card from '@/pages/card';
-import CardArticolo from '@/pages/card-articolo';
-import CardReel from '@/pages/card-reel';
+
+const Home = lazy(() => import('@/pages/home'));
+const Journaling = lazy(() => import('@/pages/journaling'));
+const Statistiche = lazy(() => import('@/pages/statistiche'));
+const ChiSono = lazy(() => import('@/pages/chi-sono'));
+const Admin = lazy(() => import('@/pages/admin'));
+const NotFound = lazy(() => import('@/pages/not-found'));
+const Pagina = lazy(() => import('@/pages/Pagina'));
+const Social = lazy(() => import('@/pages/social'));
+const Sponsor = lazy(() => import('@/pages/sponsor'));
+const Articoli = lazy(() => import('@/pages/articoli'));
+const Articolo = lazy(() => import('@/pages/articolo'));
+const ArticoloPreview = lazy(() => import('@/pages/articolo-preview'));
+const Coaching = lazy(() => import('@/pages/coaching'));
+const GiornoDetail = lazy(() => import('@/pages/giorno'));
+const Card = lazy(() => import('@/pages/card'));
+const CardArticolo = lazy(() => import('@/pages/card-articolo'));
+const CardReel = lazy(() => import('@/pages/card-reel'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -48,6 +49,35 @@ function ConditionalNavbar() {
   return <Navbar />;
 }
 
+/**
+ * A short fade on navigation. Restarts the CSS animation without keying the
+ * routed subtree, so pages are never remounted (and queries never refetched)
+ * just for the transition.
+ */
+function PageFade({ children }: { children: ReactNode }) {
+  const [location] = useLocation();
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.classList.remove('page-fade');
+    // Force a reflow so re-adding the class restarts the animation.
+    void el.offsetWidth;
+    el.classList.add('page-fade');
+  }, [location]);
+  return <div ref={ref}>{children}</div>;
+}
+
+function RouteLoading() {
+  return (
+    <div className="min-h-screen pt-24 flex items-center justify-center">
+      <span className="text-muted-foreground font-sans uppercase tracking-widest text-[12px] animate-pulse">
+        Caricamento...
+      </span>
+    </div>
+  );
+}
+
 function App() {
   useEffect(() => {
     document.documentElement.classList.add('dark');
@@ -58,27 +88,31 @@ function App() {
       <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
         <ScrollToTop />
         <ConditionalNavbar />
-        <Switch>
-          <Route path="/" component={Home} />
-          <Route path="/journaling" component={Journaling} />
-          <Route path="/statistiche" component={Statistiche} />
-          <Route path="/chi-sono" component={ChiSono} />
-          <Route path="/social" component={Social} />
-          <Route path="/sponsor" component={Sponsor} />
-          <Route path="/articoli" component={Articoli} />
-          <Route path="/a/:slug" component={Articolo} />
-          <Route path="/coaching" component={Coaching} />
-          <Route path="/giorno/:id" component={GiornoDetail} />
-          <Route path="/card/articolo/:slug/story" component={CardArticolo} />
-          <Route path="/card/articolo/:slug" component={CardArticolo} />
-          <Route path="/card/:giorno/reel-minimal" component={CardReel} />
-          <Route path="/card/:giorno/reel" component={CardReel} />
-          <Route path="/card/:giorno" component={Card} />
-          <Route path="/admin/articoli/:slug/preview" component={ArticoloPreview} />
-          <Route path="/admin" component={Admin} />
-          <Route path="/p/:slug" component={Pagina} />
-          <Route component={NotFound} />
-        </Switch>
+        <PageFade>
+          <Suspense fallback={<RouteLoading />}>
+            <Switch>
+              <Route path="/" component={Home} />
+              <Route path="/journaling" component={Journaling} />
+              <Route path="/statistiche" component={Statistiche} />
+              <Route path="/chi-sono" component={ChiSono} />
+              <Route path="/social" component={Social} />
+              <Route path="/sponsor" component={Sponsor} />
+              <Route path="/articoli" component={Articoli} />
+              <Route path="/a/:slug" component={Articolo} />
+              <Route path="/coaching" component={Coaching} />
+              <Route path="/giorno/:id" component={GiornoDetail} />
+              <Route path="/card/articolo/:slug/story" component={CardArticolo} />
+              <Route path="/card/articolo/:slug" component={CardArticolo} />
+              <Route path="/card/:giorno/reel-minimal" component={CardReel} />
+              <Route path="/card/:giorno/reel" component={CardReel} />
+              <Route path="/card/:giorno" component={Card} />
+              <Route path="/admin/articoli/:slug/preview" component={ArticoloPreview} />
+              <Route path="/admin" component={Admin} />
+              <Route path="/p/:slug" component={Pagina} />
+              <Route component={NotFound} />
+            </Switch>
+          </Suspense>
+        </PageFade>
       </WouterRouter>
       <Toaster />
     </QueryClientProvider>

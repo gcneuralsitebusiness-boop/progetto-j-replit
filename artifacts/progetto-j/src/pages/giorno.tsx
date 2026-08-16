@@ -28,6 +28,35 @@ function formatNumber(n: number, fraction = 0): string {
   return n.toLocaleString("it-IT", { minimumFractionDigits: 0, maximumFractionDigits: fraction });
 }
 
+function hasNutritionData(entry: GiornoEntry): boolean {
+  return entry.kcal != null
+    || entry.pasti != null
+    || entry.acqua != null
+    || entry.energia != null
+    || entry.alcol === true;
+}
+
+function hasTrainingData(entry: GiornoEntry): boolean {
+  return entry.tipoAllenamento != null
+    || entry.durata != null
+    || entry.intensita != null
+    || entry.tipoGiorno != null
+    || entry.routineCompletata != null
+    || entry.routineFlessioni != null
+    || entry.routineTrazioni != null
+    || entry.routineSquat != null
+    || entry.plank != null
+    || entry.routineForza != null
+    || entry.collo != null
+    || entry.mobilita != null
+    || entry.sollevamentoGamba != null
+    || entry.grapplingVuoto != null;
+}
+
+function hasTrackingData(entry: GiornoEntry): boolean {
+  return hasNutritionData(entry) || hasTrainingData(entry);
+}
+
 // ─── Data strip ───────────────────────────────────────────────────────────────
 
 interface DataStripItem {
@@ -83,41 +112,50 @@ function DataStrip({ entry }: { entry: GiornoEntry }) {
 }
 
 function TrackingRows({ entry, routineStreak }: { entry: GiornoEntry; routineStreak: number }) {
-  const hasNutrition = entry.kcal != null || entry.pasti != null || entry.acqua != null || entry.energia != null || entry.alcol === true;
-  const hasTraining = entry.tipoAllenamento != null || entry.durata != null || entry.intensita != null ||
-    entry.tipoGiorno != null || entry.routineCompletata != null || entry.routineFlessioni != null ||
-    entry.routineTrazioni != null || entry.routineSquat != null || entry.plank != null ||
-    entry.routineForza != null || entry.collo != null || entry.mobilita != null ||
-    entry.sollevamentoGamba != null || entry.grapplingVuoto != null;
+  const hasNutrition = hasNutritionData(entry);
+  const hasTraining = hasTrainingData(entry);
 
   if (!hasNutrition && !hasTraining) return null;
   const activeDay = entry.routineCompletata === true
     || Boolean(entry.tipoAllenamento && entry.tipoAllenamento !== "NESSUNO");
 
+  const cell = (value: string, label: string, tone?: "acid" | "primary") => (
+    <div key={`${label}-${value}`} className="flex flex-col">
+      <span className={`measured font-mono text-[16px] leading-tight ${tone === "acid" ? "text-[hsl(var(--acid))]" : tone === "primary" ? "text-primary" : "text-foreground"}`}>
+        {value}
+      </span>
+      <span className="mt-0.5 text-[9px] font-sans uppercase tracking-[0.16em] text-muted-foreground">{label}</span>
+    </div>
+  );
+
   return (
-    <div className="mt-4 space-y-3 border-t border-border pt-4 font-mono text-[12px] uppercase tracking-[0.08em]">
+    <div className="mt-4 space-y-5 border-t border-border pt-4 uppercase">
       {hasNutrition && (
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-          <span className="text-[10px] font-sans tracking-[0.16em] text-muted-foreground">NUTRIZIONE</span>
-          {entry.kcal != null && <span>KCAL {formatNumber(entry.kcal)}</span>}
-          {entry.pasti != null && <span>PASTI {entry.pasti}</span>}
-          {entry.acqua != null && <span>ACQUA {formatNumber(entry.acqua, 1)}L</span>}
-          {entry.energia != null && <span>ENERGIA {entry.energia}/5</span>}
-          {entry.alcol === true && <span className="text-primary">ALC</span>}
+        <div>
+          <div className="mb-2 text-[10px] font-sans tracking-[0.16em] text-muted-foreground">NUTRIZIONE</div>
+          <div className="flex flex-wrap gap-x-7 gap-y-3">
+            {entry.kcal != null && cell(formatNumber(entry.kcal), "KCAL")}
+            {entry.pasti != null && cell(String(entry.pasti), "PASTI")}
+            {entry.acqua != null && cell(`${formatNumber(entry.acqua, 1)}L`, "ACQUA")}
+            {entry.energia != null && cell(`${entry.energia}/5`, "ENERGIA")}
+            {entry.alcol === true && cell("SÌ", "ALCOL", "primary")}
+          </div>
         </div>
       )}
       {hasTraining && (
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-          <span className="text-[10px] font-sans tracking-[0.16em] text-muted-foreground">ALLENAMENTO</span>
-          {entry.tipoAllenamento && entry.tipoAllenamento !== "NESSUNO" && <span>{entry.tipoAllenamento}</span>}
-          {entry.durata != null && <span>{entry.durata}MIN</span>}
-          {entry.intensita != null && <span>INT {entry.intensita}</span>}
-          {entry.tipoGiorno && <span>ROUTINE {entry.tipoGiorno === "RECUPERO" ? "R" : entry.tipoGiorno}</span>}
-          {activeDay ? (
-            <span className="text-[hsl(var(--acid))]">{entry.routineCompletata === true ? "✓ COMPLETATA" : "✓ ALLENAMENTO"} · STREAK {routineStreak}</span>
-          ) : entry.routineCompletata === false ? (
-            <span className="text-primary">ROUTINE — · STREAK RESET</span>
-          ) : null}
+        <div>
+          <div className="mb-2 text-[10px] font-sans tracking-[0.16em] text-muted-foreground">ALLENAMENTO</div>
+          <div className="flex flex-wrap gap-x-7 gap-y-3">
+            {entry.tipoAllenamento && entry.tipoAllenamento !== "NESSUNO" && cell(entry.tipoAllenamento, "TIPO")}
+            {entry.durata != null && cell(`${entry.durata}MIN`, "DURATA")}
+            {entry.intensita != null && cell(String(entry.intensita), "INTENSITÀ")}
+            {entry.tipoGiorno && cell(entry.tipoGiorno === "RECUPERO" ? "R" : entry.tipoGiorno, "ROUTINE")}
+            {activeDay
+              ? cell(`✓ · ${routineStreak}`, entry.routineCompletata === true ? "STREAK" : "STREAK (ALLENAMENTO)", "acid")
+              : entry.routineCompletata === false
+                ? cell("RESET", "STREAK", "primary")
+                : null}
+          </div>
         </div>
       )}
     </div>
@@ -167,13 +205,13 @@ function FinanceRow({ entry }: { entry: GiornoEntry }) {
 
 interface VsMetric {
   label: string;
-  value: number;
+  value: number | null;
   avg: number;
   fraction?: number;
 }
 
 function VsMediaTable({ entry, averages }: { entry: GiornoEntry; averages: VsMetric[] }) {
-  const rows = averages.filter((m) => m.value != null);
+  const rows = averages.filter((m): m is VsMetric & { value: number } => m.value != null);
   if (rows.length === 0) return null;
 
   return (
@@ -450,6 +488,16 @@ function GiornoContent({
       ? firstDiaryLine.slice(0, 157) + "…"
       : firstDiaryLine
     : `Giorno ${entry.numero} — ${dateLabel}`;
+  const hasData = entry.peso != null
+    || entry.battito != null
+    || entry.sonno != null
+    || entry.round != null
+    || entry.flessioni != null
+    || entry.addominali != null
+    || entry.km != null
+    || hasTrackingData(entry);
+  const hasFinance = entry.entrate != null || entry.uscite != null;
+  const hasVsMedia = averages.some((metric) => metric.value != null);
 
   usePageMeta({
     title: `Giorno ${String(entry.numero).padStart(3, "0")} — Progetto J`,
@@ -513,21 +561,21 @@ function GiornoContent({
         </Reveal>
 
         <div className="grid grid-cols-1 md:grid-cols-[140px_1fr] gap-x-8 gap-y-0 max-w-4xl mx-auto px-5">
-          <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-[140px_1fr] gap-x-8 border-t border-iron py-10">
+          {hasData && <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-[140px_1fr] gap-x-8 border-t border-iron py-10">
             <div className="font-sans text-[11px] uppercase tracking-[0.2em] text-muted-foreground md:sticky md:top-24 self-start mb-4 md:mb-0">DATI</div>
             <div>
               <DataStrip entry={entry} />
               <TrackingRows entry={entry} routineStreak={routineStreak} />
             </div>
-          </div>
-          <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-[140px_1fr] gap-x-8 border-t border-iron py-10">
+          </div>}
+          {hasFinance && <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-[140px_1fr] gap-x-8 border-t border-iron py-10">
             <div className="font-sans text-[11px] uppercase tracking-[0.2em] text-muted-foreground md:sticky md:top-24 self-start mb-4 md:mb-0">FINANZE</div>
             <FinanceRow entry={entry} />
-          </div>
-          <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-[140px_1fr] gap-x-8 border-t border-iron py-10">
+          </div>}
+          {hasVsMedia && <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-[140px_1fr] gap-x-8 border-t border-iron py-10">
             <div className="font-sans text-[11px] uppercase tracking-[0.2em] text-muted-foreground md:sticky md:top-24 self-start mb-4 md:mb-0">VS MEDIA</div>
             <VsMediaTable entry={entry} averages={averages} />
-          </div>
+          </div>}
           {entry.testo && (
             <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-[140px_1fr] gap-x-8 border-t border-iron py-10">
               <div className="font-sans text-[11px] uppercase tracking-[0.2em] text-muted-foreground md:sticky md:top-24 self-start mb-4 md:mb-0">DIARIO</div>
@@ -541,16 +589,16 @@ function GiornoContent({
         <ShareButton entryNumero={entry.numero} entryTesto={entry.testo ?? null} />
 
         <div className="h-px bg-border mb-10" />
-        <div className="flex items-center justify-between gap-4">
+        <div className="grid grid-cols-2 gap-3">
           {prevEntry ? (
             <Link
               href={`/giorno/${prevEntry.numero}`}
-              className="flex items-center gap-2 border border-border bg-card px-5 py-3 hover:border-iron transition-colors group"
+              className="flex min-h-[64px] items-center gap-3 border border-border bg-card px-4 sm:px-5 hover:border-primary transition-colors group"
             >
-              <ArrowLeft size={14} className="text-primary" />
-              <div>
+              <ArrowLeft size={16} className="shrink-0 text-primary" />
+              <div className="min-w-0">
                 <div className="text-[9px] font-sans uppercase tracking-[0.2em] text-muted-foreground">Precedente</div>
-                <div className="font-serif text-[20px] leading-none text-foreground bebas">GG {padDay(prevEntry.numero)}</div>
+                <div className="font-serif text-[22px] leading-none text-foreground bebas">GG {padDay(prevEntry.numero)}</div>
               </div>
             </Link>
           ) : (
@@ -559,13 +607,13 @@ function GiornoContent({
           {nextEntry ? (
             <Link
               href={`/giorno/${nextEntry.numero}`}
-              className="flex items-center gap-2 border border-border bg-card px-5 py-3 hover:border-iron transition-colors text-right group"
+              className="flex min-h-[64px] items-center justify-end gap-3 border border-border bg-card px-4 sm:px-5 hover:border-primary transition-colors text-right group"
             >
-              <div>
+              <div className="min-w-0">
                 <div className="text-[9px] font-sans uppercase tracking-[0.2em] text-muted-foreground">Successivo</div>
-                <div className="font-serif text-[20px] leading-none text-foreground bebas">GG {padDay(nextEntry.numero)}</div>
+                <div className="font-serif text-[22px] leading-none text-foreground bebas">GG {padDay(nextEntry.numero)}</div>
               </div>
-              <ArrowLeft size={14} className="text-primary rotate-180" />
+              <ArrowLeft size={16} className="shrink-0 text-primary rotate-180" />
             </Link>
           ) : (
             <div />
@@ -612,7 +660,7 @@ export default function GiornoDetail() {
   let routineStreak = 0;
   const entryHasActivity = entry?.routineCompletata === true
     || Boolean(entry?.tipoAllenamento && entry.tipoAllenamento !== "NESSUNO");
-  if (entryHasActivity) {
+  if (entry && entryHasActivity) {
     const byNumber = new Map((entries ?? []).map((item) => [item.numero, item]));
     for (let day = entry.numero; day >= 1; day -= 1) {
       const current = byNumber.get(day);
@@ -656,14 +704,14 @@ export default function GiornoDetail() {
   }
 
   const averages: VsMetric[] = [
-    { label: "KCAL", value: entry.kcal ?? 0, avg: avgKcal },
-    { label: "SONNO", value: entry.sonno ?? 0, avg: avgSonno, fraction: 1 },
-    { label: "PESO", value: entry.peso ?? 0, avg: avgPeso, fraction: 1 },
-    { label: "BATTITO", value: entry.battito ?? 0, avg: avgBattito },
-    { label: "KM", value: entry.km ?? 0, avg: avgKm, fraction: 1 },
-    { label: "FLESSIONI", value: entry.flessioni ?? 0, avg: avgFlessioni },
-    { label: "ADDOMINALI", value: entry.addominali ?? 0, avg: avgAddominali },
-    { label: "ROUND", value: entry.round ?? 0, avg: avgRound },
+    { label: "KCAL", value: entry.kcal ?? null, avg: avgKcal },
+    { label: "SONNO", value: entry.sonno ?? null, avg: avgSonno, fraction: 1 },
+    { label: "PESO", value: entry.peso ?? null, avg: avgPeso, fraction: 1 },
+    { label: "BATTITO", value: entry.battito ?? null, avg: avgBattito },
+    { label: "KM", value: entry.km ?? null, avg: avgKm, fraction: 1 },
+    { label: "FLESSIONI", value: entry.flessioni ?? null, avg: avgFlessioni },
+    { label: "ADDOMINALI", value: entry.addominali ?? null, avg: avgAddominali },
+    { label: "ROUND", value: entry.round ?? null, avg: avgRound },
   ];
 
   return <GiornoContent entry={entry} prevEntry={prevEntry} nextEntry={nextEntry} averages={averages} routineStreak={routineStreak} />;
