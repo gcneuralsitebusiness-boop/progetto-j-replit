@@ -11,6 +11,7 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { DataErrorState } from "@/components/DataErrorState";
 import { getPhotoUrl } from "@workspace/object-storage-web";
 import { usePageMeta } from "@/hooks/use-page-meta";
+import { containsDiaryHtml, sanitizeDiaryHtml } from "@/lib/diary-html";
 
 function padDay(n: number) {
   return n.toString().padStart(3, "0");
@@ -259,6 +260,8 @@ function isSubtitleLine(line: string): { isSubtitle: true; text: string } | { is
 
 function DiaryText({ text, entryId, entryNumero }: { text: string; entryId: number; entryNumero: number }) {
   const cleaned = stripDayLabel(text);
+  const isHtml = containsDiaryHtml(cleaned);
+  const sanitizedHtml = isHtml ? sanitizeDiaryHtml(cleaned) : null;
   const lines = cleaned.split(/\r?\n/);
   const elements: ReactElement[] = [];
   const search = useSearch();
@@ -344,6 +347,23 @@ function DiaryText({ text, entryId, entryNumero }: { text: string; entryId: numb
     const timeout = window.setTimeout(() => setHighlightedLine(null), 4000);
     return () => window.clearTimeout(timeout);
   }, [search]);
+
+  if (sanitizedHtml != null) {
+    return (
+      <>
+        <div
+          ref={containerRef}
+          className="diary-html border-l-2 border-iron pl-6"
+          dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
+        />
+        {copied && (
+          <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 border border-primary bg-[#0A0A0A] px-4 py-2 text-[11px] font-sans uppercase tracking-[0.2em] text-primary">
+            LINK COPIATO
+          </div>
+        )}
+      </>
+    );
+  }
 
   lines.forEach((raw, index) => {
     const line = raw.trim();

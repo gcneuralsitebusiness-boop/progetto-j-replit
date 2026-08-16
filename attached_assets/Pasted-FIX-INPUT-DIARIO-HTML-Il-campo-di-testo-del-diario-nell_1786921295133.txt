@@ -1,0 +1,82 @@
+FIX — INPUT DIARIO HTML
+
+Il campo di testo del diario nell'admin DEVE accettare 
+HTML grezzo incollato dall'utente e renderizzarlo 
+correttamente nella pagina pubblica del giorno.
+
+═══════════════════════════════════════════
+COME FUNZIONAVA (e come deve tornare a funzionare)
+═══════════════════════════════════════════
+
+1. Nell'admin, il campo "diario" è una textarea grande.
+
+2. L'utente ci incolla dentro testo già formattato in 
+   HTML, tipo:
+
+   <h2>Il Viaggio</h2>
+   <p>Sveglia a mezzogiorno.</p>
+   <p>Ho visitato Minsk di notte.</p>
+   <h2>La Mente</h2>
+   <p>Sono andato a trovare dei parenti.</p>
+   <p>83 giorni rimasti.</p>
+   <p>IC XC NIKA</p>
+
+3. Quando salva, il backend DEVE salvare l'HTML 
+   esattamente com'è, senza modificarlo, senza 
+   fare escape dei tag, senza convertire < in &lt;.
+
+4. Nella pagina pubblica /giorno/[N], il contenuto 
+   del diario DEVE essere renderizzato come HTML 
+   vero (innerHTML o dangerouslySetInnerHTML in React), 
+   NON come testo piatto.
+
+═══════════════════════════════════════════
+COSA SI È ROTTO
+═══════════════════════════════════════════
+
+Dopo un aggiornamento recente, il diario viene 
+mostrato come testo grezzo: l'utente vede i tag 
+<h2> e <p> scritti a schermo invece del testo 
+formattato. Oppure i tag vengono strippati e il 
+testo appare tutto attaccato senza struttura.
+
+═══════════════════════════════════════════
+FIX RICHIESTO
+═══════════════════════════════════════════
+
+- Backend (salvataggio): il campo diario deve essere 
+  salvato nel database come stringa grezza, SENZA 
+  sanitizzazione HTML, senza escape. Il contenuto 
+  arriva già in HTML dall'utente.
+
+- Frontend (pagina pubblica): il contenuto del diario 
+  deve essere iniettato come HTML reale.
+  
+  Se usi React:
+  <div dangerouslySetInnerHTML={{ __html: giorno.diario }} />
+  
+  Se usi template engine (EJS/Pug):
+  <%- giorno.diario %>  (NON <%= che fa escape)
+
+- Frontend (admin): la textarea deve mostrare l'HTML 
+  grezzo così com'è stato salvato, senza modifiche, 
+  così l'utente può correggerlo.
+
+═══════════════════════════════════════════
+TAG HTML PERMESSI
+═══════════════════════════════════════════
+
+Solo questi: <h1> <h2> <h3> <p> <br> <strong> <em>
+Non serve supportare immagini, link, script o altro.
+
+═══════════════════════════════════════════
+TEST
+═══════════════════════════════════════════
+
+a. Apro l'admin, incollo il blocco HTML qui sopra 
+   nel campo diario, salvo.
+b. Apro la pagina pubblica del giorno: vedo 
+   "Il Viaggio" come titolo grande, i paragrafi 
+   separati, "IC XC NIKA" come paragrafo finale.
+c. Torno nell'admin: il campo mostra ancora l'HTML 
+   grezzo con i tag visibili, pronto da modificare.

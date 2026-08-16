@@ -488,7 +488,14 @@ function EntryForm({ initialData, previousEntry, onSuccess, onCancel }: { initia
 
       <div className="flex flex-col gap-2">
         <label className="text-[11px] uppercase tracking-widest text-muted-foreground">Testo</label>
-        <textarea rows={6} value={formData.testo ?? ""} onChange={(e) => setFormData({ ...formData, testo: e.target.value })} className="bg-[#141414] border border-border p-3 text-white focus:outline-none focus:border-primary resize-y font-sans leading-relaxed" />
+        <textarea
+          rows={18}
+          spellCheck={false}
+          value={formData.testo ?? ""}
+          onChange={(e) => setFormData({ ...formData, testo: e.target.value })}
+          placeholder="<h2>Titolo della sezione</h2>&#10;<p>Testo del diario...</p>"
+          className="min-h-[280px] bg-[#141414] border border-border p-3 text-white focus:outline-none focus:border-primary resize-y font-mono text-[13px] leading-relaxed"
+        />
       </div>
 
       <div className="flex flex-col gap-2">

@@ -345,6 +345,52 @@ body::before {
   letter-spacing: 0.03em;
 }
 
+/* Diary HTML authored in the admin textarea. */
+.diary-html h1,
+.diary-html h2,
+.diary-html h3 {
+  font-family: var(--app-font-serif);
+  color: hsl(var(--foreground));
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  line-height: 0.95;
+}
+.diary-html h1 {
+  font-size: clamp(2rem, 6vw, 3.5rem);
+  margin: 0 0 1.25rem;
+}
+.diary-html h2 {
+  font-size: clamp(1.65rem, 5vw, 2.6rem);
+  margin: 1.75rem 0 0.65rem;
+}
+.diary-html h3 {
+  font-size: clamp(1.35rem, 4vw, 2rem);
+  margin: 1.35rem 0 0.5rem;
+}
+.diary-html h1:first-child,
+.diary-html h2:first-child,
+.diary-html h3:first-child {
+  margin-top: 0;
+}
+.diary-html p {
+  max-width: 65ch;
+  margin: 0 0 1rem;
+  color: hsl(var(--foreground));
+  font-family: var(--app-font-sans);
+  font-size: 16px;
+  line-height: 1.7;
+}
+.diary-html p:last-child {
+  margin-bottom: 0;
+}
+.diary-html strong {
+  font-weight: 700;
+}
+.diary-html em {
+  font-style: italic;
+  color: hsl(var(--muted-foreground));
+}
+
 /* Corner bracket accent on hover */
 .bracket-hover {
   position: relative;
