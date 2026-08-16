@@ -87,9 +87,12 @@ function TrackingRows({ entry, routineStreak }: { entry: GiornoEntry; routineStr
   const hasTraining = entry.tipoAllenamento != null || entry.durata != null || entry.intensita != null ||
     entry.tipoGiorno != null || entry.routineCompletata != null || entry.routineFlessioni != null ||
     entry.routineTrazioni != null || entry.routineSquat != null || entry.plank != null ||
-    entry.collo != null || entry.mobilita != null || entry.sollevamentoGamba != null || entry.grapplingVuoto != null;
+    entry.routineForza != null || entry.collo != null || entry.mobilita != null ||
+    entry.sollevamentoGamba != null || entry.grapplingVuoto != null;
 
   if (!hasNutrition && !hasTraining) return null;
+  const activeDay = entry.routineCompletata === true
+    || Boolean(entry.tipoAllenamento && entry.tipoAllenamento !== "NESSUNO");
 
   return (
     <div className="mt-4 space-y-3 border-t border-border pt-4 font-mono text-[12px] uppercase tracking-[0.08em]">
@@ -110,8 +113,8 @@ function TrackingRows({ entry, routineStreak }: { entry: GiornoEntry; routineStr
           {entry.durata != null && <span>{entry.durata}MIN</span>}
           {entry.intensita != null && <span>INT {entry.intensita}</span>}
           {entry.tipoGiorno && <span>ROUTINE {entry.tipoGiorno === "RECUPERO" ? "R" : entry.tipoGiorno}</span>}
-          {entry.routineCompletata === true ? (
-            <span className="text-[hsl(var(--acid))]">✓ COMPLETATA · STREAK {routineStreak}</span>
+          {activeDay ? (
+            <span className="text-[hsl(var(--acid))]">{entry.routineCompletata === true ? "✓ COMPLETATA" : "✓ ALLENAMENTO"} · STREAK {routineStreak}</span>
           ) : entry.routineCompletata === false ? (
             <span className="text-primary">ROUTINE — · STREAK RESET</span>
           ) : null}
@@ -607,9 +610,15 @@ export default function GiornoDetail() {
   const nextEntry = sorted[idx - 1] ?? null;
 
   let routineStreak = 0;
-  if (entry?.routineCompletata) {
+  const entryHasActivity = entry?.routineCompletata === true
+    || Boolean(entry?.tipoAllenamento && entry.tipoAllenamento !== "NESSUNO");
+  if (entryHasActivity) {
     const byNumber = new Map((entries ?? []).map((item) => [item.numero, item]));
-    for (let day = entry.numero; byNumber.get(day)?.routineCompletata === true; day -= 1) {
+    for (let day = entry.numero; day >= 1; day -= 1) {
+      const current = byNumber.get(day);
+      const active = current?.routineCompletata === true
+        || Boolean(current?.tipoAllenamento && current.tipoAllenamento !== "NESSUNO");
+      if (!active) break;
       routineStreak += 1;
     }
   }

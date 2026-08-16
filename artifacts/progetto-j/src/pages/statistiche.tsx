@@ -35,7 +35,9 @@ function routineStats(entries: Entry[]) {
   let record = 0;
   let run = 0;
   for (let index = 0; index < sorted.length; index += 1) {
-    if (sorted[index].routineCompletata === true) {
+    const isActive = sorted[index].routineCompletata === true
+      || Boolean(sorted[index].tipoAllenamento && sorted[index].tipoAllenamento !== "NESSUNO");
+    if (isActive) {
       run += 1;
       record = Math.max(record, run);
     } else {
@@ -131,6 +133,7 @@ export default function Statistiche() {
       entry.intensita != null ||
       entry.tipoGiorno != null ||
       entry.routineCompletata != null ||
+      entry.routineForza != null ||
       entry.routineFlessioni != null ||
       entry.routineTrazioni != null ||
       entry.routineSquat != null ||

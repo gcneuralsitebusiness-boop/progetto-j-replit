@@ -41,7 +41,13 @@ function formatNumber(n: number, fraction = 0): string {
 function getRoutineStreak(entries: Entry[], numero: number): number {
   const byNumber = new Map(entries.map((entry) => [entry.numero, entry]));
   let streak = 0;
-  for (let day = numero; byNumber.get(day)?.routineCompletata === true; day -= 1) streak += 1;
+  for (let day = numero; day >= 1; day -= 1) {
+    const entry = byNumber.get(day);
+    const active = entry?.routineCompletata === true
+      || Boolean(entry?.tipoAllenamento && entry.tipoAllenamento !== "NESSUNO");
+    if (!active) break;
+    streak += 1;
+  }
   return streak;
 }
 
@@ -78,9 +84,11 @@ function InstagramCard({
   if (entry.peso != null) stats.push({ value: `${formatNumber(entry.peso, 1)}KG`, label: "PESO" });
   if (entry.battito != null) stats.push({ value: `${formatNumber(entry.battito)}BPM`, label: "BATTITO" });
   if (entry.sonno != null) stats.push({ value: `${formatNumber(entry.sonno, 1)}H`, label: "SONNO" });
-  const hasRoutine = entry.tipoGiorno != null || entry.routineCompletata != null;
-  const routineText = entry.routineCompletata === true
-    ? `ROUTINE ${entry.tipoGiorno === "RECUPERO" ? "R" : (entry.tipoGiorno ?? "—")} ✓ · STREAK ${routineStreak}`
+  const hasActivity = entry.routineCompletata === true
+    || Boolean(entry.tipoAllenamento && entry.tipoAllenamento !== "NESSUNO");
+  const hasRoutine = entry.tipoGiorno != null || entry.routineCompletata != null || hasActivity;
+  const routineText = hasActivity
+    ? `${entry.routineCompletata === true ? "ROUTINE" : "ALLENAMENTO"} ${entry.tipoGiorno === "RECUPERO" ? "R" : (entry.tipoGiorno ?? "—")} · STREAK ${routineStreak}`
     : entry.routineCompletata === false
       ? "ROUTINE — · STREAK RESET"
       : "";
@@ -273,8 +281,10 @@ export default function Card() {
       if (entry.peso != null) stats.push({ value: `${formatNumber(entry.peso, 1)}KG`, label: "PESO" });
       if (entry.battito != null) stats.push({ value: `${formatNumber(entry.battito)}BPM`, label: "BATTITO" });
       if (entry.sonno != null) stats.push({ value: `${formatNumber(entry.sonno, 1)}H`, label: "SONNO" });
-      const routineLine = entry.routineCompletata === true
-        ? { text: `ROUTINE ${entry.tipoGiorno === "RECUPERO" ? "R" : (entry.tipoGiorno ?? "—")} ✓ · STREAK ${getRoutineStreak(entries ?? [], entry.numero)}`, completed: true }
+      const activeDay = entry.routineCompletata === true
+        || Boolean(entry.tipoAllenamento && entry.tipoAllenamento !== "NESSUNO");
+      const routineLine = activeDay
+        ? { text: `${entry.routineCompletata === true ? "ROUTINE" : "ALLENAMENTO"} ${entry.tipoGiorno === "RECUPERO" ? "R" : (entry.tipoGiorno ?? "—")} · STREAK ${getRoutineStreak(entries ?? [], entry.numero)}`, completed: entry.routineCompletata === true }
         : entry.routineCompletata === false
           ? { text: "ROUTINE — · STREAK RESET", completed: false }
           : undefined;

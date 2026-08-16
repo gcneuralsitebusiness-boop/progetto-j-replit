@@ -14,3 +14,4 @@
 - [PNG export with html-to-image](png-export-html-to-image.md) — external stylesheets need `crossorigin="anonymous"` or export dies on cssRules; inline all images as data URLs before toPng.
 - [Daily tracking fields](daily-tracking-fields.md) — keep new routine text fields separate from legacy numeric exercise counters; automatic blank days must not count as tracking data.
 - [Optional admin input normalization](optional-admin-input-normalization.md) — normalize blank draft/form values to null at the API boundary before Zod and Drizzle.
+- [Daily tracking panel](daily-tracking-panel.md) — quick-status tracking uses nullable fields, automatic A/B day type, and streak activity from training or routine.

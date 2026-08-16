@@ -11,10 +11,67 @@ import { eq, and, between, sql, asc, desc } from "drizzle-orm";
 import { z } from "zod";
 
 const router: IRouter = Router();
+export const FIXED_PLANNER_TASKS = ["DIARIO", "CARD IG", "STORIA IG", "TRACKING"] as const;
 
 function isAdmin(req: any): boolean {
   return !!req.session?.adminAuthenticated;
 }
+
+// ─── Fixed daily checklist ────────────────────────────────────────────────────
+
+router.get("/admin/planner/checklist", async (req, res): Promise<void> => {
+  if (!isAdmin(req)) { res.status(401).json({ error: "Non autorizzato" }); return; }
+  const { from, to } = req.query as Record<string, string>;
+  if (!from || !to) { res.status(400).json({ error: "Parametri mancanti" }); return; }
+  try {
+    const rows = await db
+      .select()
+      .from(tasksTable)
+      .where(between(tasksTable.data, from, to));
+    res.json(rows.filter((row) => (FIXED_PLANNER_TASKS as readonly string[]).includes(row.testo)));
+  } catch {
+    res.status(500).json({ error: "Errore interno" });
+  }
+});
+
+router.post("/admin/planner/checklist", async (req, res): Promise<void> => {
+  if (!isAdmin(req)) { res.status(401).json({ error: "Non autorizzato" }); return; }
+  const parsed = z.object({
+    data: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    task: z.enum(FIXED_PLANNER_TASKS),
+    done: z.boolean(),
+  }).safeParse(req.body);
+  if (!parsed.success) { res.status(400).json({ error: parsed.error.issues }); return; }
+  try {
+    const existing = await db
+      .select()
+      .from(tasksTable)
+      .where(and(eq(tasksTable.data, parsed.data.data), eq(tasksTable.testo, parsed.data.task)));
+    if (existing[0]) {
+      const [row] = await db
+        .update(tasksTable)
+        .set({ stato: parsed.data.done ? "FATTO" : "DA FARE" })
+        .where(eq(tasksTable.id, existing[0].id))
+        .returning();
+      res.json(row);
+      return;
+    }
+    if (!parsed.data.done) {
+      res.json({ data: parsed.data.data, testo: parsed.data.task, stato: "DA FARE" });
+      return;
+    }
+    const [row] = await db.insert(tasksTable).values({
+      data: parsed.data.data,
+      testo: parsed.data.task,
+      tipo: parsed.data.task === "DIARIO" ? "DIARIO" : "ALTRO",
+      stato: "FATTO",
+      priorita: 2,
+    }).returning();
+    res.status(201).json(row);
+  } catch {
+    res.status(500).json({ error: "Errore interno" });
+  }
+});
 
 // ─── Tasks CRUD ───────────────────────────────────────────────────────────────
 

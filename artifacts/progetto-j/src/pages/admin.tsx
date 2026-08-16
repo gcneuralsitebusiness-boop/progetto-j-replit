@@ -17,6 +17,7 @@ import { ContattiTab } from "@/components/admin/ContattiTab";
 import { IscrittiTab } from "@/components/admin/IscrittiTab";
 import { AnalyticsTab } from "@/components/admin/AnalyticsTab";
 import { PlannerTab } from "@/components/admin/PlannerTab";
+import { DailyTrackingPanel, type TrackingKey } from "@/components/admin/DailyTrackingPanel";
 import type { Entry, EntryInput, PageItem } from "@workspace/api-client-react";
 import { useUpload, getPhotoUrl } from "@workspace/object-storage-web";
 import { format } from "date-fns";
@@ -116,7 +117,7 @@ function AdminLoginForm() {
 
 // ─── Entry Form ───────────────────────────────────────────────────────────────
 
-function EntryForm({ initialData, onSuccess, onCancel }: { initialData?: Entry; onSuccess: () => void; onCancel?: () => void }) {
+function EntryForm({ initialData, previousEntry, onSuccess, onCancel }: { initialData?: Entry; previousEntry?: Entry; onSuccess: () => void; onCancel?: () => void }) {
   const queryClient = useQueryClient();
   const createMutation = useCreateEntry();
   const updateMutation = useUpdateEntry();
@@ -164,8 +165,65 @@ function EntryForm({ initialData, onSuccess, onCancel }: { initialData?: Entry; 
   const [draftBar, setDraftBar] = useState<{ time: string; data: Partial<EntryInput> } | null>(null);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [touchedTracking, setTouchedTracking] = useState<Set<TrackingKey>>(new Set());
   const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isMounted = useRef(false);
+
+  const markTouched = useCallback((key: TrackingKey) => {
+    setTouchedTracking((current) => new Set(current).add(key));
+  }, []);
+
+  const markManyTouched = useCallback((keys: TrackingKey[]) => {
+    setTouchedTracking((current) => {
+      const next = new Set(current);
+      keys.forEach((key) => next.add(key));
+      return next;
+    });
+  }, []);
+
+  const copyYesterday = useCallback(() => {
+    if (!previousEntry) return;
+    setFormData((current) => ({
+      ...current,
+      kcal: previousEntry.kcal ?? undefined,
+      pasti: previousEntry.pasti ?? undefined,
+      alcol: previousEntry.alcol ?? undefined,
+      acqua: previousEntry.acqua ?? undefined,
+      tipoAllenamento: previousEntry.tipoAllenamento ?? undefined,
+      durata: previousEntry.durata ?? undefined,
+      intensita: previousEntry.intensita ?? undefined,
+      tipoGiorno: previousEntry.tipoGiorno ?? undefined,
+      routineCompletata: previousEntry.routineCompletata ?? undefined,
+      routineForza: previousEntry.routineForza ?? undefined,
+      routineFlessioni: previousEntry.routineFlessioni ?? undefined,
+      routineTrazioni: previousEntry.routineTrazioni ?? undefined,
+      routineSquat: previousEntry.routineSquat ?? undefined,
+      plank: previousEntry.plank ?? undefined,
+      collo: previousEntry.collo ?? undefined,
+      mobilita: previousEntry.mobilita ?? undefined,
+      sollevamentoGamba: previousEntry.sollevamentoGamba ?? undefined,
+      grapplingVuoto: previousEntry.grapplingVuoto ?? undefined,
+      energia: previousEntry.energia ?? undefined,
+      sonno: previousEntry.sonno ?? undefined,
+      flessioni: previousEntry.flessioni ?? undefined,
+      addominali: previousEntry.addominali ?? undefined,
+      round: previousEntry.round ?? undefined,
+      km: previousEntry.km ?? undefined,
+      peso: previousEntry.peso ?? undefined,
+      battito: previousEntry.battito ?? undefined,
+      entrate: previousEntry.entrate ?? undefined,
+      uscite: previousEntry.uscite ?? undefined,
+      testo: previousEntry.testo ?? "",
+      foto: previousEntry.foto ?? "",
+      sintesi: previousEntry.sintesi ?? "",
+    }));
+    markManyTouched([
+      "kcal", "pasti", "acqua", "alcol", "tipoAllenamento", "durata", "intensita",
+      "routineCompletata", "routineForza", "routineFlessioni", "routineTrazioni",
+      "routineSquat", "plank", "collo", "mobilita", "sollevamentoGamba",
+      "grapplingVuoto", "energia", "flessioni",
+    ]);
+  }, [markManyTouched, previousEntry]);
 
   // Load draft when editing an entry
   useEffect(() => {
@@ -209,41 +267,34 @@ function EntryForm({ initialData, onSuccess, onCancel }: { initialData?: Entry; 
     setValidationErrors(errors);
     if (Object.keys(errors).length > 0) return;
 
+    const optionalKeys: (keyof EntryInput)[] = [
+      "kcal", "pasti", "alcol", "acqua", "tipoAllenamento", "durata", "intensita",
+      "tipoGiorno", "routineCompletata", "routineForza", "routineFlessioni",
+      "routineTrazioni", "routineSquat", "plank", "collo", "mobilita",
+      "sollevamentoGamba", "grapplingVuoto", "energia", "noteAllenamento",
+      "sonno", "flessioni", "addominali", "round", "km", "peso", "battito",
+      "entrate", "uscite", "testo", "foto", "sintesi",
+    ];
+    const hasValue = (value: unknown) => value != null && (typeof value !== "string" || value.trim() !== "");
+    const sameValue = (left: unknown, right: unknown) => (
+      (left == null && right == null)
+      || (typeof left === "string" && left.trim() === "" && right == null)
+      || (typeof right === "string" && right.trim() === "" && left == null)
+      || left === right
+    );
+    const normalizeValue = (value: unknown) => (
+      typeof value === "string" && value.trim() === "" ? null : value
+    );
     const payload: EntryInput = {
       numero: Number(formData.numero),
       data: formData.data as string,
-      kcal: formData.kcal != null ? Number(formData.kcal) : null,
-      pasti: formData.pasti != null ? Number(formData.pasti) : null,
-      alcol: formData.alcol ?? null,
-      acqua: formData.acqua != null ? Number(formData.acqua) : null,
-      tipoAllenamento: formData.tipoAllenamento ?? null,
-      durata: formData.durata != null ? Number(formData.durata) : null,
-      intensita: formData.intensita != null ? Number(formData.intensita) : null,
-      tipoGiorno: formData.tipoGiorno ?? null,
-      routineCompletata: formData.routineCompletata ?? null,
-      routineFlessioni: formData.routineFlessioni?.trim() || null,
-      routineTrazioni: formData.routineTrazioni?.trim() || null,
-      routineSquat: formData.routineSquat?.trim() || null,
-      plank: formData.plank != null ? Number(formData.plank) : null,
-      collo: formData.collo ?? null,
-      mobilita: formData.mobilita ?? null,
-      sollevamentoGamba: formData.sollevamentoGamba ?? null,
-      grapplingVuoto: formData.grapplingVuoto ?? null,
-      energia: formData.energia != null ? Number(formData.energia) : null,
-      noteAllenamento: formData.noteAllenamento?.trim() || null,
-      sonno: formData.sonno != null ? Number(formData.sonno) : null,
-      flessioni: formData.flessioni != null ? Number(formData.flessioni) : null,
-      addominali: formData.addominali != null ? Number(formData.addominali) : null,
-      round: formData.round != null ? Number(formData.round) : null,
-      km: formData.km != null ? Number(formData.km) : null,
-      peso: formData.peso != null ? Number(formData.peso) : null,
-      battito: formData.battito != null ? Number(formData.battito) : null,
-      entrate: formData.entrate != null ? Number(formData.entrate) : null,
-      uscite: formData.uscite != null ? Number(formData.uscite) : null,
-      testo: formData.testo || null,
-      foto: formData.foto || null,
-      sintesi: formData.sintesi?.trim() ? formData.sintesi.trim().slice(0, 180) : null,
     };
+    for (const key of optionalKeys) {
+      const value = formData[key];
+      const previousValue = initialData?.[key as keyof Entry];
+      const shouldSend = initialData ? !sameValue(value, previousValue) : hasValue(value);
+      if (shouldSend) (payload as Record<string, unknown>)[key] = normalizeValue(value);
+    }
 
     const invalidate = () => {
       queryClient.invalidateQueries({ queryKey: getListEntriesQueryKey() });
@@ -269,7 +320,7 @@ function EntryForm({ initialData, onSuccess, onCancel }: { initialData?: Entry; 
             data: new Date().toISOString().split("T")[0],
             kcal: undefined, pasti: undefined, alcol: undefined, acqua: undefined,
             tipoAllenamento: undefined, durata: undefined, intensita: undefined,
-            tipoGiorno: undefined, routineCompletata: undefined, routineFlessioni: "",
+            tipoGiorno: undefined, routineCompletata: undefined, routineForza: undefined, routineFlessioni: "",
             routineTrazioni: "", routineSquat: "", plank: undefined, collo: undefined,
             mobilita: undefined, sollevamentoGamba: undefined, grapplingVuoto: undefined,
             energia: undefined, noteAllenamento: "",
@@ -278,6 +329,7 @@ function EntryForm({ initialData, onSuccess, onCancel }: { initialData?: Entry; 
             entrate: undefined, uscite: undefined,
             testo: "", foto: "",
           });
+          setTouchedTracking(new Set());
           onSuccess();
         },
         onError: handleError,
@@ -369,6 +421,21 @@ function EntryForm({ initialData, onSuccess, onCancel }: { initialData?: Entry; 
         )}
       </div>
 
+      <DailyTrackingPanel
+        formData={formData}
+        setFormData={setFormData}
+        initialData={initialData}
+        markTouched={markTouched}
+        markManyTouched={markManyTouched}
+        onCopyYesterday={copyYesterday}
+      />
+
+      <div className="sticky bottom-0 z-20 -mx-6 border-y border-[#333] bg-[#0A0A0A]/95 px-6 py-3 backdrop-blur md:-mx-8 md:px-8">
+        <button type="submit" disabled={isPending} className="w-full bg-[#B81D1D] text-white font-serif text-[18px] py-4 tracking-wider hover:bg-[#9A1515] transition-colors uppercase disabled:opacity-50">
+          {isPending ? "Salvataggio..." : "Salva Giorno"}
+        </button>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
         <div className="flex flex-col gap-2">
           <label className="text-[11px] uppercase tracking-widest text-muted-foreground">Numero *</label>
@@ -388,91 +455,6 @@ function EntryForm({ initialData, onSuccess, onCancel }: { initialData?: Entry; 
         {field("Entrate (€)", "entrate", "0.01")}
         {field("Uscite (€)", "uscite", "0.01")}
       </div>
-
-      <section className="border-t border-border pt-6 space-y-6">
-        <div>
-          <h3 className="font-serif text-[24px] tracking-wider text-primary">TRACKING GIORNALIERO</h3>
-          <p className="mt-1 text-[12px] font-sans text-muted-foreground">Tutti i campi sono opzionali e vengono mostrati pubblicamente solo se compilati.</p>
-        </div>
-
-        <div className="space-y-4">
-          <h4 className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground">Nutrizione</h4>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-            {field("Kcal", "kcal", "1")}
-            {field("Pasti (1–6)", "pasti")}
-            {field("Acqua (litri)", "acqua", "0.1")}
-            <div className="flex items-end">{checkField("Alcol", "alcol")}</div>
-          </div>
-        </div>
-
-        <div className="space-y-4">
-          <h4 className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground">Allenamento</h4>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] uppercase tracking-widest text-muted-foreground">Tipo allenamento</label>
-              <select
-                value={formData.tipoAllenamento ?? ""}
-                onChange={(e) => setFormData({ ...formData, tipoAllenamento: (e.target.value || null) as EntryInput["tipoAllenamento"] })}
-                className="bg-[#141414] border border-border p-2.5 text-white focus:outline-none focus:border-primary"
-              >
-                <option value="">Non indicato</option>
-                {["NESSUNO", "MMA", "MUAY THAI", "BJJ", "CALISTHENICS", "CORSA", "SPARRING", "MISTO"].map((value) => <option key={value} value={value}>{value}</option>)}
-              </select>
-            </div>
-            {field("Durata (minuti)", "durata", "0.1")}
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] uppercase tracking-widest text-muted-foreground">Intensità: {formData.intensita ?? "—"}/5</label>
-              <input type="range" min="1" max="5" step="1" value={formData.intensita ?? 3} onChange={(e) => setFormData({ ...formData, intensita: Number(e.target.value) })} className="accent-[hsl(var(--primary))] mt-3" />
-            </div>
-          </div>
-        </div>
-
-        <div className="space-y-4">
-          <h4 className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground">Routine giornaliera</h4>
-          <div className="flex flex-wrap items-center gap-5">
-            <span className="text-[11px] uppercase tracking-widest text-muted-foreground">Tipo giorno</span>
-            {["A", "B", "RECUPERO"].map((value) => (
-              <label key={value} className="flex items-center gap-2 text-[11px] uppercase tracking-widest text-muted-foreground cursor-pointer">
-                <input type="radio" name="tipoGiorno" value={value} checked={formData.tipoGiorno === value} onChange={() => setFormData({ ...formData, tipoGiorno: value as EntryInput["tipoGiorno"] })} className="accent-[hsl(var(--primary))]" />
-                {value}
-              </label>
-            ))}
-            {checkField("Routine completata", "routineCompletata")}
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-            {textField("Flessioni", "routineFlessioni", "es. 3x18 diamante")}
-            {textField("Trazioni", "routineTrazioni", "es. 3x8 australian")}
-            {textField("Squat", "routineSquat", "es. 3x20")}
-            {field("Plank (secondi)", "plank")}
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] uppercase tracking-widest text-muted-foreground">Sollevamento gamba</label>
-              <select value={formData.sollevamentoGamba ?? ""} onChange={(e) => setFormData({ ...formData, sollevamentoGamba: (e.target.value || null) as EntryInput["sollevamentoGamba"] })} className="bg-[#141414] border border-border p-2.5 text-white focus:outline-none focus:border-primary">
-                <option value="">Non indicato</option>
-                {["ANCA", "PETTO", "TESTA", "OLTRE"].map((value) => <option key={value} value={value}>{value}</option>)}
-              </select>
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-x-6 gap-y-2">
-            {checkField("Collo", "collo")}
-            {checkField("Mobilità", "mobilita")}
-            {checkField("Grappling a vuoto", "grapplingVuoto")}
-          </div>
-        </div>
-
-        <div className="space-y-4">
-          <h4 className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground">Stato generale</h4>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] uppercase tracking-widest text-muted-foreground">Energia: {formData.energia ?? "—"}/5</label>
-              <input type="range" min="1" max="5" step="1" value={formData.energia ?? 3} onChange={(e) => setFormData({ ...formData, energia: Number(e.target.value) })} className="accent-[hsl(var(--primary))] mt-3" />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] uppercase tracking-widest text-muted-foreground">Note allenamento</label>
-              <input type="text" value={formData.noteAllenamento ?? ""} onChange={(e) => setFormData({ ...formData, noteAllenamento: e.target.value })} className="bg-[#141414] border border-border p-2.5 text-white focus:outline-none focus:border-primary" />
-            </div>
-          </div>
-        </div>
-      </section>
 
       <div className="flex flex-col gap-2 mt-2">
         <label className="text-[11px] uppercase tracking-widest text-muted-foreground">Foto</label>
@@ -530,9 +512,6 @@ function EntryForm({ initialData, onSuccess, onCancel }: { initialData?: Entry; 
         <p className="text-[13px] font-sans text-primary border border-primary/40 bg-primary/10 px-4 py-3">{submitError}</p>
       )}
 
-      <button type="submit" disabled={isPending} className="w-full bg-primary text-primary-foreground font-serif text-[18px] py-4 tracking-wider hover:bg-primary/90 transition-colors uppercase disabled:opacity-50 mt-4">
-        {isPending ? "Salvataggio..." : "Salva Giorno"}
-      </button>
     </form>
   );
 }
@@ -578,14 +557,16 @@ function DiarioTab({ scrollToEntry }: { scrollToEntry?: number }) {
     const q = search.trim().toLowerCase();
     return String(e.numero).includes(q) || (e.testo ?? "").toLowerCase().includes(q);
   }) ?? [];
+  const nextNumero = editingEntry?.numero ?? ((entries?.reduce((max, entry) => Math.max(max, entry.numero), 0) ?? 0) + 1);
+  const previousEntry = entries?.find((entry) => entry.numero === nextNumero - 1);
 
   return (
     <div className="space-y-12">
       <div ref={formRef} className="scroll-mt-28">
         {editingEntry ? (
-          <EntryForm key={editingEntry.id} initialData={editingEntry} onSuccess={() => setEditingEntry(null)} onCancel={() => setEditingEntry(null)} />
+          <EntryForm key={editingEntry.id} initialData={editingEntry} previousEntry={previousEntry} onSuccess={() => setEditingEntry(null)} onCancel={() => setEditingEntry(null)} />
         ) : (
-          <EntryForm key="new" onSuccess={() => {}} />
+          <EntryForm key="new" previousEntry={previousEntry} onSuccess={() => {}} />
         )}
       </div>
 
@@ -1175,7 +1156,7 @@ export default function Admin() {
       {activeTab === "iscritti" && <IscrittiTab />}
       {activeTab === "bulk" && <BulkEditTab />}
       {activeTab === "analytics" && <AnalyticsTab />}
-      {activeTab === "planner" && <PlannerTab />}
+      {activeTab === "planner" && <PlannerTab onOpenDay={(numero) => handleSwitchTab("diario", numero)} />}
     </div>
   );
 }

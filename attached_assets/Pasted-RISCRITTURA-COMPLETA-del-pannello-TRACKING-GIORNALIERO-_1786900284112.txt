@@ -1,0 +1,220 @@
+RISCRITTURA COMPLETA del pannello "TRACKING GIORNALIERO" 
+nell'admin. Non aggiungere nulla — sostituisci quello che 
+c'è con quello che segue. L'obiettivo è: compilare tutto 
+in 30 SECONDI, massimo 6 tap su mobile.
+
+═══════════════════════════════════════════
+PRINCIPI DI DESIGN
+═══════════════════════════════════════════
+
+- Zero scroll per compilare. Tutto deve stare in una 
+  schermata su iPhone senza scrollare.
+- Nessun campo testo libero per i dati numerici. Solo 
+  tap, slider, bottoni.
+- Presets intelligenti: i valori più comuni sono già 
+  selezionabili con un tap.
+- Se un campo non viene toccato, non esiste nel database. 
+  Non salvare mai null o zero — semplicemente non salvare 
+  quel campo.
+- Ogni campo ha il formato corretto già visibile 
+  (es. "minuti" scritto dentro il campo, non fuori).
+
+═══════════════════════════════════════════
+LAYOUT — UNA SOLA SCHERMATA, 4 BLOCCHI ORIZZONTALI
+═══════════════════════════════════════════
+
+BLOCCO 1 — QUICK STATUS (prima cosa visibile)
+Una riga di 4 bottoni grandi, tap singolo, selezionabili:
+
+  [🟢 ALLENATO]  [🔴 RIPOSO]  [🟡 SOLO ROUTINE]  [🟠 SPARRING]
+
+Quando tappi uno, il blocco allenamento sotto si adatta:
+- ALLENATO → mostra tipo + durata + intensità
+- RIPOSO → nasconde tutto il blocco allenamento
+- SOLO ROUTINE → mostra solo il blocco routine
+- SPARRING → mostra durata + intensità, precompila 
+  tipo = SPARRING
+
+BLOCCO 2 — ALLENAMENTO (visibile solo se non RIPOSO)
+
+TIPO: riga di chip/bottoni selezionabili (un tap):
+  MMA | MUAY THAI | BJJ | CALISTHENICS | CORSA | MISTO
+
+DURATA: slider orizzontale da 15 a 180 minuti, step di 
+15 minuti, con il numero grande al centro che si aggiorna 
+live. Default: 60. Il numero mostra "60 MIN" non "60".
+Sotto lo slider, 3 bottoni preset: [30] [60] [90] per 
+tap rapido senza usare lo slider.
+
+INTENSITÀ: 5 quadrati in riga. Tap uno = selezionato.
+  [1] [2] [3] [4] [5]
+Colori da verde a rosso. Nessun testo "intensità" — 
+solo l'icona/numero. Label sopra: "QUANTO TI HA 
+DISTRUTTO"
+
+BLOCCO 3 — NUTRIZIONE (sempre visibile, compresso)
+
+Una riga sola con 3 elementi:
+
+KCAL: 4 bottoni preset in riga:
+  [1500] [2000] [2500] [3000]
+Tap uno = selezionato. Se vuole un numero diverso, 
+tap lungo su qualsiasi bottone apre un input numerico.
+
+ACQUA: 3 bottoni:
+  [1L] [2L] [3L]
+Stesso comportamento del tap lungo per valore custom.
+
+ALCOL: un singolo toggle switch (on/off), default off.
+Nessun testo "ALCOL" grande — solo un'icona bicchiere 
+piccola con lo switch. Quando attivato diventa rosso.
+
+BLOCCO 4 — ROUTINE (visibile solo se SOLO ROUTINE o 
+ALLENATO)
+
+UNA SOLA DOMANDA: "HAI FATTO LA ROUTINE OGGI?"
+Due bottoni grandi:
+
+  [SÌ, COMPLETA]    [PARZIALE]
+
+Se SÌ COMPLETA → salva routine=completata, fine. 
+Nessun altro campo da compilare.
+
+Se PARZIALE → si espande e mostra 4 toggle:
+  FORZA ○  COLLO ○  MOBILITÀ ○  GRAPPLING ○
+L'utente spunta solo quelli che ha fatto.
+
+Il campo flessioni/trazioni/squat/plank come testo 
+libero viene ELIMINATO dal form quotidiano. Al suo 
+posto, UNA VOLTA A SETTIMANA il sito chiede 
+automaticamente (popup o notifica nel pannello admin):
+
+  "È domenica. Aggiorna i tuoi massimali:"
+  FLESSIONI: [tipo ▾] [numero rep ▾]
+  TRAZIONI: [numero rep ▾]  
+  PLANK: slider secondi 15-180
+  GAMBA: [ANCA] [PETTO] [TESTA] [OLTRE]
+
+Questo riduce il form giornaliero a 6 tap e sposta 
+i dati di progressione a una cadenza settimanale 
+dove ha senso tracciarli (i massimali non cambiano 
+ogni giorno).
+
+FONDO PAGINA — ENERGIA + SALVA
+
+ENERGIA: 5 emoji in riga, tap singolo:
+  [💀] [😐] [🙂] [💪] [🔥]
+Corrispondono a 1-2-3-4-5. Nessun slider, nessun 
+numero. L'emoji è più veloce e più intuitivo.
+
+BOTTONE SALVA: grande, rosso, fisso in fondo allo 
+schermo (sticky bottom). Sempre visibile senza 
+scrollare.
+
+═══════════════════════════════════════════
+DATI AUTOMATICI (non chiedere all'utente)
+═══════════════════════════════════════════
+
+- TIPO GIORNO A/B: ELIMINATO come campo manuale. 
+  Il sito alterna automaticamente A e B basandosi 
+  sull'ultimo giorno con routine completata. Se 
+  l'ultimo era A, il prossimo suggerisce B. L'utente 
+  non deve sapere né ricordare quale giorno è.
+
+- STREAK: calcolato automaticamente dal backend. 
+  Conteggio giorni consecutivi con almeno una tra 
+  routine completata o allenamento fatto. Non è un 
+  campo da compilare.
+
+- PASTI: ELIMINATO. Non aggiunge valore. Le calorie 
+  bastano.
+
+═══════════════════════════════════════════
+PLANNER — TAB SEPARATA NELL'ADMIN
+═══════════════════════════════════════════
+
+Nuova tab "PLANNER" nella navigazione admin.
+
+VISTA SETTIMANALE (default):
+7 colonne (Lun-Dom), ogni colonna mostra:
+- Numero giorno progetto (es. "G97")
+- Icona stato: 🟢 compilato / 🔴 mancante / 
+  ⚪ futuro
+- Se compilato: mini-riepilogo con icone
+  (💪 tipo allenamento, 🔢 kcal, ✓ routine)
+
+TAP su un giorno → apre direttamente il form di 
+quel giorno (non una pagina separata, un pannello 
+laterale o modale).
+
+VISTA MENSILE:
+Griglia calendario con gli stessi indicatori colorati.
+Colpo d'occhio su tutto il mese.
+
+ROUTINE AUTOMATICHE (template):
+Bottone "COMPILA COME IERI" nel form giornaliero — 
+copia tutti i valori del giorno precedente. L'utente 
+modifica solo quello che è diverso. Questo dimezza 
+il tempo di compilazione nei giorni simili.
+
+TASK RICORRENTI:
+Lista fissa in cima al planner (sempre visibile):
+  □ DIARIO
+  □ CARD IG  
+  □ STORIA IG
+  □ TRACKING
+
+Ogni task è un checkbox. Quando spuntato, si segna 
+come fatto per quel giorno. Non modificabile — sono 
+sempre questi 4. Servono solo come promemoria visivo, 
+non come obbligo.
+
+═══════════════════════════════════════════
+ESTETICA
+═══════════════════════════════════════════
+
+Sfondo: #0A0A0A
+Bottoni attivi: #B81D1D
+Bottoni inattivi: #1A1A1A con bordo #333
+Testo: #E8E4DE
+Toggle on: verde acido #00FF41
+Toggle off: grigio #333
+Font bottoni: Bebas Neue
+Font dati: JetBrains Mono
+Nessun bordo arrotondato. Nessuna ombra.
+Bottone SALVA: sfondo #B81D1D, testo bianco, 
+  altezza 56px, larghezza 100%, sticky bottom.
+
+═══════════════════════════════════════════
+FIX BUG CRITICO
+═══════════════════════════════════════════
+
+Il salvataggio attuale restituisce HTTP 500.
+Verifica che TUTTI i nuovi campi siano nullable 
+nel database e nell'endpoint di salvataggio. Se un 
+campo non viene compilato, NON deve essere inviato 
+nel payload — non inviare null, non inviare zero, 
+non inviare stringa vuota. Il backend deve accettare 
+un payload con qualsiasi combinazione di campi 
+presenti o assenti senza errore.
+
+═══════════════════════════════════════════
+TEST
+═══════════════════════════════════════════
+
+a. Apro il form su iPhone: tutto visibile senza 
+   scroll, bottone SALVA visibile in fondo.
+b. Tappo RIPOSO: i blocchi allenamento e routine 
+   spariscono. Compilo solo kcal e energia. Salvo 
+   senza errore.
+c. Tappo ALLENATO + MMA + preset 60 + intensità 3 
+   + kcal 2000 + routine SÌ COMPLETA + energia 💪: 
+   6 tap totali, salva senza errore.
+d. Tappo PARZIALE nella routine: si espandono i 4 
+   toggle. Spunto solo FORZA e COLLO. Salva OK.
+e. Giorno senza compilazione: il planner mostra 
+   pallino rosso.
+f. "COMPILA COME IERI" riempie tutti i campi con 
+   i valori di ieri.
+g. La domenica appare il popup massimali settimanali.
+h. Lo streak si calcola correttamente.

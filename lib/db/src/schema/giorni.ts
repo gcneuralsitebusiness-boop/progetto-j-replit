@@ -15,6 +15,7 @@ export const giorniTable = pgTable("giorni", {
   intensita: integer("intensita"),
   tipoGiorno: text("tipo_giorno"),
   routineCompletata: boolean("routine_completata"),
+  routineForza: boolean("routine_forza"),
   routineFlessioni: text("routine_flessioni"),
   routineTrazioni: text("routine_trazioni"),
   routineSquat: text("routine_squat"),

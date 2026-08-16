@@ -84,6 +84,7 @@ const OPTIONAL_NUMERIC_FIELDS = new Set([
 const OPTIONAL_BOOLEAN_FIELDS = new Set([
   "alcol",
   "routineCompletata",
+  "routineForza",
   "collo",
   "mobilita",
   "grapplingVuoto",
@@ -154,6 +155,10 @@ function validateRanges(data: Record<string, unknown>): string | null {
   return null;
 }
 
+function automaticDayType(numero: number): "A" | "B" {
+  return numero % 2 === 0 ? "B" : "A";
+}
+
 // POST /entries — create entry (admin only)
 router.post("/entries", async (req, res): Promise<void> => {
   if (!req.session?.adminAuthenticated) {
@@ -184,7 +189,10 @@ router.post("/entries", async (req, res): Promise<void> => {
     return;
   }
 
-  const [row] = await db.insert(giorniTable).values(parsed.data).returning();
+  const [row] = await db.insert(giorniTable).values({
+    ...parsed.data,
+    tipoGiorno: automaticDayType(parsed.data.numero),
+  }).returning();
   res.status(201).json(CreateEntryResponse.parse(ser(row)));
 });
 
@@ -215,7 +223,10 @@ router.patch("/entries/:numero", async (req, res): Promise<void> => {
 
   const [row] = await db
     .update(giorniTable)
-    .set(body.data)
+    .set({
+      ...body.data,
+      tipoGiorno: automaticDayType(params.data.numero),
+    })
     .where(eq(giorniTable.numero, params.data.numero))
     .returning();
 

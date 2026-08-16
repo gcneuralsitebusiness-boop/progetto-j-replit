@@ -42,6 +42,8 @@ export interface EntryUpdate {
   /** @nullable */
   routineCompletata?: boolean | null;
   /** @nullable */
+  routineForza?: boolean | null;
+  /** @nullable */
   routineFlessioni?: string | null;
   /** @nullable */
   routineTrazioni?: string | null;

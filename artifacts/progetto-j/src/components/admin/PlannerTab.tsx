@@ -1,873 +1,256 @@
-import { useState, useCallback, useRef } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { getListEntriesQueryKey, useListEntries } from "@workspace/api-client-react";
+import type { Entry } from "@workspace/api-client-react";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+type CalendarView = "week" | "month";
+type ChecklistTask = "DIARIO" | "CARD IG" | "STORIA IG" | "TRACKING";
 
-type Tipo = "POST" | "ARTICOLO" | "DIARIO" | "VIDEO" | "SITO" | "ALTRO";
-type Stato = "DA FARE" | "IN CORSO" | "FATTO";
+const FIXED_TASKS: ChecklistTask[] = ["DIARIO", "CARD IG", "STORIA IG", "TRACKING"];
+const BASE = import.meta.env.BASE_URL?.replace(/\/$/, "") ?? "";
 
-interface Task {
+function localDate(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function parseDate(value: string): Date {
+  const [year, month, day] = value.split("-").map(Number);
+  return new Date(year, month - 1, day, 12);
+}
+
+function addDays(date: Date, amount: number): Date {
+  const next = new Date(date);
+  next.setDate(next.getDate() + amount);
+  return next;
+}
+
+function startOfWeek(date: Date): Date {
+  const next = new Date(date);
+  const day = next.getDay();
+  next.setDate(next.getDate() + (day === 0 ? -6 : 1 - day));
+  next.setHours(12, 0, 0, 0);
+  return next;
+}
+
+function monthDays(date: Date): Date[] {
+  const first = new Date(date.getFullYear(), date.getMonth(), 1, 12);
+  const last = new Date(date.getFullYear(), date.getMonth() + 1, 0, 12);
+  const offset = first.getDay() === 0 ? 6 : first.getDay() - 1;
+  return Array.from({ length: offset + last.getDate() }, (_, index) => (
+    addDays(first, index - offset)
+  ));
+}
+
+function dateLabel(date: Date): string {
+  return date.toLocaleDateString("it-IT", { weekday: "long", day: "numeric", month: "long" });
+}
+
+function monthLabel(date: Date): string {
+  return date.toLocaleDateString("it-IT", { month: "long", year: "numeric" }).toUpperCase();
+}
+
+function isCompiled(entry?: Entry): boolean {
+  if (!entry) return false;
+  return Boolean(
+    entry.testo?.trim()
+    || entry.kcal != null
+    || entry.acqua != null
+    || entry.tipoAllenamento
+    || entry.routineCompletata != null
+    || entry.energia != null,
+  );
+}
+
+function trackingSummary(entry?: Entry): string[] {
+  if (!entry) return [];
+  const summary: string[] = [];
+  if (entry.kcal != null) summary.push(`🥗 ${entry.kcal}`);
+  if (entry.tipoAllenamento && entry.tipoAllenamento !== "NESSUNO") summary.push(`🥊 ${entry.tipoAllenamento}`);
+  if (entry.durata != null) summary.push(`${entry.durata} min`);
+  if (entry.routineCompletata === true) summary.push("✓ routine");
+  if (entry.routineCompletata === false) summary.push("~ routine");
+  if (entry.energia != null) summary.push(`⚡ ${entry.energia}/5`);
+  return summary;
+}
+
+async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(`${BASE}/api${path}`, {
+    ...init,
+    credentials: "include",
+    headers: { "Content-Type": "application/json", ...(init?.headers ?? {}) },
+  });
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  return response.json();
+}
+
+type ChecklistRow = {
   id: number;
   data: string;
-  testo: string;
-  tipo: Tipo;
-  stato: Stato;
-  priorita: number;
-  ordine: number;
-  createdAt: string;
-}
-
-// Manual drag order wins when set; otherwise priority then insertion order
-function sortTasks(a: Task, b: Task): number {
-  const ao = a.ordine > 0;
-  const bo = b.ordine > 0;
-  if (ao && bo) return a.ordine - b.ordine;
-  if (ao !== bo) return ao ? -1 : 1;
-  return a.priorita - b.priorita || a.id - b.id;
-}
-
-interface TaskTemplate {
-  id: number;
-  testo: string;
-  tipo: Tipo;
-  priorita: number;
-  ordine: number;
-}
-
-// ─── Constants ────────────────────────────────────────────────────────────────
-
-const TIPI: Tipo[] = ["POST", "ARTICOLO", "DIARIO", "VIDEO", "SITO", "ALTRO"];
-const STATI: Stato[] = ["DA FARE", "IN CORSO", "FATTO"];
-
-const TIPO_COLOR: Record<Tipo, string> = {
-  POST: "#B81D1D",
-  ARTICOLO: "#B87333",
-  DIARIO: "#6E6A65",
-  VIDEO: "#4A6FA5",
-  SITO: "#5A8A5A",
-  ALTRO: "#E8E4DE",
+  testo: ChecklistTask;
+  stato: "DA FARE" | "FATTO";
 };
 
-const STATO_NEXT: Record<Stato, Stato> = {
-  "DA FARE": "IN CORSO",
-  "IN CORSO": "FATTO",
-  "FATTO": "DA FARE",
-};
+export function PlannerTab({ onOpenDay }: { onOpenDay: (numero?: number) => void }) {
+  const queryClient = useQueryClient();
+  const today = localDate(new Date());
+  const [view, setView] = useState<CalendarView>("week");
+  const [anchor, setAnchor] = useState(() => new Date());
+  const [selectedDate, setSelectedDate] = useState(today);
+  const { data: entries } = useListEntries({ query: { queryKey: getListEntriesQueryKey() } });
 
-const STATO_LABEL: Record<Stato, string> = {
-  "DA FARE": "DA FARE",
-  "IN CORSO": "IN CORSO",
-  "FATTO": "FATTO",
-};
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function dateStr(d: Date): string {
-  return d.toISOString().slice(0, 10);
-}
-
-function addDays(d: Date, n: number): Date {
-  const copy = new Date(d);
-  copy.setDate(copy.getDate() + n);
-  return copy;
-}
-
-function weekStart(d: Date): Date {
-  const copy = new Date(d);
-  const day = copy.getDay(); // 0=Sun
-  const diff = day === 0 ? -6 : 1 - day; // Monday
-  copy.setDate(copy.getDate() + diff);
-  return copy;
-}
-
-function monthStart(d: Date): Date {
-  return new Date(d.getFullYear(), d.getMonth(), 1);
-}
-
-function monthEnd(d: Date): Date {
-  return new Date(d.getFullYear(), d.getMonth() + 1, 0);
-}
-
-function formatDateIta(d: Date): string {
-  return d.toLocaleDateString("it-IT", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
-}
-
-function formatMonthIta(d: Date): string {
-  return d.toLocaleDateString("it-IT", { month: "long", year: "numeric" }).toUpperCase();
-}
-
-const WEEKDAYS = ["LUN", "MAR", "MER", "GIO", "VEN", "SAB", "DOM"];
-
-// ─── API helpers ──────────────────────────────────────────────────────────────
-
-const BASE = import.meta.env.BASE_URL?.replace(/\/$/, "") ?? "";
-const api = (path: string) => `${BASE}/api${path}`;
-
-async function fetchJson<T>(url: string, opts?: RequestInit): Promise<T> {
-  const res = await fetch(url, { credentials: "include", ...opts });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  if (res.status === 204) return undefined as unknown as T;
-  return res.json();
-}
-
-// ─── Task row ─────────────────────────────────────────────────────────────────
-
-function TaskRow({
-  task,
-  onStatusToggle,
-  onDelete,
-  onEdit,
-  draggable,
-  onDragStart,
-  onDragOver,
-  onDrop,
-}: {
-  task: Task;
-  onStatusToggle: (t: Task) => void;
-  onDelete: (id: number) => void;
-  onEdit: (t: Task) => void;
-  draggable?: boolean;
-  onDragStart?: (t: Task) => void;
-  onDragOver?: (e: React.DragEvent) => void;
-  onDrop?: (e: React.DragEvent, t: Task) => void;
-}) {
-  const isDone = task.stato === "FATTO";
-  const isHigh = task.priorita === 1 && !isDone;
-
-  return (
-    <div
-      className={`flex items-start gap-3 px-3 py-2.5 rounded border-l-2 transition-colors cursor-pointer group ${
-        isHigh ? "border-l-[#B81D1D]" : "border-l-transparent"
-      } hover:bg-[#141414]`}
-      draggable={draggable}
-      onDragStart={() => onDragStart?.(task)}
-      onDragOver={(e) => { e.preventDefault(); onDragOver?.(e); }}
-      onDrop={(e) => onDrop?.(e, task)}
-      onClick={() => onEdit(task)}
-    >
-      {/* Tipo dot */}
-      <span
-        className="mt-1 shrink-0 w-2.5 h-2.5 rounded-full"
-        style={{ backgroundColor: TIPO_COLOR[task.tipo] }}
-        title={task.tipo}
-      />
-
-      {/* Testo */}
-      <span
-        className="flex-1 text-[14px] font-sans leading-snug min-w-0 break-words"
-        style={{
-          color: isDone ? "#6E6A65" : "#E8E4DE",
-          textDecoration: isDone ? "line-through" : "none",
-        }}
-      >
-        {task.testo}
-      </span>
-
-      {/* Stato button */}
-      <button
-        onClick={(e) => { e.stopPropagation(); onStatusToggle(task); }}
-        className="shrink-0 text-[10px] font-serif tracking-[0.08em] px-2 py-0.5 border border-[#262626] hover:border-[#6E6A65] transition-colors"
-        style={{ color: isDone ? "#6E6A65" : task.stato === "IN CORSO" ? "#B87333" : "#E8E4DE" }}
-      >
-        {STATO_LABEL[task.stato]}
-      </button>
-
-      {/* Delete */}
-      <button
-        onClick={(e) => { e.stopPropagation(); onDelete(task.id); }}
-        className="shrink-0 text-[#6E6A65] hover:text-[#B81D1D] transition-colors opacity-0 group-hover:opacity-100 text-[12px] leading-none"
-        aria-label="Elimina"
-      >
-        ✕
-      </button>
-    </div>
-  );
-}
-
-// ─── Quick add form ───────────────────────────────────────────────────────────
-
-function QuickAdd({
-  onAdd,
-  disabled,
-}: {
-  onAdd: (testo: string, tipo: Tipo) => Promise<void>;
-  disabled?: boolean;
-}) {
-  const [testo, setTesto] = useState("");
-  const [tipo, setTipo] = useState<Tipo>("ALTRO");
-  const [loading, setLoading] = useState(false);
-
-  const submit = async () => {
-    const t = testo.trim();
-    if (!t) return;
-    setLoading(true);
-    try {
-      await onAdd(t, tipo);
-      setTesto("");
-    } finally {
-      setLoading(false);
+  const dates = useMemo(() => {
+    if (view === "week") {
+      const first = startOfWeek(anchor);
+      return Array.from({ length: 7 }, (_, index) => addDays(first, index));
     }
+    return monthDays(anchor);
+  }, [anchor, view]);
+
+  const range = useMemo(() => ({
+    from: localDate(dates[0] ?? anchor),
+    to: localDate(dates[dates.length - 1] ?? anchor),
+  }), [anchor, dates]);
+
+  const { data: checklist = [], isLoading: checklistLoading } = useQuery({
+    queryKey: ["planner-checklist", range.from, range.to],
+    queryFn: () => fetchJson<ChecklistRow[]>(`/admin/planner/checklist?from=${range.from}&to=${range.to}`),
+  });
+
+  const toggleTask = useMutation({
+    mutationFn: ({ data, task, done }: { data: string; task: ChecklistTask; done: boolean }) => (
+      fetchJson<ChecklistRow>("/admin/planner/checklist", {
+        method: "POST",
+        body: JSON.stringify({ data, task, done }),
+      })
+    ),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["planner-checklist"] }),
+  });
+
+  const entryByDate = useMemo(() => new Map((entries ?? []).map((entry) => [entry.data, entry])), [entries]);
+  const checklistByDate = useMemo(() => {
+    const map = new Map<string, Set<string>>();
+    checklist.forEach((row) => {
+      if (row.stato !== "FATTO") return;
+      const set = map.get(row.data) ?? new Set<string>();
+      set.add(row.testo);
+      map.set(row.data, set);
+    });
+    return map;
+  }, [checklist]);
+
+  const selectedEntry = entryByDate.get(selectedDate);
+  const selectedTasks = checklistByDate.get(selectedDate) ?? new Set<string>();
+  const changeAnchor = (direction: number) => {
+    setAnchor((current) => {
+      const next = new Date(current);
+      if (view === "week") next.setDate(next.getDate() + direction * 7);
+      else next.setMonth(next.getMonth() + direction);
+      return next;
+    });
   };
 
   return (
-    <div className="flex gap-2 mt-4">
-      <input
-        value={testo}
-        onChange={(e) => setTesto(e.target.value)}
-        onKeyDown={(e) => e.key === "Enter" && submit()}
-        placeholder="Nuova task..."
-        maxLength={500}
-        disabled={disabled || loading}
-        className="flex-1 bg-[#141414] border border-[#262626] text-[13px] font-sans px-3 py-2 text-foreground placeholder:text-[#6E6A65] focus:outline-none focus:border-[#B87333]"
-      />
-      <select
-        value={tipo}
-        onChange={(e) => setTipo(e.target.value as Tipo)}
-        disabled={disabled || loading}
-        className="bg-[#141414] border border-[#262626] text-[12px] font-serif text-foreground px-2 py-2 focus:outline-none"
-      >
-        {TIPI.map((t) => <option key={t}>{t}</option>)}
-      </select>
-      <button
-        onClick={submit}
-        disabled={disabled || loading || !testo.trim()}
-        className="text-[12px] font-serif tracking-[0.1em] px-4 py-2 bg-[#B81D1D] text-white disabled:opacity-40 hover:bg-[#9a1515] transition-colors"
-      >
-        AGGIUNGI
-      </button>
-    </div>
-  );
-}
-
-// ─── Edit modal ───────────────────────────────────────────────────────────────
-
-function EditModal({
-  task,
-  onSave,
-  onClose,
-}: {
-  task: Task;
-  onSave: (id: number, patch: Partial<Task>) => Promise<void>;
-  onClose: () => void;
-}) {
-  const [testo, setTesto] = useState(task.testo);
-  const [tipo, setTipo] = useState<Tipo>(task.tipo);
-  const [stato, setStato] = useState<Stato>(task.stato);
-  const [priorita, setPriorita] = useState(task.priorita);
-  const [data, setData] = useState(task.data);
-  const [loading, setLoading] = useState(false);
-
-  const save = async () => {
-    setLoading(true);
-    try {
-      await onSave(task.id, { testo, tipo, stato, priorita, data });
-      onClose();
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div
-        className="bg-[#0A0A0A] border border-[#262626] p-6 w-full max-w-md"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h3 className="text-[18px] font-serif tracking-[0.1em] mb-5">MODIFICA TASK</h3>
-        <textarea
-          value={testo}
-          onChange={(e) => setTesto(e.target.value)}
-          maxLength={500}
-          rows={3}
-          className="w-full bg-[#141414] border border-[#262626] text-[13px] font-sans px-3 py-2 text-foreground focus:outline-none focus:border-[#B87333] resize-none mb-4"
-        />
-        <div className="grid grid-cols-2 gap-3 mb-4">
-          <div>
-            <div className="text-[10px] font-serif tracking-widest text-[#6E6A65] mb-1">TIPO</div>
-            <select value={tipo} onChange={(e) => setTipo(e.target.value as Tipo)} className="w-full bg-[#141414] border border-[#262626] text-[12px] font-serif text-foreground px-2 py-2 focus:outline-none">
-              {TIPI.map((t) => <option key={t}>{t}</option>)}
-            </select>
-          </div>
-          <div>
-            <div className="text-[10px] font-serif tracking-widest text-[#6E6A65] mb-1">STATO</div>
-            <select value={stato} onChange={(e) => setStato(e.target.value as Stato)} className="w-full bg-[#141414] border border-[#262626] text-[12px] font-serif text-foreground px-2 py-2 focus:outline-none">
-              {STATI.map((s) => <option key={s}>{s}</option>)}
-            </select>
-          </div>
-          <div>
-            <div className="text-[10px] font-serif tracking-widest text-[#6E6A65] mb-1">PRIORITÀ</div>
-            <select value={priorita} onChange={(e) => setPriorita(Number(e.target.value))} className="w-full bg-[#141414] border border-[#262626] text-[12px] font-serif text-foreground px-2 py-2 focus:outline-none">
-              <option value={1}>1 — Alta</option>
-              <option value={2}>2 — Media</option>
-              <option value={3}>3 — Bassa</option>
-            </select>
-          </div>
-          <div>
-            <div className="text-[10px] font-serif tracking-widest text-[#6E6A65] mb-1">DATA</div>
-            <input type="date" value={data} onChange={(e) => setData(e.target.value)} className="w-full bg-[#141414] border border-[#262626] text-[12px] font-sans text-foreground px-2 py-2 focus:outline-none" />
-          </div>
+    <section className="space-y-6">
+      <div className="flex flex-col gap-4 border-b border-[#262626] pb-5 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="font-mono text-[10px] tracking-[0.2em] text-[#B81D1D]">ADMIN / ORGANIZZAZIONE</p>
+          <h2 className="mt-2 font-serif text-[30px] tracking-wider text-[#E8E4DE]">PLANNER</h2>
+          <p className="mt-1 font-sans text-[12px] text-[#6E6A65]">Controlla la giornata, compila il tracking e prepara i contenuti.</p>
         </div>
-        <div className="flex gap-3 justify-end">
-          <button onClick={onClose} className="text-[12px] font-serif tracking-widest text-[#6E6A65] hover:text-foreground px-4 py-2 border border-[#262626]">ANNULLA</button>
-          <button onClick={save} disabled={loading || !testo.trim()} className="text-[12px] font-serif tracking-widest px-4 py-2 bg-[#B81D1D] text-white disabled:opacity-40 hover:bg-[#9a1515] transition-colors">SALVA</button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Daily view ───────────────────────────────────────────────────────────────
-
-function DailyView({
-  selectedDate,
-  tasks,
-  giornoAttivo,
-  onPrev,
-  onToday,
-  onNext,
-  onSelectDate,
-  onAdd,
-  onStatusToggle,
-  onDelete,
-  onEdit,
-  onRoutine,
-  routineLoading,
-  onReorder,
-}: {
-  selectedDate: Date;
-  tasks: Task[];
-  giornoAttivo: number | null;
-  onPrev: () => void;
-  onToday: () => void;
-  onNext: () => void;
-  onSelectDate: (d: Date) => void;
-  onAdd: (testo: string, tipo: Tipo) => Promise<void>;
-  onStatusToggle: (t: Task) => void;
-  onDelete: (id: number) => void;
-  onEdit: (t: Task) => void;
-  onRoutine: () => void;
-  routineLoading: boolean;
-  onReorder: (ids: number[]) => Promise<void>;
-}) {
-  const dayTasks = tasks
-    .filter((t) => t.data === dateStr(selectedDate))
-    .sort(sortTasks);
-
-  const dragRef = useRef<Task | null>(null);
-
-  const handleDrop = useCallback(
-    async (e: React.DragEvent, target: Task) => {
-      e.preventDefault();
-      const dragged = dragRef.current;
-      dragRef.current = null;
-      if (!dragged || dragged.id === target.id) return;
-      // Build the new display order: move dragged to target's position
-      const ids = dayTasks.map((t) => t.id).filter((id) => id !== dragged.id);
-      const targetIdx = ids.indexOf(target.id);
-      ids.splice(targetIdx, 0, dragged.id);
-      await onReorder(ids);
-    },
-    [dayTasks, onReorder]
-  );
-
-  return (
-    <div className="mb-10">
-      {/* Date header */}
-      <div className="flex items-baseline gap-4 mb-4">
-        <h2 className="text-[40px] md:text-[56px] font-serif leading-none text-white uppercase">
-          {formatDateIta(selectedDate)}
-        </h2>
-        {giornoAttivo !== null && (
-          <span className="text-[18px] font-serif text-[#B87333]">GIORNO {giornoAttivo}</span>
-        )}
-      </div>
-
-      {/* Routine button */}
-      <button
-        onClick={onRoutine}
-        disabled={routineLoading}
-        className="mb-5 text-[11px] font-serif tracking-[0.12em] px-4 py-2 border border-[#B87333] text-[#B87333] hover:bg-[#B87333] hover:text-black transition-colors disabled:opacity-40"
-      >
-        {routineLoading ? "..." : "ROUTINE GIORNALIERA"}
-      </button>
-
-      {/* Task list */}
-      <div className="border border-[#262626] divide-y divide-[#1a1a1a] min-h-[60px]">
-        {dayTasks.length === 0 ? (
-          <p className="text-[13px] text-[#6E6A65] font-sans px-3 py-4">Nessuna task per oggi.</p>
-        ) : (
-          dayTasks.map((t) => (
-            <TaskRow
-              key={t.id}
-              task={t}
-              onStatusToggle={onStatusToggle}
-              onDelete={onDelete}
-              onEdit={onEdit}
-              draggable
-              onDragStart={(t) => { dragRef.current = t; }}
-              onDrop={handleDrop}
-            />
-          ))
-        )}
-      </div>
-
-      <QuickAdd onAdd={onAdd} />
-
-      {/* Day navigation */}
-      <div className="flex items-center gap-4 mt-6 text-[12px] font-serif tracking-[0.1em]">
-        <button onClick={onPrev} className="text-[#6E6A65] hover:text-foreground transition-colors">← IERI</button>
-        <button onClick={onToday} className="text-[#B87333] hover:text-foreground transition-colors">OGGI</button>
-        <button onClick={onNext} className="text-[#6E6A65] hover:text-foreground transition-colors">DOMANI →</button>
-      </div>
-    </div>
-  );
-}
-
-// ─── Weekly view ──────────────────────────────────────────────────────────────
-
-function WeeklyView({
-  weekFrom,
-  tasks,
-  onSelectDay,
-  onEdit,
-  onStatusToggle,
-  onAdd,
-  onMove,
-}: {
-  weekFrom: Date;
-  tasks: Task[];
-  onSelectDay: (d: Date) => void;
-  onEdit: (t: Task) => void;
-  onStatusToggle: (t: Task) => void;
-  onAdd: (testo: string, tipo: Tipo, data: Date) => Promise<void>;
-  onMove: (id: number, data: string) => Promise<void>;
-}) {
-  const [addingDay, setAddingDay] = useState<string | null>(null);
-  const days = Array.from({ length: 7 }, (_, i) => addDays(weekFrom, i));
-  const isMobile = typeof window !== "undefined" && window.innerWidth < 640;
-  const dragRef = useRef<Task | null>(null);
-
-  return (
-    <div className="mb-10">
-      <h3 className="text-[16px] font-serif tracking-[0.12em] text-[#6E6A65] mb-4">QUESTA SETTIMANA</h3>
-
-      {isMobile ? (
-        /* Mobile: vertical list */
-        <div className="flex flex-col gap-4">
-          {days.map((day) => {
-            const ds = dateStr(day);
-            const dayTasks = tasks.filter((t) => t.data === ds).sort((a, b) => a.priorita - b.priorita);
-            return (
-              <div key={ds} className="border border-[#262626] p-3">
-                <div
-                  className="text-[11px] font-serif tracking-widest text-[#6E6A65] mb-2 cursor-pointer hover:text-foreground"
-                  onClick={() => onSelectDay(day)}
-                >
-                  {WEEKDAYS[days.indexOf(day)]} {day.getDate()}
-                </div>
-                {dayTasks.map((t) => (
-                  <div
-                    key={t.id}
-                    className="flex items-center gap-2 py-1 cursor-pointer"
-                    onClick={() => onEdit(t)}
-                  >
-                    <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: TIPO_COLOR[t.tipo] }} />
-                    <span className="text-[12px] font-sans truncate flex-1" style={{ color: t.stato === "FATTO" ? "#6E6A65" : "#E8E4DE", textDecoration: t.stato === "FATTO" ? "line-through" : "none" }}>
-                      {t.testo.slice(0, 40)}
-                    </span>
-                    <button onClick={(e) => { e.stopPropagation(); onStatusToggle(t); }} className="text-[9px] font-serif text-[#6E6A65] hover:text-foreground shrink-0">{t.stato.slice(0, 2)}</button>
-                  </div>
-                ))}
-                {addingDay === ds ? (
-                  <QuickAdd onAdd={(testo, tipo) => { setAddingDay(null); return onAdd(testo, tipo, day); }} />
-                ) : (
-                  <button onClick={() => setAddingDay(ds)} className="text-[10px] font-serif text-[#6E6A65] hover:text-[#B87333] mt-1">+ aggiungi</button>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      ) : (
-        /* Desktop: 7 columns */
-        <div className="grid grid-cols-7 gap-1">
-          {days.map((day, i) => {
-            const ds = dateStr(day);
-            const dayTasks = tasks.filter((t) => t.data === ds).sort((a, b) => a.priorita - b.priorita);
-            const isToday = ds === dateStr(new Date());
-            return (
-              <div
-                key={ds}
-                className={`border border-[#262626] p-2 min-h-[80px] ${isToday ? "border-[#B87333]" : ""}`}
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  const dragged = dragRef.current;
-                  dragRef.current = null;
-                  if (dragged && dragged.data !== ds) onMove(dragged.id, ds);
-                }}
-              >
-                <div
-                  className="text-[10px] font-serif tracking-widest mb-2 cursor-pointer hover:text-[#B87333]"
-                  style={{ color: isToday ? "#B87333" : "#6E6A65" }}
-                  onClick={() => onSelectDay(day)}
-                >
-                  {WEEKDAYS[i]} {day.getDate()}
-                </div>
-                {dayTasks.map((t) => (
-                  <div
-                    key={t.id}
-                    className="flex items-start gap-1 mb-1 cursor-pointer"
-                    draggable
-                    onDragStart={() => { dragRef.current = t; }}
-                    onClick={() => onEdit(t)}
-                    title={t.testo}
-                  >
-                    <span className="w-1.5 h-1.5 rounded-full shrink-0 mt-1" style={{ backgroundColor: TIPO_COLOR[t.tipo] }} />
-                    <span
-                      className="text-[10px] font-sans leading-tight"
-                      style={{ color: t.stato === "FATTO" ? "#6E6A65" : "#E8E4DE", textDecoration: t.stato === "FATTO" ? "line-through" : "none" }}
-                    >
-                      {t.testo.slice(0, 40)}
-                    </span>
-                  </div>
-                ))}
-                {addingDay === ds ? (
-                  <div className="mt-1">
-                    <QuickAdd onAdd={(testo, tipo) => { setAddingDay(null); return onAdd(testo, tipo, day); }} />
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => setAddingDay(ds)}
-                    className="text-[9px] font-serif text-[#6E6A65] hover:text-[#B87333] mt-1"
-                  >+</button>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── Monthly view ─────────────────────────────────────────────────────────────
-
-function MonthlyView({
-  month,
-  tasks,
-  onSelectDay,
-  onPrevMonth,
-  onNextMonth,
-}: {
-  month: Date;
-  tasks: Task[];
-  onSelectDay: (d: Date) => void;
-  onPrevMonth: () => void;
-  onNextMonth: () => void;
-}) {
-  const start = monthStart(month);
-  const end = monthEnd(month);
-  // Pad to Monday
-  const padStart = start.getDay() === 0 ? 6 : start.getDay() - 1;
-  const cells: (Date | null)[] = Array.from({ length: padStart }, () => null);
-  for (let d = new Date(start); d <= end; d = addDays(d, 1)) {
-    cells.push(new Date(d));
-  }
-  while (cells.length % 7 !== 0) cells.push(null);
-
-  const taskMap: Record<string, Task[]> = {};
-  for (const t of tasks) {
-    if (!taskMap[t.data]) taskMap[t.data] = [];
-    taskMap[t.data].push(t);
-  }
-
-  return (
-    <div className="mb-8">
-      <div className="flex items-center gap-4 mb-4">
-        <button onClick={onPrevMonth} className="text-[12px] font-serif text-[#6E6A65] hover:text-foreground">←</button>
-        <h3 className="text-[16px] font-serif tracking-[0.12em] text-[#6E6A65]">
-          QUESTO MESE — {formatMonthIta(month)}
-        </h3>
-        <button onClick={onNextMonth} className="text-[12px] font-serif text-[#6E6A65] hover:text-foreground">→</button>
-      </div>
-
-      <div className="grid grid-cols-7 gap-px bg-[#1a1a1a]">
-        {WEEKDAYS.map((wd) => (
-          <div key={wd} className="bg-[#0A0A0A] text-[10px] font-serif tracking-widest text-[#6E6A65] text-center py-1">{wd}</div>
-        ))}
-        {cells.map((day, i) => {
-          if (!day) return <div key={i} className="bg-[#0A0A0A] h-12" />;
-          const ds = dateStr(day);
-          const dayTasks = taskMap[ds] ?? [];
-          const hasTodo = dayTasks.some((t) => t.stato === "DA FARE");
-          const isToday = ds === dateStr(new Date());
-          return (
-            <div
-              key={ds}
-              onClick={() => onSelectDay(day)}
-              className={`bg-[#0A0A0A] h-12 p-1.5 cursor-pointer hover:bg-[#141414] flex flex-col items-start ${isToday ? "ring-1 ring-[#B87333]" : ""}`}
+        <div className="flex border border-[#333]">
+          {(["week", "month"] as const).map((option) => (
+            <button
+              key={option}
+              type="button"
+              onClick={() => setView(option)}
+              className={`px-4 py-2 font-serif text-[11px] tracking-wider ${view === option ? "bg-[#B81D1D] text-white" : "text-[#6E6A65] hover:text-[#E8E4DE]"}`}
             >
-              <span className="text-[11px] font-serif" style={{ color: isToday ? "#B87333" : "#6E6A65" }}>{day.getDate()}</span>
-              {dayTasks.length > 0 && (
-                <span className="flex items-center gap-1 mt-auto">
-                  <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: hasTodo ? "#B81D1D" : "#6E6A65" }} />
-                  <span className="text-[9px] font-serif text-[#6E6A65]">{dayTasks.length}</span>
-                </span>
-              )}
-            </div>
+              {option === "week" ? "SETTIMANA" : "MESE"}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between">
+        <button type="button" onClick={() => changeAnchor(-1)} className="border border-[#333] px-4 py-2 font-serif text-[12px] text-[#E8E4DE]">←</button>
+        <div className="text-center">
+          <div className="font-serif text-[18px] tracking-wider text-[#E8E4DE]">{view === "week" ? "SETTIMANA" : monthLabel(anchor)}</div>
+          {view === "week" && <div className="mt-1 font-sans text-[11px] capitalize text-[#6E6A65]">{dateLabel(dates[0] ?? anchor)} — {dateLabel(dates[dates.length - 1] ?? anchor)}</div>}
+        </div>
+        <button type="button" onClick={() => changeAnchor(1)} className="border border-[#333] px-4 py-2 font-serif text-[12px] text-[#E8E4DE]">→</button>
+      </div>
+
+      <div className={`grid gap-px bg-[#262626] ${view === "week" ? "grid-cols-7" : "grid-cols-7"}`}>
+        {["LUN", "MAR", "MER", "GIO", "VEN", "SAB", "DOM"].map((day) => (
+          <div key={day} className="bg-[#0A0A0A] py-2 text-center font-mono text-[10px] text-[#6E6A65]">{day}</div>
+        ))}
+        {dates.map((date) => {
+          const key = localDate(date);
+          const entry = entryByDate.get(key);
+          const future = key > today;
+          const compiled = isCompiled(entry);
+          const state = future ? "FUTURO" : compiled ? "COMPILATO" : "MANCANTE";
+          const stateColor = future ? "#6E6A65" : compiled ? "#00FF41" : "#B81D1D";
+          const tasksDone = checklistByDate.get(key)?.size ?? 0;
+          return (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setSelectedDate(key)}
+              className={`min-h-[112px] bg-[#101010] p-2 text-left transition-colors hover:bg-[#181818] ${selectedDate === key ? "outline outline-2 outline-[#B81D1D] -outline-offset-2" : ""} ${date.getMonth() !== anchor.getMonth() && view === "month" ? "opacity-40" : ""}`}
+            >
+              <div className="flex items-start justify-between gap-1">
+                <span className="font-mono text-[13px] text-[#E8E4DE]">{date.getDate()}</span>
+                <span className="h-2 w-2" style={{ backgroundColor: stateColor }} title={state} />
+              </div>
+              <div className="mt-2 font-mono text-[9px]" style={{ color: stateColor }}>{state}</div>
+              <div className="mt-2 space-y-1 font-sans text-[10px] text-[#B7B1AA]">
+                {trackingSummary(entry).slice(0, 2).map((item) => <div key={item} className="truncate">{item}</div>)}
+              </div>
+              <div className="mt-2 font-mono text-[9px] text-[#6E6A65]">TASK {tasksDone}/4</div>
+            </button>
           );
         })}
       </div>
-    </div>
-  );
-}
 
-// ─── Template settings ────────────────────────────────────────────────────────
-
-function TemplateSettings() {
-  const qc = useQueryClient();
-
-  const { data: templates = [] } = useQuery<TaskTemplate[]>({
-    queryKey: ["planner-templates"],
-    queryFn: () => fetchJson(api("/admin/planner/templates")),
-  });
-
-  const addMut = useMutation({
-    mutationFn: (body: Partial<TaskTemplate>) =>
-      fetchJson(api("/admin/planner/templates"), { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["planner-templates"] }),
-  });
-
-  const deleteMut = useMutation({
-    mutationFn: (id: number) =>
-      fetchJson(api(`/admin/planner/templates/${id}`), { method: "DELETE" }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["planner-templates"] }),
-  });
-
-  const [newTesto, setNewTesto] = useState("");
-  const [newTipo, setNewTipo] = useState<Tipo>("ALTRO");
-  const [newPriorita, setNewPriorita] = useState(2);
-
-  return (
-    <div className="border border-[#262626] p-5">
-      <h4 className="text-[14px] font-serif tracking-[0.1em] text-[#6E6A65] mb-4">IMPOSTAZIONI PLANNER — TEMPLATE ROUTINE</h4>
-      <div className="divide-y divide-[#1a1a1a] mb-4">
-        {templates.map((t) => (
-          <div key={t.id} className="flex items-center gap-3 py-2">
-            <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: TIPO_COLOR[t.tipo] }} />
-            <span className="flex-1 text-[13px] font-sans text-foreground">{t.testo}</span>
-            <span className="text-[10px] font-serif text-[#6E6A65]">{t.tipo}</span>
-            <span className="text-[10px] font-serif text-[#6E6A65]">P{t.priorita}</span>
-            <button onClick={() => deleteMut.mutate(t.id)} className="text-[#6E6A65] hover:text-[#B81D1D] text-[11px]">✕</button>
+      <div className="border border-[#333] bg-[#101010] p-5">
+        <div className="flex flex-col gap-4 border-b border-[#262626] pb-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <p className="font-mono text-[10px] tracking-[0.15em] text-[#B81D1D]">{selectedDate === today ? "OGGI" : "GIORNO SELEZIONATO"}</p>
+            <h3 className="mt-1 font-serif text-[22px] capitalize tracking-wider text-[#E8E4DE]">{dateLabel(parseDate(selectedDate))}</h3>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {trackingSummary(selectedEntry).length > 0 ? trackingSummary(selectedEntry).map((item) => <span key={item} className="border border-[#333] px-2 py-1 font-mono text-[10px] text-[#B7B1AA]">{item}</span>) : <span className="font-sans text-[12px] text-[#6E6A65]">Nessun tracking registrato.</span>}
+            </div>
           </div>
-        ))}
-        {templates.length === 0 && (
-          <p className="text-[12px] text-[#6E6A65] font-sans py-2">Nessun template. Aggiungine uno qui sotto.</p>
-        )}
+          <button type="button" onClick={() => onOpenDay(selectedEntry?.numero)} className="border border-[#B81D1D] px-4 py-3 font-serif text-[12px] tracking-wider text-[#B81D1D] hover:bg-[#B81D1D] hover:text-white">
+            APRI GIORNO
+          </button>
+        </div>
+
+        <div className="pt-4">
+          <div className="mb-3 font-serif text-[11px] tracking-[0.2em] text-[#6E6A65]">TASK FISSI</div>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {FIXED_TASKS.map((task) => {
+              const done = selectedTasks.has(task);
+              return (
+                <button
+                  key={task}
+                  type="button"
+                  disabled={checklistLoading || toggleTask.isPending}
+                  onClick={() => toggleTask.mutate({ data: selectedDate, task, done: !done })}
+                  className={`min-h-12 border px-2 font-serif text-[11px] tracking-wider transition-colors ${done ? "border-[#00FF41] bg-[#00FF41] text-black" : "border-[#333] text-[#E8E4DE] hover:border-[#B81D1D]"}`}
+                  aria-pressed={done}
+                >
+                  {done ? "✓" : "○"} {task}
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </div>
-      <div className="flex gap-2">
-        <input
-          value={newTesto}
-          onChange={(e) => setNewTesto(e.target.value)}
-          placeholder="Testo template..."
-          maxLength={500}
-          className="flex-1 bg-[#141414] border border-[#262626] text-[12px] font-sans px-3 py-1.5 text-foreground placeholder:text-[#6E6A65] focus:outline-none focus:border-[#B87333]"
-        />
-        <select value={newTipo} onChange={(e) => setNewTipo(e.target.value as Tipo)} className="bg-[#141414] border border-[#262626] text-[11px] font-serif text-foreground px-2 py-1.5 focus:outline-none">
-          {TIPI.map((t) => <option key={t}>{t}</option>)}
-        </select>
-        <select value={newPriorita} onChange={(e) => setNewPriorita(Number(e.target.value))} className="bg-[#141414] border border-[#262626] text-[11px] font-serif text-foreground px-2 py-1.5 focus:outline-none">
-          <option value={1}>P1</option>
-          <option value={2}>P2</option>
-          <option value={3}>P3</option>
-        </select>
-        <button
-          onClick={() => {
-            if (!newTesto.trim()) return;
-            addMut.mutate({ testo: newTesto.trim(), tipo: newTipo, priorita: newPriorita });
-            setNewTesto("");
-          }}
-          disabled={!newTesto.trim() || addMut.isPending}
-          className="text-[11px] font-serif px-4 py-1.5 bg-[#B87333] text-black disabled:opacity-40 hover:opacity-80 transition-opacity"
-        >
-          +
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// ─── Main PlannerTab ──────────────────────────────────────────────────────────
-
-export function PlannerTab() {
-  const qc = useQueryClient();
-
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const [month, setMonth] = useState(() => new Date());
-  const [editingTask, setEditingTask] = useState<Task | null>(null);
-  const [routineLoading, setRoutineLoading] = useState(false);
-
-  // Compute date ranges for queries
-  const weekFrom = weekStart(selectedDate);
-  const weekTo = addDays(weekFrom, 6);
-  const mStart = monthStart(month);
-  const mEnd = monthEnd(month);
-
-  // We fetch a wide range so all three views share one query when possible
-  const from = dateStr(mStart);
-  const to = dateStr(mEnd);
-
-  const { data: tasks = [], refetch: refetchTasks } = useQuery<Task[]>({
-    queryKey: ["planner-tasks", from, to],
-    queryFn: () => fetchJson(api(`/admin/planner/tasks?from=${from}&to=${to}`)),
-  });
-
-  // Also prefetch ±1 month so navigation is instant
-  useQuery<Task[]>({
-    queryKey: ["planner-tasks", dateStr(addDays(mStart, -31)), dateStr(addDays(mStart, -1))],
-    queryFn: () => fetchJson(api(`/admin/planner/tasks?from=${dateStr(addDays(mStart, -31))}&to=${dateStr(addDays(mStart, -1))}`)),
-  });
-
-  const { data: giornoData } = useQuery<{ numero: number | null }>({
-    queryKey: ["planner-giorno-attivo"],
-    queryFn: () => fetchJson(api("/admin/planner/giorno-attivo")),
-  });
-
-  const addTask = useCallback(
-    async (testo: string, tipo: Tipo, data?: Date) => {
-      const d = dateStr(data ?? selectedDate);
-      await fetchJson(api("/admin/planner/tasks"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ data: d, testo, tipo, stato: "DA FARE", priorita: 2 }),
-      });
-      qc.invalidateQueries({ queryKey: ["planner-tasks"] });
-    },
-    [selectedDate, qc]
-  );
-
-  const statusToggle = useCallback(
-    async (task: Task) => {
-      const next = STATO_NEXT[task.stato];
-      await fetchJson(api(`/admin/planner/tasks/${task.id}`), {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ stato: next }),
-      });
-      qc.invalidateQueries({ queryKey: ["planner-tasks"] });
-    },
-    [qc]
-  );
-
-  const deleteTask = useCallback(
-    async (id: number) => {
-      await fetchJson(api(`/admin/planner/tasks/${id}`), { method: "DELETE" });
-      qc.invalidateQueries({ queryKey: ["planner-tasks"] });
-    },
-    [qc]
-  );
-
-  const saveTask = useCallback(
-    async (id: number, patch: Partial<Task>) => {
-      await fetchJson(api(`/admin/planner/tasks/${id}`), {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(patch),
-      });
-      qc.invalidateQueries({ queryKey: ["planner-tasks"] });
-    },
-    [qc]
-  );
-
-  const reorderTasks = useCallback(
-    async (ids: number[]) => {
-      await fetchJson(api("/admin/planner/tasks/reorder"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids }),
-      });
-      qc.invalidateQueries({ queryKey: ["planner-tasks"] });
-    },
-    [qc]
-  );
-
-  const doRoutine = useCallback(async () => {
-    setRoutineLoading(true);
-    try {
-      await fetchJson(api(`/admin/planner/routine?data=${dateStr(selectedDate)}`), { method: "POST" });
-      qc.invalidateQueries({ queryKey: ["planner-tasks"] });
-    } finally {
-      setRoutineLoading(false);
-    }
-  }, [selectedDate, qc]);
-
-  const handleSelectDay = useCallback((d: Date) => {
-    setSelectedDate(d);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }, []);
-
-  // Keep month in sync with selectedDate
-  const prevMonth = () => setMonth((m) => new Date(m.getFullYear(), m.getMonth() - 1, 1));
-  const nextMonth = () => setMonth((m) => new Date(m.getFullYear(), m.getMonth() + 1, 1));
-
-  return (
-    <div className="space-y-10 pb-12">
-      {/* Daily */}
-      <DailyView
-        selectedDate={selectedDate}
-        tasks={tasks}
-        giornoAttivo={giornoData?.numero ?? null}
-        onPrev={() => setSelectedDate((d) => addDays(d, -1))}
-        onToday={() => setSelectedDate(new Date())}
-        onNext={() => setSelectedDate((d) => addDays(d, 1))}
-        onSelectDate={setSelectedDate}
-        onAdd={addTask}
-        onStatusToggle={statusToggle}
-        onDelete={deleteTask}
-        onEdit={setEditingTask}
-        onRoutine={doRoutine}
-        routineLoading={routineLoading}
-        onReorder={reorderTasks}
-      />
-
-      {/* Weekly */}
-      <WeeklyView
-        weekFrom={weekFrom}
-        tasks={tasks}
-        onSelectDay={handleSelectDay}
-        onEdit={setEditingTask}
-        onStatusToggle={statusToggle}
-        onAdd={(testo, tipo, d) => addTask(testo, tipo, d)}
-        onMove={async (id, data) => {
-          await fetchJson(api(`/admin/planner/tasks/${id}`), {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ data }),
-          });
-          qc.invalidateQueries({ queryKey: ["planner-tasks"] });
-        }}
-      />
-
-      {/* Monthly */}
-      <MonthlyView
-        month={month}
-        tasks={tasks}
-        onSelectDay={handleSelectDay}
-        onPrevMonth={prevMonth}
-        onNextMonth={nextMonth}
-      />
-
-      {/* Template settings */}
-      <TemplateSettings />
-
-      {/* Edit modal */}
-      {editingTask && (
-        <EditModal
-          task={editingTask}
-          onSave={saveTask}
-          onClose={() => setEditingTask(null)}
-        />
-      )}
-    </div>
+    </section>
   );
 }
