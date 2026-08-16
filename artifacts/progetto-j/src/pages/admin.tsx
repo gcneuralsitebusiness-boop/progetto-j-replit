@@ -1156,7 +1156,7 @@ export default function Admin() {
       {activeTab === "iscritti" && <IscrittiTab />}
       {activeTab === "bulk" && <BulkEditTab />}
       {activeTab === "analytics" && <AnalyticsTab />}
-      {activeTab === "planner" && <PlannerTab onOpenDay={(numero) => handleSwitchTab("diario", numero)} />}
+      {activeTab === "planner" && <PlannerTab />}
     </div>
   );
 }

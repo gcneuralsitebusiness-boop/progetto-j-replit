@@ -6,12 +6,13 @@ import {
   insertTaskSchema,
   insertTaskTemplateSchema,
   giorniTable,
+  plannerNotesTable,
 } from "@workspace/db/schema";
-import { eq, and, between, sql, asc, desc } from "drizzle-orm";
+import { eq, and, between, sql, asc, desc, isNull } from "drizzle-orm";
 import { z } from "zod";
 
 const router: IRouter = Router();
-export const FIXED_PLANNER_TASKS = ["DIARIO", "CARD IG", "STORIA IG", "TRACKING"] as const;
+export const FIXED_PLANNER_TASKS = ["DIARIO", "TRACKING", "CARD IG", "CONTENUTO"] as const;
 
 function isAdmin(req: any): boolean {
   return !!req.session?.adminAuthenticated;
@@ -66,6 +67,97 @@ router.post("/admin/planner/checklist", async (req, res): Promise<void> => {
       tipo: parsed.data.task === "DIARIO" ? "DIARIO" : "ALTRO",
       stato: "FATTO",
       priorita: 2,
+    }).returning();
+    res.status(201).json(row);
+  } catch {
+    res.status(500).json({ error: "Errore interno" });
+  }
+});
+
+// ─── Simple planner state: daily extras + persistent fixed notes ──────────────
+
+router.get("/admin/planner/state", async (req, res): Promise<void> => {
+  if (!isAdmin(req)) { res.status(401).json({ error: "Non autorizzato" }); return; }
+  const { data } = req.query as Record<string, string>;
+  if (!data || !/^\d{4}-\d{2}-\d{2}$/.test(data)) {
+    res.status(400).json({ error: "data obbligatoria (YYYY-MM-DD)" }); return;
+  }
+  try {
+    const [tasks, extras, fixed] = await Promise.all([
+      db.select().from(tasksTable).where(eq(tasksTable.data, data)),
+      db.select().from(plannerNotesTable).where(and(eq(plannerNotesTable.data, data), eq(plannerNotesTable.tipo, "daily"))),
+      db.select().from(plannerNotesTable).where(and(isNull(plannerNotesTable.data), eq(plannerNotesTable.tipo, "fixed"))).limit(1),
+    ]);
+    res.json({
+      tasks: tasks.filter((row) => (FIXED_PLANNER_TASKS as readonly string[]).includes(row.testo)),
+      extras,
+      fixedNote: fixed[0]?.testo ?? "",
+    });
+  } catch {
+    res.status(500).json({ error: "Errore interno" });
+  }
+});
+
+router.post("/admin/planner/extras", async (req, res): Promise<void> => {
+  if (!isAdmin(req)) { res.status(401).json({ error: "Non autorizzato" }); return; }
+  const parsed = z.object({
+    data: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    testo: z.string().trim().min(1).max(180),
+  }).safeParse(req.body);
+  if (!parsed.success) { res.status(400).json({ error: parsed.error.issues }); return; }
+  try {
+    const existing = await db
+      .select()
+      .from(plannerNotesTable)
+      .where(and(eq(plannerNotesTable.data, parsed.data.data), eq(plannerNotesTable.tipo, "daily")));
+    if (existing.length >= 3) { res.status(400).json({ error: "Massimo 3 note extra per giornata" }); return; }
+    const [row] = await db.insert(plannerNotesTable).values({
+      data: parsed.data.data,
+      tipo: "daily",
+      testo: parsed.data.testo,
+    }).returning();
+    res.status(201).json(row);
+  } catch {
+    res.status(500).json({ error: "Errore interno" });
+  }
+});
+
+router.delete("/admin/planner/extras/:id", async (req, res): Promise<void> => {
+  if (!isAdmin(req)) { res.status(401).json({ error: "Non autorizzato" }); return; }
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) { res.status(400).json({ error: "ID non valido" }); return; }
+  try {
+    await db.delete(plannerNotesTable).where(and(eq(plannerNotesTable.id, id), eq(plannerNotesTable.tipo, "daily")));
+    res.status(204).end();
+  } catch {
+    res.status(500).json({ error: "Errore interno" });
+  }
+});
+
+router.put("/admin/planner/fixed-note", async (req, res): Promise<void> => {
+  if (!isAdmin(req)) { res.status(401).json({ error: "Non autorizzato" }); return; }
+  const parsed = z.object({
+    testo: z.string().max(1000).refine((text) => text.split(/\r?\n/).length <= 10, "Massimo 10 righe"),
+  }).safeParse(req.body);
+  if (!parsed.success) { res.status(400).json({ error: parsed.error.issues }); return; }
+  try {
+    const existing = await db
+      .select()
+      .from(plannerNotesTable)
+      .where(and(isNull(plannerNotesTable.data), eq(plannerNotesTable.tipo, "fixed")))
+      .limit(1);
+    if (existing[0]) {
+      const [row] = await db.update(plannerNotesTable)
+        .set({ testo: parsed.data.testo, updatedAt: new Date() })
+        .where(eq(plannerNotesTable.id, existing[0].id))
+        .returning();
+      res.json(row);
+      return;
+    }
+    const [row] = await db.insert(plannerNotesTable).values({
+      data: null,
+      tipo: "fixed",
+      testo: parsed.data.testo,
     }).returning();
     res.status(201).json(row);
   } catch {

@@ -1,0 +1,113 @@
+RISCRITTURA COMPLETA del PLANNER nell'admin.
+Cancella quello che c'è e sostituisci con questo.
+L'obiettivo: aprirlo, vedere in 2 secondi cosa devo 
+fare oggi, spuntare, chiudere.
+
+═══════════════════════════════════════════
+DESIGN
+═══════════════════════════════════════════
+
+Una sola schermata. Nessun menu. Nessuna vista 
+settimanale/mensile. Nessun drag-drop. Nessuna 
+priorità. Nessuna categoria.
+
+Quando apro la tab PLANNER vedo SOLO:
+
+═══════════════════════════════════════════
+BLOCCO 1 — OGGI (sempre in cima, grande)
+═══════════════════════════════════════════
+
+Header: "GIORNO [N]" in Bebas Neue rosso, grande.
+Sotto: la data di oggi in grigio piccolo.
+
+Lista fissa di 4 task quotidiani, NON modificabili, 
+NON cancellabili — ci sono sempre, ogni giorno:
+
+  □ DIARIO
+  □ TRACKING
+  □ CARD IG
+  □ CONTENUTO (post / storia / reel)
+
+Ogni riga è un checkbox grande, facile da tappare 
+con il pollice. Tap = spuntato, diventa verde con 
+barratura. I check si salvano automaticamente 
+(niente bottone salva).
+
+Sotto i 4 fissi, uno spazio "ALTRO" con un singolo 
+campo testo + bottone [+] per aggiungere una nota 
+rapida per oggi (es. "chiamare palestra", "mandare 
+preventivo detailing"). Massimo 3 note extra. 
+Nessun titolo, nessuna categoria, nessuna priorità. 
+Solo testo breve.
+
+═══════════════════════════════════════════
+BLOCCO 2 — SETTIMANA (sotto, compresso)
+═══════════════════════════════════════════
+
+7 pallini in riga, Lun-Dom.
+- Verde pieno: tutti e 4 i task spuntati
+- Mezzo verde: almeno 1 spuntato
+- Grigio: niente spuntato
+- Bianco: giorno futuro
+
+Tap su un pallino = vedo il riepilogo di quel 
+giorno (cosa è stato spuntato e cosa no). Niente 
+di più.
+
+═══════════════════════════════════════════
+BLOCCO 3 — NOTE FISSE (in fondo, collassabile)
+═══════════════════════════════════════════
+
+Un blocco di testo libero che resta lì sempre, 
+non cambia ogni giorno. Per cose tipo:
+- "Thailandia: budget 1500€"
+- "Post #3 manca materiale primo boxing"
+- "Fixare export card canvas"
+
+Massimo 10 righe. Si modifica con un tap, si salva 
+automaticamente. Resta identico finché non lo cambi 
+tu. Non è legato a nessun giorno.
+
+═══════════════════════════════════════════
+COSA NON DEVE ESSERCI
+═══════════════════════════════════════════
+
+- Nessuna vista mensile
+- Nessun drag-drop
+- Nessuna priorità alta/media/bassa
+- Nessun tipo task (POST/ARTICOLO/VIDEO/SITO/ALTRO)
+- Nessun colore per categoria
+- Nessun task ricorrente configurabile
+- Nessun orario o deadline
+- Nessuna notifica
+
+═══════════════════════════════════════════
+ESTETICA
+═══════════════════════════════════════════
+
+Sfondo: #0A0A0A
+Checkbox vuoto: bordo #333
+Checkbox spuntato: #00FF41 con barratura testo
+Header giorno: Bebas Neue #B81D1D
+Testo task: Inter #E8E4DE 18px
+Pallini settimana: 12px, spaziati uniformemente
+Note fisse: JetBrains Mono #6E6A65 14px
+Nessun bordo arrotondato. Nessuna ombra.
+
+═══════════════════════════════════════════
+TEST
+═══════════════════════════════════════════
+
+a. Apro il planner: vedo subito "GIORNO 97" e i 
+   4 checkbox. Nessun caricamento, nessun menu.
+b. Tappo DIARIO: si spunta in verde. Non devo 
+   premere salva.
+c. Aggiungo "chiamare palestra" nel campo ALTRO. 
+   Appare come quinta riga sotto i 4 fissi.
+d. Guardo i pallini settimana: quelli passati 
+   mostrano il colore corretto.
+e. Scrivo una nota fissa. Chiudo il planner. 
+   Riapro. La nota è ancora lì.
+f. Cambio giorno (domani): i 4 checkbox tornano 
+   vuoti. Le note extra di ieri spariscono. Le 
+   note fisse restano.

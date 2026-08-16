@@ -1,19 +1,33 @@
-import { useMemo, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getListEntriesQueryKey, useListEntries } from "@workspace/api-client-react";
 import type { Entry } from "@workspace/api-client-react";
 
-type CalendarView = "week" | "month";
-type ChecklistTask = "DIARIO" | "CARD IG" | "STORIA IG" | "TRACKING";
+type FixedTask = "DIARIO" | "TRACKING" | "CARD IG" | "CONTENUTO";
 
-const FIXED_TASKS: ChecklistTask[] = ["DIARIO", "CARD IG", "STORIA IG", "TRACKING"];
+const FIXED_TASKS: FixedTask[] = ["DIARIO", "TRACKING", "CARD IG", "CONTENUTO"];
+const WEEKDAYS = ["LUN", "MAR", "MER", "GIO", "VEN", "SAB", "DOM"];
 const BASE = import.meta.env.BASE_URL?.replace(/\/$/, "") ?? "";
 
+type PlannerTask = {
+  testo: FixedTask;
+  stato: "DA FARE" | "FATTO";
+};
+
+type PlannerExtra = {
+  id: number;
+  data: string;
+  testo: string;
+};
+
+type PlannerState = {
+  tasks: PlannerTask[];
+  extras: PlannerExtra[];
+  fixedNote: string;
+};
+
 function localDate(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
 function parseDate(value: string): Date {
@@ -22,58 +36,30 @@ function parseDate(value: string): Date {
 }
 
 function addDays(date: Date, amount: number): Date {
-  const next = new Date(date);
-  next.setDate(next.getDate() + amount);
-  return next;
+  const result = new Date(date);
+  result.setDate(result.getDate() + amount);
+  return result;
 }
 
 function startOfWeek(date: Date): Date {
-  const next = new Date(date);
-  const day = next.getDay();
-  next.setDate(next.getDate() + (day === 0 ? -6 : 1 - day));
-  next.setHours(12, 0, 0, 0);
-  return next;
+  const result = new Date(date);
+  const day = result.getDay();
+  result.setDate(result.getDate() + (day === 0 ? -6 : 1 - day));
+  result.setHours(12, 0, 0, 0);
+  return result;
 }
 
-function monthDays(date: Date): Date[] {
-  const first = new Date(date.getFullYear(), date.getMonth(), 1, 12);
-  const last = new Date(date.getFullYear(), date.getMonth() + 1, 0, 12);
-  const offset = first.getDay() === 0 ? 6 : first.getDay() - 1;
-  return Array.from({ length: offset + last.getDate() }, (_, index) => (
-    addDays(first, index - offset)
-  ));
-}
-
-function dateLabel(date: Date): string {
-  return date.toLocaleDateString("it-IT", { weekday: "long", day: "numeric", month: "long" });
-}
-
-function monthLabel(date: Date): string {
-  return date.toLocaleDateString("it-IT", { month: "long", year: "numeric" }).toUpperCase();
-}
-
-function isCompiled(entry?: Entry): boolean {
-  if (!entry) return false;
-  return Boolean(
-    entry.testo?.trim()
-    || entry.kcal != null
-    || entry.acqua != null
-    || entry.tipoAllenamento
-    || entry.routineCompletata != null
-    || entry.energia != null,
-  );
-}
-
-function trackingSummary(entry?: Entry): string[] {
-  if (!entry) return [];
-  const summary: string[] = [];
-  if (entry.kcal != null) summary.push(`🥗 ${entry.kcal}`);
-  if (entry.tipoAllenamento && entry.tipoAllenamento !== "NESSUNO") summary.push(`🥊 ${entry.tipoAllenamento}`);
-  if (entry.durata != null) summary.push(`${entry.durata} min`);
-  if (entry.routineCompletata === true) summary.push("✓ routine");
-  if (entry.routineCompletata === false) summary.push("~ routine");
-  if (entry.energia != null) summary.push(`⚡ ${entry.energia}/5`);
-  return summary;
+function dayNumber(entries: Entry[] | undefined, date: string): string {
+  const exactEntry = entries?.find((entry) => entry.data === date);
+  if (exactEntry) return String(exactEntry.numero).padStart(3, "0");
+  const today = localDate(new Date());
+  const todayEntry = entries?.find((entry) => entry.data === today);
+  if (todayEntry) {
+    const offset = Math.round((parseDate(date).getTime() - parseDate(today).getTime()) / 86400000);
+    return String(todayEntry.numero + offset).padStart(3, "0");
+  }
+  const latest = [...(entries ?? [])].sort((a, b) => b.numero - a.numero)[0];
+  return latest ? String(latest.numero).padStart(3, "0") : "—";
 }
 
 async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
@@ -83,173 +69,285 @@ async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
     headers: { "Content-Type": "application/json", ...(init?.headers ?? {}) },
   });
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
-  return response.json();
+  if (response.status === 204) return undefined as T;
+  return response.json() as Promise<T>;
 }
 
-type ChecklistRow = {
-  id: number;
-  data: string;
-  testo: ChecklistTask;
-  stato: "DA FARE" | "FATTO";
-};
+function doneTasks(rows: PlannerTask[] | undefined): Set<FixedTask> {
+  return new Set((rows ?? []).filter((row) => row.stato === "FATTO").map((row) => row.testo));
+}
 
-export function PlannerTab({ onOpenDay }: { onOpenDay: (numero?: number) => void }) {
-  const queryClient = useQueryClient();
-  const today = localDate(new Date());
-  const [view, setView] = useState<CalendarView>("week");
-  const [anchor, setAnchor] = useState(() => new Date());
-  const [selectedDate, setSelectedDate] = useState(today);
-  const { data: entries } = useListEntries({ query: { queryKey: getListEntriesQueryKey() } });
-
-  const dates = useMemo(() => {
-    if (view === "week") {
-      const first = startOfWeek(anchor);
-      return Array.from({ length: 7 }, (_, index) => addDays(first, index));
+function WeekDots({
+  dates,
+  today,
+  rows,
+  selectedDate,
+  onSelect,
+}: {
+  dates: Date[];
+  today: string;
+  rows: PlannerTask[];
+  selectedDate: string;
+  onSelect: (date: string) => void;
+}) {
+  const grouped = useMemo(() => {
+    const result = new Map<string, Set<string>>();
+    for (const row of rows) {
+      const date = (row as PlannerTask & { data?: string }).data;
+      if (!date || row.stato !== "FATTO") continue;
+      const current = result.get(date) ?? new Set<string>();
+      current.add(row.testo);
+      result.set(date, current);
     }
-    return monthDays(anchor);
-  }, [anchor, view]);
-
-  const range = useMemo(() => ({
-    from: localDate(dates[0] ?? anchor),
-    to: localDate(dates[dates.length - 1] ?? anchor),
-  }), [anchor, dates]);
-
-  const { data: checklist = [], isLoading: checklistLoading } = useQuery({
-    queryKey: ["planner-checklist", range.from, range.to],
-    queryFn: () => fetchJson<ChecklistRow[]>(`/admin/planner/checklist?from=${range.from}&to=${range.to}`),
-  });
-
-  const toggleTask = useMutation({
-    mutationFn: ({ data, task, done }: { data: string; task: ChecklistTask; done: boolean }) => (
-      fetchJson<ChecklistRow>("/admin/planner/checklist", {
-        method: "POST",
-        body: JSON.stringify({ data, task, done }),
-      })
-    ),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["planner-checklist"] }),
-  });
-
-  const entryByDate = useMemo(() => new Map((entries ?? []).map((entry) => [entry.data, entry])), [entries]);
-  const checklistByDate = useMemo(() => {
-    const map = new Map<string, Set<string>>();
-    checklist.forEach((row) => {
-      if (row.stato !== "FATTO") return;
-      const set = map.get(row.data) ?? new Set<string>();
-      set.add(row.testo);
-      map.set(row.data, set);
-    });
-    return map;
-  }, [checklist]);
-
-  const selectedEntry = entryByDate.get(selectedDate);
-  const selectedTasks = checklistByDate.get(selectedDate) ?? new Set<string>();
-  const changeAnchor = (direction: number) => {
-    setAnchor((current) => {
-      const next = new Date(current);
-      if (view === "week") next.setDate(next.getDate() + direction * 7);
-      else next.setMonth(next.getMonth() + direction);
-      return next;
-    });
-  };
+    return result;
+  }, [rows]);
 
   return (
-    <section className="space-y-6">
-      <div className="flex flex-col gap-4 border-b border-[#262626] pb-5 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="font-mono text-[10px] tracking-[0.2em] text-[#B81D1D]">ADMIN / ORGANIZZAZIONE</p>
-          <h2 className="mt-2 font-serif text-[30px] tracking-wider text-[#E8E4DE]">PLANNER</h2>
-          <p className="mt-1 font-sans text-[12px] text-[#6E6A65]">Controlla la giornata, compila il tracking e prepara i contenuti.</p>
-        </div>
-        <div className="flex border border-[#333]">
-          {(["week", "month"] as const).map((option) => (
-            <button
-              key={option}
-              type="button"
-              onClick={() => setView(option)}
-              className={`px-4 py-2 font-serif text-[11px] tracking-wider ${view === option ? "bg-[#B81D1D] text-white" : "text-[#6E6A65] hover:text-[#E8E4DE]"}`}
-            >
-              {option === "week" ? "SETTIMANA" : "MESE"}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="flex items-center justify-between">
-        <button type="button" onClick={() => changeAnchor(-1)} className="border border-[#333] px-4 py-2 font-serif text-[12px] text-[#E8E4DE]">←</button>
-        <div className="text-center">
-          <div className="font-serif text-[18px] tracking-wider text-[#E8E4DE]">{view === "week" ? "SETTIMANA" : monthLabel(anchor)}</div>
-          {view === "week" && <div className="mt-1 font-sans text-[11px] capitalize text-[#6E6A65]">{dateLabel(dates[0] ?? anchor)} — {dateLabel(dates[dates.length - 1] ?? anchor)}</div>}
-        </div>
-        <button type="button" onClick={() => changeAnchor(1)} className="border border-[#333] px-4 py-2 font-serif text-[12px] text-[#E8E4DE]">→</button>
-      </div>
-
-      <div className={`grid gap-px bg-[#262626] ${view === "week" ? "grid-cols-7" : "grid-cols-7"}`}>
-        {["LUN", "MAR", "MER", "GIO", "VEN", "SAB", "DOM"].map((day) => (
-          <div key={day} className="bg-[#0A0A0A] py-2 text-center font-mono text-[10px] text-[#6E6A65]">{day}</div>
-        ))}
-        {dates.map((date) => {
+    <div className="border-t border-[#262626] pt-6">
+      <div className="mb-4 font-mono text-[10px] tracking-[0.2em] text-[#6E6A65]">SETTIMANA</div>
+      <div className="grid grid-cols-7 gap-2">
+        {dates.map((date, index) => {
           const key = localDate(date);
-          const entry = entryByDate.get(key);
+          const completed = grouped.get(key)?.size ?? 0;
           const future = key > today;
-          const compiled = isCompiled(entry);
-          const state = future ? "FUTURO" : compiled ? "COMPILATO" : "MANCANTE";
-          const stateColor = future ? "#6E6A65" : compiled ? "#00FF41" : "#B81D1D";
-          const tasksDone = checklistByDate.get(key)?.size ?? 0;
+          const color = future ? "#E8E4DE" : completed === 4 ? "#00FF41" : completed > 0 ? "#187A3A" : "#333";
           return (
             <button
               key={key}
               type="button"
-              onClick={() => setSelectedDate(key)}
-              className={`min-h-[112px] bg-[#101010] p-2 text-left transition-colors hover:bg-[#181818] ${selectedDate === key ? "outline outline-2 outline-[#B81D1D] -outline-offset-2" : ""} ${date.getMonth() !== anchor.getMonth() && view === "month" ? "opacity-40" : ""}`}
+              onClick={() => onSelect(key)}
+              className={`flex min-w-0 flex-col items-center gap-2 py-1 ${selectedDate === key ? "text-[#E8E4DE]" : "text-[#6E6A65]"}`}
+              aria-label={`${WEEKDAYS[index]} ${date.getDate()}, ${completed} task completati`}
             >
-              <div className="flex items-start justify-between gap-1">
-                <span className="font-mono text-[13px] text-[#E8E4DE]">{date.getDate()}</span>
-                <span className="h-2 w-2" style={{ backgroundColor: stateColor }} title={state} />
-              </div>
-              <div className="mt-2 font-mono text-[9px]" style={{ color: stateColor }}>{state}</div>
-              <div className="mt-2 space-y-1 font-sans text-[10px] text-[#B7B1AA]">
-                {trackingSummary(entry).slice(0, 2).map((item) => <div key={item} className="truncate">{item}</div>)}
-              </div>
-              <div className="mt-2 font-mono text-[9px] text-[#6E6A65]">TASK {tasksDone}/4</div>
+              <span className="font-mono text-[10px]">{WEEKDAYS[index]}</span>
+              <span className="h-3 w-3 border border-[#555]" style={{ backgroundColor: color, borderColor: color }} />
+              <span className="font-mono text-[10px]">{date.getDate()}</span>
             </button>
           );
         })}
       </div>
+    </div>
+  );
+}
 
-      <div className="border border-[#333] bg-[#101010] p-5">
-        <div className="flex flex-col gap-4 border-b border-[#262626] pb-4 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <p className="font-mono text-[10px] tracking-[0.15em] text-[#B81D1D]">{selectedDate === today ? "OGGI" : "GIORNO SELEZIONATO"}</p>
-            <h3 className="mt-1 font-serif text-[22px] capitalize tracking-wider text-[#E8E4DE]">{dateLabel(parseDate(selectedDate))}</h3>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {trackingSummary(selectedEntry).length > 0 ? trackingSummary(selectedEntry).map((item) => <span key={item} className="border border-[#333] px-2 py-1 font-mono text-[10px] text-[#B7B1AA]">{item}</span>) : <span className="font-sans text-[12px] text-[#6E6A65]">Nessun tracking registrato.</span>}
-            </div>
-          </div>
-          <button type="button" onClick={() => onOpenDay(selectedEntry?.numero)} className="border border-[#B81D1D] px-4 py-3 font-serif text-[12px] tracking-wider text-[#B81D1D] hover:bg-[#B81D1D] hover:text-white">
-            APRI GIORNO
+export function PlannerTab() {
+  const queryClient = useQueryClient();
+  const today = localDate(new Date());
+  const weekDates = useMemo(() => {
+    const first = startOfWeek(new Date());
+    return Array.from({ length: 7 }, (_, index) => addDays(first, index));
+  }, []);
+  const weekFrom = localDate(weekDates[0]);
+  const weekTo = localDate(weekDates[6]);
+  const [selectedDate, setSelectedDate] = useState(today);
+  const [extraText, setExtraText] = useState("");
+  const [fixedNote, setFixedNote] = useState("");
+  const [fixedNoteOpen, setFixedNoteOpen] = useState(false);
+  const noteTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const { data: entries } = useListEntries({ query: { queryKey: getListEntriesQueryKey() } });
+  const { data: todayState } = useQuery({
+    queryKey: ["planner-state", today],
+    queryFn: () => fetchJson<PlannerState>(`/admin/planner/state?data=${today}`),
+  });
+  const { data: selectedState } = useQuery({
+    queryKey: ["planner-state", selectedDate],
+    queryFn: () => fetchJson<PlannerState>(`/admin/planner/state?data=${selectedDate}`),
+    enabled: selectedDate !== today,
+  });
+  const activeState = selectedDate === today ? todayState : selectedState;
+  const { data: weekRows = [] } = useQuery({
+    queryKey: ["planner-checklist", weekFrom, weekTo],
+    queryFn: () => fetchJson<(PlannerTask & { data: string })[]>(`/admin/planner/checklist?from=${weekFrom}&to=${weekTo}`),
+  });
+
+  const [checked, setChecked] = useState<Record<FixedTask, boolean>>({
+    DIARIO: false,
+    TRACKING: false,
+    "CARD IG": false,
+    CONTENUTO: false,
+  });
+
+  useEffect(() => {
+    if (!activeState) return;
+    const next = doneTasks(activeState.tasks);
+    setChecked({
+      DIARIO: next.has("DIARIO"),
+      TRACKING: next.has("TRACKING"),
+      "CARD IG": next.has("CARD IG"),
+      CONTENUTO: next.has("CONTENUTO"),
+    });
+  }, [activeState]);
+
+  useEffect(() => {
+    if (todayState) setFixedNote(todayState.fixedNote);
+  }, [todayState]);
+
+  const toggleTask = useMutation({
+    mutationFn: ({ task, done }: { task: FixedTask; done: boolean }) => (
+      fetchJson<PlannerTask>("/admin/planner/checklist", {
+        method: "POST",
+        body: JSON.stringify({ data: selectedDate, task, done }),
+      })
+    ),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["planner"] }),
+  });
+
+  const addExtra = useMutation({
+    mutationFn: (text: string) => fetchJson<PlannerExtra>("/admin/planner/extras", {
+      method: "POST",
+      body: JSON.stringify({ data: selectedDate, testo: text }),
+    }),
+    onSuccess: () => {
+      setExtraText("");
+      queryClient.invalidateQueries({ queryKey: ["planner-state", selectedDate] });
+    },
+  });
+
+  const deleteExtra = useMutation({
+    mutationFn: (id: number) => fetchJson<void>(`/admin/planner/extras/${id}`, { method: "DELETE" }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["planner-state", selectedDate] }),
+  });
+
+  const saveFixedNote = useMutation({
+    mutationFn: (text: string) => fetchJson("/admin/planner/fixed-note", {
+      method: "PUT",
+      body: JSON.stringify({ testo: text }),
+    }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["planner-state", today] }),
+  });
+
+  useEffect(() => {
+    if (!todayState || fixedNote === todayState.fixedNote) return;
+    if (noteTimer.current) clearTimeout(noteTimer.current);
+    noteTimer.current = setTimeout(() => saveFixedNote.mutate(fixedNote), 500);
+    return () => {
+      if (noteTimer.current) clearTimeout(noteTimer.current);
+    };
+  }, [fixedNote, todayState, saveFixedNote]);
+
+  const selectedSummary = checked;
+  const selectedExtras = activeState?.extras ?? [];
+  const activeNumber = dayNumber(entries, selectedDate);
+  const activeLoading = !activeState;
+  const extraLimitReached = selectedExtras.length >= 3;
+
+  return (
+    <section className="space-y-8 bg-[#0A0A0A]">
+      <div className="border-b border-[#262626] pb-6">
+        <div className="bebas text-[18px] tracking-[0.24em] text-[#6E6A65]">{selectedDate === today ? "OGGI" : "GIORNO SELEZIONATO"} · {selectedDate}</div>
+        <h2 className="bebas mt-1 text-[64px] leading-none tracking-[0.06em] text-[#B81D1D] sm:text-[86px]">GIORNO {activeNumber}</h2>
+      </div>
+
+      <div>
+        <div className="mb-4 font-mono text-[10px] tracking-[0.2em] text-[#6E6A65]">DA FARE OGGI</div>
+        <div className="space-y-2">
+          {FIXED_TASKS.map((task) => {
+            const isDone = checked[task];
+            return (
+              <button
+                key={task}
+                type="button"
+                disabled={activeLoading || toggleTask.isPending}
+                onClick={() => {
+                  const done = !isDone;
+                  setChecked((current) => ({ ...current, [task]: done }));
+                  toggleTask.mutate({ task, done });
+                }}
+                className={`flex min-h-[58px] w-full items-center gap-4 border px-4 text-left transition-colors ${isDone ? "border-[#00FF41] bg-[#00FF41] text-black" : "border-[#333] text-[#E8E4DE] hover:border-[#6E6A65]"}`}
+                aria-pressed={isDone}
+              >
+                <span className={`flex h-7 w-7 shrink-0 items-center justify-center border font-mono text-[18px] ${isDone ? "border-black" : "border-[#333]"}`}>
+                  {isDone ? "×" : ""}
+                </span>
+                <span className={`font-sans text-[18px] ${isDone ? "line-through" : ""}`}>{task}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div>
+        <div className="mb-3 font-mono text-[10px] tracking-[0.2em] text-[#6E6A65]">ALTRO</div>
+        <div className="flex gap-2">
+          <input
+            value={extraText}
+            onChange={(event) => setExtraText(event.target.value.slice(0, 180))}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && extraText.trim() && !extraLimitReached) addExtra.mutate(extraText.trim());
+            }}
+            disabled={extraLimitReached || addExtra.isPending}
+            placeholder={extraLimitReached ? "Massimo 3 note raggiunto" : "Nota rapida per oggi"}
+            className="min-h-12 min-w-0 flex-1 border border-[#333] bg-transparent px-3 font-sans text-[14px] text-[#E8E4DE] outline-none placeholder:text-[#6E6A65] focus:border-[#B81D1D]"
+          />
+          <button
+            type="button"
+            disabled={!extraText.trim() || extraLimitReached || addExtra.isPending}
+            onClick={() => addExtra.mutate(extraText.trim())}
+            className="w-12 border border-[#B81D1D] font-mono text-[24px] text-[#B81D1D] disabled:opacity-30"
+            aria-label="Aggiungi nota extra"
+          >
+            +
           </button>
         </div>
-
-        <div className="pt-4">
-          <div className="mb-3 font-serif text-[11px] tracking-[0.2em] text-[#6E6A65]">TASK FISSI</div>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            {FIXED_TASKS.map((task) => {
-              const done = selectedTasks.has(task);
-              return (
-                <button
-                  key={task}
-                  type="button"
-                  disabled={checklistLoading || toggleTask.isPending}
-                  onClick={() => toggleTask.mutate({ data: selectedDate, task, done: !done })}
-                  className={`min-h-12 border px-2 font-serif text-[11px] tracking-wider transition-colors ${done ? "border-[#00FF41] bg-[#00FF41] text-black" : "border-[#333] text-[#E8E4DE] hover:border-[#B81D1D]"}`}
-                  aria-pressed={done}
-                >
-                  {done ? "✓" : "○"} {task}
-                </button>
-              );
-            })}
-          </div>
+        <div className="mt-3 space-y-2">
+          {selectedExtras.map((note) => (
+            <div key={note.id} className="flex items-center gap-3 border-l-2 border-[#333] pl-3 font-sans text-[14px] text-[#E8E4DE]">
+              <span className="min-w-0 flex-1">{note.testo}</span>
+              <button type="button" onClick={() => deleteExtra.mutate(note.id)} className="font-mono text-[14px] text-[#6E6A65] hover:text-[#B81D1D]" aria-label={`Elimina ${note.testo}`}>×</button>
+            </div>
+          ))}
         </div>
+      </div>
+
+      <WeekDots
+        dates={weekDates}
+        today={today}
+        rows={weekRows}
+        selectedDate={selectedDate}
+        onSelect={setSelectedDate}
+      />
+
+      {selectedDate !== today && (
+        <div className="border-t border-[#262626] pt-5">
+          <div className="font-mono text-[10px] tracking-[0.2em] text-[#6E6A65]">
+            RIEPILOGO · {parseDate(selectedDate).toLocaleDateString("it-IT", { weekday: "long", day: "numeric", month: "long" })}
+          </div>
+          <div className="mt-3 space-y-2">
+            {FIXED_TASKS.map((task) => (
+              <div key={task} className={`font-sans text-[15px] ${selectedSummary.has(task) ? "text-[#00FF41]" : "text-[#6E6A65]"}`}>
+                {selectedSummary.has(task) ? "✓" : "□"} {task}
+              </div>
+            ))}
+          </div>
+          {selectedExtras.length > 0 && (
+            <div className="mt-4 font-sans text-[13px] text-[#6E6A65]">
+              Note extra: {selectedExtras.map((note) => note.testo).join(" · ")}
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="border-t border-[#262626] pt-5">
+        <button
+          type="button"
+          onClick={() => setFixedNoteOpen((open) => !open)}
+          className="flex w-full items-center justify-between text-left"
+          aria-expanded={fixedNoteOpen}
+        >
+          <span className="font-mono text-[10px] tracking-[0.2em] text-[#6E6A65]">NOTE FISSE</span>
+          <span className="font-mono text-[14px] text-[#6E6A65]">{fixedNoteOpen ? "−" : "+"}</span>
+        </button>
+        {fixedNoteOpen && (
+          <textarea
+            value={fixedNote}
+            onChange={(event) => setFixedNote(event.target.value.slice(0, 1000))}
+            rows={10}
+            maxLength={1000}
+            placeholder={"Thailandia: budget 1500€\nPost #3 manca materiale primo boxing\nFixare export card canvas"}
+            className="mt-4 w-full resize-y border-0 border-l-2 border-[#333] bg-transparent p-0 pl-4 font-mono text-[14px] leading-6 text-[#6E6A65] outline-none placeholder:text-[#444]"
+          />
+        )}
       </div>
     </section>
   );

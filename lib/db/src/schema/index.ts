@@ -10,3 +10,4 @@ export * from "./iscritti";
 export * from "./bozze";
 export * from "./pageviews";
 export * from "./tasks";
+export * from "./planner-notes";
