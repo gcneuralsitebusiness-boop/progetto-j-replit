@@ -156,9 +156,6 @@ function validateRanges(data: Record<string, unknown>): string | null {
     if (val == null) continue;
     const num = Number(val);
     if (Number.isNaN(num)) continue;
-    if (INTEGER_FIELDS.has(field) && !Number.isInteger(num)) {
-      return `${field}: il valore ${num} deve essere un numero intero`;
-    }
     if (num < min || num > max) {
       return `${field}: il valore ${num} è fuori dall'intervallo consentito (${min}–${max})`;
     }
