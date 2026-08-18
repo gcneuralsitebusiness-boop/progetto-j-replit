@@ -49,8 +49,8 @@ export default function Home() {
   const heartRateEntries = sortedEntries.filter((entry) => entry.battito != null);
   const progressPercent = Math.min(100, Math.round((currentDay / 180) * 100));
   const comparisonMetrics = [
-    { label: "PESO", unit: "KG", first: firstEntry?.peso, last: lastEntry?.peso, fraction: 1 },
-    { label: "BATTITO", unit: "BPM", first: firstEntry?.battito, last: lastEntry?.battito, fraction: 0 },
+    { label: "PESO", unit: "KG", first: firstEntry?.peso ?? firstWeight, last: lastEntry?.peso ?? currentWeight, fraction: 1 },
+    { label: "BATTITO", unit: "BPM", first: firstEntry?.battito ?? heartRateEntries[0]?.battito, last: lastEntry?.battito ?? heartRateEntries[heartRateEntries.length - 1]?.battito, fraction: 0 },
   ].filter((metric) => metric.first != null && metric.last != null);
 
   const tickerItems = [
@@ -113,6 +113,9 @@ export default function Home() {
                   <span className="text-[hsl(var(--acid))]">{currentWeight.toFixed(1)} KG</span>
                 </div>
               )}
+              <p className="mt-5 max-w-sm text-center font-sans text-[13px] uppercase tracking-[0.2em] text-muted-foreground sm:text-[14px]">
+                Dal fondo al ring. 180 giorni. Tutto pubblico.
+              </p>
               {currentDay > 0 && (
                 <div className="mt-8 w-full max-w-xl">
                   <div className="mb-2 flex items-end justify-between text-[10px] font-sans uppercase tracking-[0.2em] text-muted-foreground">
@@ -123,7 +126,8 @@ export default function Home() {
                 </div>
               )}
               <Link href="/journaling" className="btn-primary mt-8">
-                {ctaTesto} <ArrowRight size={16} />
+                {currentDay > 0 ? `LEGGI IL GIORNO ${String(currentDay).padStart(3, "0")} →` : ctaTesto}
+                {currentDay === 0 && <ArrowRight size={16} />}
               </Link>
               <div className={`mt-8 transition-opacity duration-500 ${hasScrolled ? "opacity-0" : "opacity-100"}`} aria-hidden={hasScrolled}>
                 <div className="scroll-hint-line" />
@@ -139,30 +143,11 @@ export default function Home() {
           </div>
         )}
 
-        {/* The latest diary day stands on its own; editorial lives in Articoli. */}
-        {latestDay && (
-          <section className="max-w-5xl mx-auto px-5 sm:px-6 pt-16 sm:pt-20 w-full">
-            <Reveal>
-              <div className="flex items-end justify-between mb-5">
-                <div>
-                  <span className="page-label">ULTIMO AGGIORNAMENTO</span>
-                  <h3 className="font-serif text-[clamp(42px,7vw,72px)] leading-[0.82] text-foreground bebas mt-2">
-                    GIORNO {String(latestDay.numero).padStart(3, "0")}
-                  </h3>
-                </div>
-                <Link href={`/giorno/${latestDay.numero}`} className="hidden sm:inline-flex text-[11px] uppercase tracking-[0.2em] text-primary hover:text-foreground">
-                  APRI <ArrowRight size={14} />
-                </Link>
-              </div>
-              <DayCard entry={latestDay} featured />
-            </Reveal>
-          </section>
-        )}
-
         {comparisonMetrics.length > 0 && firstEntry && lastEntry && (
           <section className="max-w-5xl mx-auto px-5 sm:px-6 pt-24 w-full">
             <Reveal>
               <div className="border-t border-iron pt-8">
+                <span className="page-label">LA TRASFORMAZIONE</span>
                 <h3 className="font-serif text-[clamp(28px,6vw,48px)] leading-none tracking-wide bebas text-foreground">
                   GIORNO {firstEntry.numero} → GIORNO {lastEntry.numero}
                 </h3>
@@ -211,6 +196,26 @@ export default function Home() {
           </section>
         )}
 
+        {/* The latest diary day stands on its own; editorial lives in Articoli. */}
+        {latestDay && (
+          <section className="max-w-5xl mx-auto px-5 sm:px-6 pt-16 sm:pt-20 w-full">
+            <Reveal>
+              <div className="flex items-end justify-between mb-5">
+                <div>
+                  <span className="page-label">ULTIMO AGGIORNAMENTO</span>
+                  <h3 className="font-serif text-[clamp(42px,7vw,72px)] leading-[0.82] text-foreground bebas mt-2">
+                    GIORNO {String(latestDay.numero).padStart(3, "0")}
+                  </h3>
+                </div>
+                <Link href={`/giorno/${latestDay.numero}`} className="hidden sm:inline-flex text-[11px] uppercase tracking-[0.2em] text-primary hover:text-foreground">
+                  APRI <ArrowRight size={14} />
+                </Link>
+              </div>
+              <DayCard entry={latestDay} featured />
+            </Reveal>
+          </section>
+        )}
+
         {/* Timeline */}
         <section className="max-w-5xl mx-auto px-5 sm:px-6 py-24 w-full">
           <Reveal>
@@ -254,7 +259,7 @@ export default function Home() {
             ) : (
               latestEntries.map((entry) => (
                 <Reveal key={entry.id}>
-                  <DayCard entry={entry} />
+                  <DayCard entry={entry} hookOnly />
                 </Reveal>
               ))
             )}

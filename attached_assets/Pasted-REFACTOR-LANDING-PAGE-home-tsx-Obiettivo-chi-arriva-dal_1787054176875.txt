@@ -1,0 +1,163 @@
+REFACTOR LANDING PAGE — home.tsx
+
+Obiettivo: chi arriva dal link in bio di Instagram
+deve capire in 3 secondi chi è J e perché dovrebbe 
+leggere il diario. Adesso vede un numero e dei dati 
+senza contesto. Deve sentire la storia.
+
+═══════════════════════════════════════════
+MODIFICHE ALL'HERO
+═══════════════════════════════════════════
+
+Dopo la riga del peso (130.0 KG → 80.3 KG) e 
+PRIMA della barra di progresso, aggiungi una 
+riga di testo:
+
+<p className="mt-5 font-sans text-[13px] sm:text-[14px] 
+  uppercase tracking-[0.2em] text-muted-foreground 
+  max-w-sm text-center">
+  Dal fondo al ring. 180 giorni. Tutto pubblico.
+</p>
+
+Questa riga dà il contesto a chi non conosce J.
+Non modificare nient'altro nell'hero.
+
+Cambia il testo del bottone CTA da 
+siteContent?.home_cta_testo (che di default è 
+"Segui il percorso") a questo testo fisso:
+
+"LEGGI IL GIORNO {currentDay} →"
+
+Esempio: "LEGGI IL GIORNO 097 →"
+
+Se currentDay è 0, usa il testo dal DB come 
+fallback.
+
+═══════════════════════════════════════════
+RIORDINO SEZIONI — CAMBIA SOLO L'ORDINE,
+NON IL CONTENUTO
+═══════════════════════════════════════════
+
+Ordine attuale (da cambiare):
+1. Hero
+2. Ticker
+3. Ultimo giorno (latestDay)
+4. Confronto prima/dopo (comparisonMetrics)
+5. Timeline
+6. Ultimi giorni
+7. EKG divider
+8. Community CTA
+
+Ordine nuovo (logica narrativa):
+1. Hero
+2. Ticker
+3. Confronto prima/dopo ← SPOSTATO SOPRA
+4. Ultimo giorno
+5. Timeline
+6. Ultimi giorni
+7. EKG divider
+8. Community CTA
+
+Il confronto prima/dopo è la prova che il 
+progetto funziona. Va mostrato subito, prima 
+del diario dell'ultimo giorno.
+
+NON modificare il contenuto delle sezioni — 
+solo l'ordine nel JSX.
+
+═══════════════════════════════════════════
+SEZIONE CONFRONTO — AGGIUNGI TITOLO
+═══════════════════════════════════════════
+
+La sezione confronto prima/dopo adesso ha solo 
+"GIORNO 1 → GIORNO 97" come titolo. 
+Sopra, aggiungi un page-label:
+
+<span className="page-label">LA TRASFORMAZIONE</span>
+
+Poi il titolo esistente sotto.
+
+═══════════════════════════════════════════
+DAYCARD NELLA HOME — HOOK TESTUALE
+═══════════════════════════════════════════
+
+Nelle DayCard mostrate nella sezione 
+"ULTIMI GIORNI" (le ultime 3), il testo 
+preview (line-clamp-3) mostra le prime 
+righe del diario. Queste righe spesso 
+iniziano con "GIORNO 097 —" o altri label 
+tecnici che vengono già strippati da 
+stripDayLabel().
+
+Aggiungi in DayCard.tsx che quando il testo 
+è presente, dopo stripDayLabel() e stripHtml(), 
+prende solo la prima frase significativa 
+(fino al primo punto o al primo \n):
+
+function firstSentence(text: string): string {
+  const clean = text.trim();
+  const dot = clean.indexOf(".");
+  const newline = clean.indexOf("\n");
+  const cut = Math.min(
+    dot > 0 ? dot + 1 : clean.length,
+    newline > 0 ? newline : clean.length,
+    120
+  );
+  return clean.slice(0, cut).trim();
+}
+
+Usa firstSentence(stripHtml(stripDayLabel(
+  entry.testo))) come testo mostrato nella 
+preview delle DayCard nella home. Questo 
+mostra la prima frase vera del diario — 
+quella che funziona come hook.
+
+IMPORTANTE: questa modifica va applicata SOLO 
+alle DayCard nella home (sezione "ULTIMI GIORNI"), 
+NON a quelle nel journaling che mostrano 
+più testo. Per distinguerle, aggiungi una prop 
+opzionale a DayCard:
+
+interface DayCardProps {
+  entry: Entry;
+  featured?: boolean;
+  hookOnly?: boolean; // nuovo
+}
+
+Quando hookOnly={true}, mostra firstSentence.
+Quando hookOnly={false} o assente, mostra 
+il testo completo line-clamp-3 come adesso.
+
+Nella home, passa hookOnly={true} alle DayCard:
+<DayCard entry={entry} hookOnly />
+
+Nel journaling, non passare hookOnly — 
+comportamento invariato.
+
+═══════════════════════════════════════════
+COSA NON TOCCARE
+═══════════════════════════════════════════
+
+- Il ticker (posizione e contenuto invariati)
+- La Timeline180 (invariata)
+- Il PulseTrace hero e divider (invariati)
+- La Community CTA (invariata)
+- Il design system (colori, font, border-radius)
+- Il footer
+
+═══════════════════════════════════════════
+TEST
+═══════════════════════════════════════════
+
+a. Hero: sotto il peso c'è "Dal fondo al ring. 
+   180 giorni. Tutto pubblico."
+b. Hero: il bottone dice "LEGGI IL GIORNO 097 →"
+c. Scrollo: prima cosa dopo il ticker vedo 
+   il confronto prima/dopo con label 
+   "LA TRASFORMAZIONE"
+d. Sotto il confronto vedo l'ultimo giorno
+e. Le 3 DayCard in fondo mostrano solo la 
+   prima frase del diario, non il testo tagliato
+f. Nel journaling le card mostrano ancora 
+   3 righe di testo (hookOnly non attivo lì)
+g. Su mobile tutto leggibile e nell'ordine corretto

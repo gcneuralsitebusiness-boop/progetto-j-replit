@@ -16,8 +16,28 @@ function stripDayLabel(text: string): string {
   return text.replace(/^\s*GIORNO\s+\d+\s*[—–-]?\s*[\d-]*\s*\n?/i, "").trim();
 }
 
-export function DayCard({ entry, featured = false }: { entry: Entry; featured?: boolean }) {
+function firstSentence(text: string): string {
+  const clean = text.trim();
+  const dot = clean.indexOf(".");
+  const newline = clean.indexOf("\n");
+  const cut = Math.min(
+    dot > 0 ? dot + 1 : clean.length,
+    newline > 0 ? newline : clean.length,
+    120,
+  );
+  return clean.slice(0, cut).trim();
+}
+
+interface DayCardProps {
+  entry: Entry;
+  featured?: boolean;
+  hookOnly?: boolean;
+}
+
+export function DayCard({ entry, featured = false, hookOnly = false }: DayCardProps) {
   const hasPhoto = Boolean(entry.foto);
+  const previewText = entry.testo ? stripHtml(stripDayLabel(entry.testo)) : "";
+  const displayedText = hookOnly ? firstSentence(previewText) : previewText;
 
   const stats: { label: string; value: number; suffix?: string; prefix?: string; income?: boolean }[] = [];
   if (entry.kcal != null) stats.push({ label: "KCAL", value: entry.kcal });
@@ -89,11 +109,11 @@ export function DayCard({ entry, featured = false }: { entry: Entry; featured?: 
           ))}
         </div>
 
-        {entry.testo && (
+        {displayedText && (
           <p className={`font-sans text-foreground/90 leading-relaxed whitespace-pre-wrap mb-4 ${
             featured ? "text-[16px] line-clamp-4" : "text-[14px] sm:text-[15px] line-clamp-3"
           }`}>
-            {stripHtml(stripDayLabel(entry.testo))}
+            {displayedText}
           </p>
         )}
 
