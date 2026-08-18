@@ -6,6 +6,7 @@ import { getPhotoUrl } from "@workspace/object-storage-web";
 import { DataLabel } from "./DataLabel";
 import { MilestoneBadge } from "./MilestoneBadge";
 import type { Entry } from "@workspace/api-client-react";
+import { stripHtml } from "@/lib/strip-html";
 
 function padDay(n: number): string {
   return n.toString().padStart(3, "0");
@@ -92,7 +93,7 @@ export function DayCard({ entry, featured = false }: { entry: Entry; featured?: 
           <p className={`font-sans text-foreground/90 leading-relaxed whitespace-pre-wrap mb-4 ${
             featured ? "text-[16px] line-clamp-4" : "text-[14px] sm:text-[15px] line-clamp-3"
           }`}>
-            {stripDayLabel(entry.testo)}
+            {stripHtml(stripDayLabel(entry.testo))}
           </p>
         )}
 

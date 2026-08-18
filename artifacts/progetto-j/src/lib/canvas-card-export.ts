@@ -1,3 +1,5 @@
+import { stripHtml } from "@/lib/strip-html";
+
 const BLACK = "#0A0A0A";
 const RED = "#B81D1D";
 const WHITE = "#E8E4DE";
@@ -94,6 +96,56 @@ function drawCover(
   ctx.restore();
 }
 
+function drawFilmGrain(ctx: CanvasRenderingContext2D, width: number, height: number) {
+  const grainCanvas = document.createElement("canvas");
+  const grainWidth = Math.ceil(width / 4);
+  const grainHeight = Math.ceil(height / 4);
+  grainCanvas.width = grainWidth;
+  grainCanvas.height = grainHeight;
+  const grainContext = grainCanvas.getContext("2d");
+  if (!grainContext) return;
+
+  const noise = grainContext.createImageData(grainWidth, grainHeight);
+  for (let index = 0; index < noise.data.length; index += 4) {
+    const value = Math.floor(Math.random() * 256);
+    noise.data[index] = value;
+    noise.data[index + 1] = value;
+    noise.data[index + 2] = value;
+    noise.data[index + 3] = 255;
+  }
+  grainContext.putImageData(noise, 0, 0);
+
+  ctx.save();
+  ctx.globalAlpha = 0.06;
+  ctx.globalCompositeOperation = "overlay";
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(grainCanvas, 0, 0, width, height);
+  ctx.restore();
+}
+
+function drawCardEkg(ctx: CanvasRenderingContext2D, centerY: number) {
+  const points = [
+    [0, 20], [180, 20], [220, 20], [240, 5], [260, 35], [280, 10],
+    [300, 30], [320, 20], [500, 20], [540, 20], [560, 5], [580, 35],
+    [600, 10], [620, 30], [640, 20], [900, 20],
+  ];
+  const scaleX = 936 / 900;
+
+  ctx.save();
+  ctx.globalAlpha = 0.3;
+  ctx.strokeStyle = RED;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  points.forEach(([x, y], index) => {
+    const canvasX = 72 + x * scaleX;
+    const canvasY = centerY + y - 20;
+    if (index === 0) ctx.moveTo(canvasX, canvasY);
+    else ctx.lineTo(canvasX, canvasY);
+  });
+  ctx.stroke();
+  ctx.restore();
+}
+
 function drawCanvasImage(
   canvas: HTMLCanvasElement,
   filename: string,
@@ -146,6 +198,7 @@ export async function downloadDailyCanvasCard({
 }) {
   await waitForCanvasFonts();
   const { canvas, context: ctx } = prepareCanvas(1080, 1350);
+  const cleanSummary = stripHtml(summary ?? "");
   const image = await loadOptionalImage(photoUrl);
 
   if (image) {
@@ -157,6 +210,7 @@ export async function downloadDailyCanvasCard({
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, 1080, 1350);
   }
+  drawFilmGrain(ctx, 1080, 1350);
 
   ctx.strokeStyle = RED;
   ctx.lineWidth = 3;
@@ -183,7 +237,9 @@ export async function downloadDailyCanvasCard({
   drawSpacedText(ctx, countdown, 72, bottom, 5.5);
   ctx.fillStyle = RED;
   ctx.textAlign = "right";
-  drawSpacedText(ctx, "PROGETTOJ.IT", 1008, bottom, 5.5, "right");
+  drawSpacedText(ctx, "PROGETTOJ.IT", 820, bottom, 5.5, "right");
+  ctx.fillStyle = "rgba(255,255,255,0.4)";
+  drawSpacedText(ctx, "IC XC NIKA", 1008, bottom, 4.4, "right");
 
   if (routineLine) {
     setFont(ctx, 22, "Inter");
@@ -191,6 +247,7 @@ export async function downloadDailyCanvasCard({
     ctx.textAlign = "left";
     drawSpacedText(ctx, routineLine.text, 72, bottom - 48, 4.5);
   }
+  drawCardEkg(ctx, 1176);
 
   if (showStats && stats.length > 0) {
     const statBaseline = bottom - 153;
@@ -221,9 +278,9 @@ export async function downloadDailyCanvasCard({
     bottom = statBaseline - 75;
   }
 
-  if (summary) {
+  if (cleanSummary) {
     setFont(ctx, 40, "Inter");
-    const lines = wrapText(ctx, summary, 880);
+    const lines = wrapText(ctx, cleanSummary, 880);
     const lineHeight = 54;
     const firstBaseline = bottom - (lines.length - 1) * lineHeight;
     ctx.fillStyle = WHITE;
@@ -263,6 +320,7 @@ export async function downloadReelCanvasCard({
 }) {
   await waitForCanvasFonts();
   const { canvas, context: ctx } = prepareCanvas(1080, 1920);
+  const cleanSummary = stripHtml(summary ?? "");
   const image = await loadOptionalImage(photoUrl);
   if (image) {
     drawCover(ctx, image, 1080, 1920);
@@ -287,10 +345,10 @@ export async function downloadReelCanvasCard({
   ctx.fillStyle = RED;
   ctx.fillRect(490, 0.48 * 1920, 100, 4);
 
-  if (summary) {
+  if (cleanSummary) {
     setFont(ctx, 34, "Inter");
     ctx.fillStyle = WHITE;
-    const lines = wrapText(ctx, summary, 800).slice(0, 3);
+    const lines = wrapText(ctx, cleanSummary, 800).slice(0, 3);
     lines.forEach((line, index) => ctx.fillText(line, 540, 0.51 * 1920 + 42 + index * 51));
   }
 

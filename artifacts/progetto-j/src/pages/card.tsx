@@ -7,6 +7,7 @@ import { format } from "date-fns";
 import { it } from "date-fns/locale";
 import { getPhotoUrl } from "@workspace/object-storage-web";
 import { downloadDailyCanvasCard } from "@/lib/canvas-card-export";
+import { stripHtml } from "@/lib/strip-html";
 import CardCustomizer, {
   CARD_OVERLAY_DEFAULT,
   customizationFromRecord,
@@ -17,6 +18,7 @@ const CARD_W = 1080;
 const CARD_H = 1350;
 const GOAL_DAY = 180;
 const SINTESI_MAX = 180;
+const CARD_GRAIN_BACKGROUND = "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='5' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E\")";
 
 function stripDayLabel(text: string): string {
   return text.replace(/^\s*GIORNO\s+\d+\s*[—–-]?\s*[\d-]*\s*\n?/i, "").trim();
@@ -26,7 +28,9 @@ function stripDayLabel(text: string): string {
 function resolveSintesi(sintesi: string | null | undefined, testo: string | null | undefined): string {
   const explicit = sintesi?.trim();
   if (explicit) return explicit.slice(0, SINTESI_MAX);
-  const cleaned = testo ? stripDayLabel(testo).replace(/\*\*/g, "").replace(/\s+/g, " ").trim() : "";
+  const cleaned = testo
+    ? stripHtml(stripDayLabel(testo).replace(/\*\*/g, ""))
+    : "";
   if (!cleaned) return "";
   if (cleaned.length <= SINTESI_MAX) return cleaned;
   const cut = cleaned.slice(0, SINTESI_MAX - 1);
@@ -57,6 +61,23 @@ function CardStat({ value, label }: { value: string; label: string }) {
       <div className="bebas font-serif leading-none text-white" style={{ fontSize: 88 }}>{value}</div>
       <div className="font-sans uppercase text-white/60" style={{ fontSize: 22, letterSpacing: "0.25em", marginTop: 8 }}>{label}</div>
     </div>
+  );
+}
+
+function CardEkg() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 900 40"
+      style={{ width: "100%", height: 40, marginTop: 32, opacity: 0.3 }}
+    >
+      <polyline
+        points="0,20 180,20 220,20 240,5 260,35 280,10 300,30 320,20 500,20 540,20 560,5 580,35 600,10 620,30 640,20 900,20"
+        fill="none"
+        stroke="#B81D1D"
+        strokeWidth="2"
+      />
+    </svg>
   );
 }
 
@@ -137,8 +158,22 @@ function InstagramCard({
         </svg>
       )}
 
+      {/* Film grain: above the image and below all card content. */}
+      <div
+        aria-hidden="true"
+        style={{
+          position: "absolute",
+          inset: 0,
+          backgroundImage: CARD_GRAIN_BACKGROUND,
+          mixBlendMode: "overlay",
+          opacity: 0.08,
+          pointerEvents: "none",
+          zIndex: 1,
+        }}
+      />
+
       {/* Content */}
-      <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", justifyContent: "space-between", padding: 72 }}>
+      <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", justifyContent: "space-between", padding: 72, zIndex: 2 }}>
         {/* Header: logo + date */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
@@ -192,13 +227,20 @@ function InstagramCard({
             </div>
           )}
 
+          <CardEkg />
+
           {/* Countdown */}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 56 }}>
             <div className="font-sans uppercase text-white/60" style={{ fontSize: 22, letterSpacing: "0.25em" }}>
               {remaining > 0 ? `−${remaining} GIORNI AL GIORNO ${GOAL_DAY}` : `GIORNO ${GOAL_DAY} RAGGIUNTO`}
             </div>
-            <div className="font-sans uppercase" style={{ fontSize: 22, letterSpacing: "0.25em", color: "hsl(var(--primary))" }}>
-              PROGETTOJ.IT
+            <div style={{ display: "flex", alignItems: "center", gap: 32 }}>
+              <div className="font-sans uppercase" style={{ fontSize: 22, letterSpacing: "0.25em", color: "hsl(var(--primary))" }}>
+                PROGETTOJ.IT
+              </div>
+              <div className="font-sans uppercase" style={{ fontSize: 20, letterSpacing: "0.2em", color: "rgba(255,255,255,0.4)" }}>
+                IC XC NIKA
+              </div>
             </div>
           </div>
         </div>
@@ -336,7 +378,20 @@ export default function Card() {
   }
 
   return (
-    <div className="min-h-screen bg-background py-8 px-2 flex flex-col items-center gap-6">
+    <div
+      className="min-h-screen bg-background py-8 px-2 flex flex-col items-center gap-6"
+      style={{
+        backgroundColor: "#080808",
+        backgroundImage: `
+          linear-gradient(45deg, #111 25%, transparent 25%),
+          linear-gradient(-45deg, #111 25%, transparent 25%),
+          linear-gradient(45deg, transparent 75%, #111 75%),
+          linear-gradient(-45deg, transparent 75%, #111 75%)
+        `,
+        backgroundSize: "20px 20px",
+        backgroundPosition: "0 0, 0 10px, 10px -10px, -10px 0",
+      }}
+    >
       <div className="flex items-center gap-6">
         <span className="text-[11px] font-sans uppercase tracking-[0.3em] text-muted-foreground">
           CARD IG — GIORNO {String(entry.numero).padStart(3, "0")} · 1080×1350

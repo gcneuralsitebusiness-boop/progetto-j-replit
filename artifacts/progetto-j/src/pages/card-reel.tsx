@@ -4,6 +4,7 @@ import { useListEntries, useAdminMe, useUpdateEntry, getListEntriesQueryKey } fr
 import type { Entry } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { downloadMinimalCanvasCard, downloadReelCanvasCard } from "@/lib/canvas-card-export";
+import { stripHtml } from "@/lib/strip-html";
 import { getPhotoUrl } from "@workspace/object-storage-web";
 import CardCustomizer, {
   customizationFromRecord,
@@ -34,7 +35,7 @@ function stripDayLabel(text: string): string {
 }
 
 function summary(text: string | null | undefined, sintesi: string | null | undefined): string {
-  const source = sintesi?.trim() || (text ? stripDayLabel(text).replace(/\s+/g, " ").trim() : "");
+  const source = sintesi?.trim() || (text ? stripHtml(stripDayLabel(text)) : "");
   if (source.length <= 180) return source;
   const cut = source.slice(0, 179);
   const lastSpace = cut.lastIndexOf(" ");

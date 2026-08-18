@@ -1,0 +1,178 @@
+FIX — CARD IG: HTML NEL TESTO DELLA SINTESI
+
+Il campo "testo" del diario ora contiene HTML 
+(es. <h2>Il Corpo</h2><p>testo</p>). 
+La card IG lo stampa grezzo mostrando i tag 
+visibili invece del testo pulito.
+
+═══════════════════════════════════════════
+DOVE SI TROVA IL BUG
+═══════════════════════════════════════════
+
+File: artifacts/progetto-j/src/pages/card.tsx
+
+Funzione resolveSintesi() (righe ~26-35):
+prende il campo testo e lo usa direttamente 
+per costruire la sintesi. Se testo contiene 
+HTML, i tag appaiono nella card.
+
+Stessa cosa nel canvas export:
+artifacts/progetto-j/src/lib/canvas-card-export.ts
+il campo summary viene disegnato su canvas 
+con ctx.fillText — se contiene tag HTML li 
+stampa come stringa.
+
+═══════════════════════════════════════════
+FIX
+═══════════════════════════════════════════
+
+In card.tsx, la funzione resolveSintesi() 
+deve strippare l'HTML dal testo prima di 
+usarlo. Aggiungi questa funzione helper 
+prima di resolveSintesi():
+
+function stripHtml(html: string): string {
+  // Rimuove tutti i tag HTML e decodifica 
+  // le entity HTML base
+  return html
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+Poi in resolveSintesi(), dove si usa il campo 
+testo, wrappalo con stripHtml():
+
+// PRIMA (riga ~29):
+const cleaned = testo 
+  ? stripDayLabel(testo)
+    .replace(/\*\*/g, "")
+    .replace(/\s+/g, " ")
+    .trim() 
+  : "";
+
+// DOPO:
+const cleaned = testo 
+  ? stripHtml(
+      stripDayLabel(testo)
+        .replace(/\*\*/g, "")
+    )
+  : "";
+
+═══════════════════════════════════════════
+STESSO FIX NEL CANVAS EXPORT
+═══════════════════════════════════════════
+
+File: artifacts/progetto-j/src/lib/canvas-card-export.ts
+
+Quando la funzione riceve il parametro 
+"summary", prima di usarlo con ctx.fillText, 
+applicagli la stessa stripHtml():
+
+function stripHtml(html: string): string {
+  return html
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+// Poi dove usi summary:
+const cleanSummary = stripHtml(summary ?? "");
+// Usa cleanSummary al posto di summary 
+// in tutti i ctx.fillText
+
+═══════════════════════════════════════════
+STESSO FIX NELLA CARD REEL
+═══════════════════════════════════════════
+
+File: artifacts/progetto-j/src/pages/card-reel.tsx
+
+Stessa logica: se usa il campo testo per 
+costruire la sintesi, applicare stripHtml() 
+prima di stamparla.
+
+═══════════════════════════════════════════
+STESSO FIX NELLA DAYCARD (lista journaling)
+═══════════════════════════════════════════
+
+File: artifacts/progetto-j/src/components/DayCard.tsx
+
+Il campo entry.testo viene usato nel preview 
+(line-clamp-3) con whitespace-pre-wrap. Se 
+contiene HTML appare grezzo.
+
+Fix: prima di stampare entry.testo nel preview, 
+strippa l'HTML:
+
+// PRIMA:
+<p className="... whitespace-pre-wrap">
+  {stripDayLabel(entry.testo)}
+</p>
+
+// DOPO:
+<p className="... whitespace-pre-wrap">
+  {stripHtml(stripDayLabel(entry.testo))}
+</p>
+
+Dove stripHtml è la stessa funzione sopra, 
+importata da un file condiviso o definita 
+nel componente.
+
+═══════════════════════════════════════════
+SOLUZIONE PULITA — FILE CONDIVISO
+═══════════════════════════════════════════
+
+Invece di duplicare stripHtml in ogni file, 
+creala in un posto solo:
+
+File: artifacts/progetto-j/src/lib/strip-html.ts
+
+export function stripHtml(html: string): string {
+  return html
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+Poi importala dove serve:
+import { stripHtml } from "@/lib/strip-html";
+
+═══════════════════════════════════════════
+COSA NON TOCCARE
+═══════════════════════════════════════════
+
+- La pagina pubblica /giorno/[N]: lì l'HTML 
+  VA renderizzato (dangerouslySetInnerHTML) — 
+  NON applicare stripHtml lì
+- Il componente DiaryText: stesso, NON toccare
+- La logica di salvataggio del diario
+- Il design system
+
+═══════════════════════════════════════════
+TEST
+═══════════════════════════════════════════
+
+a. Apro /card/97: la sintesi mostra testo 
+   pulito, nessun tag <h2> o <p> visibile
+b. Scarico il PNG: stesso, testo pulito
+c. Apro /journaling: le DayCard mostrano 
+   il testo del diario senza tag HTML
+d. Apro /giorno/97: l'HTML viene ancora 
+   renderizzato correttamente (h2, p con stili)
+e. La funzione stripHtml non appare in più 
+   file — è importata da @/lib/strip-html
