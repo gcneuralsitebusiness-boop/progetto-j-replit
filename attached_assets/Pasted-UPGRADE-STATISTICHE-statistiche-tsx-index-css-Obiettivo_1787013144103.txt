@@ -1,0 +1,180 @@
+UPGRADE STATISTICHE — statistiche.tsx + index.css
+
+Obiettivo: i grafici devono sembrare Progetto J, 
+non un dashboard generico. I numeri devono muoversi.
+
+═══════════════════════════════════════════
+FILE DA TOCCARE
+═══════════════════════════════════════════
+
+- artifacts/progetto-j/src/pages/statistiche.tsx
+- artifacts/progetto-j/src/components/AnimatedNumber.tsx 
+  (importalo e usalo)
+- artifacts/progetto-j/src/index.css 
+  (aggiungi stili tooltip custom)
+
+═══════════════════════════════════════════
+1. HERO STATS — NUMERI ANIMATI
+═══════════════════════════════════════════
+
+I 4 box hero stats (STREAK ATTUALE, STREAK RECORD, 
+SESSIONI, PESO CAMBIATO) usano adesso un <div> con 
+font-mono per il numero. Sostituisci con il 
+componente AnimatedNumber già esistente in 
+src/components/AnimatedNumber.tsx.
+
+Il numero deve animarsi (count-up da 0) quando 
+la card entra nel viewport. Se il valore è null, 
+mostra "—" senza animazione.
+
+═══════════════════════════════════════════
+2. GRAFICI — AREA FILL + LINEE PIÙ SPESSE
+═══════════════════════════════════════════
+
+GRAFICO PESO (LineChart):
+- Cambia strokeWidth da 2 a 3
+- Aggiungi sotto la Line un componente <defs> 
+  con linearGradient e un <Area> che riempie 
+  sotto la curva con gradiente dal rosso (opacity 
+  0.3) a trasparente. In Recharts si fa così:
+
+  Sostituisci LineChart con ComposedChart (importalo)
+  e aggiungi:
+  <defs>
+    <linearGradient id="pesoGrad" x1="0" y1="0" 
+      x2="0" y2="1">
+      <stop offset="0%" stopColor="#B81D1D" 
+        stopOpacity={0.35} />
+      <stop offset="100%" stopColor="#B81D1D" 
+        stopOpacity={0} />
+    </linearGradient>
+  </defs>
+  <Area type="monotone" dataKey="peso" 
+    fill="url(#pesoGrad)" stroke="none" />
+  <Line ... (il resto uguale ma strokeWidth={3}) />
+
+- L'ultimo dot deve essere più grande (r: 5) e 
+  pulsare con un'animazione CSS:
+  Aggiungi in index.css:
+  @keyframes pulse-dot {
+    0%, 100% { r: 5; opacity: 1; }
+    50% { r: 8; opacity: 0.6; }
+  }
+  .recharts-dot:last-of-type {
+    animation: pulse-dot 2s ease-in-out infinite;
+  }
+  NOTA: se questo selector è troppo aggressivo, 
+  usa un customDot component per l'ultimo punto.
+
+GRAFICO SONNO (BarChart):
+- Le barre devono avere un'animazione di crescita 
+  dal basso. Recharts lo fa di default ma calibra:
+  <Bar animationDuration={1200} 
+    animationBegin={200} ... />
+
+GRAFICO BATTITO (LineChart):
+- Stessa area-fill del peso ma col colore ink 
+  (#E8E4DE) a opacity 0.15
+- strokeWidth: 3
+
+TUTTI I GRAFICI:
+- CartesianGrid: cambia stroke da "#333" a "#1A1A1A" 
+  per essere più sottile e meno invasiva
+- I grafici devono animarsi SOLO quando entrano nel 
+  viewport. Wrappa ogni <Section> che contiene un 
+  grafico nel componente <Reveal> (già importato nel 
+  file). In questo modo l'animazione di Recharts 
+  parte quando l'utente scrolla fino a quel punto.
+
+═══════════════════════════════════════════
+3. TOOLTIP CUSTOM
+═══════════════════════════════════════════
+
+Sostituisci tooltipStyle con:
+const tooltipStyle = {
+  backgroundColor: "#0A0A0A",
+  border: "1px solid #B81D1D",
+  color: "#E8E4DE",
+  borderRadius: 0,
+  fontFamily: "'JetBrains Mono', monospace",
+  fontSize: "12px",
+  letterSpacing: "0.05em",
+  padding: "8px 12px",
+};
+
+═══════════════════════════════════════════
+4. CORRELAZIONI — MINI BAR COMPARATIVO
+═══════════════════════════════════════════
+
+Nel componente CorrelationCard, sotto i due numeri 
+(firstValue e secondValue), aggiungi due barre 
+orizzontali proporzionali:
+
+<div className="mt-3 flex flex-col gap-1">
+  <div className="h-1.5 bg-primary" 
+    style={{ width: `${pctFirst}%` }} />
+  <div className="h-1.5 bg-iron" 
+    style={{ width: `${pctSecond}%` }} />
+</div>
+
+Dove pctFirst e pctSecond sono calcolati come 
+percentuale relativa al maggiore dei due:
+const maxVal = Math.max(
+  Math.abs(firstValue ?? 0), 
+  Math.abs(secondValue ?? 0)
+);
+const pctFirst = maxVal > 0 
+  ? (Math.abs(firstValue ?? 0) / maxVal) * 100 : 0;
+const pctSecond = maxVal > 0 
+  ? (Math.abs(secondValue ?? 0) / maxVal) * 100 : 0;
+
+═══════════════════════════════════════════
+5. HEATMAP — TOOLTIP AL TAP/HOVER
+═══════════════════════════════════════════
+
+Ogni quadratino della heatmap calendario, al 
+hover (desktop) o tap (mobile), mostra un mini 
+tooltip con:
+- "Giorno {numero}" 
+- Tipo allenamento se presente
+- "Alcol" se alcol === true
+Usa un title attribute per semplicità — non serve 
+un componente tooltip custom.
+
+Aumenta le dimensioni dei quadratini da h-4 w-4 
+a h-5 w-5 su mobile (default) e h-4 w-4 su sm+.
+
+═══════════════════════════════════════════
+6. DIVIDER EKG TRA SEZIONI
+═══════════════════════════════════════════
+
+Tra ogni <Section>, invece del semplice spazio 
+vuoto, aggiungi:
+<PulseTrace entries={data.all} variant="divider" />
+Importa PulseTrace da @/components/PulseTrace.
+
+═══════════════════════════════════════════
+COSA NON TOCCARE
+═══════════════════════════════════════════
+
+- La logica di calcolo dei dati (useMemo, average, 
+  metricStats, routineStats)
+- Il filtro periodo (7/14/30/90/tutto)
+- La struttura delle sezioni
+- I colori del design system
+- Il footer
+
+═══════════════════════════════════════════
+TEST
+═══════════════════════════════════════════
+
+a. I numeri hero stats si animano (count-up) 
+   quando scrollo fino a loro
+b. Il grafico peso ha un'area rossa sfumata sotto 
+   la curva, la linea è più spessa
+c. I tooltip sono neri con bordo rosso e font mono
+d. Le correlazioni mostrano due barre proporzionali
+e. La heatmap ha quadratini leggermente più grandi 
+   su mobile
+f. Tra le sezioni c'è la linea EKG
+g. Su mobile tutto è leggibile

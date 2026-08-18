@@ -657,6 +657,17 @@ body::before {
   to { stroke-dashoffset: 0; }
 }
 
+@keyframes pulse-dot {
+  0%, 100% { r: 5; opacity: 1; }
+  50% { r: 8; opacity: 0.6; }
+}
+
+.stats-last-dot {
+  animation: pulse-dot 2s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
 .pulse-trace-path {
   stroke-dasharray: 1000;
   stroke-dashoffset: 1000;
