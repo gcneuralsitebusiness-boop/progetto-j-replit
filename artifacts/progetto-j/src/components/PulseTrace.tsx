@@ -19,7 +19,7 @@ export function PulseTrace({ entries, variant }: PulseTraceProps) {
   const maxY = Math.max(...points.map((point) => point.y));
   const xRange = Math.max(maxX - minX, 1);
   const yRange = Math.max(maxY - minY, 1);
-  const height = variant === "hero" ? 120 : 60;
+  const height = variant === "hero" ? 200 : 60;
   const path = points
     .map((point) => {
       const x = ((point.x - minX) / xRange) * 1000;

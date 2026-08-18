@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useGetLatestEntries, useListEntries, useGetCoaching, useGetSiteContent } from "@workspace/api-client-react";
 import { Link } from "wouter";
 import { Reveal } from "@/components/Reveal";
@@ -7,6 +8,7 @@ import { DayCardSkeleton } from "@/components/DayCardSkeleton";
 import { SiteFooter } from "@/components/SiteFooter";
 import { DataErrorState } from "@/components/DataErrorState";
 import { PulseTrace } from "@/components/PulseTrace";
+import { AnimatedNumber } from "@/components/AnimatedNumber";
 import { ArrowRight, Users, Flame, Dumbbell, Heart, Wallet } from "lucide-react";
 import { getPhotoUrl } from "@workspace/object-storage-web";
 
@@ -18,10 +20,16 @@ export default function Home() {
   const isError = latestError || allError || coachingError || siteContentError;
   const isLoading = latestLoading || allLoading || coachingLoading || siteContentLoading;
 
-  const heroTitolo = siteContent?.home_hero_titolo || "PROGETTO J · 180 DAYS";
-  const heroSottotitolo = siteContent?.home_hero_sottotitolo || "Disciplina. Tracking. Dati.";
   const ctaTesto = siteContent?.home_cta_testo || "Segui il percorso";
   const communityTesto = siteContent?.home_community_testo || coaching?.communityCta || "Entra nella community italiana e trova gente con la tua stessa fame.";
+  const [hasScrolled, setHasScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setHasScrolled(window.scrollY > 100);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const totalDays = allEntries?.length ?? 0;
   const currentDay = allEntries && allEntries.length > 0
@@ -35,6 +43,10 @@ export default function Home() {
   const firstEntry = sortedEntries[0];
   const lastEntry = sortedEntries[sortedEntries.length - 1];
   const latestDay = lastEntry;
+  const weightEntries = sortedEntries.filter((entry) => entry.peso != null);
+  const firstWeight = weightEntries[0]?.peso ?? null;
+  const currentWeight = weightEntries[weightEntries.length - 1]?.peso ?? null;
+  const heartRateEntries = sortedEntries.filter((entry) => entry.battito != null);
   const progressPercent = Math.min(100, Math.round((currentDay / 180) * 100));
   const comparisonMetrics = [
     { label: "PESO", unit: "KG", first: firstEntry?.peso, last: lastEntry?.peso, fraction: 1 },
@@ -42,10 +54,10 @@ export default function Home() {
   ].filter((metric) => metric.first != null && metric.last != null);
 
   const tickerItems = [
-    { icon: Flame, label: "GIORNI", value: totalDays },
-    { icon: Dumbbell, label: "KM", value: totalKm },
-    { icon: Heart, label: "KCAL", value: totalKcal.toLocaleString() },
-    { icon: Wallet, label: "ENTRATE", value: `€${totalIncome}` },
+    { icon: Flame, label: "GIORNI", value: totalDays, prefix: "", formatter: (value: number) => String(value) },
+    { icon: Dumbbell, label: "KM", value: totalKm, prefix: "", formatter: (value: number) => value.toLocaleString("it-IT", { maximumFractionDigits: 1 }) },
+    { icon: Heart, label: "KCAL", value: totalKcal, prefix: "", formatter: (value: number) => value.toLocaleString("it-IT") },
+    { icon: Wallet, label: "ENTRATE", value: totalIncome, prefix: "€", formatter: (value: number) => value.toLocaleString("it-IT") },
   ];
 
   const tickerContent = (
@@ -53,7 +65,10 @@ export default function Home() {
       {[...tickerItems, ...tickerItems].map((item, i) => (
         <div key={i} className="flex items-center gap-3 px-6 sm:px-8 text-[11px] sm:text-[12px] font-sans uppercase tracking-[0.2em] text-muted-foreground">
           <item.icon size={14} className="text-iron" />
-          <span className="measured text-foreground">{item.value}</span>
+          <span className="measured text-foreground">
+            {item.prefix}
+            <AnimatedNumber value={item.value} formatter={item.formatter} />
+          </span>
           <span>{item.label}</span>
           <span className="text-iron">·</span>
         </div>
@@ -74,29 +89,45 @@ export default function Home() {
     <div className="min-h-screen flex flex-col">
       <main className="flex-1">
         {/* A single, readable entry point into the diary. */}
-        <section className="px-5 sm:px-6 pt-28 sm:pt-36 pb-16 sm:pb-20 hero-radial">
-          <Reveal className="max-w-5xl mx-auto">
-            <div className="max-w-3xl">
+        <section className="relative isolate overflow-hidden px-5 sm:px-6 pt-28 sm:pt-36 pb-16 sm:pb-20 hero-radial">
+          {heartRateEntries.length >= 2 && (
+            <div className="pointer-events-none absolute inset-x-0 top-1/2 z-0 h-[200px] -translate-y-1/2 opacity-[0.12]" aria-hidden="true">
+              <PulseTrace entries={heartRateEntries} variant="hero" />
+            </div>
+          )}
+          <Reveal className="relative z-10 mx-auto max-w-5xl text-center">
+            <div className="mx-auto flex max-w-3xl flex-col items-center">
               <div className="page-label w-fit text-primary before:!bg-primary">PERCORSO IN CORSO</div>
-              <h1 className="font-serif text-[clamp(72px,14vw,148px)] leading-[0.78] text-primary bebas tracking-[0.02em] mt-5">J</h1>
-              <h2 className="font-serif text-[clamp(30px,6vw,52px)] text-foreground tracking-[0.06em] mt-3 mb-4 bebas">
-              {heroTitolo}
-              </h2>
-              <p className="text-[14px] sm:text-[15px] font-sans text-muted-foreground max-w-xl mb-8 leading-relaxed uppercase tracking-[0.12em]">
-              {heroSottotitolo}
-              </p>
-              {currentDay > 0 && (
-                <div className="mb-8 max-w-xl">
-                <div className="flex items-end justify-between text-[10px] font-sans uppercase tracking-[0.2em] text-muted-foreground mb-2">
-                  <span>GIORNO {String(currentDay).padStart(3, "0")} / 180</span>
-                  <span className="text-primary">{progressPercent}%</span>
-                </div>
-                <div className="h-1 bg-iron"><div className="h-full bg-primary transition-all duration-1000" style={{ width: `${progressPercent}%` }} /></div>
+              <div className="mt-5 font-serif text-[clamp(120px,25vw,220px)] leading-[0.72] text-primary bebas tracking-[0.02em]" aria-label={`Giorno ${String(currentDay).padStart(3, "0")}`}>
+                <AnimatedNumber
+                  value={currentDay}
+                  className="!font-serif"
+                  formatter={(value) => String(value).padStart(3, "0")}
+                  duration={1600}
+                />
+              </div>
+              {firstWeight != null && currentWeight != null && (
+                <div className="measured mt-7 text-[16px] uppercase tracking-[0.12em] sm:text-[18px]">
+                  <span className="text-muted-foreground line-through">{firstWeight.toFixed(1)} KG</span>
+                  <span className="mx-3 text-primary">→</span>
+                  <span className="text-[hsl(var(--acid))]">{currentWeight.toFixed(1)} KG</span>
                 </div>
               )}
-              <Link href="/journaling" className="btn-primary">
-              {ctaTesto} <ArrowRight size={16} />
+              {currentDay > 0 && (
+                <div className="mt-8 w-full max-w-xl">
+                  <div className="mb-2 flex items-end justify-between text-[10px] font-sans uppercase tracking-[0.2em] text-muted-foreground">
+                    <span>GIORNO {String(currentDay).padStart(3, "0")} / 180</span>
+                    <span className="text-primary">{progressPercent}%</span>
+                  </div>
+                  <div className="h-1 bg-iron"><div className="h-full bg-primary transition-all duration-1000" style={{ width: `${progressPercent}%` }} /></div>
+                </div>
+              )}
+              <Link href="/journaling" className="btn-primary mt-8">
+                {ctaTesto} <ArrowRight size={16} />
               </Link>
+              <div className={`mt-8 transition-opacity duration-500 ${hasScrolled ? "opacity-0" : "opacity-100"}`} aria-hidden={hasScrolled}>
+                <div className="scroll-hint-line" />
+              </div>
             </div>
           </Reveal>
         </section>
@@ -160,12 +191,16 @@ export default function Home() {
                       <div key={metric.label} className="sm:col-span-2 grid grid-cols-[1fr_auto_1fr] items-end gap-4 border-t border-border pt-4">
                         <div>
                           <div className="text-[11px] font-sans uppercase tracking-[0.2em] text-muted-foreground">{metric.label}</div>
-                          <div className="measured mt-2 text-[clamp(32px,7vw,56px)] leading-none text-foreground">{first.toFixed(metric.fraction)} {metric.unit}</div>
+                          <div className="mt-2 text-[clamp(32px,7vw,56px)] leading-none text-foreground">
+                            <AnimatedNumber value={first} formatter={(value) => `${value.toFixed(metric.fraction)} ${metric.unit}`} />
+                          </div>
                         </div>
                         <span className="pb-2 text-xl text-iron">→</span>
                         <div className="text-right">
                           <div className="text-[11px] font-sans uppercase tracking-[0.2em] text-muted-foreground">ORA</div>
-                          <div className={`measured mt-2 text-[clamp(32px,7vw,56px)] leading-none ${improved ? "text-primary" : "text-foreground"}`}>{last.toFixed(metric.fraction)} {metric.unit}</div>
+                          <div className={`mt-2 text-[clamp(32px,7vw,56px)] leading-none ${improved ? "text-primary" : "text-foreground"}`}>
+                            <AnimatedNumber value={last} formatter={(value) => `${value.toFixed(metric.fraction)} ${metric.unit}`} />
+                          </div>
                         </div>
                       </div>
                     );
@@ -234,6 +269,14 @@ export default function Home() {
             </Link>
           </div>
         </section>
+
+        <div className="max-w-5xl mx-auto px-5 sm:px-6 w-full" aria-hidden="true">
+          {heartRateEntries.length >= 2 ? (
+            <PulseTrace entries={heartRateEntries} variant="divider" />
+          ) : (
+            <div className="h-px bg-border" />
+          )}
+        </div>
 
         {/* Community CTA bar */}
         <section className="max-w-5xl mx-auto px-5 sm:px-6 py-16 w-full">

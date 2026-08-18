@@ -1,0 +1,116 @@
+REDESIGN LISTA ARTICOLI — articoli.tsx
+
+Il primo articolo deve spaccare. Gli altri seguono.
+Adesso sono tutti uguali in una griglia 2×2.
+
+═══════════════════════════════════════════
+FILE DA TOCCARE
+═══════════════════════════════════════════
+
+- artifacts/progetto-j/src/pages/articoli.tsx
+
+═══════════════════════════════════════════
+LOGICA FEATURED
+═══════════════════════════════════════════
+
+Il primo articolo della lista filtrata (index 0) 
+viene renderizzato come CARD FEATURED. Gli altri 
+(index 1+) restano nella griglia 2 colonne come 
+adesso.
+
+═══════════════════════════════════════════
+CARD FEATURED (solo il primo articolo)
+═══════════════════════════════════════════
+
+- Full-width (col-span-full), altezza minima 420px
+- L'immagine è di SFONDO (background-image, 
+  object-cover, 100% altezza)
+- Gradiente sovrapposto: bg-gradient-to-t 
+  from-[#0A0A0A] via-[#0A0A0A]/60 to-transparent
+- Il contenuto testuale è posizionato in basso 
+  a sinistra dentro il gradiente:
+  - Badge categoria: come adesso (bordo, uppercase)
+  - Titolo: Bebas Neue, clamp(36px, 6vw, 56px), 
+    colore foreground, uppercase, max-width 600px
+  - Excerpt: una riga, 14px, Inter, 
+    text-muted-foreground, max 100 caratteri
+  - "X min di lettura →" in rosso primary, 11px
+- Hover: l'immagine fa scale(1.03) con transition 
+  duration-700, il titolo diventa text-primary
+- Se non c'è immagine: sfondo nero con crosshatch 
+  (come le card attuali senza foto)
+
+STRUTTURA HTML:
+<Link href={`/a/${firstArticle.slug}`} 
+  className="col-span-full">
+  <article className="group relative overflow-hidden 
+    border border-border min-h-[420px] flex flex-col 
+    justify-end">
+    {/* Immagine sfondo */}
+    {imgUrl ? (
+      <img src={imgUrl} className="absolute inset-0 
+        w-full h-full object-cover transition-transform 
+        duration-700 group-hover:scale-[1.03]" />
+    ) : (
+      <div className="absolute inset-0 crosshatch 
+        opacity-30" />
+    )}
+    {/* Gradiente */}
+    <div className="absolute inset-0 bg-gradient-to-t 
+      from-[#0A0A0A] via-[#0A0A0A]/60 
+      to-transparent" />
+    {/* Contenuto */}
+    <div className="relative p-6 sm:p-8">
+      <span className="badge categoria">...</span>
+      <h3 className="font-serif text-[clamp(36px,6vw,56px)] 
+        leading-[0.9] bebas text-foreground uppercase 
+        max-w-[600px] mt-3 
+        group-hover:text-primary transition-colors">
+        {titolo}
+      </h3>
+      <p className="excerpt mt-3">...</p>
+      <span className="read-time mt-4">...</span>
+    </div>
+  </article>
+</Link>
+
+═══════════════════════════════════════════
+GRIGLIA SOTTO (articoli 1+)
+═══════════════════════════════════════════
+
+Resta la griglia 2 colonne identica a com'è adesso.
+Solo, non include più il primo articolo (index 0).
+
+Codice:
+{filtered.length > 1 && (
+  <div className="grid grid-cols-1 md:grid-cols-2 
+    gap-6 mt-6">
+    {filtered.slice(1).map((a) => (
+      // card identica a quella attuale
+    ))}
+  </div>
+)}
+
+═══════════════════════════════════════════
+COSA NON TOCCARE
+═══════════════════════════════════════════
+
+- Il filtro categorie (resta identico)
+- Il titolo della pagina e la descrizione
+- La Cross in fondo
+- Il footer
+- I colori e i font
+
+═══════════════════════════════════════════
+TEST
+═══════════════════════════════════════════
+
+a. Apro /articoli: il primo articolo è una card 
+   enorme con immagine di sfondo e titolo grande
+b. Sotto, gli altri articoli sono in griglia 2 col
+c. Cambio filtro categoria: il primo della lista 
+   filtrata diventa featured
+d. Su mobile la card featured è alta almeno 360px 
+   e il titolo è leggibile
+e. Hover: l'immagine zooma leggermente, il titolo 
+   diventa rosso
