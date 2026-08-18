@@ -1,0 +1,146 @@
+UPGRADE JOURNALING — journaling.tsx
+
+Obiettivo: la pagina journaling è il cuore del sito 
+ma adesso sembra una lista di card tutte uguali. 
+Serve gerarchia e un header più potente.
+
+═══════════════════════════════════════════
+FILE DA TOCCARE
+═══════════════════════════════════════════
+
+- artifacts/progetto-j/src/pages/journaling.tsx
+- artifacts/progetto-j/src/components/DayCard.tsx
+
+═══════════════════════════════════════════
+1. ULTIMO CHECKPOINT — UPGRADE VISIVO
+═══════════════════════════════════════════
+
+La sezione "ULTIMO CHECKPOINT" in alto è una card 
+piatta con bordo e barra rossa a sinistra. 
+Miglioramenti:
+
+- Se l'ultimo entry ha una foto, usala come sfondo 
+  della card con overlay scuro (come le card IG):
+  <div className="relative overflow-hidden 
+    min-h-[280px]">
+    {latest.foto && (
+      <>
+        <img src={getPhotoUrl(latest.foto)} 
+          className="absolute inset-0 w-full h-full 
+          object-cover grayscale-[20%]" />
+        <div className="absolute inset-0 
+          bg-gradient-to-r from-[#0A0A0A] 
+          via-[#0A0A0A]/80 to-transparent" />
+      </>
+    )}
+    <div className="relative p-6 sm:p-8 ...">
+      {/* contenuto attuale */}
+    </div>
+  </div>
+
+- Se NON ha foto, resta la card attuale con barra 
+  rossa a sinistra (nessun cambiamento)
+
+═══════════════════════════════════════════
+2. KPI STRIP — PIÙ COMPATTA E POTENTE
+═══════════════════════════════════════════
+
+La riga di KPI (GIORNI, KCAL, KM, ENTRATE, PESO, 
+SONNO) adesso è in card separate kpi-card. 
+Rendila una striscia continua orizzontale 
+scrollabile su mobile:
+
+<div className="flex overflow-x-auto no-scrollbar 
+  snap-x gap-0 border border-border bg-card mb-12">
+  {kpiItems.map(item => (
+    <div key={item.label} className="snap-start 
+      flex-shrink-0 p-4 sm:p-5 border-r 
+      border-border last:border-r-0 
+      min-w-[120px] sm:min-w-[140px]">
+      <div className="measured text-[clamp(24px,4vw,36px)] 
+        text-foreground leading-none">
+        <AnimatedNumber value={item.value} />
+        {item.suffix}
+      </div>
+      <div className="text-[10px] font-sans uppercase 
+        tracking-[0.2em] text-muted-foreground mt-2">
+        {item.label}
+      </div>
+    </div>
+  ))}
+</div>
+
+I numeri usano AnimatedNumber (già importato nel file).
+
+═══════════════════════════════════════════
+3. FEED GIORNI — LAYOUT ALTERNATO
+═══════════════════════════════════════════
+
+Adesso tutte le DayCard sono identiche, una sotto 
+l'altra. Per dare ritmo:
+
+- Il primo giorno visibile (il più recente) viene 
+  renderizzato come DayCard con prop featured={true} 
+  (il componente già lo supporta — la card diventa 
+  più alta con min-h-[420px])
+- I giorni successivi alternano: ogni 5 giorni, 
+  una card è featured e le altre sono normali.
+
+Codice:
+{visibleEntries.map((entry, index) => (
+  <Reveal key={entry.id}>
+    <DayCard entry={entry} 
+      featured={index === 0 || index % 5 === 0} />
+  </Reveal>
+))}
+
+═══════════════════════════════════════════
+4. DAYCARD — HOVER PIÙ VIVO
+═══════════════════════════════════════════
+
+In DayCard.tsx, l'immagine al hover fa 
+scale-[1.02] ma è molto sottile. Aumenta a:
+- group-hover:scale-[1.05] (più zoom)
+- Aggiungi un bordo rosso che appare al hover:
+  hover:border-primary (al posto di hover:border-iron)
+
+Il testo preview (line-clamp-3) è piccolo. 
+Quando featured={true}, cambialo a line-clamp-4 
+e font-size 16px.
+
+═══════════════════════════════════════════
+5. GRAFICI JOURNALING — STESSI UPGRADE 
+   DELLE STATISTICHE
+═══════════════════════════════════════════
+
+I grafici nella pagina journaling (peso, kcal, 
+allenamento, entrate/uscite) devono avere:
+- Stessi tooltip custom (sfondo nero, bordo rosso, 
+  font mono)
+- Area-fill sotto il grafico peso (stessa logica 
+  del prompt statistiche)
+- Le barre dell'allenamento con animationDuration 
+  1200 e animationBegin 200
+
+═══════════════════════════════════════════
+COSA NON TOCCARE
+═══════════════════════════════════════════
+
+- Il filtro mese e la ricerca testo (restano identici)
+- Il ProgressRing
+- La paginazione "CARICA ALTRI"
+- Il footer
+- Il design system
+
+═══════════════════════════════════════════
+TEST
+═══════════════════════════════════════════
+
+a. L'ultimo checkpoint ha la foto come sfondo 
+   (se presente) con gradiente
+b. I KPI scorrono orizzontalmente su mobile, 
+   i numeri si animano
+c. Il primo giorno del feed è una card più grande
+d. Al hover sulle DayCard il bordo diventa rosso 
+   e l'immagine zooma di più
+e. I grafici hanno area-fill e tooltip coerenti

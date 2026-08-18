@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useListEntries, useGetSiteContent, getGetSiteContentQueryKey } from "@workspace/api-client-react";
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { Area, ComposedChart, LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
 import { Reveal } from "@/components/Reveal";
@@ -11,13 +11,23 @@ import { MilestoneBadge } from "@/components/MilestoneBadge";
 import { AnimatedNumber } from "@/components/AnimatedNumber";
 import { SiteFooter } from "@/components/SiteFooter";
 import { DataErrorState } from "@/components/DataErrorState";
-import { Dumbbell, Heart, Flame, Wallet, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Link } from "wouter";
+import { getPhotoUrl } from "@workspace/object-storage-web";
 
 const PAGE_SIZE = 12;
 
 const chartTooltip = {
-  contentStyle: { backgroundColor: "#0a0a0a", borderColor: "hsl(var(--primary))", color: "#F5F0E8", borderRadius: 0 },
+  contentStyle: {
+    backgroundColor: "#0A0A0A",
+    border: "1px solid #B81D1D",
+    color: "#E8E4DE",
+    borderRadius: 0,
+    fontFamily: "'JetBrains Mono', monospace",
+    fontSize: "12px",
+    letterSpacing: "0.05em",
+    padding: "8px 12px",
+  },
 };
 
 const isTouch = typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
@@ -77,6 +87,14 @@ export default function Journaling() {
     sonnoEntries.length > 0
       ? +(sonnoEntries.reduce((s, e) => s + (e.sonno ?? 0), 0) / sonnoEntries.length).toFixed(1)
       : null;
+  const kpiItems = [
+    { label: "GIORNI", value: totalEntries, suffix: "", prefix: "" },
+    { label: "KCAL", value: totalCalories, suffix: "", prefix: "" },
+    { label: "KM", value: totalKm, suffix: "", prefix: "" },
+    { label: "ENTRATE", value: totalIncome, suffix: "", prefix: "€" },
+    { label: "PESO", value: latestWithPeso?.peso ?? null, suffix: " KG", prefix: "" },
+    { label: "SONNO", value: sonnoMedio, suffix: " H", prefix: "" },
+  ] as const;
 
   const maxDay = latest ? latest.numero : 0;
   const goalDay = 180;
@@ -149,9 +167,19 @@ export default function Journaling() {
         {/* Current checkpoint: gives the newest update narrative priority. */}
         {latest && (
           <Reveal>
-            <section className="mb-12 border border-iron bg-card relative overflow-hidden">
+            <section className="relative mb-12 min-h-[280px] overflow-hidden border border-iron bg-card">
               <div className="absolute inset-y-0 left-0 w-1 bg-primary" />
-              <div className="p-6 sm:p-8 flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+              {latest.foto && (
+                <>
+                  <img
+                    src={getPhotoUrl(latest.foto) ?? undefined}
+                    alt=""
+                    className="absolute inset-0 h-full w-full object-cover grayscale-[20%]"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-r from-[#0A0A0A] via-[#0A0A0A]/80 to-transparent" />
+                </>
+              )}
+              <div className="relative flex min-h-[280px] flex-col justify-end gap-6 p-6 sm:p-8 md:flex-row md:items-end md:justify-between">
                 <div>
                   <span className="page-label">ULTIMO CHECKPOINT</span>
                   <div className="mt-3 flex items-end gap-4">
@@ -211,49 +239,28 @@ export default function Journaling() {
         </Reveal>
       )}
 
-      {/* KPI Cards */}
+      {/* KPI strip */}
       <section aria-labelledby="metriche-title" className="mb-12">
         <h2 id="metriche-title" className="sr-only">Metriche del percorso</h2>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Reveal>
-          <div className="kpi-card">
-            <div className="flex items-center gap-2 mb-2 text-iron">
-              <Flame size={16} strokeWidth={2} />
-              <span className="text-[10px] font-sans uppercase tracking-[0.2em] text-muted-foreground">GIORNI</span>
+        <div className="mb-12 flex snap-x gap-0 overflow-x-auto border border-border bg-card no-scrollbar">
+          {kpiItems.map((item) => (
+            <div key={item.label} className="min-w-[120px] shrink-0 snap-start border-r border-border p-4 last:border-r-0 sm:min-w-[140px] sm:p-5">
+              <div className={`measured text-[clamp(24px,4vw,36px)] leading-none ${item.label === "ENTRATE" ? "text-[hsl(var(--acid))]" : "text-foreground"}`}>
+                {item.prefix}
+                {typeof item.value === "number" ? (
+                  <AnimatedNumber
+                    value={item.value}
+                    formatter={(number) => item.label === "KCAL" || item.label === "ENTRATE"
+                      ? number.toLocaleString("it-IT")
+                      : number.toLocaleString("it-IT", { maximumFractionDigits: 1 })}
+                  />
+                ) : "—"}
+                {item.suffix}
+              </div>
+              <div className="mt-2 text-[10px] font-sans uppercase tracking-[0.2em] text-muted-foreground">{item.label}</div>
             </div>
-            <AnimatedNumber value={totalEntries} className="font-serif text-[36px] sm:text-[48px] leading-none text-foreground bebas" formatter={(n) => String(n)} />
-          </div>
-        </Reveal>
-        <Reveal delay={50}>
-          <div className="kpi-card">
-            <div className="flex items-center gap-2 mb-2 text-iron">
-              <Dumbbell size={16} strokeWidth={2} />
-              <span className="text-[10px] font-sans uppercase tracking-[0.2em] text-muted-foreground">KM</span>
-            </div>
-            <AnimatedNumber value={totalKm} className="font-serif text-[36px] sm:text-[48px] leading-none text-foreground bebas" formatter={(n) => String(n)} />
-          </div>
-        </Reveal>
-        <Reveal delay={100}>
-          <div className="kpi-card">
-            <div className="flex items-center gap-2 mb-2 text-iron">
-              <Heart size={16} strokeWidth={2} />
-              <span className="text-[10px] font-sans uppercase tracking-[0.2em] text-muted-foreground">KCAL</span>
-            </div>
-            <AnimatedNumber value={totalCalories} className="font-serif text-[36px] sm:text-[48px] leading-none text-foreground bebas" />
-          </div>
-        </Reveal>
-        <Reveal delay={150}>
-          <div className="kpi-card">
-            <div className="flex items-center gap-2 mb-2 text-[hsl(var(--acid))]">
-              <Wallet size={16} strokeWidth={2} />
-              <span className="text-[10px] font-sans uppercase tracking-[0.2em] text-muted-foreground">ENTRATE</span>
-            </div>
-            <div className="font-serif text-[36px] sm:text-[48px] leading-none text-[hsl(var(--acid))] bebas measured">
-              €<AnimatedNumber value={totalIncome} />
-            </div>
-          </div>
-        </Reveal>
-      </div>
+          ))}
+        </div>
       </section>
 
       {/* Progress rings */}
@@ -315,13 +322,20 @@ export default function Journaling() {
               <h3 className="text-[11px] font-sans uppercase tracking-[0.2em] text-muted-foreground mb-5">PESO NEL TEMPO</h3>
               <div className="flex-1 min-h-[200px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={formattedChartData.filter((d) => d.peso != null)} {...chartProps}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1a1a1a" vertical={false} />
+                  <ComposedChart data={formattedChartData.filter((d) => d.peso != null)} {...chartProps}>
+                    <defs>
+                      <linearGradient id="journalingPesoGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.35} />
+                        <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#1A1A1A" vertical={false} />
                     <XAxis dataKey="formattedDate" {...axisProps} />
                     <YAxis domain={["dataMin - 1", "dataMax + 1"]} {...axisProps} />
                     {!isTouch && <Tooltip {...chartTooltip} itemStyle={{ color: "hsl(var(--primary))" }} />}
-                    <Line type="monotone" dataKey="peso" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ fill: "hsl(var(--primary))", strokeWidth: 0, r: 3 }} activeDot={{ r: 5 }} />
-                  </LineChart>
+                    <Area type="monotone" dataKey="peso" fill="url(#journalingPesoGrad)" stroke="none" />
+                    <Line type="monotone" dataKey="peso" stroke="hsl(var(--primary))" strokeWidth={3} dot={{ fill: "hsl(var(--primary))", strokeWidth: 0, r: 3 }} activeDot={{ r: 5 }} />
+                  </ComposedChart>
                 </ResponsiveContainer>
               </div>
             </div>
@@ -333,7 +347,7 @@ export default function Journaling() {
               <div className="flex-1 min-h-[200px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={formattedChartData.filter((d) => d.sonno != null)} {...chartProps}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1a1a1a" vertical={false} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#1A1A1A" vertical={false} />
                     <XAxis dataKey="formattedDate" {...axisProps} />
                     <YAxis domain={[0, "dataMax + 2"]} {...axisProps} />
                     {!isTouch && <Tooltip {...chartTooltip} itemStyle={{ color: "hsl(var(--primary))" }} />}
@@ -350,7 +364,7 @@ export default function Journaling() {
               <div className="flex-1 min-h-[200px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={formattedChartData.filter((d) => d.kcal != null)} {...chartProps}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1a1a1a" vertical={false} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#1A1A1A" vertical={false} />
                     <XAxis dataKey="formattedDate" {...axisProps} />
                     <YAxis domain={["dataMin - 200", "dataMax + 200"]} {...axisProps} />
                     {!isTouch && <Tooltip {...chartTooltip} itemStyle={{ color: "hsl(var(--primary))" }} />}
@@ -367,11 +381,11 @@ export default function Journaling() {
               <div className="flex-1 min-h-[200px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={formattedChartData.filter((d) => d.allenamento > 0)} {...chartProps}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1a1a1a" vertical={false} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#1A1A1A" vertical={false} />
                     <XAxis dataKey="formattedDate" {...axisProps} />
                     <YAxis {...axisProps} />
                     <Tooltip {...chartTooltip} cursor={{ fill: "#1a1a1a", opacity: 0.4 }} />
-                    <Bar dataKey="allenamento" fill="hsl(var(--primary))" />
+                    <Bar dataKey="allenamento" fill="hsl(var(--primary))" animationDuration={1200} animationBegin={200} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -402,7 +416,7 @@ export default function Journaling() {
                       barGap={4}
                       barCategoryGap="30%"
                     >
-                      <CartesianGrid strokeDasharray="3 3" stroke="#1a1a1a" vertical={false} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#1A1A1A" vertical={false} />
                       <XAxis dataKey="formattedDate" {...axisProps} />
                       <YAxis
                         {...axisProps}
@@ -410,7 +424,7 @@ export default function Journaling() {
                       />
                       {!isTouch && (
                         <Tooltip
-                          contentStyle={{ backgroundColor: "#0a0a0a", borderColor: "#1f1f1f", color: "#F5F0E8", borderRadius: 0, fontSize: 12 }}
+                          contentStyle={chartTooltip.contentStyle}
                           cursor={{ fill: "rgba(255,255,255,0.03)" }}
                           formatter={(value: number, name: string) => [
                             `€${Number(value).toLocaleString("it-IT")}`,
@@ -499,9 +513,9 @@ export default function Journaling() {
           </Reveal>
         ) : (
           <>
-            {visibleEntries.map((entry) => (
+            {visibleEntries.map((entry, index) => (
               <Reveal key={entry.id}>
-                <DayCard entry={entry} />
+                <DayCard entry={entry} featured={index === 0 || index % 5 === 0} />
               </Reveal>
             ))}
             {hasMore && (

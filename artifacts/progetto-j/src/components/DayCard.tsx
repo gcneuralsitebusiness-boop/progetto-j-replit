@@ -33,7 +33,7 @@ export function DayCard({ entry, featured = false }: { entry: Entry; featured?: 
   return (
     <Link href={`/giorno/${entry.numero}`} className="block">
     <article
-      className={`group relative border border-border bg-card bracket-hover overflow-hidden transition-all duration-300 hover:border-iron card-lift cursor-pointer ${
+      className={`group relative border border-border bg-card bracket-hover overflow-hidden transition-all duration-300 hover:border-primary card-lift cursor-pointer ${
         featured ? "min-h-[420px]" : ""
       }`}
     >
@@ -43,7 +43,7 @@ export function DayCard({ entry, featured = false }: { entry: Entry; featured?: 
           <img
             src={getPhotoUrl(entry.foto) ?? undefined}
             alt={`Giorno ${entry.numero}`}
-            className="w-full h-full object-cover grayscale-[20%] contrast-110 group-hover:scale-[1.02] transition-transform duration-700"
+            className="w-full h-full object-cover grayscale-[20%] contrast-110 transition-transform duration-700 group-hover:scale-[1.05]"
           />
         ) : (
           <div className="relative h-full w-full border border-iron bg-[#0A0A0A]">
@@ -89,7 +89,9 @@ export function DayCard({ entry, featured = false }: { entry: Entry; featured?: 
         </div>
 
         {entry.testo && (
-          <p className="text-[14px] sm:text-[15px] font-sans text-foreground/90 leading-relaxed line-clamp-3 whitespace-pre-wrap mb-4">
+          <p className={`font-sans text-foreground/90 leading-relaxed whitespace-pre-wrap mb-4 ${
+            featured ? "text-[16px] line-clamp-4" : "text-[14px] sm:text-[15px] line-clamp-3"
+          }`}>
             {stripDayLabel(entry.testo)}
           </p>
         )}
