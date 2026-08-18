@@ -1,0 +1,193 @@
+REDESIGN PAGINA ARTICOLO SINGOLO — articolo.tsx
+
+L'articolo deve sembrare una pagina di rivista, 
+non un post di blog.
+
+═══════════════════════════════════════════
+FILE DA TOCCARE
+═══════════════════════════════════════════
+
+- artifacts/progetto-j/src/pages/articolo.tsx
+- artifacts/progetto-j/src/index.css (aggiungere 
+  stili drop-cap e pull-quote)
+
+═══════════════════════════════════════════
+1. IMMAGINE FULL-BLEED CON TITOLO OVERLAY
+═══════════════════════════════════════════
+
+Se l'articolo ha un'immagine, invece del box 
+attuale con bordo, renderizza:
+
+<div className="relative w-screen -ml-[50vw] 
+  left-1/2 h-[50vh] min-h-[320px] max-h-[520px] 
+  overflow-hidden mb-10 mt-8">
+  <img src={imgUrl} className="w-full h-full 
+    object-cover" />
+  <div className="absolute inset-0 bg-gradient-to-t 
+    from-[#0A0A0A] via-[#0A0A0A]/40 to-transparent" />
+  <div className="absolute bottom-0 left-0 right-0 
+    max-w-4xl mx-auto px-5 sm:px-6 pb-8">
+    <span className="badge categoria mb-3 inline-block">
+      {article.categoria}
+    </span>
+    <h1 className="font-serif 
+      text-[clamp(40px,8vw,72px)] leading-[0.85] 
+      tracking-wide bebas text-foreground uppercase">
+      {article.titolo}
+    </h1>
+    <div className="flex items-center gap-3 mt-4">
+      <span className="text-[12px] font-sans 
+        text-muted-foreground uppercase 
+        tracking-[0.2em]">
+        {data formattata}
+      </span>
+      <span className="text-muted-foreground">·</span>
+      <span className="text-[12px] font-sans 
+        text-muted-foreground uppercase 
+        tracking-[0.2em]">
+        {minutes} min
+      </span>
+    </div>
+  </div>
+</div>
+
+Se NON c'è immagine, il titolo resta nella 
+posizione attuale (inline, non overlay).
+
+Il badge categoria, il titolo h1, la data e i 
+minuti di lettura che sono sopra l'immagine nel 
+codice attuale vengono SPOSTATI dentro l'overlay 
+dell'immagine. Non devono apparire due volte.
+
+Il bottone Condividi resta in alto a destra, 
+fuori dall'immagine, nella posizione attuale.
+
+═══════════════════════════════════════════
+2. DROP CAP — CSS
+═══════════════════════════════════════════
+
+Aggiungi in index.css:
+
+.article-body > p:first-of-type::first-letter {
+  font-family: 'Bebas Neue', sans-serif;
+  color: #B81D1D;
+  float: left;
+  font-size: 4.5em;
+  line-height: 0.8;
+  margin-right: 0.08em;
+  margin-top: 0.05em;
+}
+
+IMPORTANTE: rimuovi la regola esistente 
+.article-body p:first-of-type che imposta 
+font-size: 1.1875rem e color: #fff. La sostituisci 
+con:
+
+.article-body > p:first-of-type {
+  font-size: 1.125rem;
+  line-height: 1.7;
+  color: #fff;
+}
+
+═══════════════════════════════════════════
+3. PULL QUOTE (blockquote potenziato) — CSS
+═══════════════════════════════════════════
+
+Sostituisci la regola .article-body blockquote 
+esistente con:
+
+.article-body blockquote {
+  border: none;
+  border-left: none;
+  margin: 3rem 0;
+  padding: 2rem 0;
+  text-align: center;
+  position: relative;
+}
+.article-body blockquote::before {
+  content: """;
+  display: block;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 4rem;
+  line-height: 1;
+  color: #B81D1D;
+  margin-bottom: 0.5rem;
+}
+.article-body blockquote p {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(1.5rem, 4vw, 2.25rem);
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #fff;
+  max-width: 45ch;
+  margin: 0 auto;
+}
+
+═══════════════════════════════════════════
+4. ARTICOLO SUCCESSIVO IN FONDO
+═══════════════════════════════════════════
+
+Dopo il link al giorno correlato (o dopo la Cross 
+se non c'è giorno), aggiungi una sezione 
+"PROSSIMO ARTICOLO".
+
+Logica: usa useListArticles() per prendere la lista. 
+Trova l'articolo corrente per slug. Prendi quello 
+successivo nell'array (index + 1). Se non c'è 
+(è l'ultimo), prendi il primo (loop).
+
+Rendering:
+<div className="mt-14 border border-border 
+  bg-card overflow-hidden">
+  {nextArticle.immagine && (
+    <img src={resolveImgUrl(nextArticle.immagine)} 
+      className="w-full h-48 object-cover" />
+  )}
+  <div className="p-5">
+    <div className="text-[10px] font-sans uppercase 
+      tracking-[0.2em] text-muted-foreground mb-2">
+      PROSSIMO ARTICOLO
+    </div>
+    <h3 className="font-serif text-[28px] 
+      leading-none bebas text-foreground 
+      hover:text-primary transition-colors">
+      {nextArticle.titolo}
+    </h3>
+    <span className="inline-flex items-center gap-1 
+      text-[11px] font-sans uppercase tracking-[0.15em] 
+      text-primary mt-3">
+      Leggi <ArrowRight size={13} />
+    </span>
+  </div>
+</div>
+
+Wrappalo in un <Link href={`/a/${nextArticle.slug}`}>.
+
+═══════════════════════════════════════════
+COSA NON TOCCARE
+═══════════════════════════════════════════
+
+- Il componente ArticleContent (il rendering HTML 
+  del corpo resta identico)
+- Il link al giorno correlato (resta identico)
+- Il bottone Condividi (resta identico)
+- Il footer
+- Nessun colore o font nuovo
+
+═══════════════════════════════════════════
+TEST
+═══════════════════════════════════════════
+
+a. Apro un articolo con immagine: l'immagine è 
+   full-bleed (bordo a bordo dello schermo), il 
+   titolo è sovrapposto in basso col gradiente
+b. Il primo paragrafo ha la prima lettera grande 
+   e rossa (drop cap)
+c. Se c'è un <blockquote>, appare centrato con 
+   virgolette rosse e font grande
+d. In fondo c'è la card "PROSSIMO ARTICOLO"
+e. Su mobile l'immagine è alta almeno 320px e 
+   il titolo è leggibile
+f. Se l'articolo NON ha immagine, il titolo 
+   appare inline come prima (no overlay su nero)
