@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import { useGetSiteContent } from "@workspace/api-client-react";
 import { getPhotoUrl } from "@workspace/object-storage-web";
 import { Reveal } from "@/components/Reveal";
@@ -7,63 +8,56 @@ import { DataErrorState } from "@/components/DataErrorState";
 
 const DEFAULTS = {
   chi_sono_bio:
-    "Mi chiamo J. Ho 21 anni. Bologna.\n\nDue anni fa pesavo 130 chili ed ero dipendente. Non avevo una direzione — solo il giorno dopo. Ho toccato il fondo. Poi ho smesso di fuggire e ho iniziato a costruire.",
+    "Mi chiamo J. Ho 21 anni. Faccio il tecnico su tralicci telecom a Bologna.\n\nUn anno fa ero a 130 chili e dipendente. Non da alcol, non da cibo — da qualcosa che non nomino nei contenuti pubblici. Ho smesso cold-turkey. Il giorno dopo mi sono pesato e ho iniziato a scrivere.\n\nHo più problemi che talenti. Non sono capace di divertirmi. Non riesco a dormire più di sei ore senza sentirmi in colpa. Banalizzò i risultati appena li raggiungo.\n\nQuesto sono io. Non la versione costruita per i social — questa.",
   chi_sono_il_progetto:
-    "180 giorni. Documentati. Senza filtri.\n\nNiente motivazione vuota, niente estetica costruita per i social. Solo numeri, sudore, e quello che emerge quando resti solo con te stesso. Se inciampo, lo vedete. I dati sono reali perché la trasformazione è reale.",
+    "180 giorni. Tutti documentati. Peso, battito, sonno, soldi, allenamento. Pubblicati ogni giorno sul sito con i dati reali.\n\nNessun filtro sull'immagine. Nessuna storia costruita a posteriori. Se un giorno vado male, lo scrivo. Se un giorno non mi alleno, è nel tracking. Se guadagno poco, è nei numeri.\n\nLa trasformazione è reale perché i dati sono reali. Ogni altra versione è marketing.",
   chi_sono_la_motivazione:
-    "Il cambiamento nasce dalla disciplina, non dall'ispirazione di un momento.\n\nIl corpo e lo spirito sono legati — forgiando uno, sollevi l'altro. Lo sport da combattimento mi ha insegnato che il corpo regge più di quanto la mente creda. La fede mi ha dato una ragione per continuare quando il corpo non bastava.",
+    "Non l'ho fatto per i follower. Non l'ho fatto per dimostrare niente a nessuno.\n\nL'ho fatto perché dove ero prima ho pregato per tutto questo. Per alzarmi la mattina e avere qualcosa da fare. Per sentire la fatica nel corpo invece di quell'altra cosa. Per avere una direzione invece di un solo giorno dopo.\n\nLa fede ortodossa è il centro. Il resto — MMA, Muay Thai, BJJ, il lavoro, il business — è la struttura che la fede regge.",
   chi_sono_la_promessa:
-    "Non so chi sarò al giorno 180.\n\nSo che sarò onesto nel raccontarlo. Se fallisco, resterà documentato. Ogni mattina mi sveglio con una sola certezza: il lavoro va fatto, senza scuse.",
+    "Non so chi sarò al giorno 180.\n\nSo che sarà documentato. Ogni errore, ogni giorno perso, ogni numero che va nella direzione sbagliata — resterà sul sito.\n\nSe fallisco, lo sapete.\nSe ce la faccio, lo sapete.\n\nIC XC NIKA",
 };
 
-function PhotoBlock({ path }: { path: string | null | undefined }) {
+function HeroBlock({ path }: { path: string | null | undefined }) {
   const url = getPhotoUrl(path ?? null);
 
-  if (url) {
-    return (
-      <div className="w-full" style={{ maxWidth: 480 }}>
+  return (
+    <div
+      className="relative left-1/2 mb-16 w-screen -translate-x-1/2 overflow-hidden"
+      style={{ height: "clamp(420px, 65vh, 640px)" }}
+    >
+      {url ? (
         <img
           src={url}
           alt="J"
-          className="w-full object-cover border border-border"
-          style={{ height: "clamp(320px, 50vw, 500px)" }}
+          className="absolute inset-0 h-full w-full object-cover object-top grayscale-[15%]"
         />
-      </div>
-    );
-  }
+      ) : (
+        <svg
+          className="absolute inset-0 h-full w-full"
+          xmlns="http://www.w3.org/2000/svg"
+          aria-hidden="true"
+        >
+          <defs>
+            <pattern id="xhatch" width="12" height="12" patternUnits="userSpaceOnUse">
+              <path d="M0 12 L12 0 M-2 2 L2 -2 M10 14 L14 10" stroke="#2a2a2a" strokeWidth="1" />
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="#0a0a0a" />
+          <rect width="100%" height="100%" fill="url(#xhatch)" />
+        </svg>
+      )}
 
-  // Crosshatch placeholder
-  return (
-    <div
-      className="w-full border border-border relative overflow-hidden flex items-center justify-center"
-      style={{ maxWidth: 480, height: "clamp(320px, 50vw, 500px)" }}
-    >
-      {/* crosshatch via SVG pattern */}
-      <svg
-        className="absolute inset-0 w-full h-full"
-        xmlns="http://www.w3.org/2000/svg"
-        aria-hidden="true"
-      >
-        <defs>
-          <pattern
-            id="crosshatch"
-            width="12"
-            height="12"
-            patternUnits="userSpaceOnUse"
-          >
-            <path
-              d="M0 12 L12 0 M-2 2 L2 -2 M10 14 L14 10"
-              stroke="#2a2a2a"
-              strokeWidth="1"
-            />
-          </pattern>
-        </defs>
-        <rect width="100%" height="100%" fill="#0a0a0a" />
-        <rect width="100%" height="100%" fill="url(#crosshatch)" />
-      </svg>
-      <span className="relative font-serif text-[clamp(80px,18vw,140px)] text-[#1e1e1e] leading-none select-none bebas">
-        J
-      </span>
+      <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-[#0A0A0A]/50 to-transparent" />
+
+      <div className="absolute bottom-0 left-0 right-0 mx-auto max-w-4xl px-5 pb-10 sm:px-6">
+        <span className="page-label">DOSSIER</span>
+        <h1 className="mt-3 font-serif text-[clamp(72px,16vw,140px)] leading-[0.82] tracking-wide text-foreground bebas uppercase">
+          CHI<br />SONO
+        </h1>
+        <p className="mt-4 font-sans text-[13px] uppercase tracking-[0.2em] text-muted-foreground">
+          Bologna · 21 anni · Giorno in corso
+        </p>
+      </div>
     </div>
   );
 }
@@ -105,42 +99,67 @@ export default function ChiSono() {
 
   return (
     <div className="min-h-screen pt-20 pb-20 max-w-4xl mx-auto px-5 sm:px-6">
-      <Reveal>
-        <div className="mb-6">
-          <span className="page-label">DOSSIER</span>
-          <h1 className="font-serif text-[clamp(56px,12vw,112px)] leading-[0.85] tracking-wide bebas text-foreground mt-2">
-            CHI SONO
-          </h1>
-        </div>
-      </Reveal>
-
-      {/* Photo block */}
-      <Reveal delay={60}>
-        <div className="mb-14">
-          <PhotoBlock path={content?.chi_sono_foto} />
-        </div>
-      </Reveal>
+      <HeroBlock path={content?.chi_sono_foto} />
 
       <div className="grid grid-cols-1 gap-0 max-w-4xl mx-auto">
         {sections.map((section, i) => (
-          <Reveal key={section.key} delay={i * 80 + 120}>
-            <section className="grid grid-cols-1 md:grid-cols-[140px_1fr] gap-x-8 border-t border-iron py-10">
-              <h2 className="font-sans text-[11px] uppercase tracking-[0.2em] text-muted-foreground md:sticky md:top-24 self-start mb-4 md:mb-0">
-                {section.key}
-              </h2>
-              <p className="text-[16px] sm:text-[17px] font-sans text-foreground/90 leading-[1.8] whitespace-pre-wrap">
-                {section.body}
-              </p>
-            </section>
-          </Reveal>
+          <Fragment key={section.key}>
+            <Reveal delay={i * 80}>
+              <section className="grid grid-cols-1 gap-x-10 border-t border-iron py-12 md:grid-cols-[160px_1fr]">
+                <div className="self-start mb-6 md:sticky md:top-24 md:mb-0">
+                  <div className="select-none font-serif text-[clamp(56px,9vw,88px)] leading-none text-iron/20 bebas">
+                    {String(i + 1).padStart(2, "0")}
+                  </div>
+                  <h2 className="mt-2 font-sans text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
+                    {section.key}
+                  </h2>
+                </div>
+                <div>
+                  {i === 0 ? (
+                    <>
+                      <p className="mb-6 font-serif text-[clamp(20px,3vw,26px)] leading-[1.3] tracking-wide text-foreground bebas uppercase">
+                        {section.body.split("\n\n")[0]}
+                      </p>
+                      <p className="whitespace-pre-wrap font-sans text-[16px] leading-[1.85] text-foreground/85 sm:text-[17px]">
+                        {section.body.split("\n\n").slice(1).join("\n\n")}
+                      </p>
+                    </>
+                  ) : (
+                    <p className="whitespace-pre-wrap font-sans text-[16px] leading-[1.85] text-foreground/85 sm:text-[17px]">
+                      {section.body}
+                    </p>
+                  )}
+                </div>
+              </section>
+            </Reveal>
+
+            {i === 0 && (
+              <div className="my-4 border-l-4 border-primary py-4 pl-6">
+                <p className="max-w-2xl font-serif text-[clamp(22px,4vw,32px)] leading-[1.2] tracking-wide text-foreground bebas uppercase">
+                  "Se inciampo, lo vedete. I dati sono reali perché la trasformazione è reale."
+                </p>
+              </div>
+            )}
+
+            {i === 2 && (
+              <div className="my-4 border-l-4 border-primary py-4 pl-6">
+                <p className="max-w-2xl font-serif text-[clamp(22px,4vw,32px)] leading-[1.2] tracking-wide text-foreground bebas uppercase">
+                  "La fede ortodossa è il centro. Il resto è la struttura che la fede regge."
+                </p>
+              </div>
+            )}
+          </Fragment>
         ))}
 
-        <Reveal delay={440}>
-           <div className="border border-iron bg-card p-8 sm:p-10 text-center">
-            <Cross className="mx-auto mb-4" />
-            <span className="font-serif text-[clamp(36px,8vw,64px)] leading-none text-primary bebas tracking-wide">
+        <Reveal delay={400}>
+          <div className="mt-6 border-t-2 border-primary pb-16 pt-10 text-center">
+            <Cross className="mx-auto mb-6" />
+            <span className="block font-serif text-[clamp(48px,10vw,88px)] leading-none tracking-wide text-primary bebas">
               IC XC NIKA
             </span>
+            <p className="mt-4 font-sans text-[12px] uppercase tracking-[0.25em] text-muted-foreground">
+              Cristo vince · sempre
+            </p>
           </div>
         </Reveal>
       </div>

@@ -1,0 +1,302 @@
+REDESIGN COMPLETO CHI SONO — chi-sono.tsx
+
+Due obiettivi: 
+1. Copy più crudo e personale
+2. Grafica con impatto visivo dalla prima riga
+
+═══════════════════════════════════════════
+PARTE 1 — NUOVO COPY (testi di default)
+═══════════════════════════════════════════
+
+Sostituisci i testi in DEFAULTS con questi:
+
+chi_sono_bio:
+"Mi chiamo J. Ho 21 anni. Faccio il tecnico 
+su tralicci telecom a Bologna.
+
+Un anno fa ero a 130 chili e dipendente. 
+Non da alcol, non da cibo — da qualcosa 
+che non nomino nei contenuti pubblici. 
+Ho smesso cold-turkey. Il giorno dopo 
+mi sono pesato e ho iniziato a scrivere.
+
+Ho più problemi che talenti. Non sono 
+capace di divertirmi. Non riesco a dormire 
+più di sei ore senza sentirmi in colpa. 
+Banalizzò i risultati appena li raggiungo.
+
+Questo sono io. Non la versione costruita 
+per i social — questa."
+
+chi_sono_il_progetto:
+"180 giorni. Tutti documentati. Peso, battito, 
+sonno, soldi, allenamento. Pubblicati ogni giorno 
+sul sito con i dati reali.
+
+Nessun filtro sull'immagine. Nessuna storia 
+costruita a posteriori. Se un giorno vado male, 
+lo scrivo. Se un giorno non mi alleno, 
+è nel tracking. Se guadagno poco, è nei numeri.
+
+La trasformazione è reale perché i dati sono reali. 
+Ogni altra versione è marketing."
+
+chi_sono_la_motivazione:
+"Non l'ho fatto per i follower. Non l'ho fatto 
+per dimostrare niente a nessuno.
+
+L'ho fatto perché dove ero prima ho pregato 
+per tutto questo. Per alzarmi la mattina e 
+avere qualcosa da fare. Per sentire la fatica 
+nel corpo invece di quell'altra cosa. Per avere 
+una direzione invece di un solo giorno dopo.
+
+La fede ortodossa è il centro. Il resto — 
+MMA, Muay Thai, BJJ, il lavoro, il business — 
+è la struttura che la fede regge."
+
+chi_sono_la_promessa:
+"Non so chi sarò al giorno 180.
+
+So che sarà documentato. Ogni errore, 
+ogni giorno perso, ogni numero che va 
+nella direzione sbagliata — resterà sul sito.
+
+Se fallisco, lo sapete.
+Se ce la faccio, lo sapete.
+
+IC XC NIKA"
+
+═══════════════════════════════════════════
+PARTE 2 — GRAFICA: HERO FOTO + TITOLO OVERLAY
+═══════════════════════════════════════════
+
+Sostituisci la struttura attuale 
+(titolo separato + PhotoBlock separato) 
+con questo hero unificato:
+
+function HeroBlock({ 
+  path 
+}: { 
+  path: string | null | undefined 
+}) {
+  const url = getPhotoUrl(path ?? null);
+
+  return (
+    <div className="relative w-screen -ml-[50vw] 
+      left-1/2 overflow-hidden mb-16"
+      style={{ height: "clamp(420px, 65vh, 640px)" }}>
+      
+      {/* Sfondo: foto o crosshatch */}
+      {url ? (
+        <img
+          src={url}
+          alt="J"
+          className="absolute inset-0 w-full h-full 
+            object-cover object-top grayscale-[15%]"
+        />
+      ) : (
+        <svg className="absolute inset-0 w-full h-full"
+          xmlns="http://www.w3.org/2000/svg"
+          aria-hidden="true">
+          <defs>
+            <pattern id="xhatch" width="12" height="12"
+              patternUnits="userSpaceOnUse">
+              <path d="M0 12 L12 0 M-2 2 L2 -2 
+                M10 14 L14 10"
+                stroke="#2a2a2a" strokeWidth="1" />
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" 
+            fill="#0a0a0a" />
+          <rect width="100%" height="100%" 
+            fill="url(#xhatch)" />
+        </svg>
+      )}
+
+      {/* Gradiente */}
+      <div className="absolute inset-0 
+        bg-gradient-to-t from-[#0A0A0A] 
+        via-[#0A0A0A]/50 to-transparent" />
+
+      {/* Contenuto sovrapposto in basso */}
+      <div className="absolute bottom-0 left-0 
+        right-0 max-w-4xl mx-auto px-5 sm:px-6 
+        pb-10">
+        <span className="page-label">DOSSIER</span>
+        <h1 className="font-serif mt-3
+          text-[clamp(72px,16vw,140px)] 
+          leading-[0.82] tracking-wide bebas 
+          text-foreground uppercase">
+          CHI<br />SONO
+        </h1>
+        <p className="font-sans text-[13px] 
+          uppercase tracking-[0.2em] 
+          text-muted-foreground mt-4">
+          Bologna · 21 anni · Giorno in corso
+        </p>
+      </div>
+    </div>
+  );
+}
+
+Sostituisci il blocco:
+  <Reveal><div className="mb-6">...</div></Reveal>
+  <Reveal delay={60}><div><PhotoBlock /></div></Reveal>
+
+Con:
+  <HeroBlock path={content?.chi_sono_foto} />
+
+Nessun Reveal sul HeroBlock — è già in cima 
+alla pagina, non serve animazione.
+
+═══════════════════════════════════════════
+PARTE 3 — SEZIONI CON NUMERO PROGRESSIVO
+═══════════════════════════════════════════
+
+Modifica la struttura delle sezioni. 
+Adesso hanno solo un label a sinistra 
+(h2 piccolo). Aggiungi un numero grande 
+in grigio scuro come elemento visivo:
+
+{sections.map((section, i) => (
+  <Reveal key={section.key} delay={i * 80}>
+    <section className="grid grid-cols-1 
+      md:grid-cols-[160px_1fr] gap-x-10 
+      border-t border-iron py-12">
+      
+      {/* Colonna sinistra: numero + label */}
+      <div className="md:sticky md:top-24 
+        self-start mb-6 md:mb-0">
+        <div className="font-serif 
+          text-[clamp(56px,9vw,88px)] 
+          leading-none text-iron/20 bebas 
+          select-none">
+          {String(i + 1).padStart(2, "0")}
+        </div>
+        <h2 className="font-sans text-[11px] 
+          uppercase tracking-[0.2em] 
+          text-muted-foreground mt-2">
+          {section.key}
+        </h2>
+      </div>
+
+      {/* Colonna destra: testo */}
+      <div>
+        {/* Prima sezione: prima frase più grande */}
+        {i === 0 ? (
+          <>
+            <p className="font-serif 
+              text-[clamp(20px,3vw,26px)] 
+              leading-[1.3] text-foreground 
+              bebas uppercase tracking-wide mb-6">
+              {section.body.split("\n\n")[0]}
+            </p>
+            <p className="text-[16px] sm:text-[17px] 
+              font-sans text-foreground/85 
+              leading-[1.85] whitespace-pre-wrap">
+              {section.body.split("\n\n")
+                .slice(1).join("\n\n")}
+            </p>
+          </>
+        ) : (
+          <p className="text-[16px] sm:text-[17px] 
+            font-sans text-foreground/85 
+            leading-[1.85] whitespace-pre-wrap">
+            {section.body}
+          </p>
+        )}
+      </div>
+    </section>
+  </Reveal>
+))}
+
+═══════════════════════════════════════════
+PARTE 4 — PULL QUOTE TRA LE SEZIONI
+═══════════════════════════════════════════
+
+Tra la sezione 0 (LA STORIA) e la sezione 1 
+(IL PROGETTO), inserisci un pull quote fisso:
+
+<div className="border-l-4 border-primary 
+  pl-6 py-4 my-4">
+  <p className="font-serif 
+    text-[clamp(22px,4vw,32px)] leading-[1.2] 
+    text-foreground bebas uppercase 
+    tracking-wide max-w-2xl">
+    "Se inciampo, lo vedete. I dati sono reali 
+    perché la trasformazione è reale."
+  </p>
+</div>
+
+Tra la sezione 2 (LA MOTIVAZIONE) e la 
+sezione 3 (LA PROMESSA), inserisci:
+
+<div className="border-l-4 border-primary 
+  pl-6 py-4 my-4">
+  <p className="font-serif 
+    text-[clamp(22px,4vw,32px)] leading-[1.2] 
+    text-foreground bebas uppercase 
+    tracking-wide max-w-2xl">
+    "La fede ortodossa è il centro. 
+    Il resto è la struttura che la fede regge."
+  </p>
+</div>
+
+═══════════════════════════════════════════
+PARTE 5 — BOX IC XC NIKA — UPGRADE
+═══════════════════════════════════════════
+
+Il box finale IC XC NIKA adesso è centrato 
+con bordo iron. Rendilo più potente:
+
+<Reveal delay={400}>
+  <div className="mt-6 border-t-2 border-primary 
+    pt-10 pb-16 text-center">
+    <Cross className="mx-auto mb-6" />
+    <span className="font-serif 
+      text-[clamp(48px,10vw,88px)] leading-none 
+      text-primary bebas tracking-wide block">
+      IC XC NIKA
+    </span>
+    <p className="font-sans text-[12px] uppercase 
+      tracking-[0.25em] text-muted-foreground 
+      mt-4">
+      Cristo vince · sempre
+    </p>
+  </div>
+</Reveal>
+
+Rimuovi il bordo box (border border-iron 
+bg-card p-8) — resta solo il border-top 
+rosso e il testo centrato su sfondo aperto.
+
+═══════════════════════════════════════════
+COSA NON TOCCARE
+═══════════════════════════════════════════
+
+- La logica useGetSiteContent 
+  (i testi DB sovrascrivono i default — 
+  se hai già i testi nel DB non cambiano, 
+  cambiano solo i DEFAULTS)
+- Il footer
+- Il design system (colori, font, zero radius)
+- Gli stati isLoading e isError
+
+═══════════════════════════════════════════
+TEST
+═══════════════════════════════════════════
+
+a. Hero: foto (o crosshatch) full-bleed con 
+   "CHI SONO" sovrapposto in basso
+b. Sezioni: numeri grandi (01, 02, 03, 04) 
+   in grigio scuro a sinistra
+c. Prima sezione: prima frase più grande 
+   in Bebas Neue
+d. Due pull quote rossi tra le sezioni
+e. IC XC NIKA finale: grande, aperto, 
+   con "Cristo vince · sempre" sotto
+f. Su mobile hero alto almeno 420px, 
+   titolo leggibile
+g. I testi mostrati sono quelli del DB 
+   se presenti, altrimenti i nuovi default
