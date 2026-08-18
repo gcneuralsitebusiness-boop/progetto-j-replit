@@ -1,0 +1,148 @@
+REDESIGN HERO HOMEPAGE — home.tsx
+
+Obiettivo: chi apre il sito deve sentire il colpo 
+nei primi 3 secondi. Adesso è un titolo statico su 
+sfondo nero. Deve diventare: dati veri, cuore vero, 
+impatto visivo.
+
+═══════════════════════════════════════════
+FILE DA TOCCARE
+═══════════════════════════════════════════
+
+- artifacts/progetto-j/src/pages/home.tsx
+- artifacts/progetto-j/src/components/AnimatedNumber.tsx 
+  (ESISTE GIÀ, va solo importato e usato)
+- artifacts/progetto-j/src/components/PulseTrace.tsx 
+  (ESISTE GIÀ, va solo importato e usato)
+
+═══════════════════════════════════════════
+STRUTTURA NUOVA HERO (sostituisce la <section> 
+con classe hero-radial)
+═══════════════════════════════════════════
+
+Layout verticale, centrato, max-w-5xl.
+
+LAYER 0 — SFONDO:
+Il componente PulseTrace già esiste in 
+src/components/PulseTrace.tsx. Piazzalo DIETRO 
+tutto il contenuto hero, position absolute, 
+full-width, altezza 200px, centrato verticalmente, 
+con opacity 0.12. Passagli le entries e variant="hero".
+Se non ci sono abbastanza dati battito (<2 entries), 
+non renderizzarlo — nessun fallback, solo lo sfondo 
+nero con hero-radial.
+
+LAYER 1 — CONTENUTO (sopra il PulseTrace):
+
+Riga 1: label "PERCORSO IN CORSO" (page-label, 
+come adesso)
+
+Riga 2: numero del giorno corrente, ENORME.
+  - Usa il componente AnimatedNumber (già in 
+    src/components/AnimatedNumber.tsx)
+  - Font: Bebas Neue, colore primary (#B81D1D)
+  - Dimensione: text-[clamp(120px,25vw,220px)]
+  - Formattato con padStart(3, "0") → "097"
+  - Il numero deve animarsi (count-up da 0) quando 
+    entra nel viewport
+
+Riga 3: sotto il numero grande, una riga di 
+confronto secca:
+  <span className="line-through text-muted-foreground">
+    {pesoIniziale} KG
+  </span>
+  <span className="text-primary mx-3">→</span>
+  <span className="text-[hsl(var(--acid))]">
+    {pesoAttuale} KG
+  </span>
+  Font: JetBrains Mono, 18px, uppercase tracking
+  Il peso iniziale è il peso del primo entry che 
+  ha peso != null. Il peso attuale è l'ultimo entry 
+  che ha peso != null. Se non ci sono dati peso, 
+  non mostrare questa riga.
+
+Riga 4: barra di progresso giorno/180 (quella che 
+c'è già, resta identica)
+
+Riga 5: bottone CTA (quello che c'è già, resta)
+
+SOTTO L'HERO — SCROLL HINT:
+Aggiungi un div con classe scroll-hint-line (il CSS 
+esiste già in index.css riga 432-438, l'animazione 
+scroll-bounce è già definita). Posizionalo centrato, 
+sotto il bottone CTA, con margin-top 2rem. 
+Su mobile fa capire che c'è contenuto sotto.
+Sparisce dopo il primo scroll (usa IntersectionObserver 
+o un semplice opacity basata su scroll > 100px).
+
+═══════════════════════════════════════════
+TICKER — NUMERI ANIMATI
+═══════════════════════════════════════════
+
+Nel ticker sotto l'hero (la barra che scorre con 
+GIORNI / KM / KCAL / ENTRATE), i valori numerici 
+devono usare AnimatedNumber. Se AnimatedNumber non 
+supporta stringhe con prefisso (es. "€"), wrappalo:
+  <span>€<AnimatedNumber value={totalIncome} /></span>
+
+═══════════════════════════════════════════
+SEZIONE PRIMA/DOPO — NUMERI ANIMATI
+═══════════════════════════════════════════
+
+Nella sezione "GIORNO X → GIORNO Y" più in basso, 
+i numeri grandi del peso/battito prima e dopo 
+devono usare AnimatedNumber.
+
+═══════════════════════════════════════════
+EKG COME DIVIDER
+═══════════════════════════════════════════
+
+Tra la sezione "ULTIMI GIORNI" e la sezione 
+"Community CTA", sostituisci il divider esistente 
+con <PulseTrace entries={allEntries ?? []} 
+variant="divider" />. Se non ci sono dati battito, 
+renderizza il divider standard (h-px bg-border).
+
+═══════════════════════════════════════════
+COSA NON TOCCARE
+═══════════════════════════════════════════
+
+- Il ticker loop infinito (funziona già)
+- La sezione Timeline180 (resta identica)
+- Le DayCard degli ultimi giorni (restano identiche)
+- La sezione Community CTA (resta identica)
+- Il footer
+- I colori e i font del design system
+- Il border-radius resta ZERO ovunque
+
+═══════════════════════════════════════════
+DESIGN SYSTEM (reminder)
+═══════════════════════════════════════════
+
+Sfondo: #0A0A0A
+Rosso primario: hsl(var(--primary)) = #B81D1D
+Verde acido: hsl(var(--acid)) = #00FF41
+Testo: hsl(var(--foreground)) = #E8E4DE
+Testo secondario: hsl(var(--muted-foreground))
+Font titoli: Bebas Neue (classe .bebas)
+Font dati: JetBrains Mono (classe .measured)
+Font corpo: Inter
+ZERO border-radius. ZERO box-shadow. ZERO emoji.
+
+═══════════════════════════════════════════
+TEST
+═══════════════════════════════════════════
+
+a. Apro la home: vedo subito il numero "097" enorme 
+   in rosso che si anima da 000 a 097
+b. Dietro al numero vedo la linea EKG del battito 
+   reale, sfumata, che si disegna
+c. Sotto il numero vedo "130.0 KG → 80.3 KG" 
+   (barrato → verde acido)
+d. La barra di progresso e il bottone sono sotto
+e. Sotto il bottone c'è una linea che pulsa verso 
+   il basso (scroll hint)
+f. Il ticker scorre con i numeri che si animano
+g. Tra le sezioni c'è la linea EKG come divider
+h. Su mobile tutto è leggibile e non esce dallo 
+   schermo
