@@ -50,6 +50,8 @@ export default function Articoli() {
     if (filter === "Tutte") return articles;
     return articles.filter((a) => a.categoria === filter);
   }, [articles, filter]);
+  const featuredArticle = filtered[0];
+  const otherArticles = filtered.slice(1);
 
   if (isError) {
     return (
@@ -94,8 +96,8 @@ export default function Articoli() {
         </div>
       </Reveal>
 
-      {/* Article grid — 1-col mobile / 2-col tablet+ */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Featured article + article grid — the first filtered article leads. */}
+      <div>
         {isLoading ? (
           <div className="col-span-full grid grid-cols-1 md:grid-cols-2 gap-6" aria-label="Caricamento articoli">
             {[0, 1, 2, 3].map((item) => <div key={item} className="h-[360px] border border-border bg-card animate-pulse" />)}
@@ -105,68 +107,101 @@ export default function Articoli() {
             Gli articoli arrivano presto.
           </div>
         ) : (
-          filtered.map((a) => {
-            const imgUrl = resolveImgUrl(a.immagine);
-            const minutes = readingTime(a.contenuto);
-            const ex = excerpt(a.contenuto);
-
-            return (
-              <Reveal key={a.id}>
-                <Link href={`/a/${a.slug}`}>
-                  <article className="group block border border-border bg-card hover:border-iron transition-colors h-full flex flex-col card-lift bracket-hover">
-                    {/* Cover image — 16:9 */}
-                    <div className="relative w-full overflow-hidden" style={{ paddingBottom: "56.25%" }}>
-                      {imgUrl ? (
-                        <>
-                          <img
-                            src={imgUrl}
-                            alt={a.titolo}
-                            className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.035]"
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                        </>
-                      ) : (
-                        <div className="absolute inset-0 h-full w-full border border-iron bg-[#0A0A0A]">
-                          <div className="crosshatch absolute inset-0 opacity-30" />
-                          <span className="absolute inset-0 flex items-center justify-center text-[11px] font-sans uppercase tracking-[0.2em] text-[#3A3A3A]">
-                            NESSUNA IMMAGINE
-                          </span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Card body */}
-                    <div className="p-5 flex flex-col flex-1">
-                      {/* Category badge + date */}
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="text-[10px] font-sans uppercase tracking-[0.2em] border border-border px-2 py-1 text-muted-foreground">
-                          {a.categoria}
-                        </span>
-                        <span className="text-[11px] font-sans text-muted-foreground">
-                          {format(new Date(a.data), "d MMM yyyy", { locale: it })}
-                        </span>
-                      </div>
-
-                      {/* Title */}
-                      <h3 className="font-serif text-[26px] leading-none text-foreground bebas mb-3 group-hover:text-primary transition-colors">
-                        {a.titolo}
+          <>
+            {featuredArticle && (
+              <Reveal key={featuredArticle.id}>
+                <Link href={`/a/${featuredArticle.slug}`} className="group block">
+                  <article className="relative flex min-h-[360px] flex-col justify-end overflow-hidden border border-border bg-[#0A0A0A] sm:min-h-[420px]">
+                    {resolveImgUrl(featuredArticle.immagine) ? (
+                      <img
+                        src={resolveImgUrl(featuredArticle.immagine) ?? undefined}
+                        alt={featuredArticle.titolo}
+                        className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 crosshatch opacity-30" />
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-[#0A0A0A]/60 to-transparent" />
+                    <div className="relative p-6 sm:p-8">
+                      <span className="inline-flex border border-border px-2 py-1 text-[10px] font-sans uppercase tracking-[0.2em] text-muted-foreground">
+                        {featuredArticle.categoria}
+                      </span>
+                      <h3 className="mt-3 max-w-[600px] font-serif text-[clamp(36px,6vw,56px)] leading-[0.9] text-foreground uppercase bebas transition-colors group-hover:text-primary">
+                        {featuredArticle.titolo}
                       </h3>
-
-                      {/* Excerpt — 2 lines */}
-                      <p className="text-[13px] font-sans text-muted-foreground leading-relaxed line-clamp-2 flex-1 mb-4">
-                        {ex}
+                      <p className="mt-3 max-w-[600px] truncate text-[14px] font-sans text-muted-foreground">
+                        {excerpt(featuredArticle.contenuto, 100)}
                       </p>
-
-                      {/* Reading time */}
-                      <span className="inline-flex items-center gap-1.5 text-[11px] font-sans uppercase tracking-[0.15em] text-primary">
-                        {minutes} min di lettura <ArrowRight size={13} aria-hidden="true" />
+                      <span className="mt-4 inline-flex items-center gap-1.5 text-[11px] font-sans uppercase tracking-[0.15em] text-primary">
+                        {readingTime(featuredArticle.contenuto)} min di lettura <ArrowRight size={13} aria-hidden="true" />
                       </span>
                     </div>
                   </article>
                 </Link>
               </Reveal>
-            );
-          })
+            )}
+
+            {otherArticles.length > 0 && (
+              <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
+                {otherArticles.map((a) => {
+                  const imgUrl = resolveImgUrl(a.immagine);
+                  const minutes = readingTime(a.contenuto);
+                  const ex = excerpt(a.contenuto);
+
+                  return (
+                    <Reveal key={a.id}>
+                      <Link href={`/a/${a.slug}`}>
+                        <article className="group block border border-border bg-card hover:border-iron transition-colors h-full flex flex-col card-lift bracket-hover">
+                          <div className="relative w-full overflow-hidden" style={{ paddingBottom: "56.25%" }}>
+                            {imgUrl ? (
+                              <>
+                                <img
+                                  src={imgUrl}
+                                  alt={a.titolo}
+                                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.035]"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                              </>
+                            ) : (
+                              <div className="absolute inset-0 h-full w-full border border-iron bg-[#0A0A0A]">
+                                <div className="crosshatch absolute inset-0 opacity-30" />
+                                <span className="absolute inset-0 flex items-center justify-center text-[11px] font-sans uppercase tracking-[0.2em] text-[#3A3A3A]">
+                                  NESSUNA IMMAGINE
+                                </span>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="p-5 flex flex-col flex-1">
+                            <div className="flex items-center justify-between mb-3">
+                              <span className="text-[10px] font-sans uppercase tracking-[0.2em] border border-border px-2 py-1 text-muted-foreground">
+                                {a.categoria}
+                              </span>
+                              <span className="text-[11px] font-sans text-muted-foreground">
+                                {format(new Date(a.data), "d MMM yyyy", { locale: it })}
+                              </span>
+                            </div>
+
+                            <h3 className="font-serif text-[26px] leading-none text-foreground bebas mb-3 group-hover:text-primary transition-colors">
+                              {a.titolo}
+                            </h3>
+
+                            <p className="text-[13px] font-sans text-muted-foreground leading-relaxed line-clamp-2 flex-1 mb-4">
+                              {ex}
+                            </p>
+
+                            <span className="inline-flex items-center gap-1.5 text-[11px] font-sans uppercase tracking-[0.15em] text-primary">
+                              {minutes} min di lettura <ArrowRight size={13} aria-hidden="true" />
+                            </span>
+                          </div>
+                        </article>
+                      </Link>
+                    </Reveal>
+                  );
+                })}
+              </div>
+            )}
+          </>
         )}
       </div>
 
