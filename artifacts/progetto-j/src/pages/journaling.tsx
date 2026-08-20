@@ -14,8 +14,13 @@ import { DataErrorState } from "@/components/DataErrorState";
 import { ArrowRight } from "lucide-react";
 import { Link } from "wouter";
 import { getPhotoUrl } from "@workspace/object-storage-web";
+import { stripHtml } from "@/lib/strip-html";
 
 const PAGE_SIZE = 12;
+
+function stripDayLabel(text: string): string {
+  return text.replace(/^\s*GIORNO\s+\d+\s*[—–-]?\s*[\d-]*\s*\n?/i, "").trim();
+}
 
 const chartTooltip = {
   contentStyle: {
