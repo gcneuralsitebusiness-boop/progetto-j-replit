@@ -197,7 +197,7 @@ export default function Journaling() {
                   </div>
                   {latest.testo && (
                     <p className="mt-5 max-w-2xl text-[15px] font-sans leading-relaxed text-foreground/85 line-clamp-3">
-                      {latest.testo.replace(/^\s*GIORNO\s+\d+.*\n?/i, "").trim()}
+                      {stripHtml(stripDayLabel(latest.testo))}
                     </p>
                   )}
                 </div>
