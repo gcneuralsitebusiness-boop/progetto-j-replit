@@ -162,7 +162,8 @@ function CorrelationCard({
 }) {
   const difference = firstValue != null && secondValue != null ? firstValue - secondValue : null;
   const good = difference == null ? false : goodWhenLower ? difference < 0 : difference > 0;
-  const ready = firstCount >= minSamples && secondCount >= minSamples;
+  const ready = firstCount > 0 && secondCount > 0;
+  const hasSmallSample = ready && (firstCount < minSamples || secondCount < minSamples);
   const maxVal = Math.max(Math.abs(firstValue ?? 0), Math.abs(secondValue ?? 0));
   const pctFirst = maxVal > 0 ? (Math.abs(firstValue ?? 0) / maxVal) * 100 : 0;
   const pctSecond = maxVal > 0 ? (Math.abs(secondValue ?? 0) / maxVal) * 100 : 0;
@@ -171,7 +172,7 @@ function CorrelationCard({
       <h3 className="font-serif text-[20px] tracking-[0.12em] text-foreground bebas">{title}</h3>
       {!ready ? (
         <p className="mt-4 font-sans text-[14px] leading-relaxed text-muted-foreground">
-          Servono almeno {minSamples} valori per gruppo. Disponibili: {firstCount} / {secondCount}.
+          Dati insufficienti per il confronto. Disponibili: {firstCount} / {secondCount}.
         </p>
       ) : (
         <div className="mt-5 grid grid-cols-2 gap-4">
@@ -190,6 +191,11 @@ function CorrelationCard({
           {difference != null && (
             <div className={`col-span-2 text-[12px] font-mono uppercase tracking-wider ${good ? "text-[hsl(var(--acid))]" : "text-primary"}`}>
               Differenza {difference > 0 ? "+" : ""}{difference.toFixed(1)}
+            </div>
+          )}
+          {hasSmallSample && (
+            <div className="col-span-2 text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+              Campione ridotto · {firstCount} / {secondCount} valori
             </div>
           )}
         </div>
