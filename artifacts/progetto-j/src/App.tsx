@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Route, Switch, Router as WouterRouter, useLocation } from 'wouter';
-import { lazy, Suspense, useEffect, type ReactNode } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Toaster } from '@/components/ui/toaster';
 import { Navbar } from '@/components/Navbar';
 import { ScrollToTop } from '@/components/ScrollToTop';
@@ -54,7 +54,34 @@ function ConditionalNavbar() {
 
 function PageFade({ children }: { children: ReactNode }) {
   const [location] = useLocation();
-  return <div key={location} className="page-transition">{children}</div>;
+  const [displayedLocation, setDisplayedLocation] = useState(location);
+  const [displayedChildren, setDisplayedChildren] = useState(children);
+  const [isExiting, setIsExiting] = useState(false);
+  const latestChildren = useRef(children);
+  latestChildren.current = children;
+
+  useEffect(() => {
+    if (location === displayedLocation) return;
+
+    setIsExiting(true);
+    const timeout = window.setTimeout(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+      setDisplayedChildren(latestChildren.current);
+      setDisplayedLocation(location);
+      setIsExiting(false);
+    }, 120);
+
+    return () => window.clearTimeout(timeout);
+  }, [displayedLocation, location]);
+
+  return (
+    <div
+      key={displayedLocation}
+      className={`page-transition${isExiting ? " page-transition--exit" : ""}`}
+    >
+      {displayedChildren}
+    </div>
+  );
 }
 
 function PageMetadata() {

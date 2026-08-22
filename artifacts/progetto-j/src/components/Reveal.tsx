@@ -1,4 +1,4 @@
-import { createElement, type ReactNode, type ElementType } from "react";
+import { createElement, useEffect, useState, type ReactNode, type ElementType } from "react";
 import { useReveal } from "@/lib/use-reveal";
 
 export function Reveal({
@@ -14,7 +14,19 @@ export function Reveal({
   direction?: "up" | "none";
   as?: ElementType;
 }) {
-  const { ref, isVisible } = useReveal<HTMLElement>({ delay });
+  const { ref, isVisible } = useReveal<HTMLElement>();
+  const [isAnimating, setIsAnimating] = useState(!isVisible);
+
+  useEffect(() => {
+    if (!isVisible) {
+      setIsAnimating(true);
+      return;
+    }
+
+    const timer = window.setTimeout(() => setIsAnimating(false), delay + 600);
+    return () => window.clearTimeout(timer);
+  }, [delay, isVisible]);
+
   return createElement(
     as,
     {
@@ -25,7 +37,7 @@ export function Reveal({
         transform: isVisible || direction === "none" ? "translateY(0)" : "translateY(12px)",
         transition: "opacity var(--dur-slow) var(--ease-out), transform var(--dur-slow) var(--ease-out)",
         transitionDelay: `${delay}ms`,
-        willChange: isVisible ? "auto" : "opacity, transform",
+        willChange: isAnimating ? "opacity, transform" : "auto",
       },
     },
     children

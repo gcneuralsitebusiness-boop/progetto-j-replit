@@ -1,0 +1,133 @@
+Devi ridisegnare la pagina statistiche e creare il componente di sfondo
+riutilizzabile. Il sistema motion del prompt precedente (useReveal,
+Reveal, RevealGroup, variabili --ease-out e --dur-*) è già disponibile:
+usalo, non riscriverlo.
+
+=== 1. COMPONENTE TerminalBackdrop ===
+
+Crea /artifacts/progetto-j/src/components/TerminalBackdrop.tsx
+
+Uno sfondo decorativo a tre layer, position absolute, inset 0,
+pointer-events none, z-index 0, overflow hidden.
+
+Props:
+- intensity?: 'low' | 'medium' (default 'low')
+- glow?: boolean (default false)
+
+LAYER 1 — dot grid
+- pattern SVG con <pattern> di punti da 1px, spaziatura 24px
+- colore #F5F0E8, opacità 0.04 (low) o 0.06 (medium)
+- copre tutta l'area
+- animazione: translateY da 0 a -24px in 40s linear infinite
+  (deve sembrare fermo, il movimento è quasi impercettibile)
+
+LAYER 2 — tracce EKG
+- 3 polyline SVG orizzontali a altezze diverse (18%, 52%, 81%)
+- riusa la logica di generazione punti già presente in PulseTrace.tsx
+- stroke #F5F0E8, stroke-width 1, fill none
+- opacità 0.05 / 0.07
+- filter: blur(6px) applicato UNA VOLTA in CSS statico, mai animato
+- animazione: ogni traccia trasla su X con transform, durate diverse
+  (55s, 70s, 90s) linear infinite, così non vanno mai in sincrono
+
+LAYER 3 — glow radiale (solo se glow={true})
+- un div con radial-gradient(circle at 50% 40%, #B81D1D 0%, transparent 60%)
+- opacità 0.03
+- animazione: scale da 1 a 1.08 e ritorno, 30s ease-in-out infinite
+
+Se prefers-reduced-motion è attivo, tutte le animazioni sono disabilitate
+ma i layer restano visibili statici.
+
+=== 2. GRIGLIA 180 GIORNI ===
+
+Crea /artifacts/progetto-j/src/components/Grid180.tsx
+
+La visualizzazione più importante del sito: 180 quadratini, uno per giorno.
+
+Props: completedDays: number, totalDays?: number (default 180)
+
+Layout:
+- CSS grid, 20 colonne su desktop, 12 su tablet, 10 su mobile
+- ogni cella 10x10px desktop, gap 4px
+- nessun border-radius
+
+Stati cella:
+- giorno completato: background var(--acid) verde acido
+- giorno futuro: background rgba(245,240,232,0.08)
+- giorno corrente: background #B81D1D + animazione pulse
+  (opacity 1 → 0.4 → 1 in 2s ease-in-out infinite)
+
+Animazione di entrata:
+- al primo scroll in viewport (useReveal), le celle si accendono in
+  sequenza: ogni cella ha transition-delay = index * 8ms
+- da opacity 0 a opacity 1, NIENTE transform (troppe celle, il transform
+  su 180 elementi crea layer eccessivi)
+- l'intera sequenza dura circa 1.4 secondi
+- una sola volta, mai ripetuta
+
+Interazione:
+- hover su una cella: title attribute con "Giorno N"
+- opzionale, se semplice: la cella in hover passa a opacity 1 piena
+
+=== 3. NUMERI IN COUNT-UP ===
+
+Estendi /artifacts/progetto-j/src/components/AnimatedNumber.tsx
+
+- parte solo quando l'elemento entra in viewport (useReveal), non al mount
+- durata 800ms
+- easing: cubic-bezier(0.2, 0.8, 0.2, 1) applicato al progresso, non
+  interpolazione lineare
+- usa requestAnimationFrame, non setInterval
+- supporta props: value, decimals?, suffix?, prefix?, duration?
+- font-variant-numeric: tabular-nums per evitare che la larghezza balli
+- se reduced-motion, mostra direttamente il valore finale
+
+=== 4. GRAFICI CHE SI DISEGNANO ===
+
+Per ogni line chart presente in statistiche.tsx (peso, allenamenti,
+spese, follower):
+
+- la <path> ha stroke-dasharray e stroke-dashoffset impostati alla
+  lunghezza totale del path (calcolata con getTotalLength() in un useEffect)
+- all'entrata in viewport, stroke-dashoffset va a 0
+- transizione: stroke-dashoffset var(--dur-draw) var(--ease-out)
+- i punti dati appaiono in stagger DOPO che la linea è disegnata:
+  delay base 1200ms + index * 40ms, opacity 0 → 1
+- l'area di riempimento sotto la linea (se presente) fa fade-in a
+  opacità finale dopo 1200ms
+
+NOTA PERFORMANCE: stroke-dashoffset non è transform/opacity ma è
+accettabile perché è una transizione singola non in loop, e il
+browser la gestisce sulla GPU per gli SVG path.
+
+=== 5. GRAFICO DUPLICATO IN BACKGROUND ===
+
+Nella sezione hero di statistiche.tsx:
+- prendi il grafico principale (peso o follower)
+- duplicalo in un layer di sfondo: scale(3), opacity 0.05,
+  filter blur(8px), position absolute, pointer-events none
+- deve stare DIETRO i numeri in primo piano
+- il duplicato NON si anima: è statico, già disegnato
+
+=== 6. LAYOUT E STRUTTURA statistiche.tsx ===
+
+Ordine della pagina:
+1. Hero: titolo Bebas Neue + TerminalBackdrop con glow + grafico
+   duplicato dietro + 3 numeri chiave in count-up
+2. Grid180 con label "180 GIORNI" in JetBrains Mono
+3. Blocchi grafici, ognuno wrappato in RevealGroup
+4. Tabella dati grezzi in JetBrains Mono, righe in stagger
+
+Ogni sezione è separata da una hairline 1px rgba(245,240,232,0.12).
+Bracket corners agli angoli dei blocchi principali (riusa lo stile
+esistente).
+
+=== VINCOLI ===
+- Zero border-radius, zero box-shadow, zero emoji
+- Nessuna libreria di animazione o charting nuova installata
+- Palette e font invariati
+- Su mobile la pagina deve restare fluida: se Grid180 rallenta, riduci
+  le celle a 8x8px e il gap a 3px, non rimuovere l'animazione
+- Testa che il primo caricamento su mobile resti sotto i 2 secondi
+
+Al termine elenca i file creati e modificati con una riga ciascuno.
