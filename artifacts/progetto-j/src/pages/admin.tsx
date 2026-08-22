@@ -65,13 +65,37 @@ function validateEntry(data: Partial<Record<string, unknown>>): Record<string, s
 
 // ─── Backup download helper ────────────────────────────────────────────────────
 
-function downloadBackup() {
+type BackupResult = {
+  filename: string;
+  summary: Record<string, number>;
+};
+
+async function downloadBackup(): Promise<BackupResult> {
+  const response = await fetch(`${import.meta.env.BASE_URL}api/admin/backup`, { credentials: "include" });
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    throw new Error(body?.error ?? `HTTP ${response.status}`);
+  }
+
+  const text = await response.text();
+  let payload: { summary?: Record<string, number> };
+  try {
+    payload = JSON.parse(text);
+  } catch {
+    throw new Error("Il file ricevuto non è un JSON valido.");
+  }
+  const filenameHeader = response.headers.get("Content-Disposition")?.match(/filename="([^"]+)"/)?.[1];
+  const filename = filenameHeader ?? `progetto-j-backup-${new Date().toISOString().split("T")[0]}.json`;
+  const blob = new Blob([text], { type: "application/json;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  a.href = "/api/admin/backup";
-  a.download = `progetto-j-backup-${new Date().toISOString().split("T")[0]}.json`;
+  a.href = url;
+  a.download = filename;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  return { filename, summary: payload.summary ?? {} };
 }
 
 // ─── Login ────────────────────────────────────────────────────────────────────
@@ -702,6 +726,7 @@ interface DashboardData {
 }
 
 function OggiTab({ onSwitchTab }: { onSwitchTab: (tab: string, scrollToEntry?: number) => void }) {
+  const [backupFeedback, setBackupFeedback] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const {
     data: dashboard,
     isLoading: loading,
@@ -822,10 +847,23 @@ function OggiTab({ onSwitchTab }: { onSwitchTab: (tab: string, scrollToEntry?: n
           <h2 className="text-[22px] font-serif tracking-wider">BACKUP DATI</h2>
           <p className="text-[13px] font-sans text-muted-foreground mt-1">Esporta tutti i dati in un singolo file JSON.</p>
         </div>
-        <button onClick={downloadBackup}
+        <button onClick={() => {
+          setBackupFeedback(null);
+          void downloadBackup()
+            .then(({ filename, summary }) => {
+              const total = Object.values(summary).reduce((sum, count) => sum + count, 0);
+              setBackupFeedback({ type: "success", text: `Backup scaricato: ${filename} · ${total} record esportati.` });
+            })
+            .catch((error: Error) => setBackupFeedback({ type: "error", text: `Download non riuscito: ${error.message}` }));
+        }}
           className="self-start border border-primary text-primary font-serif text-[15px] px-6 py-2.5 tracking-wider hover:bg-primary hover:text-primary-foreground transition-colors uppercase">
           SCARICA BACKUP
         </button>
+        {backupFeedback && (
+          <p role="status" className={`border px-4 py-3 font-sans text-[13px] ${backupFeedback.type === "error" ? "border-primary text-primary" : "border-green-500 text-green-500"}`}>
+            {backupFeedback.text}
+          </p>
+        )}
       </div>
     </div>
   );
@@ -1165,6 +1203,7 @@ export default function Admin() {
   const { data: adminData, isLoading: adminLoading } = useAdminMe({ query: { queryKey: getAdminMeQueryKey(), retry: false } });
   const logoutMutation = useAdminLogout();
   const [activeTab, setActiveTab] = useState<Tab>("oggi");
+  const [headerBackupFeedback, setHeaderBackupFeedback] = useState<string | null>(null);
   const [diarioScrollTo, setDiarioScrollTo] = useState<number | undefined>(undefined);
   // Read ?editArticle=slug from URL to jump straight into editing
   const searchParams = new URLSearchParams(window.location.search);
@@ -1213,7 +1252,12 @@ export default function Admin() {
           <h1 className="text-[32px] sm:text-[38px] font-serif tracking-wider">ADMIN · PROGETTO J</h1>
         </div>
         <div className="flex items-center gap-4">
-          <button onClick={downloadBackup}
+          <button onClick={() => {
+            setHeaderBackupFeedback(null);
+            void downloadBackup()
+              .then(({ filename }) => setHeaderBackupFeedback(`Backup scaricato: ${filename}`))
+              .catch((error: Error) => setHeaderBackupFeedback(`Backup non riuscito: ${error.message}`));
+          }}
             className="admin-secondary-action text-[12px] font-sans uppercase tracking-[0.15em] border border-border px-4 py-2 text-muted-foreground hover:text-foreground hover:bg-[#141414] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
             BACKUP
           </button>
@@ -1222,6 +1266,11 @@ export default function Admin() {
           </button>
         </div>
       </header>
+      {headerBackupFeedback && (
+        <p role="status" className="mb-6 border border-border bg-card px-4 py-3 font-sans text-[13px] text-foreground">
+          {headerBackupFeedback}
+        </p>
+      )}
 
       {/* Two-level nav: 4 areas on top, the area's tabs below. */}
       <nav aria-label="Sezioni admin" className="admin-navigation mb-3 grid grid-cols-2 sm:grid-cols-4 border border-border">

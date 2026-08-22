@@ -21,6 +21,25 @@ router.get("/admin/backup", async (req, res): Promise<void> => {
     return;
   }
 
+  let datasets;
+  try {
+    datasets = await Promise.all([
+      db.select().from(giorniTable),
+      db.select().from(contenutiTable),
+      db.select().from(pagineTable),
+      db.select().from(socialTable),
+      db.select().from(sponsorTable),
+      db.select().from(articoliTable),
+      db.select().from(coachingTable),
+      db.select().from(contattiTable),
+      db.select().from(iscrittiTable),
+    ]);
+  } catch (error) {
+    req.log.error({ err: error }, "Backup export failed");
+    res.status(500).json({ error: "Impossibile creare il backup." });
+    return;
+  }
+
   const [
     giorni,
     contenuti,
@@ -31,21 +50,22 @@ router.get("/admin/backup", async (req, res): Promise<void> => {
     coaching,
     contatti,
     iscritti,
-  ] = await Promise.all([
-    db.select().from(giorniTable),
-    db.select().from(contenutiTable),
-    db.select().from(pagineTable),
-    db.select().from(socialTable),
-    db.select().from(sponsorTable),
-    db.select().from(articoliTable),
-    db.select().from(coachingTable),
-    db.select().from(contattiTable),
-    db.select().from(iscrittiTable),
-  ]);
+  ] = datasets;
 
   const backup = {
     exportedAt: new Date().toISOString(),
-    schemaVersion: 1,
+    schemaVersion: 2,
+    summary: {
+      giorni: giorni.length,
+      contenuti: contenuti.length,
+      pagine: pagine.length,
+      social: social.length,
+      sponsor: sponsor.length,
+      articoli: articoli.length,
+      coaching: coaching.length,
+      contatti: contatti.length,
+      iscritti: iscritti.length,
+    },
     giorni,
     contenuti,
     pagine,
