@@ -5,7 +5,7 @@ import { ArrowRight } from "lucide-react";
 import { getPhotoUrl } from "@workspace/object-storage-web";
 import { DataLabel } from "./DataLabel";
 import { MilestoneBadge } from "./MilestoneBadge";
-import type { Entry } from "@workspace/api-client-react";
+import type { EntrySummary } from "@workspace/api-client-react";
 import { stripHtml } from "@/lib/strip-html";
 
 function padDay(n: number): string {
@@ -29,7 +29,7 @@ function firstSentence(text: string): string {
 }
 
 interface DayCardProps {
-  entry: Entry;
+  entry: EntrySummary;
   featured?: boolean;
   hookOnly?: boolean;
 }

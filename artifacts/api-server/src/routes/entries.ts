@@ -41,6 +41,53 @@ router.get("/entries/latest", async (_req, res): Promise<void> => {
   res.json(GetLatestEntriesResponse.parse(ser(rows)));
 });
 
+// GET /entries/summary — lightweight list for feeds and planning
+router.get("/entries/summary", async (_req, res): Promise<void> => {
+  const rows = await db
+    .select({
+      id: giorniTable.id,
+      numero: giorniTable.numero,
+      data: giorniTable.data,
+      kcal: giorniTable.kcal,
+      sonno: giorniTable.sonno,
+      flessioni: giorniTable.flessioni,
+      addominali: giorniTable.addominali,
+      round: giorniTable.round,
+      km: giorniTable.km,
+      peso: giorniTable.peso,
+      battito: giorniTable.battito,
+      entrate: giorniTable.entrate,
+      uscite: giorniTable.uscite,
+      testo: giorniTable.testo,
+      sintesi: giorniTable.sintesi,
+      foto: giorniTable.foto,
+      tipoAllenamento: giorniTable.tipoAllenamento,
+      routineCompletata: giorniTable.routineCompletata,
+    })
+    .from(giorniTable)
+    .orderBy(desc(giorniTable.data));
+  res.json(ser(rows));
+});
+
+// GET /entries/:numero — complete public detail for a single day
+router.get("/entries/:numero", async (req, res): Promise<void> => {
+  const numero = Number(req.params.numero);
+  if (!Number.isInteger(numero) || numero < 1 || numero > 180) {
+    res.status(400).json({ error: "Invalid entry number" });
+    return;
+  }
+  const [row] = await db
+    .select()
+    .from(giorniTable)
+    .where(eq(giorniTable.numero, numero))
+    .limit(1);
+  if (!row) {
+    res.status(404).json({ error: "Entry not found" });
+    return;
+  }
+  res.json(ser(row));
+});
+
 // ─── Range validation ──────────────────────────────────────────────────────────
 
 const RANGES: Record<string, [number, number]> = {

@@ -29,6 +29,7 @@ export * from './entryInputSollevamentoGamba';
 export * from './entryInputTipoAllenamento';
 export * from './entryInputTipoGiorno';
 export * from './entrySollevamentoGamba';
+export * from './entrySummary';
 export * from './entryTipoAllenamento';
 export * from './entryTipoGiorno';
 export * from './entryUpdate';

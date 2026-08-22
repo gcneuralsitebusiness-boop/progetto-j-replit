@@ -210,6 +210,43 @@ export interface Entry {
   createdAt?: string;
 }
 
+export interface EntrySummary {
+  id: number;
+  numero: number;
+  /** @pattern ^\d{4}-\d{2}-\d{2}$ */
+  data: string;
+  /** @nullable */
+  kcal?: number | null;
+  /** @nullable */
+  sonno?: number | null;
+  /** @nullable */
+  flessioni?: number | null;
+  /** @nullable */
+  addominali?: number | null;
+  /** @nullable */
+  round?: number | null;
+  /** @nullable */
+  km?: number | null;
+  /** @nullable */
+  peso?: number | null;
+  /** @nullable */
+  battito?: number | null;
+  /** @nullable */
+  entrate?: number | null;
+  /** @nullable */
+  uscite?: number | null;
+  /** @nullable */
+  testo?: string | null;
+  /** @nullable */
+  sintesi?: string | null;
+  /** @nullable */
+  foto?: string | null;
+  /** @nullable */
+  tipoAllenamento?: string | null;
+  /** @nullable */
+  routineCompletata?: boolean | null;
+}
+
 /**
  * @nullable
  */

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getListEntriesQueryKey, useListEntries } from "@workspace/api-client-react";
-import type { Entry } from "@workspace/api-client-react";
+import { useListEntrySummaries } from "@workspace/api-client-react";
+import type { EntrySummary } from "@workspace/api-client-react";
 
 type FixedTask = "DIARIO" | "TRACKING" | "CARD IG" | "CONTENUTO";
 
@@ -49,7 +49,7 @@ function startOfWeek(date: Date): Date {
   return result;
 }
 
-function dayNumber(entries: Entry[] | undefined, date: string): string {
+function dayNumber(entries: EntrySummary[] | undefined, date: string): string {
   const exactEntry = entries?.find((entry) => entry.data === date);
   if (exactEntry) return String(exactEntry.numero).padStart(3, "0");
   const today = localDate(new Date());
@@ -145,7 +145,7 @@ export function PlannerTab() {
   const [fixedNoteOpen, setFixedNoteOpen] = useState(false);
   const noteTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const { data: entries } = useListEntries({ query: { queryKey: getListEntriesQueryKey() } });
+  const { data: entries } = useListEntrySummaries();
   const { data: todayState } = useQuery({
     queryKey: ["planner-state", today],
     queryFn: () => fetchJson<PlannerState>(`/admin/planner/state?data=${today}`),

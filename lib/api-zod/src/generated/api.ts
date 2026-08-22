@@ -312,6 +312,36 @@ export const GetLatestEntriesResponse = zod.array(GetLatestEntriesResponseItem)
 
 
 /**
+ * Returns the fields needed by feeds and planning without full entry metadata
+ * @summary List lightweight journal entry summaries
+ */
+export const listEntrySummariesResponseDataRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
+
+
+export const ListEntrySummariesResponseItem = zod.object({
+  "id": zod.number(),
+  "numero": zod.number(),
+  "data": zod.string().regex(listEntrySummariesResponseDataRegExp),
+  "kcal": zod.number().nullish(),
+  "sonno": zod.number().nullish(),
+  "flessioni": zod.number().nullish(),
+  "addominali": zod.number().nullish(),
+  "round": zod.number().nullish(),
+  "km": zod.number().nullish(),
+  "peso": zod.number().nullish(),
+  "battito": zod.number().nullish(),
+  "entrate": zod.number().nullish(),
+  "uscite": zod.number().nullish(),
+  "testo": zod.string().nullish(),
+  "sintesi": zod.string().nullish(),
+  "foto": zod.string().nullish(),
+  "tipoAllenamento": zod.string().nullish(),
+  "routineCompletata": zod.boolean().nullish()
+})
+export const ListEntrySummariesResponse = zod.array(ListEntrySummariesResponseItem)
+
+
+/**
  * Returns a text representation of all entries for bulk editing
  * @summary Export all entries as editable text
  */
@@ -329,6 +359,87 @@ export const ImportEntriesBulkTextBody = zod.object({
 export const ImportEntriesBulkTextResponse = zod.object({
   "updated": zod.number().describe('Number of entries updated'),
   "errors": zod.array(zod.string()).describe('List of errors during parsing or update')
+})
+
+
+/**
+ * @summary Get one complete journal entry
+ */
+export const GetEntryParams = zod.object({
+  "numero": zod.coerce.number()
+})
+
+export const getEntryResponseDataRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
+export const getEntryResponsePastiMax = 6;
+
+export const getEntryResponseAcquaMin = 0;
+export const getEntryResponseAcquaMax = 20;
+
+export const getEntryResponseAcquaAllenamentoMin = 0;
+export const getEntryResponseAcquaAllenamentoMax = 10;
+
+export const getEntryResponseDurataMin = 0;
+
+export const getEntryResponseIntensitaMax = 5;
+
+export const getEntryResponsePlankMin = 0;
+
+export const getEntryResponseEnergiaMax = 5;
+
+export const getEntryResponseSintesiMax = 180;
+
+export const getEntryResponseCardTitoloMax = 60;
+
+export const getEntryResponseCardSottotitoloMax = 24;
+
+export const getEntryResponseCardOverlayMin = 30;
+export const getEntryResponseCardOverlayMax = 90;
+
+
+
+export const GetEntryResponse = zod.object({
+  "id": zod.number(),
+  "numero": zod.number().describe('Day number (1-180)'),
+  "data": zod.string().regex(getEntryResponseDataRegExp).describe('ISO date string (YYYY-MM-DD)'),
+  "kcal": zod.number().nullish(),
+  "pasti": zod.number().min(1).max(getEntryResponsePastiMax).nullish(),
+  "alcol": zod.boolean().nullish(),
+  "acqua": zod.number().min(getEntryResponseAcquaMin).max(getEntryResponseAcquaMax).nullish(),
+  "acquaAllenamento": zod.number().min(getEntryResponseAcquaAllenamentoMin).max(getEntryResponseAcquaAllenamentoMax).nullish().describe('Liters of water consumed around training'),
+  "tipoAllenamento": zod.union([zod.literal('NESSUNO'),zod.literal('MMA'),zod.literal('MUAY THAI'),zod.literal('BJJ'),zod.literal('CALISTHENICS'),zod.literal('CORSA'),zod.literal('SPARRING'),zod.literal('MISTO'),zod.literal(null)]).nullish(),
+  "durata": zod.number().min(getEntryResponseDurataMin).nullish(),
+  "intensita": zod.number().min(1).max(getEntryResponseIntensitaMax).nullish(),
+  "tipoGiorno": zod.union([zod.literal('A'),zod.literal('B'),zod.literal('RECUPERO'),zod.literal(null)]).nullish(),
+  "routineCompletata": zod.boolean().nullish(),
+  "routineForza": zod.boolean().nullish(),
+  "routineFlessioni": zod.string().nullish(),
+  "routineTrazioni": zod.string().nullish(),
+  "routineSquat": zod.string().nullish(),
+  "plank": zod.number().min(getEntryResponsePlankMin).nullish(),
+  "collo": zod.boolean().nullish(),
+  "mobilita": zod.boolean().nullish(),
+  "sollevamentoGamba": zod.union([zod.literal('ANCA'),zod.literal('PETTO'),zod.literal('TESTA'),zod.literal('OLTRE'),zod.literal(null)]).nullish(),
+  "grapplingVuoto": zod.boolean().nullish(),
+  "energia": zod.number().min(1).max(getEntryResponseEnergiaMax).nullish(),
+  "noteAllenamento": zod.string().nullish(),
+  "sonno": zod.number().nullish().describe('Hours of sleep'),
+  "flessioni": zod.number().nullish(),
+  "addominali": zod.number().nullish(),
+  "round": zod.number().nullish(),
+  "km": zod.number().nullish(),
+  "peso": zod.number().nullish().describe('Weight in kg'),
+  "battito": zod.number().nullish().describe('Resting heart rate bpm'),
+  "entrate": zod.number().nullish().describe('Daily income (€)'),
+  "uscite": zod.number().nullish().describe('Daily expenses (€)'),
+  "testo": zod.string().nullish().describe('Diary text'),
+  "sintesi": zod.string().max(getEntryResponseSintesiMax).nullish().describe('Short Instagram card summary'),
+  "foto": zod.string().nullish().describe('Photo URL'),
+  "cardTitolo": zod.string().max(getEntryResponseCardTitoloMax).nullish().describe('Custom Instagram card title (falls back to day number)'),
+  "cardSottotitolo": zod.string().max(getEntryResponseCardSottotitoloMax).nullish().describe('Custom Instagram card subtitle'),
+  "cardImmagine": zod.string().nullish().describe('Custom Instagram card background image path'),
+  "cardOverlay": zod.number().min(getEntryResponseCardOverlayMin).max(getEntryResponseCardOverlayMax).nullish().describe('Card overlay intensity (30-90, default 58)'),
+  "cardMostraParole": zod.boolean().nullish().describe('Show stats\/word count on the card (default true)'),
+  "createdAt": zod.string().optional()
 })
 
 

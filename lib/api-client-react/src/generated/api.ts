@@ -35,6 +35,7 @@ import type {
   ContentInput,
   Entry,
   EntryInput,
+  EntrySummary,
   EntryUpdate,
   HealthStatus,
   LoginInput,
@@ -385,6 +386,84 @@ export function useGetLatestEntries<TData = Awaited<ReturnType<typeof getLatestE
 
 
 
+export const getListEntrySummariesUrl = () => {
+
+
+
+
+  return `/api/entries/summary`
+}
+
+/**
+ * Returns the fields needed by feeds and planning without full entry metadata
+ * @summary List lightweight journal entry summaries
+ */
+export const listEntrySummaries = async ( options?: RequestInit): Promise<EntrySummary[]> => {
+
+  return customFetch<EntrySummary[]>(getListEntrySummariesUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListEntrySummariesQueryKey = () => {
+    return [
+    `/api/entries/summary`
+    ] as const;
+    }
+
+
+export const getListEntrySummariesQueryOptions = <TData = Awaited<ReturnType<typeof listEntrySummaries>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listEntrySummaries>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListEntrySummariesQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listEntrySummaries>>> = ({ signal }) => listEntrySummaries({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listEntrySummaries>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListEntrySummariesQueryResult = NonNullable<Awaited<ReturnType<typeof listEntrySummaries>>>
+export type ListEntrySummariesQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List lightweight journal entry summaries
+ */
+
+export function useListEntrySummaries<TData = Awaited<ReturnType<typeof listEntrySummaries>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listEntrySummaries>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListEntrySummariesQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
 export const getGetEntriesBulkTextUrl = () => {
 
 
@@ -533,6 +612,83 @@ export const useImportEntriesBulkText = <TError = ErrorType<ApiError>,
       > => {
       return useMutation(getImportEntriesBulkTextMutationOptions(options));
     }
+
+export const getGetEntryUrl = (numero: number,) => {
+
+
+
+
+  return `/api/entries/${numero}`
+}
+
+/**
+ * @summary Get one complete journal entry
+ */
+export const getEntry = async (numero: number, options?: RequestInit): Promise<Entry> => {
+
+  return customFetch<Entry>(getGetEntryUrl(numero),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetEntryQueryKey = (numero: number,) => {
+    return [
+    `/api/entries/${numero}`
+    ] as const;
+    }
+
+
+export const getGetEntryQueryOptions = <TData = Awaited<ReturnType<typeof getEntry>>, TError = ErrorType<void>>(numero: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getEntry>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetEntryQueryKey(numero);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getEntry>>> = ({ signal }) => getEntry(numero, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: numero !== null && numero !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getEntry>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetEntryQueryResult = NonNullable<Awaited<ReturnType<typeof getEntry>>>
+export type GetEntryQueryError = ErrorType<void>
+
+
+/**
+ * @summary Get one complete journal entry
+ */
+
+export function useGetEntry<TData = Awaited<ReturnType<typeof getEntry>>, TError = ErrorType<void>>(
+ numero: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getEntry>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetEntryQueryOptions(numero,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
 export const getUpdateEntryUrl = (numero: number,) => {
 

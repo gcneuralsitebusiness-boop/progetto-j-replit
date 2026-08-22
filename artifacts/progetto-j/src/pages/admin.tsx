@@ -2,10 +2,10 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   useAdminMe, useAdminLogin, useAdminLogout,
-  useListEntries, useCreateEntry, useUpdateEntry, useDeleteEntry,
+  useListEntries, useListEntrySummaries, useGetEntry, useCreateEntry, useUpdateEntry, useDeleteEntry,
   useListPages, useCreatePage, useUpdatePage, useDeletePage,
   useGetEntriesBulkText, useImportEntriesBulkText,
-  getAdminMeQueryKey, getListEntriesQueryKey, getGetLatestEntriesQueryKey,
+  getAdminMeQueryKey, getListEntriesQueryKey, getListEntrySummariesQueryKey, getGetLatestEntriesQueryKey, getGetEntryQueryKey,
   getListPagesQueryKey,
 } from "@workspace/api-client-react";
 import { SocialTab } from "@/components/admin/SocialTab";
@@ -320,6 +320,7 @@ function EntryForm({ initialData, previousEntry, onSuccess, onCancel }: { initia
 
     const invalidate = () => {
       queryClient.invalidateQueries({ queryKey: getListEntriesQueryKey() });
+      queryClient.invalidateQueries({ queryKey: getListEntrySummariesQueryKey() });
       queryClient.invalidateQueries({ queryKey: getGetLatestEntriesQueryKey() });
       queryClient.invalidateQueries({ queryKey: ["admin-dashboard"] });
     };
@@ -543,21 +544,29 @@ function EntryForm({ initialData, previousEntry, onSuccess, onCancel }: { initia
 
 function DiarioTab({ scrollToEntry }: { scrollToEntry?: number }) {
   const queryClient = useQueryClient();
-  const { data: entries } = useListEntries({ query: { queryKey: getListEntriesQueryKey() } });
+  const { data: summaries } = useListEntrySummaries();
+  const entries = summaries as Entry[] | undefined;
   const deleteMutation = useDeleteEntry();
-  const [editingEntry, setEditingEntry] = useState<Entry | null>(null);
+  const [editingNumero, setEditingNumero] = useState<number | null>(null);
   const [search, setSearch] = useState("");
   const formRef = useRef<HTMLDivElement>(null);
+  const nextNumero = editingNumero ?? ((entries?.reduce((max, entry) => Math.max(max, entry.numero), 0) ?? 0) + 1);
+  const { data: editingEntry, isLoading: editingLoading } = useGetEntry(editingNumero ?? 0, {
+    query: { queryKey: getGetEntryQueryKey(editingNumero ?? 0), enabled: editingNumero !== null, retry: false },
+  });
+  const { data: previousEntry } = useGetEntry(nextNumero - 1, {
+    query: { queryKey: getGetEntryQueryKey(nextNumero - 1), enabled: nextNumero > 1, retry: false },
+  });
 
   // Support opening a specific entry from OggiTab
   useEffect(() => {
     if (!scrollToEntry || !entries) return;
     const target = entries.find((e) => e.numero === scrollToEntry);
-    if (target) startEditing(target);
+    if (target) startEditing(target.numero);
   }, [scrollToEntry, entries]);
 
-  const startEditing = (entry: Entry) => {
-    setEditingEntry(entry);
+  const startEditing = (numero: number) => {
+    setEditingNumero(numero);
     setTimeout(() => {
       formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 50);
@@ -568,6 +577,7 @@ function DiarioTab({ scrollToEntry }: { scrollToEntry?: number }) {
       deleteMutation.mutate({ numero }, {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: getListEntriesQueryKey() });
+          queryClient.invalidateQueries({ queryKey: getListEntrySummariesQueryKey() });
           queryClient.invalidateQueries({ queryKey: getGetLatestEntriesQueryKey() });
         },
       });
@@ -580,14 +590,15 @@ function DiarioTab({ scrollToEntry }: { scrollToEntry?: number }) {
     const q = search.trim().toLowerCase();
     return String(e.numero).includes(q) || (e.testo ?? "").toLowerCase().includes(q);
   }) ?? [];
-  const nextNumero = editingEntry?.numero ?? ((entries?.reduce((max, entry) => Math.max(max, entry.numero), 0) ?? 0) + 1);
-  const previousEntry = entries?.find((entry) => entry.numero === nextNumero - 1);
-
   return (
     <div className="space-y-12">
       <div ref={formRef} className="scroll-mt-28">
-        {editingEntry ? (
-          <EntryForm key={editingEntry.id} initialData={editingEntry} previousEntry={previousEntry} onSuccess={() => setEditingEntry(null)} onCancel={() => setEditingEntry(null)} />
+        {editingNumero !== null ? (
+          editingLoading || !editingEntry ? (
+            <div className="bg-card border border-border p-8 text-center text-muted-foreground font-sans animate-pulse">Caricamento giorno...</div>
+          ) : (
+            <EntryForm key={editingEntry.id} initialData={editingEntry} previousEntry={previousEntry} onSuccess={() => setEditingNumero(null)} onCancel={() => setEditingNumero(null)} />
+          )
         ) : (
           <EntryForm key="new" previousEntry={previousEntry} onSuccess={() => {}} />
         )}
@@ -608,7 +619,7 @@ function DiarioTab({ scrollToEntry }: { scrollToEntry?: number }) {
           <div
             key={entry.id}
             className={`bg-card border p-5 flex flex-col md:flex-row md:items-center justify-between gap-6 transition-colors ${
-              editingEntry?.id === entry.id
+              editingNumero === entry.numero
                 ? "border-primary"
                 : "border-border hover:border-muted-foreground/30"
             }`}
@@ -628,7 +639,7 @@ function DiarioTab({ scrollToEntry }: { scrollToEntry?: number }) {
               <div className="text-[13px] font-sans text-muted-foreground uppercase tracking-wider hidden md:block">
                 {[entry.kcal ? `${entry.kcal} KCAL` : null, entry.peso ? `${entry.peso} KG` : null].filter(Boolean).join(" · ")}
               </div>
-              {editingEntry?.id === entry.id && (
+              {editingNumero === entry.numero && (
                 <span className="text-[11px] uppercase tracking-widest text-primary border border-primary px-2 py-0.5 font-sans">In modifica</span>
               )}
             </div>
@@ -657,7 +668,7 @@ function DiarioTab({ scrollToEntry }: { scrollToEntry?: number }) {
               >
                 MINIMAL
               </a>
-              <button onClick={() => startEditing(entry)} className="text-[13px] uppercase tracking-wider font-sans text-foreground hover:text-primary transition-colors">Modifica</button>
+              <button onClick={() => startEditing(entry.numero)} className="text-[13px] uppercase tracking-wider font-sans text-foreground hover:text-primary transition-colors">Modifica</button>
               <button onClick={() => handleDelete(entry.numero)} disabled={deleteMutation.isPending} className="text-[13px] uppercase tracking-wider font-sans text-destructive hover:text-destructive/80 transition-colors">Elimina</button>
             </div>
           </div>

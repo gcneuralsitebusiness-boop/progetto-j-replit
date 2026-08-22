@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useListEntries } from "@workspace/api-client-react";
+import { useListEntrySummaries } from "@workspace/api-client-react";
 import { Area, ComposedChart, LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
@@ -44,7 +44,7 @@ const axisProps = {
 };
 
 export default function Journaling() {
-  const { data: entries, isLoading: entriesLoading, isError: entriesError } = useListEntries();
+  const { data: entries, isLoading: entriesLoading, isError: entriesError } = useListEntrySummaries();
   const isLoading = entriesLoading;
   const isError = entriesError;
   const journalingIntro = "Tutto ciò che misuri migliora.\nSegnare i dati dà disciplina.\nI dati sono informazione.\nInformazione più disciplina uguale progresso. Sempre.";
