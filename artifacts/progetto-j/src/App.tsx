@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Route, Switch, Router as WouterRouter, useLocation } from 'wouter';
-import { lazy, Suspense, useEffect, useRef, type ReactNode } from 'react';
+import { lazy, Suspense, useEffect, type ReactNode } from 'react';
 import { Toaster } from '@/components/ui/toaster';
 import { Navbar } from '@/components/Navbar';
 import { ScrollToTop } from '@/components/ScrollToTop';
@@ -52,23 +52,9 @@ function ConditionalNavbar() {
   return <Navbar />;
 }
 
-/**
- * A short fade on navigation. Restarts the CSS animation without keying the
- * routed subtree, so pages are never remounted (and queries never refetched)
- * just for the transition.
- */
 function PageFade({ children }: { children: ReactNode }) {
   const [location] = useLocation();
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    el.classList.remove('page-fade');
-    // Force a reflow so re-adding the class restarts the animation.
-    void el.offsetWidth;
-    el.classList.add('page-fade');
-  }, [location]);
-  return <div ref={ref}>{children}</div>;
+  return <div key={location} className="page-transition">{children}</div>;
 }
 
 function PageMetadata() {

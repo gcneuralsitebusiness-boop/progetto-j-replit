@@ -1,5 +1,4 @@
 import { Link, useLocation } from "wouter";
-import { Menu, X } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useGetSiteContent, useListPages, useListArticles } from "@workspace/api-client-react";
 import { ScrollProgress } from "@/components/ScrollProgress";
@@ -10,11 +9,13 @@ function NavLink({
   children,
   external = false,
   onClick,
+  itemRef,
 }: {
   href: string;
   children: React.ReactNode;
   external?: boolean;
   onClick?: () => void;
+  itemRef?: (element: HTMLElement | null) => void;
 }) {
   const [location] = useLocation();
   const isActive = location === href || (href !== "/" && location.startsWith(href));
@@ -25,13 +26,13 @@ function NavLink({
 
   if (external) {
     return (
-      <a href={href} target="_blank" rel="noopener noreferrer" className={baseClasses} onClick={onClick}>
+    <a ref={itemRef} href={href} target="_blank" rel="noopener noreferrer" className={baseClasses} onClick={onClick}>
         {children}
       </a>
     );
   }
   return (
-    <Link href={href} className={baseClasses} onClick={onClick}>
+    <Link href={href} ref={itemRef} className={baseClasses} onClick={onClick}>
       {children}
     </Link>
   );
@@ -41,12 +42,60 @@ export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const menuRef = useRef<HTMLElement>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const navRefs = useRef<Record<string, HTMLElement | null>>({});
+  const [underline, setUnderline] = useState({ x: 0, width: 0, visible: false });
+  const [hasScrolled, setHasScrolled] = useState(false);
   const { data: content } = useGetSiteContent();
   const { data: pages } = useListPages();
   const { data: articles } = useListArticles();
   const instagramUrl = content?.instagram_url ?? "#";
 
   const publishedPages = pages?.filter((p) => p.pubblicata) ?? [];
+
+  const navigationItems = [
+    { href: "/chi-sono", label: "Chi Sono" },
+    { href: "/journaling", label: "Journaling" },
+    { href: "/statistiche", label: "Statistiche" },
+    ...(articles && articles.length > 0 ? [{ href: "/articoli", label: "Articoli" }] : []),
+    { href: "/coaching", label: "Coaching" },
+    { href: "/social", label: "Social" },
+    { href: "/sponsor", label: "Sponsor" },
+    ...publishedPages.map((page) => ({ href: `/p/${page.slug}`, label: page.titolo })),
+  ];
+
+  const updateUnderline = () => {
+    const active = navigationItems.find((item) => location === item.href || location.startsWith(item.href));
+    const element = active ? navRefs.current[active.href] : null;
+    setUnderline({
+      x: element?.offsetLeft ?? 0,
+      width: element?.offsetWidth ?? 0,
+      visible: Boolean(element),
+    });
+  };
+
+  useEffect(() => {
+    updateUnderline();
+    const onResize = () => window.requestAnimationFrame(updateUnderline);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [location, articles?.length, publishedPages.length]);
+
+  useEffect(() => {
+    let frame = 0;
+    const onScroll = () => {
+      if (frame) return;
+      frame = window.requestAnimationFrame(() => {
+        setHasScrolled(window.scrollY >= 24);
+        frame = 0;
+      });
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (frame) window.cancelAnimationFrame(frame);
+    };
+  }, []);
 
   useEffect(() => {
     if (mobileMenuOpen) {
@@ -60,17 +109,6 @@ export function Navbar() {
   }, [mobileMenuOpen]);
 
   const closeMenu = () => setMobileMenuOpen(false);
-  const navigationItems = [
-    { href: "/chi-sono", label: "Chi Sono" },
-    { href: "/journaling", label: "Journaling" },
-    { href: "/statistiche", label: "Statistiche" },
-    ...(articles && articles.length > 0 ? [{ href: "/articoli", label: "Articoli" }] : []),
-    { href: "/coaching", label: "Coaching" },
-    { href: "/social", label: "Social" },
-    { href: "/sponsor", label: "Sponsor" },
-    ...publishedPages.map((page) => ({ href: `/p/${page.slug}`, label: page.titolo })),
-  ];
-
   useEffect(() => {
     if (!mobileMenuOpen) return;
     menuRef.current?.querySelector<HTMLElement>("a, button")?.focus();
@@ -87,7 +125,14 @@ export function Navbar() {
   return (
     <>
       <ScrollProgress />
-      <header className="fixed top-0 w-full z-50 bg-[#0a0a0a]/90 backdrop-blur-[12px] border-b border-border">
+      <header
+        className="fixed top-0 w-full z-50"
+        style={{
+          backgroundColor: hasScrolled ? "#0A0A0A" : "transparent",
+          borderBottom: `1px solid ${hasScrolled ? "rgba(245,240,232,0.12)" : "transparent"}`,
+          transition: "background-color 200ms linear, border-color 200ms linear",
+        }}
+      >
         <div className="max-w-5xl mx-auto px-5 sm:px-6 h-16 flex items-center justify-between">
           <Link
             href="/"
@@ -97,12 +142,27 @@ export function Navbar() {
             J
           </Link>
 
-          <nav className="hidden lg:flex items-center gap-6 xl:gap-8">
+          <nav className="relative hidden lg:flex items-center gap-6 xl:gap-8">
             {navigationItems.map((item) => (
-              <NavLink key={item.href} href={item.href}>
+              <NavLink key={item.href} href={item.href} itemRef={(element) => { navRefs.current[item.href] = element; }}>
                 {item.label}
               </NavLink>
             ))}
+            <span
+              aria-hidden="true"
+              style={{
+                position: "absolute",
+                left: 0,
+                bottom: "-6px",
+                width: `${underline.width}px`,
+                height: "2px",
+                background: "#B81D1D",
+                transform: `translateX(${underline.x}px) scaleX(${underline.visible ? 1 : 0})`,
+                transformOrigin: "left center",
+                transition: "transform var(--dur-base) var(--ease-out)",
+                pointerEvents: "none",
+              }}
+            />
             <a
               href={instagramUrl}
               target="_blank"
@@ -122,7 +182,11 @@ export function Navbar() {
             aria-expanded={mobileMenuOpen}
             aria-controls="mobile-navigation"
           >
-            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            <span className={`hamburger-icon ${mobileMenuOpen ? "is-open" : ""}`} aria-hidden="true">
+              <span />
+              <span />
+              <span />
+            </span>
           </button>
         </div>
       </header>
@@ -149,7 +213,7 @@ export function Navbar() {
           }}
         >
           {navigationItems.map((item, index) => (
-            <NavLink key={item.href} href={item.href} onClick={closeMenu}>
+              <NavLink key={item.href} href={item.href} onClick={closeMenu}>
               <span className="mobile-nav-item py-3 text-[clamp(24px,7vw,38px)] leading-none" style={{ animationDelay: `${80 + index * 45}ms` }}>
                 {item.label}
               </span>

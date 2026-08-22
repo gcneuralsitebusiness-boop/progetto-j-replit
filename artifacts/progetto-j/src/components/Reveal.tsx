@@ -1,51 +1,33 @@
-import { useEffect, useRef, useState } from "react";
+import { createElement, type ReactNode, type ElementType } from "react";
+import { useReveal } from "@/lib/use-reveal";
 
 export function Reveal({
   children,
   className = "",
   delay = 0,
+  direction = "up",
+  as = "div",
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
   className?: string;
   delay?: number;
+  direction?: "up" | "none";
+  as?: ElementType;
 }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches || !("IntersectionObserver" in window)) {
-      setVisible(true);
-      return;
-    }
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setVisible(true);
-          observer.disconnect();
-        }
+  const { ref, isVisible } = useReveal<HTMLElement>({ delay });
+  return createElement(
+    as,
+    {
+      ref,
+      className,
+      style: {
+        opacity: isVisible ? 1 : 0,
+        transform: isVisible || direction === "none" ? "translateY(0)" : "translateY(12px)",
+        transition: "opacity var(--dur-slow) var(--ease-out), transform var(--dur-slow) var(--ease-out)",
+        transitionDelay: `${delay}ms`,
+        willChange: isVisible ? "auto" : "opacity, transform",
       },
-      { threshold: 0.08, rootMargin: "0px 0px -30px 0px" }
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
-
-  return (
-    <div
-      ref={ref}
-      style={{ transitionDelay: `${delay}ms` }}
-      className={[
-        "transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]",
-        "motion-reduce:!opacity-100 motion-reduce:![transform:none]",
-        visible
-          ? "opacity-100 translate-y-0 scale-100"
-          : "opacity-0 translate-y-5 scale-[0.97]",
-        className,
-      ].join(" ")}
-    >
-      {children}
-    </div>
+    },
+    children
   );
 }

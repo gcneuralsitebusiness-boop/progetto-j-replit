@@ -1,0 +1,133 @@
+Devi implementare il sistema di animazioni globale del sito. NON toccare
+ancora le singole pagine — questo è solo il layer di base su cui tutto
+il resto si appoggerà.
+
+REGOLA ASSOLUTA DI PERFORMANCE
+Anima ESCLUSIVAMENTE transform e opacity. Non animare mai width, height,
+top, left, margin, padding, box-shadow, o filter in loop continui.
+Ogni elemento animato deve avere will-change dichiarato solo durante
+l'animazione e rimosso al termine.
+
+=== 1. VARIABILI MOTION IN /artifacts/progetto-j/src/index.css ===
+
+Aggiungi nel blocco :root esistente:
+
+--ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+--ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+--dur-fast: 150ms;
+--dur-base: 250ms;
+--dur-slow: 600ms;
+--dur-draw: 1200ms;
+--stagger: 60ms;
+
+=== 2. REDUCED MOTION ===
+
+Aggiungi in fondo a index.css:
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+=== 3. HOOK useReveal ===
+
+Crea /artifacts/progetto-j/src/lib/use-reveal.ts
+
+Un hook che usa IntersectionObserver per rivelare elementi una sola volta.
+Requisiti:
+- accetta un parametro opzionale { threshold = 0.15, rootMargin = '0px 0px -10% 0px', delay = 0 }
+- ritorna { ref, isVisible }
+- una volta che isVisible diventa true, DISCONNETTE l'observer (mai
+  ri-animare al secondo scroll)
+- se prefers-reduced-motion è attivo, isVisible parte già a true e
+  l'observer non viene mai creato
+- TypeScript tipizzato correttamente, ref generico su HTMLElement
+
+=== 4. RIFATTORIZZA Reveal.tsx ===
+
+Riscrivi /artifacts/progetto-j/src/components/Reveal.tsx usando il nuovo hook.
+
+Props:
+- children: ReactNode
+- delay?: number (ms, default 0)
+- direction?: 'up' | 'none' (default 'up')
+- as?: keyof JSX.IntrinsicElements (default 'div')
+
+Comportamento:
+- stato iniziale: opacity 0, transform translateY(12px) se direction='up'
+- stato rivelato: opacity 1, transform translateY(0)
+- transizione: opacity var(--dur-slow) var(--ease-out),
+  transform var(--dur-slow) var(--ease-out)
+- transition-delay applicato dal prop delay
+- will-change: opacity, transform SOLO finché non è rivelato, poi rimosso
+
+=== 5. COMPONENTE RevealGroup ===
+
+Crea /artifacts/progetto-j/src/components/RevealGroup.tsx
+
+Wrappa N figli e applica automaticamente uno stagger crescente.
+Props: children, stagger?: number (default 60), direction?, className?
+Ogni figlio viene wrappato in un <Reveal> con delay = index * stagger.
+Massimo 8 elementi in stagger, oltre l'ottavo il delay resta fisso a
+8 * stagger (altrimenti l'ultimo elemento appare troppo tardi).
+
+=== 6. TRANSIZIONI DI PAGINA ===
+
+Nel layout principale (dove è montato il router wouter), implementa una
+transizione tra le route:
+- uscita: opacity 1 → 0 in 120ms linear
+- entrata: opacity 0 → 1 in 180ms var(--ease-out)
+- NESSUNO slide, NESSUNO scale. Solo opacità.
+- scroll to top istantaneo al cambio route, prima del fade-in
+Usa una key sulla location e un wrapper con CSS transition. Non
+installare librerie di animazione (no framer-motion, no react-spring).
+
+=== 7. NAVBAR — UNDERLINE SCORREVOLE ===
+
+In /artifacts/progetto-j/src/components/Navbar.tsx:
+
+Desktop:
+- una singola barra rossa #B81D1D alta 2px, posizionata assolutamente
+- si muove tra le voci di menu con transform: translateX() e scaleX()
+- transizione: transform var(--dur-base) var(--ease-out)
+- la posizione si calcola misurando offsetLeft e offsetWidth della voce
+  attiva tramite ref, ricalcolata su resize
+- se nessuna voce è attiva, scaleX(0)
+
+Mobile:
+- menu fullscreen nero #0A0A0A
+- entra con opacity 0 → 1 in 200ms
+- le voci entrano in stagger da 40ms l'una, translateY(8px) → 0
+- l'icona hamburger si trasforma in X: due linee che ruotano di 45deg
+  e -45deg con transform, la terza svanisce in opacità
+- body overflow hidden quando il menu è aperto
+
+=== 8. NAVBAR — STATO SCROLL ===
+
+- background trasparente quando scrollY < 24
+- background #0A0A0A con hairline inferiore 1px rgba(245,240,232,0.12)
+  quando scrollY >= 24
+- transizione background-color e border-color 200ms linear
+- usa un listener con requestAnimationFrame throttling, non un
+  listener scroll nudo
+
+=== 9. PRELOAD FONT ===
+
+In index.html aggiungi i tag <link rel="preload"> per Bebas Neue e
+JetBrains Mono con as="font" crossorigin, e font-display: swap nelle
+@font-face.
+
+=== VINCOLI DI DESIGN — NON VIOLARE ===
+- Zero border-radius ovunque
+- Zero box-shadow
+- Zero emoji
+- Palette: #0A0A0A sfondo, #B81D1D rosso, #8B6914 bronzo, #F5F0E8 off-white
+- Font: Bebas Neue titoli, Inter corpo, JetBrains Mono dati
+- Nessuna libreria di animazione installata
+
+Al termine elenca ogni file creato o modificato con una riga di
+descrizione. Non modificare pagine diverse da quelle indicate.
