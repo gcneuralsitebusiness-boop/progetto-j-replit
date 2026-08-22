@@ -22,6 +22,9 @@ import { AnimatedNumber } from "@/components/AnimatedNumber";
 import { DataErrorState } from "@/components/DataErrorState";
 import { PulseTrace } from "@/components/PulseTrace";
 import { Reveal } from "@/components/Reveal";
+import { RevealGroup } from "@/components/RevealGroup";
+import { TerminalBackdrop } from "@/components/TerminalBackdrop";
+import { Grid180 } from "@/components/Grid180";
 import { SiteFooter } from "@/components/SiteFooter";
 
 const COLORS = { red: "#B81D1D", copper: "#B87333", acid: "#00FF41", ink: "#E8E4DE", gray: "#6E6A65" };

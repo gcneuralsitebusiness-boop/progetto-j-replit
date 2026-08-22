@@ -1,47 +1,37 @@
 import { useEffect, useRef, useState } from "react";
+import { useReveal } from "@/lib/use-reveal";
 
 interface Props {
   value: number;
   className?: string;
   formatter?: (n: number) => string;
   duration?: number;
+  decimals?: number;
+  suffix?: string;
+  prefix?: string;
 }
 
-export function AnimatedNumber({ value, className = "", formatter, duration = 1200 }: Props) {
-  const ref = useRef<HTMLSpanElement>(null);
+export function AnimatedNumber({ value, className = "", formatter, duration = 800, decimals = 0, suffix = "", prefix = "" }: Props) {
+  const { ref, isVisible } = useReveal<HTMLSpanElement>();
   const [displayed, setDisplayed] = useState(0);
-  const [started, setStarted] = useState(false);
   const raf = useRef<number>(0);
 
   useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) { setStarted(true); observer.disconnect(); }
-      },
-      { threshold: 0.4 }
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
-
-  useEffect(() => {
-    if (!started) return;
+    if (!isVisible) return;
     if (value === 0) { setDisplayed(0); return; }
     const t0 = performance.now();
     const tick = (now: number) => {
       const p = Math.min((now - t0) / duration, 1);
-      const ease = 1 - Math.pow(2, -10 * p);
-      setDisplayed(Math.round(ease * value));
+      const eased = p * p * (3 - 2 * p);
+      setDisplayed(eased * value);
       if (p < 1) raf.current = requestAnimationFrame(tick);
       else setDisplayed(value);
     };
     raf.current = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf.current);
-  }, [started, value, duration]);
+  }, [isVisible, value, duration]);
 
-  const fmt = formatter ?? ((n: number) => n.toLocaleString("it-IT"));
+  const fmt = formatter ?? ((n: number) => `${prefix}${n.toLocaleString("it-IT", { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}${suffix}`);
 
-  return <span ref={ref} className={`measured ${className}`}>{fmt(displayed)}</span>;
+  return <span ref={ref} className={`measured tabular ${className}`}>{isVisible ? fmt(displayed) : fmt(0)}</span>;
 }
