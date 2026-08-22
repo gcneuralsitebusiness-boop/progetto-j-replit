@@ -166,9 +166,12 @@ export function AnalyticsTab() {
     load(period);
   }, [period, load]);
 
-  // Realtime auto-refresh every 15 s
+  // Realtime auto-refresh every 30 s, but never while the tab is hidden.
   useEffect(() => {
-    const t = setInterval(() => load(period), 15_000);
+    const refresh = () => {
+      if (document.visibilityState === "visible") load(period);
+    };
+    const t = setInterval(refresh, 30_000);
     return () => clearInterval(t);
   }, [period, load]);
 

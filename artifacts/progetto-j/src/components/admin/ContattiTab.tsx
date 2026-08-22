@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
 
@@ -12,32 +12,25 @@ type Contatto = {
 };
 
 export function ContattiTab() {
-  const [items, setItems] = useState<Contatto[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetch(`${import.meta.env.BASE_URL}api/contacts`, { credentials: "include" })
-      .then(async (res) => {
-        if (!res.ok) throw new Error("Errore nel caricamento");
-        return res.json() as Promise<Contatto[]>;
-      })
-      .then((data) => {
-        setItems(data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        setError(err instanceof Error ? err.message : "Errore");
-        setLoading(false);
-      });
-  }, []);
+  const {
+    data: items = [],
+    isLoading: loading,
+    isError,
+  } = useQuery<Contatto[]>({
+    queryKey: ["admin-contacts"],
+    queryFn: async () => {
+      const response = await fetch(`${import.meta.env.BASE_URL}api/contacts`, { credentials: "include" });
+      if (!response.ok) throw new Error("Errore nel caricamento");
+      return response.json() as Promise<Contatto[]>;
+    },
+  });
 
   if (loading) {
     return <p className="text-muted-foreground font-sans animate-pulse">Caricamento...</p>;
   }
 
-  if (error) {
-    return <p className="text-primary font-sans">{error}</p>;
+  if (isError) {
+    return <p className="text-primary font-sans">Errore nel caricamento</p>;
   }
 
   if (items.length === 0) {

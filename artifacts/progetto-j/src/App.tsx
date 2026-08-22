@@ -29,17 +29,20 @@ const CardReel = lazy(() => import('@/pages/card-reel'));
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      // Always consider data stale so React Query refetches on every mount
-      staleTime: 0,
-      // Keep unused data in cache for 5 minutes to avoid redundant re-fetches
-      // when navigating between pages in the same session
-      gcTime: 5 * 60_000,
-      // Refetch whenever the tab regains focus (user comes back to the site)
-      refetchOnWindowFocus: true,
-      // Always refetch when a component mounts, even if data is in cache
+      // Public content changes infrequently; keep it warm while navigating.
+      staleTime: 60_000,
+      // Keep recently visited data available for back/forward navigation.
+      gcTime: 10 * 60_000,
+      // Returning to the browser should not trigger a request storm.
+      refetchOnWindowFocus: false,
+      // Refetch on mount only when the cached data is actually stale.
       refetchOnMount: true,
-      // Retry failed requests twice before showing an error
-      retry: 2,
+      // One retry is enough for a transient network failure. Auth failures
+      // should be shown immediately instead of being retried.
+      retry: (failureCount, error) => {
+        const message = error instanceof Error ? error.message : String(error);
+        return failureCount < 1 && !/\b40[13]\b/.test(message);
+      },
     },
   },
 });

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   useAdminMe, useAdminLogin, useAdminLogout,
   useListEntries, useCreateEntry, useUpdateEntry, useDeleteEntry,
@@ -321,6 +321,7 @@ function EntryForm({ initialData, previousEntry, onSuccess, onCancel }: { initia
     const invalidate = () => {
       queryClient.invalidateQueries({ queryKey: getListEntriesQueryKey() });
       queryClient.invalidateQueries({ queryKey: getGetLatestEntriesQueryKey() });
+      queryClient.invalidateQueries({ queryKey: ["admin-dashboard"] });
     };
 
     const handleError = (err: unknown) => {
@@ -687,22 +688,25 @@ interface DashboardData {
 }
 
 function OggiTab({ onSwitchTab }: { onSwitchTab: (tab: string, scrollToEntry?: number) => void }) {
-  const [dashboard, setDashboard] = useState<DashboardData | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetch("/api/admin/dashboard", { credentials: "include" })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => setDashboard(data))
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
+  const {
+    data: dashboard,
+    isLoading: loading,
+    isError,
+  } = useQuery<DashboardData>({
+    queryKey: ["admin-dashboard"],
+    queryFn: async () => {
+      const response = await fetch("/api/admin/dashboard", { credentials: "include" });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      return response.json() as Promise<DashboardData>;
+    },
+    staleTime: 30_000,
+  });
 
   if (loading) {
     return <div className="py-20 text-center text-muted-foreground font-sans animate-pulse">Caricamento...</div>;
   }
 
-  if (!dashboard) {
+  if (isError || !dashboard) {
     return <div className="py-20 text-center text-primary font-sans">Errore nel caricamento del dashboard.</div>;
   }
 
