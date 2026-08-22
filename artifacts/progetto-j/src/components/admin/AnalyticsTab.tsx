@@ -40,6 +40,22 @@ function fmtScroll(pct: number | null): string {
   return pct == null ? "—" : `${pct}%`;
 }
 
+function appPath(path: string): string {
+  const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+  const normalized = path.startsWith("/") ? path : `/${path}`;
+  return normalized === base || normalized.startsWith(`${base}/`)
+    ? normalized
+    : `${base}${normalized}`;
+}
+
+function adminArticlePath(slug: string): string {
+  return `${import.meta.env.BASE_URL}admin?editArticle=${encodeURIComponent(slug)}`;
+}
+
+function adminDiaryPath(day: string): string {
+  return `${import.meta.env.BASE_URL}admin?editDay=${encodeURIComponent(day)}`;
+}
+
 // ─── Section wrapper ──────────────────────────────────────────────────────────
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
@@ -98,7 +114,24 @@ function ArticlesTable({ articles }: { articles: AnalyticsData["articles"] }) {
         <tbody>
           {sorted.map((a) => (
             <tr key={a.path} className="border-b border-border/50 hover:bg-[#141414] transition-colors">
-              <td className="py-2.5 px-3 font-sans text-[14px] text-foreground max-w-[300px] truncate">{a.titolo}</td>
+              <td className="py-2.5 px-3 font-sans text-[14px] text-foreground max-w-[300px] truncate">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <a
+                    href={appPath(a.path)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-primary transition-colors"
+                  >
+                    {a.titolo}
+                  </a>
+                  <a
+                    href={adminArticlePath(a.path.replace(/^\/a\//, ""))}
+                    className="text-[10px] uppercase tracking-wider text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    Modifica
+                  </a>
+                </div>
+              </td>
               <td className="py-2.5 px-3 font-sans text-[14px] tabular-nums text-foreground">{a.views}</td>
               <td className="py-2.5 px-3 font-sans text-[14px] tabular-nums text-muted-foreground">{fmtDuration(a.avgDuration)}</td>
               <td className="py-2.5 px-3 font-sans text-[14px] tabular-nums text-muted-foreground">{fmtScroll(a.avgScroll)}</td>
@@ -242,8 +275,12 @@ export function AnalyticsTab() {
               </thead>
               <tbody>
                 {data.topPages.map((p) => (
-                  <tr key={p.path} className="border-b border-border/50 hover:bg-[#141414] transition-colors">
-                    <td className="py-2.5 px-3 font-sans text-[14px] text-foreground max-w-[300px] truncate">{p.path}</td>
+                <tr key={p.path} className="border-b border-border/50 hover:bg-[#141414] transition-colors">
+                    <td className="py-2.5 px-3 font-sans text-[14px] text-foreground max-w-[300px] truncate">
+                      <a href={appPath(p.path)} target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">
+                        {p.path}
+                      </a>
+                    </td>
                     <td className="py-2.5 px-3 font-sans text-[14px] tabular-nums text-foreground">{p.views}</td>
                     <td className="py-2.5 px-3 font-sans text-[14px] tabular-nums text-muted-foreground">{fmtDuration(p.avgDuration)}</td>
                     <td className="py-2.5 px-3 font-sans text-[14px] tabular-nums text-muted-foreground">{fmtScroll(p.avgScroll)}</td>
@@ -278,7 +315,16 @@ export function AnalyticsTab() {
               <tbody>
                 {data.diary.map((d) => (
                   <tr key={d.path} className="border-b border-border/50 hover:bg-[#141414] transition-colors">
-                    <td className="py-2.5 px-3 font-serif text-[16px] text-primary">GIORNO {d.giorno}</td>
+                    <td className="py-2.5 px-3 font-serif text-[16px] text-primary">
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                        <a href={appPath(d.path)} target="_blank" rel="noopener noreferrer" className="hover:text-primary/80 transition-colors">
+                          GIORNO {d.giorno}
+                        </a>
+                        <a href={adminDiaryPath(d.giorno)} className="font-sans text-[10px] uppercase tracking-wider text-muted-foreground hover:text-primary transition-colors">
+                          Modifica
+                        </a>
+                      </div>
+                    </td>
                     <td className="py-2.5 px-3 font-sans text-[14px] tabular-nums text-foreground">{d.views}</td>
                     <td className="py-2.5 px-3 font-sans text-[14px] tabular-nums text-muted-foreground">{fmtDuration(d.avgDuration)}</td>
                     <td className="py-2.5 px-3 font-sans text-[14px] tabular-nums text-muted-foreground">{fmtScroll(d.avgScroll)}</td>

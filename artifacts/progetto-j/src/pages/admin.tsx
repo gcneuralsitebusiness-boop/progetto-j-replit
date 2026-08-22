@@ -1134,11 +1134,18 @@ export default function Admin() {
   // Read ?editArticle=slug from URL to jump straight into editing
   const searchParams = new URLSearchParams(window.location.search);
   const editArticleSlug = searchParams.get("editArticle") ?? undefined;
+  const editDay = Number(searchParams.get("editDay"));
   const [pendingEditSlug, setPendingEditSlug] = useState<string | undefined>(editArticleSlug);
 
   useEffect(() => {
-    if (!editArticleSlug) return;
-    setActiveTab("articoli");
+    if (editArticleSlug) {
+      setActiveTab("articoli");
+    } else if (Number.isInteger(editDay) && editDay > 0) {
+      setActiveTab("diario");
+      setDiarioScrollTo(editDay);
+    } else {
+      return;
+    }
     // Clean the query param from the URL without a page reload
     const cleanUrl = window.location.pathname;
     window.history.replaceState(null, "", cleanUrl);

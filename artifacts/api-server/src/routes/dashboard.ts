@@ -30,8 +30,12 @@ router.get("/admin/dashboard", async (req, res): Promise<void> => {
       peso: giorniTable.peso,
       battito: giorniTable.battito,
     }).from(giorniTable),
-    db.select({ c: count() }).from(giorniTable).where(isNull(giorniTable.testo)),
-    db.select({ c: count() }).from(giorniTable).where(isNull(giorniTable.foto)),
+    db.select({ c: count() }).from(giorniTable).where(
+      or(isNull(giorniTable.testo), sql`trim(${giorniTable.testo}) = ''`)
+    ),
+    db.select({ c: count() }).from(giorniTable).where(
+      or(isNull(giorniTable.foto), sql`trim(${giorniTable.foto}) = ''`)
+    ),
     db.select({ c: count() }).from(giorniTable).where(
       or(isNull(giorniTable.peso), isNull(giorniTable.battito))
     ),
@@ -43,7 +47,7 @@ router.get("/admin/dashboard", async (req, res): Promise<void> => {
   const currentDay = allEntries.length > 0 ? Math.max(...allEntries.map((e) => e.numero)) : 0;
   const missingDays = {
     testo: allEntries.filter((entry) => !entry.testo?.trim()).map((entry) => entry.numero),
-    foto: allEntries.filter((entry) => !entry.foto).map((entry) => entry.numero),
+    foto: allEntries.filter((entry) => !entry.foto?.trim()).map((entry) => entry.numero),
     physical: allEntries
       .filter((entry) => entry.peso == null || entry.battito == null)
       .map((entry) => entry.numero),
