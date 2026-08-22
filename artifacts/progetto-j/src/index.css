@@ -797,6 +797,15 @@ body::before {
   background: #B81D1D;
   animation: grid-current-pulse 2s var(--ease-in-out) infinite;
 }
+.stats-hero-graph {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  opacity: 0.05;
+  filter: blur(8px);
+  transform: scale(3);
+  pointer-events: none;
+}
 @keyframes grid-current-pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.4; }
@@ -827,5 +836,11 @@ body::before {
   .grid-180__cell {
     width: 8px;
     height: 8px;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .grid-180 {
+    grid-template-columns: repeat(12, 10px);
   }
 }

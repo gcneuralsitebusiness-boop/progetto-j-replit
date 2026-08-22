@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "wouter";
 import {
   Area,
@@ -26,6 +26,7 @@ import { RevealGroup } from "@/components/RevealGroup";
 import { TerminalBackdrop } from "@/components/TerminalBackdrop";
 import { Grid180 } from "@/components/Grid180";
 import { SiteFooter } from "@/components/SiteFooter";
+import { useReveal } from "@/lib/use-reveal";
 
 const COLORS = { red: "#B81D1D", copper: "#B87333", acid: "#00FF41", ink: "#E8E4DE", gray: "#6E6A65" };
 const tooltipStyle = {
@@ -140,6 +141,44 @@ function ChartEmpty({ label }: { label: string }) {
       <p className="max-w-sm font-sans text-[13px] leading-relaxed text-muted-foreground">{label}</p>
     </div>
   );
+}
+
+function ChartReveal({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  const { ref, isVisible } = useReveal<HTMLDivElement>();
+  const animated = useRef(false);
+
+  useEffect(() => {
+    if (!isVisible || animated.current || !ref.current) return;
+    const frame = window.requestAnimationFrame(() => {
+      const root = ref.current;
+      if (!root) return;
+      root.querySelectorAll<SVGPathElement>("path.recharts-line-curve").forEach((path) => {
+        const length = path.getTotalLength();
+        path.style.strokeDasharray = String(length);
+        path.style.strokeDashoffset = String(length);
+        path.style.willChange = "stroke-dashoffset";
+        window.requestAnimationFrame(() => {
+          path.style.transition = "stroke-dashoffset var(--dur-draw) var(--ease-out)";
+          path.style.strokeDashoffset = "0";
+          window.setTimeout(() => { path.style.willChange = "auto"; }, 1200);
+        });
+      });
+      root.querySelectorAll<SVGElement>(".recharts-area-area").forEach((area) => {
+        area.style.opacity = "0";
+        area.style.transition = "opacity var(--dur-base) var(--ease-out) 1200ms";
+        window.requestAnimationFrame(() => { area.style.opacity = "1"; });
+      });
+      root.querySelectorAll<SVGElement>(".recharts-line-dots circle").forEach((dot, index) => {
+        dot.style.opacity = "0";
+        dot.style.transition = `opacity var(--dur-fast) var(--ease-out) ${1200 + index * 40}ms`;
+        window.requestAnimationFrame(() => { dot.style.opacity = "1"; });
+      });
+      animated.current = true;
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [isVisible, ref]);
+
+  return <div ref={ref} className={className}>{children}</div>;
 }
 
 function CorrelationCard({
@@ -324,7 +363,9 @@ export default function Statistiche() {
   return (
     <div className="min-h-screen bg-[#0A0A0A] px-5 pb-16 pt-24 sm:px-6">
       <main className="mx-auto max-w-5xl">
-        <div className="mb-10">
+        <div className="relative mb-10 overflow-hidden border-b border-[rgba(245,240,232,0.12)] pb-10">
+          <TerminalBackdrop intensity="medium" glow />
+          <div className="relative z-10">
           <span className="page-label">DATI DEL PERCORSO</span>
           <h1 className="mt-2 font-serif text-[clamp(56px,12vw,112px)] leading-[0.85] tracking-wide text-foreground bebas">STATISTICHE</h1>
           <p className="mt-5 max-w-xl font-sans text-[15px] leading-relaxed text-muted-foreground">Allenamento, routine e recupero misurati nel tempo.</p>
@@ -343,11 +384,16 @@ export default function Statistiche() {
               </button>
             ))}
           </div>
+          </div>
         </div>
 
         <Reveal>
           <Section title="Hero stats">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="relative overflow-hidden">
+              <div className="stats-hero-graph" aria-hidden="true">
+                <PulseTrace entries={data.all} variant="hero" />
+              </div>
+              <RevealGroup className="relative z-10 grid grid-cols-2 gap-3">
               {heroStats.map(({ label, value, caption }) => (
                 <div key={label} className="border-l-[3px] border-primary bg-[#111111] p-4 sm:p-6">
                   {typeof value === "number" ? (
@@ -365,14 +411,26 @@ export default function Statistiche() {
                   <div className="mt-1 text-[11px] uppercase tracking-wider text-muted-foreground">{caption}</div>
                 </div>
               ))}
+              </RevealGroup>
             </div>
           </Section>
         </Reveal>
         <PulseTrace entries={data.all} variant="divider" />
 
         <Reveal>
+          <Section title="180 giorni">
+            <div className="mb-5 flex items-baseline justify-between gap-4">
+              <span className="font-mono text-[11px] tracking-[0.2em] text-muted-foreground">180 GIORNI</span>
+              <span className="font-mono text-[11px] text-primary">{Math.min(data.all.length, 180)} / 180</span>
+            </div>
+            <Grid180 completedDays={data.all.length} />
+          </Section>
+        </Reveal>
+        <PulseTrace entries={data.all} variant="divider" />
+
+        <Reveal>
           <Section title={period === 0 ? "Peso — tutto il percorso" : `Peso — ultimi ${period} giorni`}>
-            <div className="h-[300px] w-full">
+            <ChartReveal className="h-[300px] w-full">
               {data.body.some((entry) => entry.peso != null) ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <ComposedChart data={data.body} margin={{ top: 10, right: 8, left: -20, bottom: 0 }}>
@@ -411,7 +469,7 @@ export default function Statistiche() {
                   </ComposedChart>
                 </ResponsiveContainer>
               ) : <ChartEmpty label="Registra almeno due pesi per vedere una tendenza, senza inventare valori mancanti." />}
-            </div>
+            </ChartReveal>
           </Section>
         </Reveal>
         <PulseTrace entries={data.all} variant="divider" />
@@ -421,7 +479,7 @@ export default function Statistiche() {
             <div className="grid gap-6 md:grid-cols-2">
               <div>
                 <div className="mb-3 font-serif text-[15px] tracking-[0.16em] text-muted-foreground bebas">SONNO · ORE</div>
-                <div className="h-[230px]">
+                <ChartReveal className="h-[230px]">
                   {data.recovery.some((entry) => entry.sonno != null) ? (
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={data.recovery} margin={{ top: 10, right: 8, left: -20, bottom: 0 }}>
@@ -433,11 +491,11 @@ export default function Statistiche() {
                       </BarChart>
                     </ResponsiveContainer>
                   ) : <ChartEmpty label="Nessun dato sonno nel periodo selezionato." />}
-                </div>
+                </ChartReveal>
               </div>
               <div>
                 <div className="mb-3 font-serif text-[15px] tracking-[0.16em] text-muted-foreground bebas">BATTITO · BPM</div>
-                <div className="h-[230px]">
+                <ChartReveal className="h-[230px]">
                   {data.recovery.some((entry) => entry.battito != null) ? (
                     <ResponsiveContainer width="100%" height="100%">
                       <ComposedChart data={data.recovery} margin={{ top: 10, right: 8, left: -20, bottom: 0 }}>
@@ -456,7 +514,7 @@ export default function Statistiche() {
                       </ComposedChart>
                     </ResponsiveContainer>
                   ) : <ChartEmpty label="Nessun dato battito nel periodo selezionato." />}
-                </div>
+                </ChartReveal>
               </div>
             </div>
             <p className="mt-4 text-[11px] uppercase tracking-widest text-muted-foreground">Metriche separate: ogni grafico ha una sola unità di misura.</p>
@@ -482,7 +540,7 @@ export default function Statistiche() {
                   <div className="mt-1 text-[10px] uppercase tracking-wider text-muted-foreground">giorni in target</div>
                 </div>
               </div>
-              <div className="h-[300px] w-full">
+              <ChartReveal className="h-[300px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <ComposedChart data={data.hydration} margin={{ top: 10, right: 8, left: -20, bottom: 0 }}>
                     <CartesianGrid vertical={false} stroke="#1A1A1A" strokeDasharray="2 5" />
@@ -495,7 +553,7 @@ export default function Statistiche() {
                     <Line type="monotone" dataKey="acquaAllenamento" name="allenamento" stroke={COLORS.red} strokeWidth={2} dot={{ r: 3, fill: COLORS.red }} connectNulls={false} />
                   </ComposedChart>
                 </ResponsiveContainer>
-              </div>
+              </ChartReveal>
               <p className="mt-4 text-[11px] leading-relaxed uppercase tracking-widest text-muted-foreground">Il totale in litri guida grafico e correlazioni. Target base 2 L + fino a 0,5 L con allenamento.</p>
               </>
             ) : (
@@ -507,7 +565,7 @@ export default function Statistiche() {
 
         <Reveal>
           <Section title="Progressione forza">
-            <div className="h-[300px] w-full">
+            <ChartReveal className="h-[300px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={data.force} margin={{ top: 10, right: 8, left: -20, bottom: 0 }}>
                   <CartesianGrid vertical={false} stroke="#1A1A1A" strokeDasharray="2 5" />
@@ -519,7 +577,7 @@ export default function Statistiche() {
                   <Line type="monotone" dataKey="mobilita" name="Mobilità gamba" stroke={COLORS.ink} strokeWidth={2} dot={false} connectNulls={false} />
                 </LineChart>
               </ResponsiveContainer>
-            </div>
+            </ChartReveal>
           </Section>
         </Reveal>
         <PulseTrace entries={data.all} variant="divider" />
@@ -605,6 +663,36 @@ export default function Statistiche() {
             <PulseTrace entries={data.all} variant="divider" />
           </>
         )}
+
+        <Reveal>
+          <Section title="Registro dati">
+            <div className="overflow-x-auto border border-[rgba(245,240,232,0.12)]">
+              <table className="min-w-full border-collapse font-mono text-[11px] tracking-wide">
+                <thead className="border-b border-[rgba(245,240,232,0.12)] text-left text-muted-foreground">
+                  <tr>
+                    <th className="px-3 py-3 font-normal">GIORNO</th>
+                    <th className="px-3 py-3 font-normal">PESO</th>
+                    <th className="px-3 py-3 font-normal">SONNO</th>
+                    <th className="px-3 py-3 font-normal">BPM</th>
+                    <th className="px-3 py-3 font-normal">KCAL</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.tracked.slice(-12).reverse().map((entry, index) => (
+                    <Reveal key={entry.id} as="tr" delay={Math.min(index, 8) * 60} className="border-b border-[rgba(245,240,232,0.08)] text-foreground last:border-0">
+                      <td className="px-3 py-3 text-primary">#{entry.numero}</td>
+                      <td className="px-3 py-3">{display(entry.peso, " kg")}</td>
+                      <td className="px-3 py-3">{display(entry.sonno, " h")}</td>
+                      <td className="px-3 py-3">{display(entry.battito)}</td>
+                      <td className="px-3 py-3">{display(entry.kcal, "")}</td>
+                    </Reveal>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Section>
+        </Reveal>
+        <PulseTrace entries={data.all} variant="divider" />
 
         <Reveal>
           <Section title="Calendario heatmap">
