@@ -14,6 +14,7 @@ import { ArticoliTab } from "@/components/admin/ArticoliTab";
 import { CoachingTab } from "@/components/admin/CoachingTab";
 import { SitoTab } from "@/components/admin/SitoTab";
 import { ContattiTab } from "@/components/admin/ContattiTab";
+import { CandidatureTab } from "@/components/admin/CandidatureTab";
 import { IscrittiTab } from "@/components/admin/IscrittiTab";
 import { AnalyticsTab } from "@/components/admin/AnalyticsTab";
 import { PlannerTab } from "@/components/admin/PlannerTab";
@@ -1074,7 +1075,7 @@ function PagineTab() {
 
 // ─── Main Admin ───────────────────────────────────────────────────────────────
 
-type Tab = "oggi" | "diario" | "sito" | "pagine" | "bulk" | "social" | "sponsor" | "articoli" | "coaching" | "contatti" | "iscritti" | "analytics" | "planner";
+type Tab = "oggi" | "diario" | "sito" | "pagine" | "bulk" | "social" | "sponsor" | "articoli" | "coaching" | "contatti" | "candidature" | "iscritti" | "analytics" | "planner";
 
 type TabGroup = { id: string; label: string; tabs: { id: Tab; label: string }[] };
 
@@ -1114,6 +1115,7 @@ const TAB_GROUPS: TabGroup[] = [
     tabs: [
       { id: "analytics", label: "Analytics" },
       { id: "contatti", label: "Contatti" },
+        { id: "candidature", label: "Candidature" },
       { id: "iscritti", label: "Iscritti" },
     ],
   },
@@ -1223,6 +1225,7 @@ export default function Admin() {
       {activeTab === "sponsor" && <SponsorTab />}
       {activeTab === "coaching" && <CoachingTab />}
       {activeTab === "contatti" && <ContattiTab />}
+      {activeTab === "candidature" && <CandidatureTab />}
       {activeTab === "iscritti" && <IscrittiTab />}
       {activeTab === "bulk" && <BulkEditTab />}
       {activeTab === "analytics" && <AnalyticsTab />}

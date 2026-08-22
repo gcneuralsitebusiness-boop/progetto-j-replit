@@ -12,6 +12,7 @@ import {
 import { notify } from "../lib/notify";
 
 const router = Router();
+const ser = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
 
 // In-memory rate-limit store: IP -> list of request timestamps
 const rateLimitMap = new Map<string, number[]>();
@@ -132,7 +133,7 @@ router.get("/candidature", async (req, res): Promise<void> => {
     .from(candidatureTable)
     .orderBy(desc(candidatureTable.createdAt));
 
-  res.json(ListCandidatureResponse.parse(rows));
+  res.json(ListCandidatureResponse.parse(ser(rows)));
 });
 
 router.patch("/candidature/:id", async (req, res): Promise<void> => {
@@ -164,7 +165,7 @@ router.patch("/candidature/:id", async (req, res): Promise<void> => {
     return;
   }
 
-  res.json(UpdateCandidaturaResponse.parse(row));
+  res.json(UpdateCandidaturaResponse.parse(ser(row)));
 });
 
 export default router;
