@@ -21,6 +21,7 @@ const Coaching = lazy(() => import('@/pages/coaching'));
 const GiornoDetail = lazy(() => import('@/pages/giorno'));
 const Privacy = lazy(() => import('@/pages/privacy'));
 const Termini = lazy(() => import('@/pages/termini'));
+const Grazie = lazy(() => import('@/pages/grazie'));
 const Card = lazy(() => import('@/pages/card'));
 const CardArticolo = lazy(() => import('@/pages/card-articolo'));
 const CardReel = lazy(() => import('@/pages/card-reel'));
@@ -83,6 +84,7 @@ function PageMetadata() {
       "/social": { title: "Social — Progetto J", description: "Segui Progetto J sui canali social e contatta il progetto." },
       "/privacy": { title: "Privacy — Progetto J", description: "Come Progetto J gestisce analytics anonimi, newsletter e richieste di contatto." },
       "/termini": { title: "Termini — Progetto J", description: "Termini essenziali per consultare e condividere i contenuti di Progetto J." },
+      "/grazie": { title: "Grazie — Progetto J", description: "Richiesta ricevuta da Progetto J." },
     };
     const current = metadata[location] ?? (location.startsWith("/giorno/") ? {
       title: `Giorno ${location.split("/").pop()} — Progetto J`,
@@ -132,6 +134,7 @@ function App() {
               <Route path="/giorno/:id" component={GiornoDetail} />
               <Route path="/privacy" component={Privacy} />
               <Route path="/termini" component={Termini} />
+              <Route path="/grazie" component={Grazie} />
               <Route path="/card/articolo/:slug/story" component={CardArticolo} />
               <Route path="/card/articolo/:slug" component={CardArticolo} />
               <Route path="/card/:giorno/reel-minimal" component={CardReel} />

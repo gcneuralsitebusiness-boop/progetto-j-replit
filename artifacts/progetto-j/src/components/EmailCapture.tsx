@@ -1,6 +1,8 @@
 import { useState } from "react";
+import { useLocation } from "wouter";
 
 export function EmailCapture() {
+  const [, setLocation] = useLocation();
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
@@ -21,7 +23,7 @@ export function EmailCapture() {
       if (!response.ok) {
         throw new Error(result.error || "Errore durante l'iscrizione.");
       }
-      setSubmitted(true);
+      setLocation("/grazie?tipo=report");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Errore durante l'iscrizione.");
     } finally {

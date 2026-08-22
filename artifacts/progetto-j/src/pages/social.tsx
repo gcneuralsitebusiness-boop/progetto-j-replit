@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation } from "wouter";
 import { useListSocial, useGetSiteContent } from "@workspace/api-client-react";
 import { Reveal } from "@/components/Reveal";
 import { Cross } from "@/components/Cross";
@@ -22,6 +23,7 @@ function SocialIcon({ name, size = 24 }: { name: string; size?: number }) {
 }
 
 export default function Social() {
+  const [, setLocation] = useLocation();
   const { data: socials, isLoading: socialsLoading, isError: socialsError } = useListSocial();
   const { data: siteContent, isLoading: siteContentLoading, isError: siteContentError } = useGetSiteContent();
   const isLoading = socialsLoading || siteContentLoading;
@@ -43,7 +45,7 @@ export default function Social() {
         body: JSON.stringify(form),
       });
       if (!res.ok) throw new Error("Errore durante l'invio");
-      setSent(true);
+      setLocation("/grazie?tipo=contatto");
       toast.success("Messaggio inviato. Ti risponderemo al più presto.");
       setForm({ nome: "", email: "", tipo: "", messaggio: "" });
     } catch (err) {
