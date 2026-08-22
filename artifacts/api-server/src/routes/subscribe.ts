@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { desc } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { db } from "@workspace/db";
 import { iscrittiTable } from "@workspace/db/schema";
 import { notify } from "../lib/notify";
@@ -43,6 +43,30 @@ router.get("/subscribers", async (req, res): Promise<void> => {
 
   const rows = await db.select().from(iscrittiTable).orderBy(desc(iscrittiTable.createdAt));
   res.json(rows);
+});
+
+router.delete("/subscribers/:id", async (req, res): Promise<void> => {
+  if (!req.session?.adminAuthenticated) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id < 1) {
+    res.status(400).json({ error: "Iscritto non valido" });
+    return;
+  }
+
+  const [row] = await db
+    .delete(iscrittiTable)
+    .where(eq(iscrittiTable.id, id))
+    .returning();
+  if (!row) {
+    res.status(404).json({ error: "Iscritto non trovato" });
+    return;
+  }
+
+  res.json({ ok: true, id: row.id });
 });
 
 export default router;
