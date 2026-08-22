@@ -236,7 +236,7 @@ function InstagramCard({
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 32 }}>
               <div className="font-sans uppercase" style={{ fontSize: 22, letterSpacing: "0.25em", color: "hsl(var(--primary))" }}>
-                PROGETTOJ.IT
+                projectj180day.com
               </div>
               <div className="font-sans uppercase" style={{ fontSize: 20, letterSpacing: "0.2em", color: "rgba(255,255,255,0.4)" }}>
                 IC XC NIKA

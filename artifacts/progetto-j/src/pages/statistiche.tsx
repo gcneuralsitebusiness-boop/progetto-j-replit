@@ -308,6 +308,8 @@ export default function Statistiche() {
       mobilita: liftLevel(entry.sollevamentoGamba) ?? undefined,
     }));
     const sessions = recent.filter((entry) => entry.tipoAllenamento && entry.tipoAllenamento !== "NESSUNO").length;
+    const totalSessions = all.filter((entry) => entry.tipoAllenamento && entry.tipoAllenamento !== "NESSUNO").length;
+    const currentDay = all.length ? Math.max(...all.map((entry) => entry.numero)) : 0;
     const withTraining = recent.filter((entry) => entry.tipoAllenamento && entry.tipoAllenamento !== "NESSUNO");
     const withoutTraining = recent.filter((entry) => !entry.tipoAllenamento || entry.tipoAllenamento === "NESSUNO");
     const goodSleep = recent.filter((entry) => entry.sonno != null && entry.sonno >= 6);
@@ -322,7 +324,7 @@ export default function Statistiche() {
     const hydrated = hydrationEntries.filter((entry) => (waterLiters(entry) ?? 0) >= hydrationTarget(entry));
     const underHydrated = hydrationEntries.filter((entry) => (waterLiters(entry) ?? 0) < hydrationTarget(entry));
     return {
-      all, recent, tracked, body, recovery, force, hydration, streak, sessions,
+      all, recent, tracked, body, recovery, force, hydration, streak, sessions, totalSessions, currentDay,
       hydrationSummary: {
         average: average(hydrationEntries, waterLiters),
         target: average(hydrationEntries, hydrationTarget),
@@ -354,9 +356,11 @@ export default function Statistiche() {
     -1,
   );
   const heroStats = [
-    { label: "STREAK ATTUALE", value: data.streak.current, caption: "giorni consecutivi" },
+    { label: "GIORNI COMPLETATI", value: data.currentDay, caption: "giorno corrente" },
+    { label: "KG PERSI", value: 47, caption: "da 130 KG a 83 KG" },
+    { label: "ALLENAMENTI TOTALI", value: data.totalSessions, caption: "tutto il percorso" },
     { label: "STREAK RECORD", value: data.streak.record, caption: "massimo storico" },
-    { label: "SESSIONI", value: data.sessions, caption: period === 0 ? "allenamenti storici" : `ultimi ${period} giorni` },
+    { label: "STREAK ATTUALE", value: data.streak.current, caption: "giorni consecutivi" },
     { label: "PESO CAMBIATO", value: data.weightLost, caption: period === 0 ? "dal giorno 1" : `ultimi ${period} giorni` },
   ] as const;
 
@@ -368,7 +372,7 @@ export default function Statistiche() {
           <div className="relative z-10">
           <span className="page-label">DATI DEL PERCORSO</span>
           <h1 className="mt-2 font-serif text-[clamp(56px,12vw,112px)] leading-[0.85] tracking-wide text-foreground bebas">STATISTICHE</h1>
-          <p className="mt-5 max-w-xl font-sans text-[15px] leading-relaxed text-muted-foreground">Allenamento, routine e recupero misurati nel tempo.</p>
+          <p className="mt-5 max-w-xl font-sans text-[15px] leading-relaxed text-muted-foreground">Nessun dato arrotondato. Nessun giorno nascosto.</p>
           <div className="mt-6 inline-flex border border-border">
             {PERIODS.map((option) => (
               <button
@@ -388,7 +392,7 @@ export default function Statistiche() {
         </div>
 
         <Reveal>
-          <Section title="Hero stats">
+          <Section title="I numeri">
             <div className="relative overflow-hidden">
               <div className="stats-hero-graph" aria-hidden="true">
                 <PulseTrace entries={data.all} variant="hero" />

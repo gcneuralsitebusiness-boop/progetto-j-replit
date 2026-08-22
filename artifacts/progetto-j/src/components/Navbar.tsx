@@ -1,6 +1,5 @@
 import { Link, useLocation } from "wouter";
 import { useState, useEffect, useRef } from "react";
-import { useGetSiteContent, useListPages, useListArticles } from "@workspace/api-client-react";
 import { ScrollProgress } from "@/components/ScrollProgress";
 import { cn } from "@/lib/utils";
 
@@ -10,18 +9,20 @@ function NavLink({
   external = false,
   onClick,
   itemRef,
+  accent = false,
 }: {
   href: string;
   children: React.ReactNode;
   external?: boolean;
   onClick?: () => void;
   itemRef?: (element: HTMLElement | null) => void;
+  accent?: boolean;
 }) {
   const [location] = useLocation();
   const isActive = location === href || (href !== "/" && location.startsWith(href));
   const baseClasses = cn(
     "text-[12px] font-sans uppercase tracking-[0.2em] transition-colors",
-    isActive ? "nav-active text-foreground" : "text-muted-foreground hover:text-iron"
+    accent ? "text-[#B81D1D] hover:text-foreground" : isActive ? "nav-active text-foreground" : "text-muted-foreground hover:text-iron"
   );
 
   if (external) {
@@ -30,6 +31,9 @@ function NavLink({
         {children}
       </a>
     );
+  }
+  if (href.includes("#")) {
+    return <a ref={itemRef} href={href} className={baseClasses} onClick={onClick}>{children}</a>;
   }
   return (
     <Link href={href} ref={itemRef} className={baseClasses} onClick={onClick}>
@@ -46,22 +50,12 @@ export function Navbar() {
   const navRefs = useRef<Record<string, HTMLElement | null>>({});
   const [underline, setUnderline] = useState({ x: 0, width: 0, visible: false });
   const [hasScrolled, setHasScrolled] = useState(false);
-  const { data: content } = useGetSiteContent();
-  const { data: pages } = useListPages();
-  const { data: articles } = useListArticles();
-  const instagramUrl = content?.instagram_url ?? "#";
-
-  const publishedPages = pages?.filter((p) => p.pubblicata) ?? [];
-
   const navigationItems = [
     { href: "/chi-sono", label: "Chi Sono" },
     { href: "/journaling", label: "Journaling" },
     { href: "/statistiche", label: "Statistiche" },
-    ...(articles && articles.length > 0 ? [{ href: "/articoli", label: "Articoli" }] : []),
-    { href: "/coaching", label: "Coaching" },
-    { href: "/social", label: "Social" },
-    { href: "/sponsor", label: "Sponsor" },
-    ...publishedPages.map((page) => ({ href: `/p/${page.slug}`, label: page.titolo })),
+    { href: "/articoli", label: "Articoli" },
+    { href: "/#accesso", label: "Richiedi accesso", accent: true },
   ];
 
   const updateUnderline = () => {
@@ -79,7 +73,7 @@ export function Navbar() {
     const onResize = () => window.requestAnimationFrame(updateUnderline);
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
-  }, [location, articles?.length, publishedPages.length]);
+  }, [location]);
 
   useEffect(() => {
     let frame = 0;
@@ -145,7 +139,7 @@ export function Navbar() {
 
           <nav className="relative hidden lg:flex items-center gap-6 xl:gap-8">
             {navigationItems.map((item) => (
-              <NavLink key={item.href} href={item.href} itemRef={(element) => { navRefs.current[item.href] = element; }}>
+              <NavLink key={item.href} href={item.href} accent={item.accent} itemRef={(element) => { navRefs.current[item.href] = element; }}>
                 {item.label}
               </NavLink>
             ))}
@@ -164,14 +158,6 @@ export function Navbar() {
                 pointerEvents: "none",
               }}
             />
-            <a
-              href={instagramUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn-primary !px-4 !py-2 !text-[11px]"
-            >
-              Instagram
-            </a>
           </nav>
 
           <button
@@ -214,21 +200,12 @@ export function Navbar() {
           }}
         >
           {navigationItems.map((item, index) => (
-              <NavLink key={item.href} href={item.href} onClick={closeMenu}>
+              <NavLink key={item.href} href={item.href} accent={item.accent} onClick={closeMenu}>
               <span className="mobile-nav-item py-3 text-[clamp(24px,7vw,38px)] leading-none" style={{ animationDelay: `${80 + index * 45}ms` }}>
                 {item.label}
               </span>
             </NavLink>
           ))}
-          <a
-            href={instagramUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn-primary !px-4 !py-2 !text-[11px]"
-            onClick={closeMenu}
-          >
-            Instagram
-          </a>
         </nav>
       )}
     </>

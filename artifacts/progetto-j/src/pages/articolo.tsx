@@ -9,6 +9,8 @@ import { getPhotoUrl } from "@workspace/object-storage-web";
 import { ArrowLeft, ArrowRight, Check, Share2 } from "lucide-react";
 import { useState } from "react";
 import { ArticleContent, getArticlePlainText } from "@/components/ArticleContent";
+import { AccessoBlock } from "@/components/AccessoBlock";
+import { normalizeArticleCategory } from "@/constants/articleCategories";
 
 function resolveImgUrl(immagine: string | null | undefined): string | null {
   if (!immagine) return null;
@@ -102,7 +104,7 @@ export default function Articolo() {
             <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-[#0A0A0A]/40 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 mx-auto max-w-4xl px-5 pb-8 sm:px-6">
               <span className="mb-3 inline-block border border-border px-2 py-1 text-[10px] font-sans uppercase tracking-[0.2em] text-muted-foreground">
-                {article.categoria}
+                {normalizeArticleCategory(article.categoria)}
               </span>
               <h1 className="font-serif text-[clamp(40px,8vw,72px)] leading-[0.85] tracking-wide bebas text-foreground uppercase">
                 {article.titolo}
@@ -118,7 +120,7 @@ export default function Articolo() {
           <>
             <div className="mb-4 flex items-center gap-3">
               <span className="border border-border px-2 py-0.5 text-[10px] font-sans uppercase tracking-[0.2em] text-muted-foreground">
-                {article.categoria}
+                {normalizeArticleCategory(article.categoria)}
               </span>
               <span className="text-[11px] font-sans text-muted-foreground">· {minutes} min di lettura</span>
             </div>
@@ -154,6 +156,10 @@ export default function Articolo() {
           </Link>
         </Reveal>
       )}
+
+      <div className="mt-16">
+        <AccessoBlock />
+      </div>
 
       {!linkedDay && (
         <div className="mt-20">

@@ -1,11 +1,10 @@
 import { Link } from "wouter";
-import { useGetSiteContent, useListArticles } from "@workspace/api-client-react";
+import { useGetSiteContent } from "@workspace/api-client-react";
 import { Cross } from "@/components/Cross";
 import { EmailCapture } from "@/components/EmailCapture";
 
 export function SiteFooter() {
   const { data: siteContent } = useGetSiteContent();
-  const { data: articles } = useListArticles();
   const footerMantra = (siteContent as { global_footer_mantra?: string } | undefined)?.global_footer_mantra;
 
   return (
@@ -22,14 +21,11 @@ export function SiteFooter() {
           <nav className="flex flex-wrap items-center justify-center gap-5 sm:gap-8 text-[11px] font-sans uppercase tracking-[0.2em] text-muted-foreground">
             <Link href="/chi-sono" className="hover:text-primary transition-colors">Chi Sono</Link>
             <Link href="/journaling" className="hover:text-primary transition-colors">Journaling</Link>
-            {articles && articles.length > 0 && (
-              <Link href="/articoli" className="hover:text-primary transition-colors">Articoli</Link>
-            )}
-            <Link href="/coaching" className="hover:text-primary transition-colors">Coaching</Link>
-            <Link href="/social" className="hover:text-primary transition-colors">Social</Link>
-            <Link href="/sponsor" className="hover:text-primary transition-colors">Sponsor</Link>
+            <Link href="/statistiche" className="hover:text-primary transition-colors">Statistiche</Link>
+            <Link href="/articoli" className="hover:text-primary transition-colors">Articoli</Link>
             <Link href="/privacy" className="hover:text-primary transition-colors">Privacy</Link>
             <Link href="/termini" className="hover:text-primary transition-colors">Termini</Link>
+            <a href={siteContent?.instagram_url ?? "#"} target="_blank" rel="noopener noreferrer" className="font-mono text-[11px] normal-case tracking-normal text-foreground/40 hover:text-foreground transition-colors">Instagram</a>
           </nav>
         </div>
       </footer>

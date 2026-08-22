@@ -29,11 +29,11 @@ type QuickStatus = "ALLENATO" | "RIPOSO" | "SOLO ROUTINE" | "SPARRING";
 
 const TRAINING_TYPES = ["MMA", "MUAY THAI", "BJJ", "CALISTHENICS", "CORSA", "MISTO"] as const;
 const ENERGY = [
-  { value: 1, icon: "💀" },
-  { value: 2, icon: "😐" },
-  { value: 3, icon: "🙂" },
-  { value: 4, icon: "💪" },
-  { value: 5, icon: "🔥" },
+  { value: 1, icon: "1" },
+  { value: 2, icon: "2" },
+  { value: 3, icon: "3" },
+  { value: 4, icon: "4" },
+  { value: 5, icon: "5" },
 ] as const;
 const WATER_PRESETS = [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5] as const;
 
@@ -201,11 +201,11 @@ export function DailyTrackingPanel({
 
       <div className="grid grid-cols-2 gap-2 py-4 sm:grid-cols-4">
         {([
-          ["ALLENATO", "🟢"],
-          ["RIPOSO", "🔴"],
-          ["SOLO ROUTINE", "🟡"],
-          ["SPARRING", "🟠"],
-        ] as const).map(([label, icon]) => (
+          ["ALLENATO"],
+          ["RIPOSO"],
+          ["SOLO ROUTINE"],
+          ["SPARRING"],
+        ] as const).map(([label]) => (
           <button
             key={label}
             type="button"
@@ -215,7 +215,7 @@ export function DailyTrackingPanel({
             }`}
             aria-pressed={status === label}
           >
-            {icon} {label}
+              {label}
           </button>
         ))}
       </div>
@@ -346,7 +346,7 @@ export function DailyTrackingPanel({
               onClick={() => setField("alcol", formData.alcol ? null : true)}
               className={`flex min-h-11 items-center justify-center gap-2 border px-4 font-serif text-[11px] tracking-wider ${formData.alcol ? "border-[#B81D1D] text-[#B81D1D]" : "border-[#333] text-[#6E6A65]"}`}
             >
-              🥃 <span>ALCOL</span>
+              <span>ALCOL</span>
               <span className={`h-3 w-6 border ${formData.alcol ? "border-[#00FF41] bg-[#00FF41]" : "border-[#333] bg-[#333]"}`} />
             </button>
           </div>

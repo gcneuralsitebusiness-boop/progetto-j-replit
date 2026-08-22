@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useGetLatestEntries, useListEntries, useGetCoaching, useGetSiteContent } from "@workspace/api-client-react";
+import { useGetLatestEntries, useListEntries, useGetSiteContent } from "@workspace/api-client-react";
 import { Link } from "wouter";
 import { Reveal } from "@/components/Reveal";
 import { Timeline180 } from "@/components/Timeline180";
@@ -9,19 +9,18 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { DataErrorState } from "@/components/DataErrorState";
 import { PulseTrace } from "@/components/PulseTrace";
 import { AnimatedNumber } from "@/components/AnimatedNumber";
-import { ArrowRight, Users, Flame, Dumbbell, Heart, Wallet } from "lucide-react";
+import { AccessoBlock } from "@/components/AccessoBlock";
+import { ArrowRight, Flame, Dumbbell, Heart, Wallet } from "lucide-react";
 import { getPhotoUrl } from "@workspace/object-storage-web";
 
 export default function Home() {
   const { data: latestEntries, isLoading: latestLoading, isError: latestError } = useGetLatestEntries();
   const { data: allEntries, isLoading: allLoading, isError: allError } = useListEntries();
-  const { data: coaching, isLoading: coachingLoading, isError: coachingError } = useGetCoaching();
   const { data: siteContent, isLoading: siteContentLoading, isError: siteContentError } = useGetSiteContent();
-  const isError = latestError || allError || coachingError || siteContentError;
-  const isLoading = latestLoading || allLoading || coachingLoading || siteContentLoading;
+  const isError = latestError || allError || siteContentError;
+  const isLoading = latestLoading || allLoading || siteContentLoading;
 
   const ctaTesto = siteContent?.home_cta_testo || "Segui il percorso";
-  const communityTesto = siteContent?.home_community_testo || coaching?.communityCta || "Entra nella community italiana e trova gente con la tua stessa fame.";
   const [hasScrolled, setHasScrolled] = useState(false);
 
   useEffect(() => {
@@ -38,7 +37,6 @@ export default function Home() {
   const totalKm = allEntries?.reduce((sum, e) => sum + (e.km || 0), 0) ?? 0;
   const totalKcal = allEntries?.reduce((sum, e) => sum + (e.kcal || 0), 0) ?? 0;
   const totalIncome = allEntries?.reduce((sum, e) => sum + (e.entrate || 0), 0) ?? 0;
-  const remainingDays = Math.max(180 - currentDay, 0);
   const sortedEntries = allEntries ? [...allEntries].sort((a, b) => a.numero - b.numero) : [];
   const firstEntry = sortedEntries[0];
   const lastEntry = sortedEntries[sortedEntries.length - 1];
@@ -47,7 +45,6 @@ export default function Home() {
   const firstWeight = weightEntries[0]?.peso ?? null;
   const currentWeight = weightEntries[weightEntries.length - 1]?.peso ?? null;
   const heartRateEntries = sortedEntries.filter((entry) => entry.battito != null);
-  const progressPercent = Math.min(100, Math.round((currentDay / 180) * 100));
   const comparisonMetrics = [
     { label: "PESO", unit: "KG", first: firstEntry?.peso ?? firstWeight, last: lastEntry?.peso ?? currentWeight, fraction: 1 },
     { label: "BATTITO", unit: "BPM", first: firstEntry?.battito ?? heartRateEntries[0]?.battito, last: lastEntry?.battito ?? heartRateEntries[heartRateEntries.length - 1]?.battito, fraction: 0 },
@@ -97,7 +94,7 @@ export default function Home() {
           )}
           <Reveal className="relative z-10 mx-auto max-w-5xl text-center">
             <div className="mx-auto flex max-w-3xl flex-col items-center">
-              <div className="page-label w-fit text-primary before:!bg-primary">PERCORSO IN CORSO</div>
+              <div className="page-label w-fit text-primary before:!bg-primary">GIORNO {String(currentDay).padStart(3, "0")} / 180</div>
               <div className="mt-5 font-serif text-[clamp(120px,25vw,220px)] leading-[0.72] text-primary bebas tracking-[0.02em]" aria-label={`Giorno ${String(currentDay).padStart(3, "0")}`}>
                 <AnimatedNumber
                   value={currentDay}
@@ -106,28 +103,20 @@ export default function Home() {
                   duration={1600}
                 />
               </div>
-              {firstWeight != null && currentWeight != null && (
-                <div className="measured mt-7 text-[16px] uppercase tracking-[0.12em] sm:text-[18px]">
-                  <span className="text-muted-foreground line-through">{firstWeight.toFixed(1)} KG</span>
+              <div className="measured mt-7 text-[16px] uppercase tracking-[0.12em] sm:text-[18px]">
+                  <span className="text-muted-foreground line-through">130 KG</span>
                   <span className="mx-3 text-primary">→</span>
-                  <span className="text-[hsl(var(--acid))]">{currentWeight.toFixed(1)} KG</span>
-                </div>
+                  <span className="text-[hsl(var(--acid))]">83 KG</span>
+              </div>
+              {firstWeight != null && currentWeight != null && (
+                <p className="mt-3 font-mono text-[11px] tracking-[0.12em] text-foreground/50">PROGETTO: {firstWeight.toFixed(1)} → {currentWeight.toFixed(1)}</p>
               )}
               <p className="mt-5 max-w-sm text-center font-sans text-[13px] uppercase tracking-[0.2em] text-muted-foreground sm:text-[14px]">
-                Dal fondo al ring. 180 giorni. Tutto pubblico.
+                NON È MOTIVAZIONE. SONO NUMERI. 180 GIORNI, TUTTI PUBBLICI.
               </p>
-              {currentDay > 0 && (
-                <div className="mt-8 w-full max-w-xl">
-                  <div className="mb-2 flex items-end justify-between text-[10px] font-sans uppercase tracking-[0.2em] text-muted-foreground">
-                    <span>GIORNO {String(currentDay).padStart(3, "0")} / 180</span>
-                    <span className="text-primary">{progressPercent}%</span>
-                  </div>
-                  <div className="h-1 bg-iron"><div className="h-full bg-primary transition-all duration-1000" style={{ width: `${progressPercent}%` }} /></div>
-                </div>
-              )}
               <Link href="/journaling" className="btn-primary mt-8">
-                {currentDay > 0 ? `LEGGI IL GIORNO ${String(currentDay).padStart(3, "0")} →` : ctaTesto}
-                {currentDay === 0 && <ArrowRight size={16} />}
+                 {currentDay > 0 ? "COSA È SUCCESSO OGGI →" : ctaTesto}
+                 {currentDay === 0 && <ArrowRight size={16} />}
               </Link>
               <div className={`mt-8 transition-opacity duration-500 ${hasScrolled ? "opacity-0" : "opacity-100"}`} aria-hidden={hasScrolled}>
                 <div className="scroll-hint-line" />
@@ -283,32 +272,9 @@ export default function Home() {
           )}
         </div>
 
-        {/* Community CTA bar */}
-        <section className="max-w-5xl mx-auto px-5 sm:px-6 py-16 w-full">
-          <Reveal>
-            <a
-              href={coaching?.communityUrl || "#"}
-              className="group block border border-iron bg-card p-5 sm:p-6 card-lift hover:border-iron transition-colors"
-            >
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
-                <div className="flex items-center gap-4">
-                  <div className="border border-primary p-3 sm:p-4 shrink-0">
-                    <Users size={28} className="text-primary" />
-                  </div>
-                  <div>
-                    <span className="text-[11px] font-sans uppercase tracking-[0.2em] text-primary">COMMUNITY</span>
-                    <p className="text-[16px] sm:text-[18px] font-sans text-foreground leading-relaxed max-w-lg">
-                      {communityTesto}
-                    </p>
-                  </div>
-                </div>
-                <div className="inline-flex items-center gap-2 border border-primary text-primary font-sans text-[13px] uppercase tracking-[0.2em] px-5 py-2.5 group-hover:bg-primary group-hover:text-primary-foreground transition-colors shrink-0">
-                  Entra <ArrowRight size={16} />
-                </div>
-              </div>
-            </a>
-          </Reveal>
-        </section>
+        <div className="max-w-5xl mx-auto px-5 sm:px-6 py-16 w-full">
+          <AccessoBlock />
+        </div>
       </main>
 
       <SiteFooter />

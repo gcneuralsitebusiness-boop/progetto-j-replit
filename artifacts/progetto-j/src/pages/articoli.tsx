@@ -10,7 +10,7 @@ import { getPhotoUrl } from "@workspace/object-storage-web";
 import { useMemo, useState } from "react";
 import { ArrowRight } from "lucide-react";
 import { getArticlePlainText } from "@/components/ArticleContent";
-import { ARTICLE_CATEGORIES } from "@/constants/articleCategories";
+import { ARTICLE_CATEGORIES, normalizeArticleCategory } from "@/constants/articleCategories";
 
 function resolveImgUrl(immagine: string | null | undefined): string | null {
   if (!immagine) return null;
@@ -36,19 +36,12 @@ export default function Articoli() {
   const { data: articles, isLoading, isError } = useListArticles();
   const [filter, setFilter] = useState<string>("Tutte");
 
-  const categories = useMemo(() => {
-    const legacyCategories = Array.from(new Set(
-      (articles ?? [])
-        .map((article) => article.categoria)
-        .filter((category) => !ARTICLE_CATEGORIES.includes(category as (typeof ARTICLE_CATEGORIES)[number])),
-    ));
-    return ["Tutte", ...ARTICLE_CATEGORIES, ...legacyCategories];
-  }, [articles]);
+  const categories = useMemo(() => ["Tutte", ...ARTICLE_CATEGORIES], []);
 
   const filtered = useMemo(() => {
     if (!articles) return [];
     if (filter === "Tutte") return articles;
-    return articles.filter((a) => a.categoria === filter);
+    return articles.filter((a) => normalizeArticleCategory(a.categoria) === filter);
   }, [articles, filter]);
   const featuredArticle = filtered[0];
   const otherArticles = filtered.slice(1);
@@ -75,7 +68,7 @@ export default function Articoli() {
 
       <Reveal>
         <p className="text-[15px] sm:text-[16px] font-sans text-foreground/80 leading-relaxed mb-10 max-w-2xl ink-line">
-          Pensieri, dati e analisi. Finanza, fede, sport, mindset, business. Senza fronzoli.
+          Pensieri, dati, analisi. Niente di quello che non ho vissuto.
         </p>
       </Reveal>
 
@@ -124,7 +117,7 @@ export default function Articoli() {
                     <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-[#0A0A0A]/60 to-transparent" />
                     <div className="relative p-6 sm:p-8">
                       <span className="inline-flex border border-border px-2 py-1 text-[10px] font-sans uppercase tracking-[0.2em] text-muted-foreground">
-                        {featuredArticle.categoria}
+                        {normalizeArticleCategory(featuredArticle.categoria)}
                       </span>
                       <h3 className="mt-3 max-w-[600px] font-serif text-[clamp(36px,6vw,56px)] leading-[0.9] text-foreground uppercase bebas transition-colors group-hover:text-primary">
                         {featuredArticle.titolo}
@@ -175,7 +168,7 @@ export default function Articoli() {
                           <div className="p-5 flex flex-col flex-1">
                             <div className="flex items-center justify-between mb-3">
                               <span className="text-[10px] font-sans uppercase tracking-[0.2em] border border-border px-2 py-1 text-muted-foreground">
-                                {a.categoria}
+                                {normalizeArticleCategory(a.categoria)}
                               </span>
                               <span className="text-[11px] font-sans text-muted-foreground">
                                 {format(new Date(a.data), "d MMM yyyy", { locale: it })}

@@ -14,7 +14,7 @@ router.get("/coaching", async (_req, res): Promise<void> => {
     descrizione: "",
     communityCta: "Entra nella community italiana e trova gente con la tua stessa fame.",
     communityUrl: "#",
-    email: "contatto@progettoj.it",
+    email: "contatto@projectj180day.com",
     visibile: true,
   };
   res.json(coaching);

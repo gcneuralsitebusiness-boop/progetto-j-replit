@@ -15,6 +15,8 @@ export * from './articleUpdateCategoria';
 export * from './authStatus';
 export * from './bulkTextInput';
 export * from './bulkTextResult';
+export * from './candidatura';
+export * from './candidaturaInput';
 export * from './coaching';
 export * from './coachingUpdate';
 export * from './contentInput';

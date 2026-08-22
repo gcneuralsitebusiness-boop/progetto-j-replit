@@ -18,7 +18,7 @@ const BLACK = "#0A0A0A";
 const WHITE = "#E8E4DE";
 const GREY = "#6E6A65";
 const DARK_GREY = "#4A4744";
-const SITE_DOMAIN = "PROGETTOJ.IT";
+const SITE_DOMAIN = "projectj180day.com";
 const GOAL_DAY = 180;
 
 type ReelMode = "reel" | "minimal";

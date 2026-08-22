@@ -8,6 +8,8 @@ description: How to get Playwright's packaged Chromium binary running on this Re
 ## The problem
 Playwright's downloaded `chrome-headless-shell` binary links against `libgbm.so.1` (from mesa) and other system libraries that are not in the standard linker path on this NixOS environment. Running `playwright install chromium` alone is not enough — the binary crashes with "error while loading shared libraries".
 
+The Playwright package can be present while its Chromium cache is absent. In that case `chromium.launch()` reports that the executable does not exist; install the browser before applying the NixOS RPATH fix below.
+
 ## The fix
 Install mesa via nix-env so `libgbm.so.1` lands in `~/.nix-profile/lib`, then patch the binary's RPATH with `patchelf`:
 

@@ -27,6 +27,8 @@ import type {
   AuthStatus,
   BulkTextInput,
   BulkTextResult,
+  Candidatura,
+  CandidaturaInput,
   Coaching,
   CoachingUpdate,
   ContentInput,
@@ -2490,6 +2492,76 @@ export const useDeleteArticle = <TError = ErrorType<UnauthorizedResponse>,
         TContext
       > => {
       return useMutation(getDeleteArticleMutationOptions(options));
+    }
+
+export const getCreateCandidaturaUrl = () => {
+
+
+
+
+  return `/api/candidature`
+}
+
+/**
+ * @summary Submit a coaching candidatura
+ */
+export const createCandidatura = async (candidaturaInput: CandidaturaInput, options?: RequestInit): Promise<Candidatura> => {
+
+  return customFetch<Candidatura>(getCreateCandidaturaUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(candidaturaInput)
+  }
+);}
+
+
+
+
+export const getCreateCandidaturaMutationOptions = <TError = ErrorType<ApiError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createCandidatura>>, TError,{data: BodyType<CandidaturaInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createCandidatura>>, TError,{data: BodyType<CandidaturaInput>}, TContext> => {
+
+const mutationKey = ['createCandidatura'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createCandidatura>>, {data: BodyType<CandidaturaInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createCandidatura(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateCandidaturaMutationResult = NonNullable<Awaited<ReturnType<typeof createCandidatura>>>
+    export type CreateCandidaturaMutationBody = BodyType<CandidaturaInput>
+    export type CreateCandidaturaMutationError = ErrorType<ApiError>
+
+    /**
+ * @summary Submit a coaching candidatura
+ */
+export const useCreateCandidatura = <TError = ErrorType<ApiError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createCandidatura>>, TError,{data: BodyType<CandidaturaInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createCandidatura>>,
+        TError,
+        {data: BodyType<CandidaturaInput>},
+        TContext
+      > => {
+      return useMutation(getCreateCandidaturaMutationOptions(options));
     }
 
 export const getGetCoachingUrl = () => {

@@ -9,7 +9,7 @@ export const coachingTable = pgTable("coaching", {
   descrizione: text("descrizione").notNull().default(""),
   communityCta: text("community_cta").notNull().default("Entra nella community italiana e trova gente con la tua stessa fame."),
   communityUrl: text("community_url").notNull().default("#"),
-  email: text("email").notNull().default("contatto@progettoj.it"),
+  email: text("email").notNull().default("contatto@projectj180day.com"),
   visibile: boolean("visibile").notNull().default(true),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });

@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useListEntries, useGetSiteContent, getGetSiteContentQueryKey } from "@workspace/api-client-react";
+import { useListEntries } from "@workspace/api-client-react";
 import { Area, ComposedChart, LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
@@ -45,10 +45,9 @@ const axisProps = {
 
 export default function Journaling() {
   const { data: entries, isLoading: entriesLoading, isError: entriesError } = useListEntries();
-  const { data: content, isLoading: contentLoading, isError: contentError } = useGetSiteContent({ query: { queryKey: getGetSiteContentQueryKey() } });
-  const isLoading = entriesLoading || contentLoading;
-  const isError = entriesError || contentError;
-  const journalingIntro = content?.journaling_intro;
+  const isLoading = entriesLoading;
+  const isError = entriesError;
+  const journalingIntro = "Tutto ciò che misuri migliora.\nSegnare i dati dà disciplina.\nI dati sono informazione.\nInformazione più disciplina uguale progresso. Sempre.";
 
   // ─── Filter + pagination state ─────────────────────────────────────────────
   const [selectedMonth, setSelectedMonth] = useState<string>("all");

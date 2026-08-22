@@ -194,6 +194,61 @@ body::before {
   @apply bg-primary text-primary-foreground;
 }
 
+.accesso-block {
+  position: relative;
+  width: 100%;
+  border: 1px solid rgba(245, 240, 232, 0.12);
+  padding: clamp(2rem, 7vw, 5rem);
+}
+.bracket-corners::before,
+.bracket-corners::after,
+.bracket-corners > div::before,
+.bracket-corners > div::after {
+  content: "";
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border-color: #B81D1D;
+  border-style: solid;
+  pointer-events: none;
+}
+.bracket-corners::before { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
+.bracket-corners::after { top: -1px; right: -1px; border-width: 2px 2px 0 0; }
+.bracket-corners > div::before { bottom: -1px; left: -1px; border-width: 0 0 2px 2px; }
+.bracket-corners > div::after { right: -1px; bottom: -1px; border-width: 0 2px 2px 0; }
+.accesso-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-family: var(--app-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  color: rgb(245 240 232 / 0.5);
+}
+.accesso-input {
+  display: block;
+  width: 100%;
+  border: 1px solid rgba(245, 240, 232, 0.15);
+  border-bottom-color: rgba(245, 240, 232, 0.42);
+  background: transparent;
+  padding: 0.75rem 0.875rem;
+  font-family: var(--app-font-sans);
+  font-size: 16px;
+  color: #F5F0E8;
+  transition: border-color var(--dur-fast) linear;
+}
+.accesso-input:focus { outline: none; border-color: #B81D1D; }
+.accesso-input::placeholder { color: rgb(245 240 232 / 0.35); }
+.accesso-error { margin-top: 0.5rem; font-family: var(--app-font-mono); font-size: 11px; letter-spacing: 0.08em; color: #B81D1D; }
+.accesso-form-enter { animation: accesso-form-in var(--dur-base) var(--ease-out) both; }
+@keyframes accesso-form-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (max-width: 639px) {
+  .accesso-block { text-align: center; }
+  .accesso-block form { text-align: left; }
+}
+
 /* KPI card with animated bottom bar */
 .kpi-card {
   position: relative;
@@ -228,7 +283,6 @@ body::before {
 }
 .card-lift:hover {
   transform: translateY(-3px);
-  box-shadow: 0 8px 30px -10px hsl(var(--iron) / 0.45);
 }
 
 /* Page label: red line + uppercase */

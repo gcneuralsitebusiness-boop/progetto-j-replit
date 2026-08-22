@@ -3,12 +3,11 @@ import { useGetSiteContent } from "@workspace/api-client-react";
 import { getPhotoUrl } from "@workspace/object-storage-web";
 import { Reveal } from "@/components/Reveal";
 import { Cross } from "@/components/Cross";
+import { AccessoBlock } from "@/components/AccessoBlock";
 import { SiteFooter } from "@/components/SiteFooter";
 import { DataErrorState } from "@/components/DataErrorState";
 
 const DEFAULTS = {
-  chi_sono_bio:
-    "Mi chiamo J. Ho 21 anni. Faccio il tecnico su tralicci telecom a Bologna.\n\nUn anno fa ero a 130 chili e dipendente. Non da alcol, non da cibo — da qualcosa che non nomino nei contenuti pubblici. Ho smesso cold-turkey. Il giorno dopo mi sono pesato e ho iniziato a scrivere.\n\nHo più problemi che talenti. Non sono capace di divertirmi. Non riesco a dormire più di sei ore senza sentirmi in colpa. Banalizzò i risultati appena li raggiungo.\n\nQuesto sono io. Non la versione costruita per i social — questa.",
   chi_sono_il_progetto:
     "180 giorni. Tutti documentati. Peso, battito, sonno, soldi, allenamento. Pubblicati ogni giorno sul sito con i dati reali.\n\nNessun filtro sull'immagine. Nessuna storia costruita a posteriori. Se un giorno vado male, lo scrivo. Se un giorno non mi alleno, è nel tracking. Se guadagno poco, è nei numeri.\n\nLa trasformazione è reale perché i dati sono reali. Ogni altra versione è marketing.",
   chi_sono_la_motivazione:
@@ -16,6 +15,15 @@ const DEFAULTS = {
   chi_sono_la_promessa:
     "Non so chi sarò al giorno 180.\n\nSo che sarà documentato. Ogni errore, ogni giorno perso, ogni numero che va nella direzione sbagliata — resterà sul sito.\n\nSe fallisco, lo sapete.\nSe ce la faccio, lo sapete.\n\nIC XC NIKA",
 };
+
+const STORY_PARAGRAPHS = [
+  "Mi chiamo J, ho 21 anni, vivo a Bologna.",
+  "Due anni fa pesavo 130 chili ed ero dipendente.",
+  "Nessuno mi ha salvato. Nessun programma, nessuna clinica.",
+  "Ho smesso e sono entrato in una palestra.",
+  "Il primo giorno ho vomitato dopo sei minuti.",
+  "Sono tornato il giorno dopo.",
+];
 
 function HeroBlock({ path }: { path: string | null | undefined }) {
   const url = getPhotoUrl(path ?? null);
@@ -65,13 +73,12 @@ function HeroBlock({ path }: { path: string | null | undefined }) {
 export default function ChiSono() {
   const { data: content, isLoading, isError } = useGetSiteContent();
 
-  const bio = content?.chi_sono_bio ?? DEFAULTS.chi_sono_bio;
   const progetto = content?.chi_sono_il_progetto ?? DEFAULTS.chi_sono_il_progetto;
   const motivazione = content?.chi_sono_la_motivazione ?? DEFAULTS.chi_sono_la_motivazione;
   const promessa = content?.chi_sono_la_promessa ?? DEFAULTS.chi_sono_la_promessa;
 
   const sections = [
-    { key: "LA STORIA", body: bio },
+    { key: "LA STORIA", body: STORY_PARAGRAPHS.join("\n\n") },
     { key: "IL PROGETTO", body: progetto },
     { key: "LA MOTIVAZIONE", body: motivazione },
     { key: "LA PROMESSA", body: promessa },
@@ -98,7 +105,7 @@ export default function ChiSono() {
   }
 
   return (
-    <div className="min-h-screen pt-20 pb-20 max-w-4xl mx-auto px-5 sm:px-6">
+    <div className="min-h-screen pt-28 pb-20 max-w-4xl mx-auto px-5 sm:px-6">
       <HeroBlock path={content?.chi_sono_foto} />
 
       <div className="grid grid-cols-1 gap-0 max-w-4xl mx-auto">
@@ -116,14 +123,9 @@ export default function ChiSono() {
                 </div>
                 <div>
                   {i === 0 ? (
-                    <>
-                      <p className="mb-6 font-serif text-[clamp(20px,3vw,26px)] leading-[1.3] tracking-wide text-foreground bebas uppercase">
-                        {section.body.split("\n\n")[0]}
-                      </p>
-                      <p className="whitespace-pre-wrap font-sans text-[16px] leading-[1.85] text-foreground/85 sm:text-[17px]">
-                        {section.body.split("\n\n").slice(1).join("\n\n")}
-                      </p>
-                    </>
+                    <div className="space-y-5 font-sans text-[16px] leading-[1.85] text-foreground/85 sm:text-[17px]">
+                      {STORY_PARAGRAPHS.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
+                    </div>
                   ) : (
                     <p className="whitespace-pre-wrap font-sans text-[16px] leading-[1.85] text-foreground/85 sm:text-[17px]">
                       {section.body}
@@ -162,6 +164,9 @@ export default function ChiSono() {
             </p>
           </div>
         </Reveal>
+      </div>
+      <div className="mt-10">
+        <AccessoBlock />
       </div>
       <SiteFooter />
     </div>

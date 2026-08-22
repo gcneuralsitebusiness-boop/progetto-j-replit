@@ -850,6 +850,40 @@ export interface CoachingUpdate {
   visibile?: boolean;
 }
 
+export interface Candidatura {
+  id: number;
+  /**
+     * @minLength 1
+     * @maxLength 60
+     */
+  nome: string;
+  /** @maxLength 120 */
+  contatto: string;
+  /**
+     * @minLength 100
+     * @maxLength 800
+     */
+  progetto: string;
+  /** Application status (default "nuova") */
+  stato: string;
+  createdAt: string;
+}
+
+export interface CandidaturaInput {
+  /**
+     * @minLength 1
+     * @maxLength 60
+     */
+  nome: string;
+  /** @maxLength 120 */
+  contatto: string;
+  /**
+     * @minLength 100
+     * @maxLength 800
+     */
+  progetto: string;
+}
+
 /**
  * Unauthorized
  */

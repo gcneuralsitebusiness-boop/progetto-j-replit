@@ -15,7 +15,7 @@ import CardCustomizer, {
 const CARD_W = 1080;
 const RED = "#B81D1D";
 const GREY = "#6E6A65";
-const SITE_DOMAIN = "PROGETTOJ.IT";
+const SITE_DOMAIN = "projectj180day.com";
 
 type Format = "feed" | "story";
 

@@ -18,7 +18,7 @@ export default function Coaching() {
       "Un percorso di 12 settimane basato sui numeri reali del diario. Allenamento, nutrizione, sonno, abitudini. Niente promesse facili: solo un sistema che funziona se lo segui.",
     communityCta: "Entra nella community italiana e trova gente con la tua stessa fame.",
     communityUrl: "#",
-    email: "contatto@progettoj.it",
+    email: "contatto@projectj180day.com",
   };
 
   if (isError) {

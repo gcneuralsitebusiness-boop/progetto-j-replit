@@ -20,6 +20,8 @@ tags:
     description: Custom pages (CMS)
   - name: storage
     description: Object storage upload and serving
+  - name: candidature
+    description: Candidature al programma coaching
 paths:
   /healthz:
     get:
@@ -749,6 +751,37 @@ paths:
           description: Deleted
         "401":
           $ref: "#/components/responses/Unauthorized"
+
+  /candidature:
+    post:
+      operationId: createCandidatura
+      tags: [candidature]
+      summary: Submit a coaching candidatura
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CandidaturaInput"
+      responses:
+        "201":
+          description: Candidatura submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Candidatura"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "429":
+          description: Too many requests
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
 
   /coaching:
     get:
@@ -1594,3 +1627,43 @@ components:
           type: string
         visibile:
           type: boolean
+
+    Candidatura:
+      type: object
+      required: [id, nome, contatto, progetto, stato, createdAt]
+      properties:
+        id:
+          type: integer
+        nome:
+          type: string
+          minLength: 1
+          maxLength: 60
+        contatto:
+          type: string
+          maxLength: 120
+        progetto:
+          type: string
+          minLength: 100
+          maxLength: 800
+        stato:
+          type: string
+          description: Application status (default "nuova")
+        createdAt:
+          type: string
+          format: date-time
+
+    CandidaturaInput:
+      type: object
+      required: [nome, contatto, progetto]
+      properties:
+        nome:
+          type: string
+          minLength: 1
+          maxLength: 60
+        contatto:
+          type: string
+          maxLength: 120
+        progetto:
+          type: string
+          minLength: 100
+          maxLength: 800

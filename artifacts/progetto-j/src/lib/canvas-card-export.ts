@@ -237,7 +237,7 @@ export async function downloadDailyCanvasCard({
   drawSpacedText(ctx, countdown, 72, bottom, 5.5);
   ctx.fillStyle = RED;
   ctx.textAlign = "right";
-  drawSpacedText(ctx, "PROGETTOJ.IT", 820, bottom, 5.5, "right");
+  drawSpacedText(ctx, "projectj180day.com", 820, bottom, 5.5, "right");
   ctx.fillStyle = "rgba(255,255,255,0.4)";
   drawSpacedText(ctx, "IC XC NIKA", 1008, bottom, 4.4, "right");
 
@@ -383,7 +383,7 @@ export async function downloadReelCanvasCard({
 
   setFont(ctx, 24, "Bebas Neue");
   ctx.fillStyle = GREY;
-  drawSpacedText(ctx, "PROGETTOJ.IT", 540, 0.655 * 1920 + 24, 6.2, "center");
+  drawSpacedText(ctx, "projectj180day.com", 540, 0.655 * 1920 + 24, 6.2, "center");
   await drawCanvasImage(canvas, filename);
 }
 

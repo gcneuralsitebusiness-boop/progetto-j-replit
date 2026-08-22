@@ -1077,6 +1077,43 @@ export const DeleteArticleResponse = zod.void()
 
 
 /**
+ * @summary Submit a coaching candidatura
+ */
+export const createCandidaturaBodyNomeMax = 60;
+
+export const createCandidaturaBodyContattoMax = 120;
+
+export const createCandidaturaBodyProgettoMin = 100;
+export const createCandidaturaBodyProgettoMax = 800;
+
+
+
+export const CreateCandidaturaBody = zod.object({
+  "nome": zod.string().min(1).max(createCandidaturaBodyNomeMax),
+  "contatto": zod.string().max(createCandidaturaBodyContattoMax),
+  "progetto": zod.string().min(createCandidaturaBodyProgettoMin).max(createCandidaturaBodyProgettoMax)
+})
+
+export const createCandidaturaResponseNomeMax = 60;
+
+export const createCandidaturaResponseContattoMax = 120;
+
+export const createCandidaturaResponseProgettoMin = 100;
+export const createCandidaturaResponseProgettoMax = 800;
+
+
+
+export const CreateCandidaturaResponse = zod.object({
+  "id": zod.number(),
+  "nome": zod.string().min(1).max(createCandidaturaResponseNomeMax),
+  "contatto": zod.string().max(createCandidaturaResponseContattoMax),
+  "progetto": zod.string().min(createCandidaturaResponseProgettoMin).max(createCandidaturaResponseProgettoMax),
+  "stato": zod.string().describe('Application status (default \"nuova\")'),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
  * @summary Get coaching landing content
  */
 export const GetCoachingResponse = zod.object({

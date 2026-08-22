@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
 import { articoliTable } from "@workspace/db/schema";
-import { isArticleCategory } from "../constants/articleCategories";
+import { isArticleCategory, isLegacyArticleCategory, normalizeArticleCategory } from "../constants/articleCategories";
 import { eq, and } from "drizzle-orm";
 
 const router = Router();
@@ -81,7 +81,7 @@ router.post("/articles", async (req, res): Promise<void> => {
     res.status(400).json({ error: "Slug e titolo sono obbligatori." });
     return;
   }
-  if (!isArticleCategory(categoria)) {
+  if (!isArticleCategory(categoria) && !isLegacyArticleCategory(categoria)) {
     res.status(400).json({ error: "Seleziona una categoria valida." });
     return;
   }
@@ -91,7 +91,7 @@ router.post("/articles", async (req, res): Promise<void> => {
     .values({
       slug,
       titolo,
-      categoria,
+      categoria: normalizeArticleCategory(categoria),
       contenuto: typeof contenuto === "string" ? contenuto : "",
       immagine: typeof immagine === "string" ? immagine : null,
       pubblicato: typeof pubblicato === "boolean" ? pubblicato : false,
@@ -114,7 +114,7 @@ router.put("/articles/:id", async (req, res): Promise<void> => {
     return;
   }
 
-  if (req.body.categoria !== undefined && !isArticleCategory(req.body.categoria)) {
+  if (req.body.categoria !== undefined && !isArticleCategory(req.body.categoria) && !isLegacyArticleCategory(req.body.categoria)) {
     res.status(400).json({ error: "Seleziona una categoria valida." });
     return;
   }
@@ -130,6 +130,7 @@ router.put("/articles/:id", async (req, res): Promise<void> => {
   for (const key of ["slug", "titolo", "categoria", "contenuto", "immagine", "data"] as const) {
     if (req.body[key] !== undefined) updates[key] = req.body[key];
   }
+  if (req.body.categoria !== undefined) updates.categoria = normalizeArticleCategory(req.body.categoria);
   for (const key of ["cardTitolo", "cardSottotitolo", "cardImmagine"] as const) {
     if (req.body[key] !== undefined) updates[key] = req.body[key] === null ? null : String(req.body[key]);
   }
