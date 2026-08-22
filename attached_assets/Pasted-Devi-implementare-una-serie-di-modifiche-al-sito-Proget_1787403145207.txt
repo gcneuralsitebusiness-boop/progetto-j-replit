@@ -1,0 +1,309 @@
+Devi implementare una serie di modifiche al sito Progetto J. Sono
+principalmente cambi di copy, rimozione di sezioni, e un nuovo blocco
+con form. NON ridisegnare nulla che non sia esplicitamente indicato.
+
+VINCOLI DI DESIGN — NON VIOLARE MAI
+- Sfondo #0A0A0A, rosso #B81D1D, bronzo #8B6914, off-white #F5F0E8
+- Font: Bebas Neue (titoli), Inter (corpo), JetBrains Mono (dati/label)
+- ZERO border-radius, ZERO box-shadow, ZERO emoji, ZERO icone generiche
+- Tutto in italiano. Nessuna parola inglese nell'interfaccia.
+
+=====================================================================
+1. NAVBAR — RIDUZIONE VOCI
+=====================================================================
+
+In /artifacts/progetto-j/src/components/Navbar.tsx
+
+RIMUOVI completamente queste voci dal menu (desktop e mobile):
+- COACHING
+- SOCIAL
+- SPONSOR
+- il pulsante rosso INSTAGRAM
+
+Il menu deve contenere ESATTAMENTE, in quest'ordine:
+CHI SONO / JOURNALING / STATISTICHE / ARTICOLI / RICHIEDI ACCESSO
+
+"RICHIEDI ACCESSO" è l'ultima voce, colore #B81D1D, punta all'ancora
+#accesso della home.
+
+Le route /coaching, /social, /sponsor NON vanno cancellate dal router:
+restano raggiungibili via URL diretto ma non linkate da nessuna parte.
+
+Nel footer, aggiungi un solo link testuale piccolo (JetBrains Mono,
+11px, opacità 0.4, off-white) verso Instagram. Nessun pulsante, nessuna
+icona, nessuna evidenza.
+
+=====================================================================
+2. NUOVO BLOCCO "ACCESSO SU RICHIESTA"
+=====================================================================
+
+Crea /artifacts/progetto-j/src/components/AccessoBlock.tsx
+
+Questo SOSTITUISCE integralmente il blocco "Entra nella community
+italiana e trova gente con la tua stessa fame" attualmente presente in
+home.tsx. Elimina quel blocco, inclusa l'icona delle due personcine.
+
+STRUTTURA VISIVA
+- Sezione full-width, id="accesso"
+- Bordo 1px rgba(245,240,232,0.12) su tutti i lati
+- Bracket corners agli angoli (riusa lo stile già presente nel sito)
+- Padding generoso, contenuto allineato a sinistra su desktop,
+  centrato su mobile
+- Nessuna icona di alcun tipo
+
+COPY ESATTO (non modificare, non riformulare):
+
+Eyebrow (JetBrains Mono, 12px, letterspacing 0.2em, #B81D1D):
+ACCESSO SU RICHIESTA
+
+Titolo (Bebas Neue, grande, #F5F0E8):
+PROGETTO J NON CERCA FOLLOWER
+
+Corpo (Inter, off-white opacità 0.7):
+Un gruppo chiuso di persone che stanno costruendo qualcosa
+e hanno la disciplina per portarlo a terra.
+
+Riga dati (JetBrains Mono, 13px, letterspacing 0.15em, opacità 0.5):
+BUSINESS · CRESCITA · SPORT
+
+Riga sotto (Inter, off-white pieno):
+Lascia i tuoi dati. Ti contatto io.
+
+Pulsante (rettangolo pieno #B81D1D, testo #F5F0E8, Bebas Neue,
+letterspacing 0.1em):
+RICHIEDI DI PARTECIPARE →
+
+Nota finale sotto il pulsante (JetBrains Mono, 11px, opacità 0.35):
+Non tutti ricevono risposta.
+
+COMPORTAMENTO
+Il pulsante apre un form inline che si espande sotto (NON un modale,
+NON una nuova pagina). Transizione: opacity 0→1 e translateY(8px)→0
+in 250ms cubic-bezier(0.2,0.8,0.2,1). Il pulsante scompare quando il
+form è aperto.
+
+=====================================================================
+3. FORM DI CANDIDATURA
+=====================================================================
+
+Tre campi, tutti obbligatori:
+
+1. NOME — input testo, maxLength 60
+2. CONTATTO — input testo, placeholder "Instagram o email", maxLength 120
+3. COSA STAI COSTRUENDO ADESSO? — textarea, minLength 100,
+   maxLength 800, 5 righe visibili
+
+Sotto la textarea, contatore caratteri in JetBrains Mono 11px:
+"N / 100 minimo" — rosso #B81D1D finché sotto 100, opacità 0.4 quando
+il minimo è raggiunto.
+
+STILE CAMPI
+- Background trasparente
+- Bordo 1px rgba(245,240,232,0.15), solo il bordo inferiore più marcato
+- Focus: bordo #B81D1D, transizione 150ms
+- Label sopra ogni campo in JetBrains Mono 11px letterspacing 0.15em
+  opacità 0.5, maiuscolo
+- Testo inserito: Inter, #F5F0E8
+- Nessun border-radius
+
+VALIDAZIONE
+- Il pulsante di invio è disabilitato (opacità 0.3, cursor not-allowed)
+  finché tutti e tre i campi non sono validi
+- Errori mostrati sotto il campo in rosso #B81D1D, JetBrains Mono 11px
+- Validazione del contatto: accetta email valida OPPURE stringa che
+  inizia con @ OPPURE stringa alfanumerica (handle senza @)
+
+PULSANTE INVIO
+Testo: INVIA RICHIESTA
+Stesso stile del pulsante principale.
+
+STATO DI SUCCESSO
+Dopo invio riuscito, il form viene sostituito da:
+
+Titolo (Bebas Neue):
+RICHIESTA RICEVUTA
+
+Corpo (Inter, opacità 0.7):
+Se quello che stai costruendo ha senso, ti contatto io.
+
+Nota (JetBrains Mono 11px, opacità 0.35):
+IC XC NIKA
+
+STATO DI ERRORE
+Messaggio in rosso sotto il pulsante, il form resta compilato.
+
+PRIVACY
+Sotto il pulsante di invio, una riga JetBrains Mono 11px opacità 0.4:
+"Inviando accetti il trattamento dei dati per essere ricontattato."
+con link a /privacy (crea la pagina se non esiste, contenuto placeholder
+che indicherò dopo).
+
+=====================================================================
+4. BACKEND — SALVATAGGIO CANDIDATURE
+=====================================================================
+
+Crea la tabella `candidature` in /lib/db/src/schema/
+Campi: id (serial pk), nome (text), contatto (text), progetto (text),
+createdAt (timestamp default now), stato (text default 'nuova')
+
+Crea l'endpoint POST /api/candidature in /artifacts/api-server/src/routes/
+- Valida server-side gli stessi vincoli del client (nome non vuoto,
+  contatto non vuoto, progetto >= 100 caratteri)
+- Rate limit: max 3 invii per IP ogni ora
+- Ritorna 201 in caso di successo, 400 con messaggio in caso di errore
+- Sanitizza l'input prima di scrivere in database
+
+=====================================================================
+5. FIX COPY — HOME
+=====================================================================
+
+In home.tsx:
+
+Eyebrow sopra il numero grande: sostituisci
+"PERCORSO IN CORSO" → "GIORNO 103 / 180"
+(deve leggere il valore dinamico, non hardcodato)
+
+Sotto il numero grande, il delta peso: mostra il delta TOTALE della
+trasformazione, non solo quello del progetto:
+130 KG → 83 KG (barrato il primo, verde acido il secondo)
+
+Sotto, in JetBrains Mono piccolo opacità 0.5:
+PROGETTO: 87.3 → 83.0
+
+Claim principale: sostituisci
+"DAL FONDO AL RING. 180 GIORNI. TUTTO PUBBLICO."
+→ "NON È MOTIVAZIONE. SONO NUMERI. 180 GIORNI, TUTTI PUBBLICI."
+
+CTA principale: sostituisci
+"LEGGI IL GIORNO 103 →" → "COSA È SUCCESSO OGGI →"
+
+Rimuovi la barra di progresso duplicata (il valore giorno/180 compare
+già nell'eyebrow).
+
+=====================================================================
+6. FIX COPY — CARD GIORNO
+=====================================================================
+
+Nel componente della card giorno:
+- Badge "🏆 90 DAYS" → "90 GIORNI" senza emoji, bordo bronzo #8B6914,
+  testo bronzo, JetBrains Mono
+- Mantieni invariato "NESSUNA IMMAGINE — SOLO IL LAVORO"
+
+=====================================================================
+7. FIX COPY — JOURNALING
+=====================================================================
+
+In journaling.tsx, il testo introduttivo va sostituito esattamente con:
+
+Tutto ciò che misuri migliora.
+Segnare i dati dà disciplina.
+I dati sono informazione.
+Informazione più disciplina uguale progresso. Sempre.
+
+(nota: "dà" con accento, punto finale presente)
+
+=====================================================================
+8. FIX COPY — STATISTICHE
+=====================================================================
+
+In statistiche.tsx:
+
+Sottotitolo: sostituisci
+"Allenamento, routine e recupero misurati nel tempo."
+→ "Nessun dato arrotondato. Nessun giorno nascosto."
+
+Titolo sezione: "HERO STATS" → "I NUMERI"
+
+RIORDINO CRITICO DELLE CARD:
+Attualmente la prima card mostra "STREAK ATTUALE: 0", che è la prima
+cosa che un visitatore vede. Va spostata.
+
+Nuovo ordine delle card nella griglia:
+1. GIORNI COMPLETATI (valore: giorno corrente)
+2. KG PERSI (valore: 47, da 130 a 83)
+3. ALLENAMENTI TOTALI
+4. STREAK RECORD
+5. STREAK ATTUALE
+6. le restanti nell'ordine attuale
+
+=====================================================================
+9. FIX COPY — ARTICOLI
+=====================================================================
+
+In articoli.tsx:
+
+Sottotitolo: sostituisci
+"Pensieri, dati e analisi. Finanza, fede, sport, mindset, business.
+Senza fronzoli."
+→ "Pensieri, dati, analisi. Niente di quello che non ho vissuto."
+
+TASSONOMIA CATEGORIE — PROBLEMA DA RISOLVERE
+I filtri attuali (COMBAT, FEDE, FINANZA, ...) non coincidono con le
+categorie usate negli articoli (La Mente, Il Business, Il Viaggio).
+
+Unifica su questo set unico, da usare sia nei filtri che nei metadati
+di ogni articolo:
+LA MENTE / IL CORPO / IL BUSINESS / IL VIAGGIO / LA FEDE
+
+Mappa gli articoli esistenti sulle nuove categorie:
+- COMBAT → IL CORPO
+- FEDE → LA FEDE
+- FINANZA → IL BUSINESS
+- MINDSET → LA MENTE
+- ogni altra categoria → LA MENTE
+
+Il filtro "TUTTE" resta come primo elemento.
+
+=====================================================================
+10. FIX — CHI SONO
+=====================================================================
+
+In chi-sono.tsx:
+
+BUG DI LAYOUT: il titolo "CHI SONO" passa sotto la navbar e viene
+tagliato. Aggiungi padding-top sufficiente all'hero (almeno l'altezza
+della navbar + 48px) e verifica su viewport mobile 375px.
+
+RIMUOVI l'h3 "CHI SONO" duplicato all'interno del blocco 01 LA STORIA
+(il titolo della pagina lo dice già).
+
+SOSTITUISCI il primo paragrafo con esattamente questo testo:
+
+Mi chiamo J, ho 21 anni, vivo a Bologna.
+Due anni fa pesavo 130 chili ed ero dipendente.
+Nessuno mi ha salvato. Nessun programma, nessuna clinica.
+Ho smesso e sono entrato in una palestra.
+Il primo giorno ho vomitato dopo sei minuti.
+Sono tornato il giorno dopo.
+
+Ogni riga è un paragrafo separato, non un blocco unico.
+
+VERIFICA DI COERENZA: cerca in tutto il sito occorrenze di "un anno fa"
+riferite al peso di 130 kg e correggile in "due anni fa". Il dato deve
+essere identico ovunque.
+
+=====================================================================
+11. AGGIUNGI BLOCCO ACCESSO ALLE PAGINE
+=====================================================================
+
+Il componente AccessoBlock va inserito:
+- in home.tsx, al posto del vecchio blocco community
+- in fondo a chi-sono.tsx
+- in fondo a articolo.tsx (dopo il contenuto dell'articolo)
+
+NON inserirlo in statistiche.tsx né in journaling.tsx.
+
+=====================================================================
+CONTROLLI FINALI
+=====================================================================
+- Nessuna emoji rimasta in nessuna pagina
+- Nessuna parola inglese nell'interfaccia (verifica: "streak" può
+  restare, è entrato nell'uso comune; "hero stats", "days" no)
+- Nessun border-radius introdotto
+- Il form funziona su mobile 375px senza overflow orizzontale
+- Il link "progettoj.it" eventualmente presente nel codice va sostituito
+  con "projectj180day.com"
+
+Al termine elenca ogni file creato o modificato con una riga di
+descrizione, e segnala qualsiasi punto in cui le istruzioni erano
+ambigue rispetto al codice esistente.
