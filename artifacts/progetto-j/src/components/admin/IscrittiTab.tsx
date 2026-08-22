@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
+import { AdminRetry, AdminStatus } from "./AdminStatus";
 import { useMemo, useState } from "react";
 
 type Iscritto = {
@@ -18,6 +19,7 @@ export function IscrittiTab() {
     data: items = [],
     isLoading: loading,
     isError,
+    refetch,
   } = useQuery<Iscritto[]>({
     queryKey: ["admin-subscribers"],
     queryFn: async () => {
@@ -69,8 +71,8 @@ export function IscrittiTab() {
     URL.revokeObjectURL(url);
   };
 
-  if (loading) return <p className="text-muted-foreground font-sans animate-pulse">Caricamento...</p>;
-  if (isError) return <p className="text-primary font-sans">Errore nel caricamento</p>;
+  if (loading) return <AdminStatus>Caricamento iscritti...</AdminStatus>;
+  if (isError) return <div><AdminStatus tone="error">Non è stato possibile caricare gli iscritti.</AdminStatus><AdminRetry onRetry={() => void refetch()} /></div>;
 
   return (
     <div className="space-y-6">

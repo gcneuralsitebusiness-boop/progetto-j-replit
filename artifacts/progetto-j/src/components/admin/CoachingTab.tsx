@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useGetCoaching, useUpdateCoaching, getGetCoachingQueryKey } from "@workspace/api-client-react";
+import { AdminRetry, AdminStatus } from "./AdminStatus";
 
 export function CoachingTab() {
   const queryClient = useQueryClient();
-  const { data, isLoading } = useGetCoaching();
+  const { data, isLoading, isError, refetch } = useGetCoaching();
   const update = useUpdateCoaching();
 
   const [form, setForm] = useState({
@@ -16,6 +17,7 @@ export function CoachingTab() {
     email: "",
     visibile: true,
   });
+  const [feedback, setFeedback] = useState<string | null>(null);
 
   useEffect(() => {
     if (data) {
@@ -36,16 +38,22 @@ export function CoachingTab() {
     update.mutate(
       { data: form },
       {
-        onSuccess: () => queryClient.invalidateQueries({ queryKey: getGetCoachingQueryKey() }),
+        onSuccess: () => {
+          setFeedback("Contenuti salvati.");
+          queryClient.invalidateQueries({ queryKey: getGetCoachingQueryKey() });
+        },
+        onError: () => setFeedback("Non è stato possibile salvare i contenuti."),
       }
     );
   };
 
-  if (isLoading) return <div className="text-muted-foreground">Caricamento...</div>;
+  if (isLoading) return <AdminStatus>Caricamento coaching...</AdminStatus>;
+  if (isError) return <div><AdminStatus tone="error">Non è stato possibile caricare il coaching.</AdminStatus><AdminRetry onRetry={() => void refetch()} /></div>;
 
   return (
     <form onSubmit={handleSubmit} className="bg-card border border-border p-6 flex flex-col gap-4">
       <h3 className="text-[22px] font-serif tracking-wider">PAGINA COACHING</h3>
+      {feedback && <AdminStatus tone={feedback.includes("Non è") ? "error" : "success"}>{feedback}</AdminStatus>}
       <input
         placeholder="TITOLO HERO"
         value={form.heroTitolo}

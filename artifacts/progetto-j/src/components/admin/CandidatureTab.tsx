@@ -7,6 +7,7 @@ import {
 } from "@workspace/api-client-react";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
+import { AdminRetry, AdminStatus } from "./AdminStatus";
 
 type CandidaturaStatus = Candidatura["stato"];
 
@@ -22,7 +23,7 @@ function statusLabel(status: CandidaturaStatus) {
 
 export function CandidatureTab() {
   const queryClient = useQueryClient();
-  const { data: items, isLoading, isError } = useListCandidature({
+  const { data: items, isLoading, isError, refetch } = useListCandidature({
     query: { queryKey: getListCandidatureQueryKey(), retry: false },
   });
   const updateMutation = useUpdateCandidatura();
@@ -48,13 +49,11 @@ export function CandidatureTab() {
       </div>
 
       {isLoading && (
-        <p className="font-sans text-sm text-muted-foreground animate-pulse">Caricamento...</p>
+        <AdminStatus>Caricamento candidature...</AdminStatus>
       )}
 
       {isError && (
-        <p className="font-sans text-sm text-primary" role="alert">
-          Non è stato possibile caricare le candidature.
-        </p>
+        <div><AdminStatus tone="error">Non è stato possibile caricare le candidature.</AdminStatus><AdminRetry onRetry={() => void refetch()} /></div>
       )}
 
       {!isLoading && !isError && items?.length === 0 && (

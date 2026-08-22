@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useGetSiteContent, useUpdateSiteContent, getGetSiteContentQueryKey } from "@workspace/api-client-react";
 import { useUpload, getPhotoUrl } from "@workspace/object-storage-web";
+import { AdminRetry, AdminStatus } from "./AdminStatus";
 
 // ─── Shared helpers ──────────────────────────────────────────────────────────
 
@@ -584,9 +585,10 @@ function GlobaleCmsSection() {
 // ─── SitoTab ──────────────────────────────────────────────────────────────────
 
 export function SitoTab() {
-  const { isLoading } = useGetSiteContent({ query: { queryKey: getGetSiteContentQueryKey() } });
+  const { isLoading, isError, refetch } = useGetSiteContent({ query: { queryKey: getGetSiteContentQueryKey() } });
 
-  if (isLoading) return <p className="text-muted-foreground font-sans animate-pulse">Caricamento...</p>;
+  if (isLoading) return <AdminStatus>Caricamento contenuti sito...</AdminStatus>;
+  if (isError) return <div><AdminStatus tone="error">Non è stato possibile caricare i contenuti del sito.</AdminStatus><AdminRetry onRetry={() => void refetch()} /></div>;
 
   return (
     <div className="space-y-8">

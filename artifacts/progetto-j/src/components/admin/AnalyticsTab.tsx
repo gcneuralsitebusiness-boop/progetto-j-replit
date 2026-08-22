@@ -3,6 +3,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   BarChart, Bar, LabelList,
 } from "recharts";
+import { AdminRetry, AdminStatus } from "./AdminStatus";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -175,8 +176,8 @@ export function AnalyticsTab() {
     return () => clearInterval(t);
   }, [period, load]);
 
-  if (error) return <p className="text-primary font-sans">Errore nel caricamento delle statistiche.</p>;
-  if (!data) return <p className="text-muted-foreground font-serif text-xl animate-pulse">Caricamento...</p>;
+  if (error) return <div><AdminStatus tone="error">Non è stato possibile caricare le statistiche.</AdminStatus><AdminRetry onRetry={() => void load(period)} /></div>;
+  if (!data) return <AdminStatus>Caricamento statistiche...</AdminStatus>;
 
   const maxSource = Math.max(1, ...data.sources.map((s) => s.count));
 

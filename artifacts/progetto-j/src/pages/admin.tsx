@@ -19,6 +19,7 @@ import { IscrittiTab } from "@/components/admin/IscrittiTab";
 import { PlannerTab } from "@/components/admin/PlannerTab";
 import { DailyTrackingPanel, type TrackingKey } from "@/components/admin/DailyTrackingPanel";
 import { DiaryHtmlEditor } from "@/components/admin/DiaryHtmlEditor";
+import { AdminRetry, AdminStatus } from "@/components/admin/AdminStatus";
 import type { Entry, EntryInput, PageItem } from "@workspace/api-client-react";
 import { useUpload, getPhotoUrl } from "@workspace/object-storage-web";
 import { format } from "date-fns";
@@ -731,6 +732,7 @@ function OggiTab({ onSwitchTab }: { onSwitchTab: (tab: string, scrollToEntry?: n
     data: dashboard,
     isLoading: loading,
     isError,
+    refetch,
   } = useQuery<DashboardData>({
     queryKey: ["admin-dashboard"],
     queryFn: async () => {
@@ -742,11 +744,11 @@ function OggiTab({ onSwitchTab }: { onSwitchTab: (tab: string, scrollToEntry?: n
   });
 
   if (loading) {
-    return <div className="py-20 text-center text-muted-foreground font-sans animate-pulse">Caricamento...</div>;
+    return <div className="py-20"><AdminStatus>Caricamento area admin...</AdminStatus></div>;
   }
 
   if (isError || !dashboard) {
-    return <div className="py-20 text-center text-primary font-sans">Errore nel caricamento del dashboard.</div>;
+    return <div className="py-20"><AdminStatus tone="error">Sessione non valida o dashboard non disponibile.</AdminStatus><AdminRetry onRetry={() => void refetch()} /></div>;
   }
 
   const todayLabel = new Date(dashboard.todayDate + "T12:00:00").toLocaleDateString("it-IT", { weekday: "long", day: "numeric", month: "long" }).toUpperCase();
