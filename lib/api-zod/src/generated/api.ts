@@ -1077,6 +1077,29 @@ export const DeleteArticleResponse = zod.void()
 
 
 /**
+ * @summary List coaching candidature (admin only)
+ */
+export const listCandidatureResponseNomeMax = 60;
+
+export const listCandidatureResponseContattoMax = 120;
+
+export const listCandidatureResponseProgettoMin = 100;
+export const listCandidatureResponseProgettoMax = 800;
+
+
+
+export const ListCandidatureResponseItem = zod.object({
+  "id": zod.number(),
+  "nome": zod.string().min(1).max(listCandidatureResponseNomeMax),
+  "contatto": zod.string().max(listCandidatureResponseContattoMax),
+  "progetto": zod.string().min(listCandidatureResponseProgettoMin).max(listCandidatureResponseProgettoMax),
+  "stato": zod.enum(['nuova', 'letta', 'gestita']).describe('Application status'),
+  "createdAt": zod.coerce.date()
+})
+export const ListCandidatureResponse = zod.array(ListCandidatureResponseItem)
+
+
+/**
  * @summary Submit a coaching candidatura
  */
 export const createCandidaturaBodyNomeMax = 60;
@@ -1108,7 +1131,37 @@ export const CreateCandidaturaResponse = zod.object({
   "nome": zod.string().min(1).max(createCandidaturaResponseNomeMax),
   "contatto": zod.string().max(createCandidaturaResponseContattoMax),
   "progetto": zod.string().min(createCandidaturaResponseProgettoMin).max(createCandidaturaResponseProgettoMax),
-  "stato": zod.string().describe('Application status (default \"nuova\")'),
+  "stato": zod.enum(['nuova', 'letta', 'gestita']).describe('Application status'),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Update a coaching candidatura status (admin only)
+ */
+export const UpdateCandidaturaParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const UpdateCandidaturaBody = zod.object({
+  "stato": zod.enum(['nuova', 'letta', 'gestita'])
+})
+
+export const updateCandidaturaResponseNomeMax = 60;
+
+export const updateCandidaturaResponseContattoMax = 120;
+
+export const updateCandidaturaResponseProgettoMin = 100;
+export const updateCandidaturaResponseProgettoMax = 800;
+
+
+
+export const UpdateCandidaturaResponse = zod.object({
+  "id": zod.number(),
+  "nome": zod.string().min(1).max(updateCandidaturaResponseNomeMax),
+  "contatto": zod.string().max(updateCandidaturaResponseContattoMax),
+  "progetto": zod.string().min(updateCandidaturaResponseProgettoMin).max(updateCandidaturaResponseProgettoMax),
+  "stato": zod.enum(['nuova', 'letta', 'gestita']).describe('Application status'),
   "createdAt": zod.coerce.date()
 })
 

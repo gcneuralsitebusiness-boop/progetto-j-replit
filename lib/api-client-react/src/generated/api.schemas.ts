@@ -850,6 +850,18 @@ export interface CoachingUpdate {
   visibile?: boolean;
 }
 
+/**
+ * Application status
+ */
+export type CandidaturaStato = typeof CandidaturaStato[keyof typeof CandidaturaStato];
+
+
+export const CandidaturaStato = {
+  nuova: 'nuova',
+  letta: 'letta',
+  gestita: 'gestita',
+} as const;
+
 export interface Candidatura {
   id: number;
   /**
@@ -864,8 +876,8 @@ export interface Candidatura {
      * @maxLength 800
      */
   progetto: string;
-  /** Application status (default "nuova") */
-  stato: string;
+  /** Application status */
+  stato: CandidaturaStato;
   createdAt: string;
 }
 
@@ -882,6 +894,19 @@ export interface CandidaturaInput {
      * @maxLength 800
      */
   progetto: string;
+}
+
+export type CandidaturaUpdateStato = typeof CandidaturaUpdateStato[keyof typeof CandidaturaUpdateStato];
+
+
+export const CandidaturaUpdateStato = {
+  nuova: 'nuova',
+  letta: 'letta',
+  gestita: 'gestita',
+} as const;
+
+export interface CandidaturaUpdate {
+  stato: CandidaturaUpdateStato;
 }
 
 /**

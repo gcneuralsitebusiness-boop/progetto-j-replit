@@ -5,6 +5,7 @@
  * API specification for Progetto J — 180-day transformation journal
  * OpenAPI spec version: 0.1.0
  */
+import type { CandidaturaStato } from './candidaturaStato';
 
 export interface Candidatura {
   id: number;
@@ -20,7 +21,7 @@ export interface Candidatura {
      * @maxLength 800
      */
   progetto: string;
-  /** Application status (default "nuova") */
-  stato: string;
+  /** Application status */
+  stato: CandidaturaStato;
   createdAt: Date;
 }

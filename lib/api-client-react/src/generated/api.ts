@@ -29,6 +29,7 @@ import type {
   BulkTextResult,
   Candidatura,
   CandidaturaInput,
+  CandidaturaUpdate,
   Coaching,
   CoachingUpdate,
   ContentInput,
@@ -2494,6 +2495,83 @@ export const useDeleteArticle = <TError = ErrorType<UnauthorizedResponse>,
       return useMutation(getDeleteArticleMutationOptions(options));
     }
 
+export const getListCandidatureUrl = () => {
+
+
+
+
+  return `/api/candidature`
+}
+
+/**
+ * @summary List coaching candidature (admin only)
+ */
+export const listCandidature = async ( options?: RequestInit): Promise<Candidatura[]> => {
+
+  return customFetch<Candidatura[]>(getListCandidatureUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListCandidatureQueryKey = () => {
+    return [
+    `/api/candidature`
+    ] as const;
+    }
+
+
+export const getListCandidatureQueryOptions = <TData = Awaited<ReturnType<typeof listCandidature>>, TError = ErrorType<UnauthorizedResponse>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listCandidature>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListCandidatureQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listCandidature>>> = ({ signal }) => listCandidature({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listCandidature>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListCandidatureQueryResult = NonNullable<Awaited<ReturnType<typeof listCandidature>>>
+export type ListCandidatureQueryError = ErrorType<UnauthorizedResponse>
+
+
+/**
+ * @summary List coaching candidature (admin only)
+ */
+
+export function useListCandidature<TData = Awaited<ReturnType<typeof listCandidature>>, TError = ErrorType<UnauthorizedResponse>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listCandidature>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListCandidatureQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
 export const getCreateCandidaturaUrl = () => {
 
 
@@ -2562,6 +2640,77 @@ export const useCreateCandidatura = <TError = ErrorType<ApiError>,
         TContext
       > => {
       return useMutation(getCreateCandidaturaMutationOptions(options));
+    }
+
+export const getUpdateCandidaturaUrl = (id: number,) => {
+
+
+
+
+  return `/api/candidature/${id}`
+}
+
+/**
+ * @summary Update a coaching candidatura status (admin only)
+ */
+export const updateCandidatura = async (id: number,
+    candidaturaUpdate: CandidaturaUpdate, options?: RequestInit): Promise<Candidatura> => {
+
+  return customFetch<Candidatura>(getUpdateCandidaturaUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(candidaturaUpdate)
+  }
+);}
+
+
+
+
+export const getUpdateCandidaturaMutationOptions = <TError = ErrorType<ApiError | UnauthorizedResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCandidatura>>, TError,{id: number;data: BodyType<CandidaturaUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateCandidatura>>, TError,{id: number;data: BodyType<CandidaturaUpdate>}, TContext> => {
+
+const mutationKey = ['updateCandidatura'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateCandidatura>>, {id: number;data: BodyType<CandidaturaUpdate>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateCandidatura(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateCandidaturaMutationResult = NonNullable<Awaited<ReturnType<typeof updateCandidatura>>>
+    export type UpdateCandidaturaMutationBody = BodyType<CandidaturaUpdate>
+    export type UpdateCandidaturaMutationError = ErrorType<ApiError | UnauthorizedResponse>
+
+    /**
+ * @summary Update a coaching candidatura status (admin only)
+ */
+export const useUpdateCandidatura = <TError = ErrorType<ApiError | UnauthorizedResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCandidatura>>, TError,{id: number;data: BodyType<CandidaturaUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateCandidatura>>,
+        TError,
+        {id: number;data: BodyType<CandidaturaUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateCandidaturaMutationOptions(options));
     }
 
 export const getGetCoachingUrl = () => {

@@ -1,7 +1,15 @@
 import { Router } from "express";
+import { desc, eq } from "drizzle-orm";
 import { db } from "@workspace/db";
 import { candidatureTable } from "@workspace/db/schema";
-import { CreateCandidaturaBody } from "@workspace/api-zod";
+import {
+  CreateCandidaturaBody,
+  ListCandidatureResponse,
+  UpdateCandidaturaBody,
+  UpdateCandidaturaParams,
+  UpdateCandidaturaResponse,
+} from "@workspace/api-zod";
+import { notify } from "../lib/notify";
 
 const router = Router();
 
@@ -104,8 +112,59 @@ router.post("/candidature", async (req, res): Promise<void> => {
     })
     .returning();
 
+  await notify(
+    `Nuova candidatura: ${nomeClean}`,
+    `Nome: ${nomeClean}\nContatto: ${contattoClean}\n\n${progettoClean}`,
+  );
+
   req.log.info({ id: row.id }, "Candidatura created");
   res.status(201).json(row);
+});
+
+router.get("/candidature", async (req, res): Promise<void> => {
+  if (!req.session?.adminAuthenticated) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  const rows = await db
+    .select()
+    .from(candidatureTable)
+    .orderBy(desc(candidatureTable.createdAt));
+
+  res.json(ListCandidatureResponse.parse(rows));
+});
+
+router.patch("/candidature/:id", async (req, res): Promise<void> => {
+  if (!req.session?.adminAuthenticated) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  const params = UpdateCandidaturaParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+
+  const parsed = UpdateCandidaturaBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  const [row] = await db
+    .update(candidatureTable)
+    .set({ stato: parsed.data.stato })
+    .where(eq(candidatureTable.id, params.data.id))
+    .returning();
+
+  if (!row) {
+    res.status(404).json({ error: "Candidatura non trovata." });
+    return;
+  }
+
+  res.json(UpdateCandidaturaResponse.parse(row));
 });
 
 export default router;

@@ -753,6 +753,21 @@ paths:
           $ref: "#/components/responses/Unauthorized"
 
   /candidature:
+    get:
+      operationId: listCandidature
+      tags: [candidature]
+      summary: List coaching candidature (admin only)
+      responses:
+        "200":
+          description: Candidature
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Candidatura"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
     post:
       operationId: createCandidatura
       tags: [candidature]
@@ -778,6 +793,45 @@ paths:
                 $ref: "#/components/schemas/ApiError"
         "429":
           description: Too many requests
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /candidature/{id}:
+    patch:
+      operationId: updateCandidatura
+      tags: [candidature]
+      summary: Update a coaching candidatura status (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CandidaturaUpdate"
+      responses:
+        "200":
+          description: Updated candidatura
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Candidatura"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: Candidatura not found
           content:
             application/json:
               schema:
@@ -1647,7 +1701,8 @@ components:
           maxLength: 800
         stato:
           type: string
-          description: Application status (default "nuova")
+          enum: [nuova, letta, gestita]
+          description: Application status
         createdAt:
           type: string
           format: date-time
@@ -1667,3 +1722,11 @@ components:
           type: string
           minLength: 100
           maxLength: 800
+
+    CandidaturaUpdate:
+      type: object
+      required: [stato]
+      properties:
+        stato:
+          type: string
+          enum: [nuova, letta, gestita]
