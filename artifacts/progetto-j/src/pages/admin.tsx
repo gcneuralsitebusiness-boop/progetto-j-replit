@@ -663,6 +663,7 @@ interface DashboardData {
   missingTesto: number;
   missingFoto: number;
   missingPhysical: number;
+  missingDays: { testo: number[]; foto: number[]; physical: number[] };
   totalSubscribers: number;
   totalContacts: number;
 }
@@ -725,20 +726,38 @@ function OggiTab({ onSwitchTab }: { onSwitchTab: (tab: string, scrollToEntry?: n
         )}
       </div>
 
-      {/* Cosa manca */}
-      <div className="bg-card border border-border p-8 flex flex-col gap-4">
-        <h2 className="text-[22px] font-serif tracking-wider mb-2">COSA MANCA</h2>
+      {/* Giorni da completare */}
+      <div className="bg-card border border-primary/40 p-6 md:p-8 flex flex-col gap-4">
+        <div>
+          <h2 className="text-[22px] font-serif tracking-wider mb-1">GIORNI DA COMPLETARE</h2>
+          <p className="text-[13px] font-sans text-muted-foreground">Apri direttamente il giorno e completa solo il dato mancante.</p>
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[
-            { label: "Senza testo", count: dashboard.missingTesto, filter: "testo" },
-            { label: "Senza foto", count: dashboard.missingFoto, filter: "foto" },
-            { label: "Senza peso/battito", count: dashboard.missingPhysical, filter: "physical" },
-          ].map(({ label, count }) => (
-            <button key={label} onClick={() => onSwitchTab("diario")}
-              className="border border-border p-5 text-left hover:border-iron transition-colors group">
+            { label: "Senza testo", count: dashboard.missingTesto, days: dashboard.missingDays.testo },
+            { label: "Senza foto", count: dashboard.missingFoto, days: dashboard.missingDays.foto },
+            { label: "Senza peso/battito", count: dashboard.missingPhysical, days: dashboard.missingDays.physical },
+          ].map(({ label, count, days }) => (
+            <div key={label} className="border border-border p-5 text-left">
               <div className="font-serif text-[48px] leading-none text-primary bebas measured">{count}</div>
               <div className="text-[11px] font-sans uppercase tracking-[0.15em] text-muted-foreground mt-2">{label}</div>
-            </button>
+              {days.length > 0 && (
+                <div className="mt-4 flex flex-wrap gap-1.5">
+                  {days.slice(0, 12).map((day) => (
+                    <button
+                      key={day}
+                      onClick={() => onSwitchTab("diario", day)}
+                      className="border border-border px-2 py-1 font-mono text-[11px] text-foreground hover:border-primary hover:text-primary transition-colors"
+                      title={`Modifica giorno ${day}`}
+                    >
+                      {day}
+                    </button>
+                  ))}
+                  {days.length > 12 && <span className="px-1 py-1 font-mono text-[11px] text-muted-foreground">+{days.length - 12}</span>}
+                </div>
+              )}
+              {days.length === 0 && <div className="mt-4 font-mono text-[11px] text-[#00FF41]">COMPLETO</div>}
+            </div>
           ))}
         </div>
       </div>

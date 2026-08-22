@@ -28,12 +28,11 @@ export function validateCardFields(body: Record<string, unknown>): string | null
   return null;
 }
 
-router.get("/articles", async (_req, res): Promise<void> => {
-  const rows = await db
-    .select()
-    .from(articoliTable)
-    .where(eq(articoliTable.pubblicato, true))
-    .orderBy(articoliTable.data);
+router.get("/articles", async (req, res): Promise<void> => {
+  const query = db.select().from(articoliTable).orderBy(articoliTable.data);
+  const rows = await (req.session?.adminAuthenticated
+    ? query
+    : query.where(eq(articoliTable.pubblicato, true)));
   res.json(rows);
 });
 

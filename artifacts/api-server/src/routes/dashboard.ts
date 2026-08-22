@@ -22,7 +22,14 @@ router.get("/admin/dashboard", async (req, res): Promise<void> => {
     subscribersResult,
     contactsResult,
   ] = await Promise.all([
-    db.select({ numero: giorniTable.numero, data: giorniTable.data, testo: giorniTable.testo, foto: giorniTable.foto }).from(giorniTable),
+    db.select({
+      numero: giorniTable.numero,
+      data: giorniTable.data,
+      testo: giorniTable.testo,
+      foto: giorniTable.foto,
+      peso: giorniTable.peso,
+      battito: giorniTable.battito,
+    }).from(giorniTable),
     db.select({ c: count() }).from(giorniTable).where(isNull(giorniTable.testo)),
     db.select({ c: count() }).from(giorniTable).where(isNull(giorniTable.foto)),
     db.select({ c: count() }).from(giorniTable).where(
@@ -34,6 +41,13 @@ router.get("/admin/dashboard", async (req, res): Promise<void> => {
 
   const todayEntry = allEntries.find((e) => e.data === todayRome) ?? null;
   const currentDay = allEntries.length > 0 ? Math.max(...allEntries.map((e) => e.numero)) : 0;
+  const missingDays = {
+    testo: allEntries.filter((entry) => !entry.testo?.trim()).map((entry) => entry.numero),
+    foto: allEntries.filter((entry) => !entry.foto).map((entry) => entry.numero),
+    physical: allEntries
+      .filter((entry) => entry.peso == null || entry.battito == null)
+      .map((entry) => entry.numero),
+  };
 
   res.json({
     todayDate: todayRome,
@@ -43,6 +57,7 @@ router.get("/admin/dashboard", async (req, res): Promise<void> => {
     missingTesto: missingTestoResult[0]?.c ?? 0,
     missingFoto: missingFotoResult[0]?.c ?? 0,
     missingPhysical: missingPhysicalResult[0]?.c ?? 0,
+    missingDays,
     totalSubscribers: subscribersResult[0]?.c ?? 0,
     totalContacts: contactsResult[0]?.c ?? 0,
   });
