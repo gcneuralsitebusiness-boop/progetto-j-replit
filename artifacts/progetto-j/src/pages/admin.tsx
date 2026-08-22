@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { lazy, Suspense, useState, useRef, useEffect, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   useAdminMe, useAdminLogin, useAdminLogout,
@@ -16,7 +16,6 @@ import { SitoTab } from "@/components/admin/SitoTab";
 import { ContattiTab } from "@/components/admin/ContattiTab";
 import { CandidatureTab } from "@/components/admin/CandidatureTab";
 import { IscrittiTab } from "@/components/admin/IscrittiTab";
-import { AnalyticsTab } from "@/components/admin/AnalyticsTab";
 import { PlannerTab } from "@/components/admin/PlannerTab";
 import { DailyTrackingPanel, type TrackingKey } from "@/components/admin/DailyTrackingPanel";
 import { DiaryHtmlEditor } from "@/components/admin/DiaryHtmlEditor";
@@ -24,6 +23,10 @@ import type { Entry, EntryInput, PageItem } from "@workspace/api-client-react";
 import { useUpload, getPhotoUrl } from "@workspace/object-storage-web";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
+
+const AnalyticsTab = lazy(() =>
+  import("@/components/admin/AnalyticsTab").then((module) => ({ default: module.AnalyticsTab })),
+);
 
 // ─── Client-side range validation ─────────────────────────────────────────────
 
@@ -1274,7 +1277,11 @@ export default function Admin() {
       {activeTab === "candidature" && <CandidatureTab />}
       {activeTab === "iscritti" && <IscrittiTab />}
       {activeTab === "bulk" && <BulkEditTab />}
-      {activeTab === "analytics" && <AnalyticsTab />}
+      {activeTab === "analytics" && (
+        <Suspense fallback={<div className="py-20 text-center text-muted-foreground font-sans animate-pulse">Caricamento analytics...</div>}>
+          <AnalyticsTab />
+        </Suspense>
+      )}
       {activeTab === "planner" && <PlannerTab />}
       </div>
     </main>
