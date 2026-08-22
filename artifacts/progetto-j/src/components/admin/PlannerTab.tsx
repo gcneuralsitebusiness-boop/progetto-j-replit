@@ -26,6 +26,24 @@ type PlannerState = {
   fixedNote: string;
 };
 
+type CustomTask = {
+  id: number;
+  data: string;
+  testo: string;
+  tipo: string;
+  stato: "DA FARE" | "IN CORSO" | "FATTO";
+  priorita: number;
+  ordine: number | null;
+};
+
+type TaskTemplate = {
+  id: number;
+  testo: string;
+  tipo: string;
+  priorita: number;
+  ordine: number;
+};
+
 function localDate(date: Date): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
@@ -143,6 +161,13 @@ export function PlannerTab() {
   const [extraText, setExtraText] = useState("");
   const [fixedNote, setFixedNote] = useState("");
   const [fixedNoteOpen, setFixedNoteOpen] = useState(false);
+  const [customText, setCustomText] = useState("");
+  const [customType, setCustomType] = useState("ALTRO");
+  const [customPriority, setCustomPriority] = useState("2");
+  const [templateText, setTemplateText] = useState("");
+  const [templateType, setTemplateType] = useState("ALTRO");
+  const [templatePriority, setTemplatePriority] = useState("2");
+  const [feedback, setFeedback] = useState<string | null>(null);
   const noteTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { data: entries } = useListEntrySummaries();
@@ -159,6 +184,14 @@ export function PlannerTab() {
   const { data: weekRows = [] } = useQuery({
     queryKey: ["planner-checklist", weekFrom, weekTo],
     queryFn: () => fetchJson<(PlannerTask & { data: string })[]>(`/admin/planner/checklist?from=${weekFrom}&to=${weekTo}`),
+  });
+  const { data: customTasks = [], isLoading: customTasksLoading, isError: customTasksError } = useQuery({
+    queryKey: ["planner-tasks", selectedDate],
+    queryFn: () => fetchJson<CustomTask[]>(`/admin/planner/tasks?data=${selectedDate}`),
+  });
+  const { data: templates = [], isLoading: templatesLoading, isError: templatesError } = useQuery({
+    queryKey: ["planner-templates"],
+    queryFn: () => fetchJson<TaskTemplate[]>("/admin/planner/templates"),
   });
 
   const [checked, setChecked] = useState<Record<FixedTask, boolean>>({
@@ -217,6 +250,93 @@ export function PlannerTab() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["planner-state", today] }),
   });
 
+  const createTask = useMutation({
+    mutationFn: () => fetchJson<CustomTask>("/admin/planner/tasks", {
+      method: "POST",
+      body: JSON.stringify({
+        data: selectedDate,
+        testo: customText.trim(),
+        tipo: customType,
+        stato: "DA FARE",
+        priorita: Number(customPriority),
+      }),
+    }),
+    onSuccess: () => {
+      setCustomText("");
+      setFeedback("Task personalizzato creato.");
+      queryClient.invalidateQueries({ queryKey: ["planner-tasks", selectedDate] });
+      queryClient.invalidateQueries({ queryKey: ["planner-checklist"] });
+    },
+    onError: () => setFeedback("Non è stato possibile creare il task."),
+  });
+  const updateTask = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Partial<CustomTask> }) =>
+      fetchJson<CustomTask>(`/admin/planner/tasks/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
+    onSuccess: () => {
+      setFeedback("Task aggiornato.");
+      queryClient.invalidateQueries({ queryKey: ["planner-tasks", selectedDate] });
+    },
+    onError: () => setFeedback("Non è stato possibile aggiornare il task."),
+  });
+  const deleteTask = useMutation({
+    mutationFn: (id: number) => fetchJson<void>(`/admin/planner/tasks/${id}`, { method: "DELETE" }),
+    onSuccess: () => {
+      setFeedback("Task eliminato.");
+      queryClient.invalidateQueries({ queryKey: ["planner-tasks", selectedDate] });
+      queryClient.invalidateQueries({ queryKey: ["planner-checklist"] });
+    },
+    onError: () => setFeedback("Non è stato possibile eliminare il task."),
+  });
+  const reorderTasks = useMutation({
+    mutationFn: (ids: number[]) => fetchJson("/admin/planner/tasks/reorder", { method: "POST", body: JSON.stringify({ ids }) }),
+    onSuccess: () => {
+      setFeedback("Ordine aggiornato.");
+      queryClient.invalidateQueries({ queryKey: ["planner-tasks", selectedDate] });
+    },
+    onError: () => setFeedback("Non è stato possibile riordinare i task."),
+  });
+  const createTemplate = useMutation({
+    mutationFn: () => fetchJson<TaskTemplate>("/admin/planner/templates", {
+      method: "POST",
+      body: JSON.stringify({ testo: templateText.trim(), tipo: templateType, priorita: Number(templatePriority) }),
+    }),
+    onSuccess: () => {
+      setTemplateText("");
+      setFeedback("Template creato.");
+      queryClient.invalidateQueries({ queryKey: ["planner-templates"] });
+    },
+    onError: () => setFeedback("Non è stato possibile creare il template."),
+  });
+  const deleteTemplate = useMutation({
+    mutationFn: (id: number) => fetchJson<void>(`/admin/planner/templates/${id}`, { method: "DELETE" }),
+    onSuccess: () => {
+      setFeedback("Template eliminato.");
+      queryClient.invalidateQueries({ queryKey: ["planner-templates"] });
+    },
+    onError: () => setFeedback("Non è stato possibile eliminare il template."),
+  });
+  const updateTemplate = useMutation({
+    mutationFn: ({ id, testo }: { id: number; testo: string }) =>
+      fetchJson<TaskTemplate>(`/admin/planner/templates/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ testo }),
+      }),
+    onSuccess: () => {
+      setFeedback("Template aggiornato.");
+      queryClient.invalidateQueries({ queryKey: ["planner-templates"] });
+    },
+    onError: () => setFeedback("Non è stato possibile aggiornare il template."),
+  });
+  const applyRoutine = useMutation({
+    mutationFn: () => fetchJson<{ created: number; skipped: number }>(`/admin/planner/routine?data=${selectedDate}`, { method: "POST" }),
+    onSuccess: (result) => {
+      setFeedback(`Routine applicata: ${result.created} creati, ${result.skipped} già presenti.`);
+      queryClient.invalidateQueries({ queryKey: ["planner-tasks", selectedDate] });
+      queryClient.invalidateQueries({ queryKey: ["planner-checklist"] });
+    },
+    onError: () => setFeedback("Non è stato possibile applicare la routine."),
+  });
+
   useEffect(() => {
     if (!todayState || fixedNote === todayState.fixedNote) return;
     if (noteTimer.current) clearTimeout(noteTimer.current);
@@ -267,6 +387,12 @@ export function PlannerTab() {
         </div>
       </div>
 
+      {feedback && (
+        <p className="border border-[#B81D1D]/50 bg-[#B81D1D]/10 px-4 py-3 font-sans text-[13px] text-[#E8E4DE]" role="status">
+          {feedback}
+        </p>
+      )}
+
       <div>
         <div className="mb-3 font-mono text-[10px] tracking-[0.2em] text-[#6E6A65]">ALTRO</div>
         <div className="flex gap-2">
@@ -297,6 +423,81 @@ export function PlannerTab() {
               <button type="button" onClick={() => deleteExtra.mutate(note.id)} className="font-mono text-[14px] text-[#6E6A65] hover:text-[#B81D1D]" aria-label={`Elimina ${note.testo}`}>×</button>
             </div>
           ))}
+        </div>
+      </div>
+
+      <div className="border-t border-[#262626] pt-6">
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <div className="font-mono text-[10px] tracking-[0.2em] text-[#6E6A65]">GESTIONE PLANNER</div>
+            <h3 className="bebas mt-1 text-[30px] tracking-[0.08em] text-[#E8E4DE]">TASK PERSONALIZZATI</h3>
+          </div>
+          <button
+            type="button"
+            disabled={applyRoutine.isPending || templates.length === 0}
+            onClick={() => {
+              if (window.confirm(`Applicare la routine a ${selectedDate}? I task già presenti non verranno duplicati.`)) {
+                applyRoutine.mutate();
+              }
+            }}
+            className="border border-[#B81D1D] px-4 py-2 font-mono text-[11px] uppercase tracking-wider text-[#B81D1D] disabled:opacity-40"
+          >
+            Applica routine
+          </button>
+        </div>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <input value={customText} onChange={(event) => setCustomText(event.target.value.slice(0, 500))} placeholder="Nuovo task per il giorno selezionato" className="min-h-11 min-w-0 flex-1 border border-[#333] bg-transparent px-3 font-sans text-[14px] text-[#E8E4DE] outline-none focus:border-[#B81D1D]" />
+          <select value={customType} onChange={(event) => setCustomType(event.target.value)} className="border border-[#333] bg-[#0A0A0A] px-3 font-mono text-[11px] text-[#E8E4DE]">
+            {["ALTRO", "POST", "ARTICOLO", "VIDEO", "SITO"].map((type) => <option key={type}>{type}</option>)}
+          </select>
+          <select value={customPriority} onChange={(event) => setCustomPriority(event.target.value)} className="border border-[#333] bg-[#0A0A0A] px-3 font-mono text-[11px] text-[#E8E4DE]" aria-label="Priorità task">
+            <option value="1">P1</option><option value="2">P2</option><option value="3">P3</option>
+          </select>
+          <button type="button" disabled={!customText.trim() || createTask.isPending} onClick={() => createTask.mutate()} className="border border-[#B81D1D] px-4 font-mono text-[20px] text-[#B81D1D] disabled:opacity-30" aria-label="Crea task">+</button>
+        </div>
+        <div className="mt-4 space-y-2">
+          {customTasksLoading && <p className="font-sans text-[13px] text-[#6E6A65]">Caricamento task...</p>}
+          {customTasksError && <p className="font-sans text-[13px] text-[#B81D1D]" role="alert">Errore nel caricamento dei task.</p>}
+          {customTasks.filter((task) => !FIXED_TASKS.includes(task.testo as FixedTask)).map((task, index, list) => (
+            <div key={task.id} className="flex flex-col gap-2 border-l-2 border-[#333] py-2 pl-3 sm:flex-row sm:items-center">
+              <input defaultValue={task.testo} onBlur={(event) => event.target.value.trim() && event.target.value !== task.testo && updateTask.mutate({ id: task.id, data: { testo: event.target.value.trim() } })} className="min-w-0 flex-1 bg-transparent font-sans text-[14px] text-[#E8E4DE] outline-none" aria-label={`Modifica ${task.testo}`} />
+              <select value={task.stato} onChange={(event) => updateTask.mutate({ id: task.id, data: { stato: event.target.value as CustomTask["stato"] } })} className="border border-[#333] bg-[#0A0A0A] px-2 py-1 font-mono text-[10px] text-[#E8E4DE]" aria-label={`Stato ${task.testo}`}>
+                <option>DA FARE</option><option>IN CORSO</option><option>FATTO</option>
+              </select>
+              <button type="button" disabled={index === 0} onClick={() => { const ids = list.map((item) => item.id); [ids[index - 1], ids[index]] = [ids[index], ids[index - 1]]; reorderTasks.mutate(ids); }} className="font-mono text-[12px] text-[#6E6A65] disabled:opacity-20" aria-label="Sposta task su">↑</button>
+              <button type="button" disabled={index === list.length - 1} onClick={() => { const ids = list.map((item) => item.id); [ids[index], ids[index + 1]] = [ids[index + 1], ids[index]]; reorderTasks.mutate(ids); }} className="font-mono text-[12px] text-[#6E6A65] disabled:opacity-20" aria-label="Sposta task giù">↓</button>
+              <button type="button" onClick={() => window.confirm(`Eliminare il task "${task.testo}"?`) && deleteTask.mutate(task.id)} className="font-mono text-[14px] text-[#6E6A65] hover:text-[#B81D1D]" aria-label={`Elimina ${task.testo}`}>×</button>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="border-t border-[#262626] pt-6">
+        <div className="mb-4">
+          <div className="font-mono text-[10px] tracking-[0.2em] text-[#6E6A65]">ROUTINE RIUTILIZZABILI</div>
+          <h3 className="bebas mt-1 text-[30px] tracking-[0.08em] text-[#E8E4DE]">TEMPLATE</h3>
+        </div>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <input value={templateText} onChange={(event) => setTemplateText(event.target.value.slice(0, 500))} placeholder="Nuovo template" className="min-h-11 min-w-0 flex-1 border border-[#333] bg-transparent px-3 font-sans text-[14px] text-[#E8E4DE] outline-none focus:border-[#B81D1D]" />
+          <select value={templateType} onChange={(event) => setTemplateType(event.target.value)} className="border border-[#333] bg-[#0A0A0A] px-3 font-mono text-[11px] text-[#E8E4DE]">
+            {["ALTRO", "POST", "ARTICOLO", "VIDEO", "SITO"].map((type) => <option key={type}>{type}</option>)}
+          </select>
+          <select value={templatePriority} onChange={(event) => setTemplatePriority(event.target.value)} className="border border-[#333] bg-[#0A0A0A] px-3 font-mono text-[11px] text-[#E8E4DE]" aria-label="Priorità template">
+            <option value="1">P1</option><option value="2">P2</option><option value="3">P3</option>
+          </select>
+          <button type="button" disabled={!templateText.trim() || createTemplate.isPending} onClick={() => createTemplate.mutate()} className="border border-[#B81D1D] px-4 font-mono text-[20px] text-[#B81D1D] disabled:opacity-30" aria-label="Crea template">+</button>
+        </div>
+        <div className="mt-4 space-y-2">
+          {templatesLoading && <p className="font-sans text-[13px] text-[#6E6A65]">Caricamento template...</p>}
+          {templatesError && <p className="font-sans text-[13px] text-[#B81D1D]" role="alert">Errore nel caricamento dei template.</p>}
+          {templates.map((template) => (
+            <div key={template.id} className="flex flex-col gap-2 border-l-2 border-[#333] py-2 pl-3 sm:flex-row sm:items-center">
+              <input defaultValue={template.testo} onBlur={(event) => event.target.value.trim() && event.target.value !== template.testo && updateTemplate.mutate({ id: template.id, testo: event.target.value.trim() })} className="min-w-0 flex-1 bg-transparent font-sans text-[14px] text-[#E8E4DE] outline-none" aria-label={`Modifica template ${template.testo}`} />
+              <span className="font-mono text-[10px] text-[#6E6A65]">{template.tipo} · P{template.priorita}</span>
+              <button type="button" onClick={() => window.confirm(`Eliminare il template "${template.testo}"?`) && deleteTemplate.mutate(template.id)} className="font-mono text-[14px] text-[#6E6A65] hover:text-[#B81D1D]" aria-label={`Elimina template ${template.testo}`}>×</button>
+            </div>
+          ))}
+          {!templatesLoading && templates.length === 0 && <p className="font-sans text-[13px] text-[#6E6A65]">Nessun template definito.</p>}
         </div>
       </div>
 

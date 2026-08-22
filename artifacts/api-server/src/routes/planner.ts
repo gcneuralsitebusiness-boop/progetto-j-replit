@@ -178,7 +178,7 @@ router.get("/admin/planner/tasks", async (req, res): Promise<void> => {
         .select()
         .from(tasksTable)
         .where(eq(tasksTable.data, data))
-        .orderBy(asc(tasksTable.priorita), asc(tasksTable.createdAt));
+        .orderBy(asc(tasksTable.ordine), asc(tasksTable.priorita), asc(tasksTable.createdAt));
     } else if (from && to) {
       rows = await db
         .select()
