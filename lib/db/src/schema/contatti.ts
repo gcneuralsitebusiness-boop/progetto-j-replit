@@ -8,6 +8,7 @@ export const contattiTable = pgTable("contatti", {
   email: text("email").notNull(),
   tipo: text("tipo").notNull(),
   messaggio: text("messaggio").notNull(),
+  stato: text("stato").notNull().default("nuova"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

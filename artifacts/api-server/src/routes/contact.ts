@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { desc } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { db } from "@workspace/db";
 import { contattiTable } from "@workspace/db/schema";
 import { notify } from "../lib/notify";
@@ -50,6 +50,31 @@ router.get("/contacts", async (req, res): Promise<void> => {
     .orderBy(desc(contattiTable.createdAt));
 
   res.json(rows);
+});
+
+router.patch("/contacts/:id", async (req, res): Promise<void> => {
+  if (!req.session?.adminAuthenticated) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  const id = Number(req.params.id);
+  const stato = req.body?.stato;
+  if (!Number.isInteger(id) || id < 1 || !["nuova", "letta", "gestita"].includes(stato)) {
+    res.status(400).json({ error: "Stato non valido" });
+    return;
+  }
+
+  const [row] = await db
+    .update(contattiTable)
+    .set({ stato })
+    .where(eq(contattiTable.id, id))
+    .returning();
+  if (!row) {
+    res.status(404).json({ error: "Contatto non trovato" });
+    return;
+  }
+  res.json(row);
 });
 
 export default router;
