@@ -49,6 +49,7 @@ function ConditionalNavbar() {
   const [location] = useLocation();
   if (location.startsWith('/card/')) return null;
   if (location.startsWith('/admin/articoli/') && location.endsWith('/preview')) return null;
+  if (location === '/admin' || location.startsWith('/admin/')) return null;
   return <Navbar />;
 }
 

@@ -92,29 +92,46 @@ function AdminLoginForm() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-background">
-      <div className="bg-card border border-border p-10 w-full max-w-sm flex flex-col gap-8">
-        <h1 className="text-[64px] font-serif text-primary text-center leading-none mt-2">J</h1>
+    <main className="admin-login-shell min-h-screen flex items-center justify-center p-6 bg-background">
+      <div className="admin-login-card bracket-corners bg-card border border-border p-8 sm:p-10 w-full max-w-sm flex flex-col gap-8">
+        <div className="text-center">
+          <span className="admin-eyebrow">AREA PRIVATA</span>
+          <h1 className="mt-4 text-[72px] font-serif text-primary text-center leading-none bebas">J</h1>
+          <p className="mt-3 text-[11px] font-mono uppercase tracking-[0.2em] text-muted-foreground">Console Progetto J</p>
+        </div>
         <form onSubmit={handleLogin} className="flex flex-col gap-4">
           <input
+            type="text"
+            name="username"
+            autoComplete="username"
+            value="admin"
+            readOnly
+            tabIndex={-1}
+            aria-hidden="true"
+            className="sr-only"
+          />
+          <input
             type="password"
+            name="password"
             placeholder="Password"
+            aria-label="Password admin"
+            autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="w-full bg-[#141414] border border-border p-3 text-white focus:outline-none focus:border-primary transition-colors font-sans"
             required
           />
-          {error && <p className="text-primary font-sans text-sm">{error}</p>}
+          {error && <p className="admin-form-error text-primary font-sans text-sm" role="alert">{error}</p>}
           <button
             type="submit"
             disabled={loginMutation.isPending}
-            className="w-full bg-primary text-primary-foreground font-serif text-[18px] py-3 tracking-wider hover:bg-primary/90 transition-colors uppercase disabled:opacity-50 mt-2"
+            className="w-full bg-primary text-primary-foreground font-serif text-[18px] py-3 tracking-wider hover:bg-primary/90 transition-colors uppercase disabled:opacity-50 mt-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           >
             {loginMutation.isPending ? "Accesso..." : "Entra"}
           </button>
         </form>
       </div>
-    </div>
+    </main>
   );
 }
 
@@ -1169,30 +1186,35 @@ export default function Admin() {
   };
 
   return (
-    <div className="min-h-screen pt-24 pb-20 max-w-5xl mx-auto px-6">
+    <main className="admin-shell min-h-screen pt-8 pb-20">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6">
       {/* Header */}
-      <div className="flex justify-between items-center mb-10 border-b border-border pb-6">
-        <h1 className="text-[32px] font-serif tracking-wider">ADMIN · PROGETTO J</h1>
+      <header className="admin-header flex flex-col sm:flex-row sm:justify-between sm:items-end gap-6 mb-8 border-b border-border pb-6">
+        <div>
+          <div className="admin-eyebrow mb-3">AREA PRIVATA · CONTROLLO EDITORIALE</div>
+          <h1 className="text-[32px] sm:text-[38px] font-serif tracking-wider">ADMIN · PROGETTO J</h1>
+        </div>
         <div className="flex items-center gap-4">
           <button onClick={downloadBackup}
-            className="text-[12px] font-sans uppercase tracking-[0.15em] border border-border px-4 py-1.5 text-muted-foreground hover:text-foreground hover:bg-[#141414] transition-colors">
+            className="admin-secondary-action text-[12px] font-sans uppercase tracking-[0.15em] border border-border px-4 py-2 text-muted-foreground hover:text-foreground hover:bg-[#141414] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
             BACKUP
           </button>
-          <button onClick={handleLogout} className="text-[13px] font-sans text-primary uppercase tracking-[0.15em] hover:text-primary/80 transition-colors">
+          <button onClick={handleLogout} className="text-[13px] font-sans text-primary uppercase tracking-[0.15em] hover:text-primary/80 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
             Esci
           </button>
         </div>
-      </div>
+      </header>
 
       {/* Two-level nav: 4 areas on top, the area's tabs below. */}
-      <div className="mb-3 grid grid-cols-4 border border-border">
+      <nav aria-label="Sezioni admin" className="admin-navigation mb-3 grid grid-cols-2 sm:grid-cols-4 border border-border">
         {TAB_GROUPS.map((group) => {
           const isActive = groupOfTab(activeTab) === group.id;
           return (
             <button
               key={group.id}
               onClick={() => setActiveTab(group.tabs[0].id)}
-              className={`min-h-12 px-2 font-serif text-[13px] sm:text-[14px] tracking-[0.1em] uppercase transition-colors ${
+              aria-current={isActive ? "page" : undefined}
+              className={`min-h-14 px-2 font-serif text-[13px] sm:text-[14px] tracking-[0.1em] uppercase transition-colors focus-visible:z-10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary ${
                 isActive ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -1200,13 +1222,15 @@ export default function Admin() {
             </button>
           );
         })}
-      </div>
-      <div className="flex gap-0 mb-12 border-b border-border overflow-x-auto no-scrollbar">
+      </nav>
+      <div className="admin-subnavigation flex gap-0 mb-12 border-b border-border overflow-x-auto no-scrollbar" role="tablist" aria-label="Sottosezioni admin">
         {(TAB_GROUPS.find((group) => group.id === groupOfTab(activeTab))?.tabs ?? []).map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`shrink-0 px-5 py-3 font-serif text-[14px] tracking-[0.1em] uppercase border-b-2 transition-colors ${
+            role="tab"
+            aria-selected={activeTab === tab.id}
+            className={`shrink-0 min-h-12 px-4 sm:px-5 py-3 font-serif text-[13px] sm:text-[14px] tracking-[0.1em] uppercase border-b-2 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary ${
               activeTab === tab.id
                 ? "border-primary text-primary"
                 : "border-transparent text-muted-foreground hover:text-foreground"
@@ -1237,6 +1261,7 @@ export default function Admin() {
       {activeTab === "bulk" && <BulkEditTab />}
       {activeTab === "analytics" && <AnalyticsTab />}
       {activeTab === "planner" && <PlannerTab />}
-    </div>
+      </div>
+    </main>
   );
 }

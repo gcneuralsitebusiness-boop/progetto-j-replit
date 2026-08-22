@@ -194,6 +194,58 @@ body::before {
   @apply bg-primary text-primary-foreground;
 }
 
+/* Admin console shell: private editorial workspace, separate from public nav. */
+.admin-shell {
+  background:
+    radial-gradient(circle at 50% 0%, hsl(var(--iron) / 0.16), transparent 38rem),
+    hsl(var(--background));
+}
+.admin-header {
+  position: relative;
+}
+.admin-header::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  width: 4rem;
+  height: 2px;
+  background: hsl(var(--primary));
+}
+.admin-eyebrow {
+  color: hsl(var(--muted-foreground));
+  font-family: var(--app-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+.admin-navigation {
+  background: hsl(var(--carbon) / 0.72);
+}
+.admin-navigation button,
+.admin-subnavigation button {
+  min-width: 0;
+}
+.admin-login-shell {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 42%, hsl(var(--iron) / 0.2), transparent 22rem),
+    hsl(var(--background));
+}
+.admin-login-card {
+  position: relative;
+  box-shadow: 0 1.5rem 4rem hsl(0 0% 0% / 0.22);
+}
+.admin-form-error {
+  border-left: 2px solid hsl(var(--primary));
+  padding-left: 0.75rem;
+}
+.admin-secondary-action {
+  min-height: 2.5rem;
+}
+
 .accesso-block {
   position: relative;
   width: 100%;
