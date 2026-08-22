@@ -28,6 +28,8 @@ export function SiteFooter() {
             <Link href="/coaching" className="hover:text-primary transition-colors">Coaching</Link>
             <Link href="/social" className="hover:text-primary transition-colors">Social</Link>
             <Link href="/sponsor" className="hover:text-primary transition-colors">Sponsor</Link>
+            <Link href="/privacy" className="hover:text-primary transition-colors">Privacy</Link>
+            <Link href="/termini" className="hover:text-primary transition-colors">Termini</Link>
           </nav>
         </div>
       </footer>
