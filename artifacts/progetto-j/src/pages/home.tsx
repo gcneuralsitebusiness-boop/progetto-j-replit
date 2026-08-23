@@ -51,10 +51,10 @@ export default function Home() {
   ].filter((metric) => metric.first != null && metric.last != null);
 
   const tickerItems = [
-    { icon: Flame, label: "GIORNI", value: totalDays, prefix: "", formatter: (value: number) => String(value) },
+    { icon: Flame, label: "GIORNI", value: totalDays, prefix: "", formatter: (value: number) => String(Math.round(value)) },
     { icon: Dumbbell, label: "KM", value: totalKm, prefix: "", formatter: (value: number) => value.toLocaleString("it-IT", { maximumFractionDigits: 1 }) },
-    { icon: Heart, label: "KCAL", value: totalKcal, prefix: "", formatter: (value: number) => value.toLocaleString("it-IT") },
-    { icon: Wallet, label: "ENTRATE", value: totalIncome, prefix: "€", formatter: (value: number) => value.toLocaleString("it-IT") },
+    { icon: Heart, label: "KCAL", value: totalKcal, prefix: "", formatter: (value: number) => Math.round(value).toLocaleString("it-IT") },
+    { icon: Wallet, label: "ENTRATE", value: totalIncome, prefix: "€", formatter: (value: number) => Math.round(value).toLocaleString("it-IT") },
   ];
 
   const tickerContent = (
@@ -99,7 +99,7 @@ export default function Home() {
                 <AnimatedNumber
                   value={currentDay}
                   className="!font-serif"
-                  formatter={(value) => String(value).padStart(3, "0")}
+                  formatter={(value) => String(Math.round(value)).padStart(3, "0")}
                   duration={1600}
                 />
               </div>

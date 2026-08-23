@@ -81,11 +81,17 @@ export function getArticlePlainText(contenuto: string): string {
 
 export function ArticleContent({ contenuto }: { contenuto: string }) {
   const safeHtml = sanitizeArticleHtml(contenuto);
+  const hasVisibleText = safeHtml
+    ? new DOMParser().parseFromString(safeHtml, "text/html").body.textContent?.trim()
+    : "";
+  const fallbackHtml = hasVisibleText || !contenuto.trim()
+    ? safeHtml
+    : legacyTextToHtml(contenuto);
 
   return (
     <div
       className="article-body"
-      dangerouslySetInnerHTML={{ __html: safeHtml }}
+      dangerouslySetInnerHTML={{ __html: fallbackHtml }}
     />
   );
 }

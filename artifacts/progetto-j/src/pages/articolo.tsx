@@ -99,7 +99,7 @@ export default function Articolo() {
         </div>
 
         {imgUrl ? (
-          <div className="relative left-1/2 -ml-[50vw] mt-8 mb-10 h-[50vh] min-h-[320px] max-h-[520px] w-screen overflow-hidden">
+            <div className="relative left-1/2 -ml-[50vw] mt-8 mb-10 h-[42vh] min-h-[300px] max-h-[520px] w-screen overflow-hidden sm:h-[50vh] sm:min-h-[320px]">
             <img src={imgUrl} alt={article.titolo} className="h-full w-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-[#0A0A0A]/40 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 mx-auto max-w-4xl px-5 pb-8 sm:px-6">
@@ -134,9 +134,7 @@ export default function Articolo() {
         )}
       </Reveal>
 
-      <Reveal>
-        <ArticleContent contenuto={article.contenuto} />
-      </Reveal>
+      <ArticleContent contenuto={article.contenuto} />
 
       {linkedDay && (
         <Reveal>
