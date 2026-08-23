@@ -69,20 +69,25 @@ pubblicamente.
 - Cookie di sessione: `httpOnly`, `sameSite: lax`, `secure` in produzione e
   scadenza di sette giorni.
 
-## Rischio residuo riproducibile
+## Record mancanti nelle cancellazioni
 
-**Priorità media — DELETE idempotenti senza 404:** le route DELETE di articoli,
-social, sponsor e task/template planner validano l’ID e l’autorizzazione, ma
-non verificano il numero di righe restituite dalla cancellazione. Un ID
-inesistente produce comunque `204`. Questo non cancella un record valido, ma
-non comunica chiaramente “record non trovato” e può mascherare un errore
-nell’interfaccia. Le route DELETE pagine e iscritti e la PATCH dei contatti
-invece controllano l’esistenza e rispondono `404`.
+La correzione successiva alla verifica è stata applicata e controllata con una
+sessione admin temporanea, senza modificare dati reali:
 
-**Correzione raccomandata:** usare `returning()` (o una lettura preliminare)
-nelle DELETE restanti e rispondere `404` quando nessuna riga corrisponde;
-aggiornare poi i messaggi UI. È fuori dallo scope di questa verifica, quindi
-non è stato modificato ora.
+| DELETE con ID inesistente | Risultato |
+| --- | ---: |
+| `/api/articles/999999` | `404` |
+| `/api/social/999999` | `404` |
+| `/api/sponsors/999999` | `404` |
+| `/api/admin/planner/extras/999999` | `404` |
+| `/api/admin/planner/tasks/999999` | `404` |
+| `/api/admin/planner/templates/999999` | `404` |
 
-**Esito:** protezioni e non-esposizione dati PASS; input invalidi e conferme UI
-PASS; resta il rischio documentato sui record mancanti di alcune DELETE.
+Gli ID non validi (`0`, testo o numeri misti a testo) restituiscono `400`;
+senza sessione le stesse route continuano a restituire `401`. Le route ora
+usano il record restituito dalla cancellazione per distinguere un successo da
+un elemento già rimosso. L’interfaccia mostra un messaggio esplicito per il
+`404` e invalida le liste esclusivamente dopo una cancellazione riuscita.
+
+**Esito:** protezioni, non-esposizione dati, input invalidi, conferme UI e
+gestione dei record mancanti PASS.

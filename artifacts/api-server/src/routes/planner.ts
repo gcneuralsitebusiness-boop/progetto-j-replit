@@ -125,9 +125,13 @@ router.post("/admin/planner/extras", async (req, res): Promise<void> => {
 router.delete("/admin/planner/extras/:id", async (req, res): Promise<void> => {
   if (!isAdmin(req)) { res.status(401).json({ error: "Non autorizzato" }); return; }
   const id = Number(req.params.id);
-  if (!Number.isInteger(id)) { res.status(400).json({ error: "ID non valido" }); return; }
+  if (!Number.isInteger(id) || id < 1) { res.status(400).json({ error: "ID non valido" }); return; }
   try {
-    await db.delete(plannerNotesTable).where(and(eq(plannerNotesTable.id, id), eq(plannerNotesTable.tipo, "daily")));
+    const [row] = await db
+      .delete(plannerNotesTable)
+      .where(and(eq(plannerNotesTable.id, id), eq(plannerNotesTable.tipo, "daily")))
+      .returning();
+    if (!row) { res.status(404).json({ error: "Nota extra non trovata" }); return; }
     res.status(204).end();
   } catch {
     res.status(500).json({ error: "Errore interno" });
@@ -231,10 +235,11 @@ router.patch("/admin/planner/tasks/:id", async (req, res): Promise<void> => {
 // DELETE /admin/planner/tasks/:id
 router.delete("/admin/planner/tasks/:id", async (req, res): Promise<void> => {
   if (!isAdmin(req)) { res.status(401).json({ error: "Non autorizzato" }); return; }
-  const id = parseInt(req.params.id, 10);
-  if (isNaN(id)) { res.status(400).json({ error: "ID non valido" }); return; }
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id < 1) { res.status(400).json({ error: "ID non valido" }); return; }
   try {
-    await db.delete(tasksTable).where(eq(tasksTable.id, id));
+    const [row] = await db.delete(tasksTable).where(eq(tasksTable.id, id)).returning();
+    if (!row) { res.status(404).json({ error: "Task non trovato" }); return; }
     res.status(204).end();
   } catch { res.status(500).json({ error: "Errore interno" }); }
 });
@@ -317,10 +322,11 @@ router.patch("/admin/planner/templates/:id", async (req, res): Promise<void> => 
 // DELETE /admin/planner/templates/:id
 router.delete("/admin/planner/templates/:id", async (req, res): Promise<void> => {
   if (!isAdmin(req)) { res.status(401).json({ error: "Non autorizzato" }); return; }
-  const id = parseInt(req.params.id, 10);
-  if (isNaN(id)) { res.status(400).json({ error: "ID non valido" }); return; }
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id < 1) { res.status(400).json({ error: "ID non valido" }); return; }
   try {
-    await db.delete(taskTemplatesTable).where(eq(taskTemplatesTable.id, id));
+    const [row] = await db.delete(taskTemplatesTable).where(eq(taskTemplatesTable.id, id)).returning();
+    if (!row) { res.status(404).json({ error: "Template non trovato" }); return; }
     res.status(204).end();
   } catch { res.status(500).json({ error: "Errore interno" }); }
 });

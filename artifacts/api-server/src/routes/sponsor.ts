@@ -80,12 +80,16 @@ router.delete("/sponsors/:id", async (req, res): Promise<void> => {
   }
 
   const id = Number(req.params.id);
-  if (Number.isNaN(id)) {
+  if (!Number.isInteger(id) || id < 1) {
     res.status(400).json({ error: "Invalid id" });
     return;
   }
 
-  await db.delete(sponsorTable).where(eq(sponsorTable.id, id));
+  const [row] = await db.delete(sponsorTable).where(eq(sponsorTable.id, id)).returning();
+  if (!row) {
+    res.status(404).json({ error: "Sponsor non trovato" });
+    return;
+  }
   res.sendStatus(204);
 });
 

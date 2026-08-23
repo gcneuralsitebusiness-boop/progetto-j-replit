@@ -240,6 +240,11 @@ export function PlannerTab() {
   const deleteExtra = useMutation({
     mutationFn: (id: number) => fetchJson<void>(`/admin/planner/extras/${id}`, { method: "DELETE" }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["planner-state", selectedDate] }),
+    onError: (error) => {
+      setFeedback(error instanceof Error && error.message.includes("404")
+        ? "Questa nota extra non esiste più. Aggiorna la pagina prima di riprovare."
+        : "Non è stato possibile eliminare la nota extra.");
+    },
   });
 
   const saveFixedNote = useMutation({
@@ -285,7 +290,9 @@ export function PlannerTab() {
       queryClient.invalidateQueries({ queryKey: ["planner-tasks", selectedDate] });
       queryClient.invalidateQueries({ queryKey: ["planner-checklist"] });
     },
-    onError: () => setFeedback("Non è stato possibile eliminare il task."),
+    onError: (error) => setFeedback(error instanceof Error && error.message.includes("404")
+      ? "Questo task non esiste più. Aggiorna la lista prima di riprovare."
+      : "Non è stato possibile eliminare il task."),
   });
   const reorderTasks = useMutation({
     mutationFn: (ids: number[]) => fetchJson("/admin/planner/tasks/reorder", { method: "POST", body: JSON.stringify({ ids }) }),
@@ -313,7 +320,9 @@ export function PlannerTab() {
       setFeedback("Template eliminato.");
       queryClient.invalidateQueries({ queryKey: ["planner-templates"] });
     },
-    onError: () => setFeedback("Non è stato possibile eliminare il template."),
+    onError: (error) => setFeedback(error instanceof Error && error.message.includes("404")
+      ? "Questo template non esiste più. Aggiorna la lista prima di riprovare."
+      : "Non è stato possibile eliminare il template."),
   });
   const updateTemplate = useMutation({
     mutationFn: ({ id, testo }: { id: number; testo: string }) =>

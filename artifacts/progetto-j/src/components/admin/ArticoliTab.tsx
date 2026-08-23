@@ -256,7 +256,21 @@ export function ArticoliTab({ startEditSlug, onEditStarted }: { startEditSlug?: 
 
   const handleDelete = (id: number) => {
     if (window.confirm("Eliminare questo articolo?")) {
-      del.mutate({ id }, { onSuccess: invalidate });
+      setSubmitError(null);
+      del.mutate(
+        { id },
+        {
+          onSuccess: invalidate,
+          onError: (error) => {
+            const message = error instanceof Error ? error.message : String(error);
+            setSubmitError(
+              message.includes("404")
+                ? "Questo articolo non esiste più. Aggiorna la lista prima di riprovare."
+                : "Eliminazione fallita. Riprova.",
+            );
+          },
+        },
+      );
     }
   };
 

@@ -112,6 +112,7 @@ export function SponsorTab() {
   const del = useDeleteSponsor();
   const [editing, setEditing] = useState<Sponsor | null>(null);
   const [form, setForm] = useState(EMPTY);
+  const [feedback, setFeedback] = useState<string | null>(null);
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: getListSponsorsQueryKey() });
 
@@ -144,7 +145,21 @@ export function SponsorTab() {
 
   const handleDelete = (id: number) => {
     if (window.confirm("Eliminare questo sponsor?")) {
-      del.mutate({ id }, { onSuccess: invalidate });
+      setFeedback(null);
+      del.mutate(
+        { id },
+        {
+          onSuccess: invalidate,
+          onError: (error) => {
+            const message = error instanceof Error ? error.message : String(error);
+            setFeedback(
+              message.includes("404")
+                ? "Questo sponsor non esiste più. Aggiorna la lista prima di riprovare."
+                : "Eliminazione fallita. Riprova.",
+            );
+          },
+        },
+      );
     }
   };
 
@@ -174,6 +189,11 @@ export function SponsorTab() {
 
   return (
     <div className="space-y-8">
+      {feedback && (
+        <p className="border border-primary/40 bg-primary/10 px-4 py-3 text-[13px] font-sans text-primary" role="alert">
+          {feedback}
+        </p>
+      )}
       <form onSubmit={handleSubmit} className="bg-card border border-border p-6 flex flex-col gap-4">
         <h3 className="text-[22px] font-serif tracking-wider">{editing ? "MODIFICA SPONSOR" : "NUOVO SPONSOR"}</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
