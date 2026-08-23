@@ -13,3 +13,10 @@ uri = "file://reports/progetto-j-design-system.txt"
 type = "text"
 title = "Progetto J — Design System completo"
 description = "Riepilogo testuale completo e copiabile del sistema di design attuale: palette, font, sfondi, media, effetti e layout."
+
+[[outputs]]
+id = "ARBDQOFKM8-FsRmOHpYBP"
+uri = "file://attached_assets/progetto-j-copy-completo.md"
+type = "text"
+title = "Progetto J — Copy completo del sito"
+description = "Esportazione in Markdown del copy pubblico, dei dati testuali del Journaling giorno per giorno e del testo completo degli articoli. Nessun codice o dato dell’app è stato modificato."
