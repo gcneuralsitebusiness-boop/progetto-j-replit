@@ -17,3 +17,4 @@
 - [Daily tracking panel](daily-tracking-panel.md) — quick-status tracking uses nullable fields, automatic A/B day type, and streak activity from training or routine.
 - [Planner single-screen workflow](planner-single-screen.md) — planner is today-first with four fixed checks, max three daily extras, and one persistent fixed-note block.
 - [Playwright Chromium on NixOS](playwright-nixos-setup.md) — after `playwright install chromium`, patchelf the binary with `~/.nix-profile/lib` (needs `nix-env -iA nixpkgs.mesa` first) or the browser won't launch.
+- [Mockup sandbox typecheck](mockup-sandbox-typecheck.md) — sandbox-wide typecheck can fail on duplicate React types in bundled UI components; verify isolated previews separately.
