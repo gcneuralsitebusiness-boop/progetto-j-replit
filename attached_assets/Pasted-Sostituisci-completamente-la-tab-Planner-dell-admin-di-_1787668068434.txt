@@ -1,0 +1,74 @@
+Sostituisci completamente la tab Planner dell'admin di Progetto J con un blocco note privato. L'attuale sistema di task, template, routine, checklist e riepilogo settimanale va rimosso dall'interfaccia.
+
+=== COSA DEVE ESSERE ===
+
+Un foglio privato dove l'admin scrive note libere. Due cose soltanto:
+1. Una nota per il giorno selezionato
+2. Una nota fissa globale, sempre presente
+
+Niente task, niente stati, niente checkbox, niente priorità, niente template, niente riordino, niente riepilogo settimanale.
+
+=== LAYOUT ===
+
+Dall'alto verso il basso, una colonna sola:
+
+1. RIGA DATA
+   A sinistra: la data selezionata in JetBrains Mono, formato "25.08.2026", 13px, #E8E4DE.
+   Accanto: il numero del giorno se esiste una entry del diario con quella data — "GIORNO 106" in Bebas Neue, 16px. Se non esiste, mostra solo la data, senza calcolare offset.
+   A destra: due frecce ‹ › per giorno precedente/successivo, 44x44px ciascuna.
+   Sotto: un pulsante di testo "OGGI" (11px, JetBrains Mono, #8B6914) visibile solo se la data selezionata non è oggi.
+
+2. NOTA DEL GIORNO
+   Una textarea a tutta larghezza, altezza minima 40vh, che cresce con il contenuto.
+   Sfondo #0A0A0A, bordo 1px #1A1A1A, nessun border-radius.
+   Testo Inter 15px, #E8E4DE, interlinea 1.7.
+   Placeholder: "Note del giorno"
+   Padding interno 20px.
+   Nessun limite di caratteri.
+   In basso a destra, fuori dalla textarea: indicatore di salvataggio in JetBrains Mono 10px — "salvato HH:MM" in #8B6914, "salvataggio…" in #E8E4DE opacità 0.4, "errore" in #B81D1D con accanto un pulsante RIPROVA.
+
+3. SEPARATORE
+   Linea 1px #1A1A1A a tutta larghezza, 48px di margine sopra e sotto.
+
+4. NOTA FISSA
+   Etichetta "FISSE" in Bebas Neue 14px, #8B6914, letterspacing 0.1em.
+   Sotto, una textarea identica per stile a quella del giorno, altezza minima 20vh.
+   Placeholder: "Note permanenti"
+   Stesso indicatore di salvataggio.
+   Non richiudibile: sempre visibile.
+   Rimuovi il limite di 1000 caratteri e di 10 righe.
+
+=== SALVATAGGIO ===
+
+Entrambe le textarea: autosave con debounce 800ms mentre si scrive.
+Su errore il testo digitato NON viene mai sovrascritto o perso: resta a schermo con lo stato di errore e il pulsante RIPROVA.
+Salva anche su blur, come rete di sicurezza, ma il debounce è il meccanismo principale.
+
+=== BACKEND ===
+
+Nota del giorno: usa la tabella planner_notes esistente con tipo="daily" e la data selezionata. Un solo record per data — se ne esistono già più di uno per una data (dalle vecchie note extra), concatenali in un unico record separandoli con una riga vuota, la prima volta che quel giorno viene aperto.
+
+Nota fissa: usa il record esistente con tipo="fixed" e data=null. Non cambiare nulla.
+
+Rimuovi il limite server-side di 3 note per giornata e quello di 180 caratteri: non servono più.
+
+Endpoint:
+- GET /api/admin/planner/note?data=YYYY-MM-DD
+- PUT /api/admin/planner/note  body: { data, testo }
+- GET e PUT /api/admin/planner/fixed-note restano come sono
+
+Tutti protetti da req.session.adminAuthenticated.
+
+=== COSA RIMUOVERE DALL'INTERFACCIA ===
+
+Sezione task fissi (DIARIO, TRACKING, CARD IG, CONTENUTO), sezione ALTRO, task personalizzati, template, pulsante APPLICA ROUTINE, riepilogo settimanale, frecce di riordino.
+
+Gli endpoint /api/admin/planner/tasks, /templates, /routine, /checklist, /extras possono restare nel backend (non rompere nulla), ma non devono più essere chiamati dal frontend. Le tabelle tasks e task_templates restano nel database, non cancellarle.
+
+=== VINCOLI ===
+
+Design system: #0A0A0A sfondo, #B81D1D rosso, #8B6914 bronzo, #E8E4DE testo, #1A1A1A bordi.
+Bebas Neue titoli, Inter corpo, JetBrains Mono dati e date.
+ZERO border-radius, zero box-shadow, zero emoji, zero icone.
+Target touch minimo 44x44px.
+Usabile da telefono con una mano: la textarea del giorno deve essere raggiungibile senza scroll all'apertura.
