@@ -1,16 +1,9 @@
 import { Router, type IRouter } from "express";
-import { db } from "@workspace/db";
 import {
-  giorniTable,
-  contenutiTable,
-  pagineTable,
-  socialTable,
-  sponsorTable,
-  articoliTable,
-  coachingTable,
-  contattiTable,
-  iscrittiTable,
-} from "@workspace/db";
+  generateBackupPayload,
+  getLatestBackupStatus,
+  runAutomaticBackup,
+} from "../lib/backupService";
 
 const router: IRouter = Router();
 
@@ -21,66 +14,43 @@ router.get("/admin/backup", async (req, res): Promise<void> => {
     return;
   }
 
-  let datasets;
   try {
-    datasets = await Promise.all([
-      db.select().from(giorniTable),
-      db.select().from(contenutiTable),
-      db.select().from(pagineTable),
-      db.select().from(socialTable),
-      db.select().from(sponsorTable),
-      db.select().from(articoliTable),
-      db.select().from(coachingTable),
-      db.select().from(contattiTable),
-      db.select().from(iscrittiTable),
-    ]);
+    const backup = await generateBackupPayload();
+    const date = new Date().toISOString().split("T")[0];
+    res.setHeader("Content-Type", "application/json");
+    res.setHeader("Content-Disposition", `attachment; filename="progetto-j-backup-${date}.json"`);
+    res.json(backup);
   } catch (error) {
     req.log.error({ err: error }, "Backup export failed");
     res.status(500).json({ error: "Impossibile creare il backup." });
+  }
+});
+
+router.get("/admin/backup/status", async (req, res): Promise<void> => {
+  if (!req.session?.adminAuthenticated) {
+    res.status(401).json({ error: "Unauthorized" });
     return;
   }
+  try {
+    res.json({ backup: await getLatestBackupStatus() });
+  } catch (error) {
+    req.log.error({ err: error }, "Backup status lookup failed");
+    res.status(500).json({ error: "Impossibile leggere lo stato del backup." });
+  }
+});
 
-  const [
-    giorni,
-    contenuti,
-    pagine,
-    social,
-    sponsor,
-    articoli,
-    coaching,
-    contatti,
-    iscritti,
-  ] = datasets;
-
-  const backup = {
-    exportedAt: new Date().toISOString(),
-    schemaVersion: 2,
-    summary: {
-      giorni: giorni.length,
-      contenuti: contenuti.length,
-      pagine: pagine.length,
-      social: social.length,
-      sponsor: sponsor.length,
-      articoli: articoli.length,
-      coaching: coaching.length,
-      contatti: contatti.length,
-      iscritti: iscritti.length,
-    },
-    giorni,
-    contenuti,
-    pagine,
-    social,
-    sponsor,
-    articoli,
-    coaching,
-    contatti,
-    iscritti,
-  };
-
-  const date = new Date().toISOString().split("T")[0];
-  res.setHeader("Content-Type", "application/json");
-  res.setHeader("Content-Disposition", `attachment; filename="progetto-j-backup-${date}.json"`);
-  res.json(backup);
+router.post("/admin/backup/run", async (req, res): Promise<void> => {
+  if (!req.session?.adminAuthenticated) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  try {
+    const result = await runAutomaticBackup();
+    res.json(result);
+  } catch (error) {
+    req.log.error({ err: error }, "Manual backup run failed");
+    res.status(500).json({ error: "Impossibile completare il backup." });
+  }
 });
 
 export default router;

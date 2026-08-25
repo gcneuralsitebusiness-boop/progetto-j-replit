@@ -724,10 +724,12 @@ interface DashboardData {
   missingDays: { testo: number[]; foto: number[]; physical: number[] };
   totalSubscribers: number;
   totalContacts: number;
+  backup: { key: string; createdAt: string; sizeBytes: number } | null;
 }
 
 function OggiTab({ onSwitchTab }: { onSwitchTab: (tab: string, scrollToEntry?: number) => void }) {
   const [backupFeedback, setBackupFeedback] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [isRunningBackup, setIsRunningBackup] = useState(false);
   const {
     data: dashboard,
     isLoading: loading,
@@ -847,8 +849,42 @@ function OggiTab({ onSwitchTab }: { onSwitchTab: (tab: string, scrollToEntry?: n
       <div className="bg-card border border-border p-8 flex flex-col gap-4">
         <div>
           <h2 className="text-[22px] font-serif tracking-wider">BACKUP DATI</h2>
-          <p className="text-[13px] font-sans text-muted-foreground mt-1">Esporta tutti i dati in un singolo file JSON.</p>
+          <p className="text-[13px] font-sans text-muted-foreground mt-1">Esporta tutti i dati e conserva automaticamente gli ultimi 30 salvataggi.</p>
         </div>
+        <div className={`border px-4 py-3 font-sans text-[13px] ${dashboard.backup && Date.now() - new Date(dashboard.backup.createdAt).getTime() > 48 * 60 * 60 * 1000 ? "border-primary text-primary" : "border-border text-muted-foreground"}`}>
+          {dashboard.backup ? (
+            <>
+              <div className="uppercase tracking-widest text-[11px]">ULTIMO BACKUP</div>
+              <div className="mt-1 font-mono text-foreground">
+                {new Date(dashboard.backup.createdAt).toLocaleString("it-IT")} · {(dashboard.backup.sizeBytes / 1024).toFixed(1)} KB
+              </div>
+              {Date.now() - new Date(dashboard.backup.createdAt).getTime() > 48 * 60 * 60 * 1000 && (
+                <div className="mt-1 text-primary uppercase tracking-widest text-[11px]">BACKUP PIÙ VECCHIO DI 48 ORE</div>
+              )}
+            </>
+          ) : (
+            <span>NESSUN BACKUP AUTOMATICO DISPONIBILE</span>
+          )}
+        </div>
+        <button
+          disabled={isRunningBackup}
+          onClick={() => {
+            setBackupFeedback(null);
+            setIsRunningBackup(true);
+            void fetch("/api/admin/backup/run", { method: "POST", credentials: "include" })
+              .then(async (response) => {
+                const body = await response.json().catch(() => ({}));
+                if (!response.ok) throw new Error(body.error ?? `HTTP ${response.status}`);
+                setBackupFeedback({ type: "success", text: `Backup automatico completato · ${(body.sizeBytes / 1024).toFixed(1)} KB.` });
+                await refetch();
+              })
+              .catch((error: Error) => setBackupFeedback({ type: "error", text: `Backup non riuscito: ${error.message}` }))
+              .finally(() => setIsRunningBackup(false));
+          }}
+          className="self-start border border-primary text-primary font-serif text-[15px] px-6 py-2.5 tracking-wider hover:bg-primary hover:text-primary-foreground transition-colors uppercase disabled:opacity-50"
+        >
+          {isRunningBackup ? "BACKUP IN CORSO..." : "ESEGUI BACKUP ORA"}
+        </button>
         <button onClick={() => {
           setBackupFeedback(null);
           void downloadBackup()

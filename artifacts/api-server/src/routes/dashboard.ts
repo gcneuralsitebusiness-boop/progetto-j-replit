@@ -1,6 +1,7 @@
 import { Router, type IRouter } from "express";
 import { sql, count, isNull, or } from "drizzle-orm";
 import { db, giorniTable, contattiTable, iscrittiTable } from "@workspace/db";
+import { getLatestBackupStatus } from "../lib/backupService";
 
 const router: IRouter = Router();
 
@@ -43,6 +44,13 @@ router.get("/admin/dashboard", async (req, res): Promise<void> => {
     db.select({ c: count() }).from(contattiTable),
   ]);
 
+  let backup: Awaited<ReturnType<typeof getLatestBackupStatus>> = null;
+  try {
+    backup = await getLatestBackupStatus();
+  } catch (error) {
+    req.log.warn({ err: error }, "Could not read backup status for dashboard");
+  }
+
   const todayEntry = allEntries.find((e) => e.data === todayRome) ?? null;
   const currentDay = allEntries.length > 0 ? Math.max(...allEntries.map((e) => e.numero)) : 0;
   const missingDays = {
@@ -64,6 +72,7 @@ router.get("/admin/dashboard", async (req, res): Promise<void> => {
     missingDays,
     totalSubscribers: subscribersResult[0]?.c ?? 0,
     totalContacts: contactsResult[0]?.c ?? 0,
+    backup,
   });
 });
 
