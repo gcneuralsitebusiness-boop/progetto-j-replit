@@ -1,0 +1,28 @@
+Implementa un backup automatico giornaliero per Progetto J.
+
+CONTESTO
+Attualmente il backup esiste solo come endpoint manuale GET /api/admin/backup, protetto da sessione admin. Non c'è nessun backup schedulato. Il valore del progetto sono 106+ giorni di dati non ricostruibili, e la funzione Bulk import può modificare molti record insieme.
+
+COSA FARE
+
+1. Estrai la logica di generazione del backup dall'handler HTTP in una funzione riusabile, es. `generateBackupPayload()` in un modulo dedicato, che ritorna l'oggetto JSON completo (giorni, articoli, pagine, contatti, candidature, iscritti, config sito). L'endpoint manuale deve continuare a funzionare usando questa stessa funzione — nessuna duplicazione di logica.
+
+2. Aggiungi un job schedulato che gira ogni giorno alle 04:00 Europe/Rome (un'ora dopo il job di aggregazione analytics delle 03:00, per non sovrapporsi). Usa lo stesso meccanismo di scheduling già presente nel progetto per il rollup analytics — non introdurre una nuova dipendenza se ne esiste già una.
+
+3. Il job deve:
+   - chiamare generateBackupPayload()
+   - serializzare in JSON
+   - salvare su object storage con nome `backups/backup-YYYY-MM-DD.json` (data in Europe/Rome)
+   - loggare esito e dimensione del file
+
+4. Retention: dopo il salvataggio, elenca i file sotto `backups/`, ordina per data, ed elimina tutti quelli oltre i 30 più recenti.
+
+5. Gestione errori: se il job fallisce, logga l'errore completo e NON far crashare il processo. Il fallimento di un backup non deve buttare giù il sito.
+
+6. Nella tab Oggi della dashboard admin, aggiungi una riga di stato: data e ora dell'ultimo backup riuscito e la sua dimensione. Se l'ultimo backup ha più di 48 ore, mostra la riga in rosso (#B81D1D). Serve un endpoint GET /api/admin/backup/status protetto da sessione admin che legge il file più recente dallo storage.
+
+7. Aggiungi anche un endpoint POST /api/admin/backup/run (protetto) che triggera il job manualmente, e un pulsante corrispondente accanto allo stato.
+
+VINCOLI
+- Rispetta il design system: sfondo #0A0A0A, rosso #B81D1D, nessun border-radius, nessuna emoji, JetBrains Mono per i dati.
+- Non modificare il comportamento dell'endpoint di backup manuale esistente.
