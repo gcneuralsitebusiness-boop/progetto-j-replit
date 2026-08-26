@@ -61,6 +61,11 @@ router.get("/entries/summary", async (_req, res): Promise<void> => {
       testo: giorniTable.testo,
       sintesi: giorniTable.sintesi,
       foto: giorniTable.foto,
+      attrito: giorniTable.attrito,
+      fatto: giorniTable.fatto,
+      nonFatto: giorniTable.nonFatto,
+      cardFeed: giorniTable.cardFeed,
+      cardStory: giorniTable.cardStory,
       tipoAllenamento: giorniTable.tipoAllenamento,
       routineCompletata: giorniTable.routineCompletata,
     })
@@ -150,6 +155,14 @@ const OPTIONAL_TEXT_FIELDS = new Set([
   "testo",
   "sintesi",
   "foto",
+  "attrito",
+  "fatto",
+  "nonFatto",
+  "cardTitolo",
+  "cardSottotitolo",
+  "cardImmagine",
+  "cardFeed",
+  "cardStory",
 ]);
 
 function isValidIsoDate(value: string): boolean {

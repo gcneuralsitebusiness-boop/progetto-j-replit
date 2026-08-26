@@ -108,4 +108,43 @@ export interface EntryInput {
   sintesi?: string | null;
   /** @nullable */
   foto?: string | null;
+  /**
+     * @maxLength 280
+     * @nullable
+     */
+  attrito?: string | null;
+  /**
+     * @maxLength 280
+     * @nullable
+     */
+  fatto?: string | null;
+  /**
+     * @maxLength 280
+     * @nullable
+     */
+  nonFatto?: string | null;
+  /**
+     * @maxLength 60
+     * @nullable
+     */
+  cardTitolo?: string | null;
+  /**
+     * @maxLength 24
+     * @nullable
+     */
+  cardSottotitolo?: string | null;
+  /** @nullable */
+  cardImmagine?: string | null;
+  /**
+     * @minimum 30
+     * @maximum 90
+     * @nullable
+     */
+  cardOverlay?: number | null;
+  /** @nullable */
+  cardMostraParole?: boolean | null;
+  /** @nullable */
+  cardFeed?: string | null;
+  /** @nullable */
+  cardStory?: string | null;
 }

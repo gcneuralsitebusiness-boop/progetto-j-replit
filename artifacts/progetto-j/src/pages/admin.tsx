@@ -20,10 +20,12 @@ import { PlannerTab } from "@/components/admin/PlannerTab";
 import { DailyTrackingPanel, type TrackingKey } from "@/components/admin/DailyTrackingPanel";
 import { DiaryHtmlEditor } from "@/components/admin/DiaryHtmlEditor";
 import { AdminRetry, AdminStatus } from "@/components/admin/AdminStatus";
+import { DailyCardPreview } from "@/components/DailyCardPreview";
 import type { Entry, EntryInput, PageItem } from "@workspace/api-client-react";
 import { useUpload, getPhotoUrl } from "@workspace/object-storage-web";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
+import { persistDailyCardImages } from "@/lib/daily-card-persistence";
 
 const AnalyticsTab = lazy(() =>
   import("@/components/admin/AnalyticsTab").then((module) => ({ default: module.AnalyticsTab })),
@@ -208,6 +210,9 @@ function EntryForm({ initialData, previousEntry, onSuccess, onCancel }: { initia
     testo: initialData?.testo || "",
     foto: initialData?.foto || "",
     sintesi: initialData?.sintesi || "",
+    attrito: initialData?.attrito || "",
+    fatto: initialData?.fatto || "",
+    nonFatto: initialData?.nonFatto || "",
   });
 
   // ─── Autosave + draft restore ──────────────────────────────────────────────
@@ -323,7 +328,7 @@ function EntryForm({ initialData, previousEntry, onSuccess, onCancel }: { initia
       "routineTrazioni", "routineSquat", "plank", "collo", "mobilita",
       "sollevamentoGamba", "grapplingVuoto", "energia", "noteAllenamento",
       "sonno", "flessioni", "addominali", "round", "km", "peso", "battito",
-      "entrate", "uscite", "testo", "foto", "sintesi",
+      "entrate", "uscite", "testo", "foto", "sintesi", "attrito", "fatto", "nonFatto",
     ];
     const hasValue = (value: unknown) => value != null && (typeof value !== "string" || value.trim() !== "");
     const sameValue = (left: unknown, right: unknown) => (
@@ -360,12 +365,30 @@ function EntryForm({ initialData, previousEntry, onSuccess, onCancel }: { initia
 
     if (initialData) {
       updateMutation.mutate({ numero: initialData.numero, data: payload }, {
-        onSuccess: () => { invalidate(); deleteDraft(initialData.numero); onSuccess(); },
+        onSuccess: async (savedEntry) => {
+          try {
+            await persistDailyCardImages(savedEntry);
+          } catch (cardError) {
+            setSubmitError(cardError instanceof Error ? cardError.message : "Il giorno è salvato, ma le card non sono state rigenerate.");
+            invalidate();
+            return;
+          }
+          invalidate();
+          deleteDraft(initialData.numero);
+          onSuccess();
+        },
         onError: handleError,
       });
     } else {
       createMutation.mutate({ data: payload }, {
-        onSuccess: () => {
+        onSuccess: async (savedEntry) => {
+          try {
+            await persistDailyCardImages(savedEntry);
+          } catch (cardError) {
+            setSubmitError(cardError instanceof Error ? cardError.message : "Il giorno è salvato, ma le card non sono state rigenerate.");
+            invalidate();
+            return;
+          }
           invalidate();
           setFormData({
             numero: Number(formData.numero) + 1,
@@ -379,7 +402,7 @@ function EntryForm({ initialData, previousEntry, onSuccess, onCancel }: { initia
             sonno: undefined, flessioni: undefined, addominali: undefined,
             round: undefined, km: undefined, peso: undefined, battito: undefined,
             entrate: undefined, uscite: undefined,
-            testo: "", foto: "",
+            testo: "", foto: "", sintesi: "", attrito: "", fatto: "", nonFatto: "",
           });
           setTouchedTracking(new Set());
           onSuccess();
@@ -542,6 +565,28 @@ function EntryForm({ initialData, previousEntry, onSuccess, onCancel }: { initia
         <label className="text-[11px] uppercase tracking-widest text-muted-foreground">Testo</label>
         <DiaryHtmlEditor value={formData.testo ?? ""} onChange={(testo) => setFormData((current) => ({ ...current, testo }))} />
       </div>
+
+      <section className="grid grid-cols-1 gap-4 border-y border-border py-6 md:grid-cols-3">
+        {([
+          ["Attrito", "attrito", "L'ostacolo concreto della giornata."],
+          ["Fatto", "fatto", "Ciò che hai portato a termine."],
+          ["Non fatto", "nonFatto", "Ciò che hai scelto di non fare."],
+        ] as const).map(([label, key, placeholder]) => (
+          <label key={key} className="flex flex-col gap-2">
+            <span className="flex items-center justify-between text-[11px] uppercase tracking-widest text-muted-foreground">
+              {label}<span className={(formData[key]?.length ?? 0) > 280 ? "text-primary" : ""}>{formData[key]?.length ?? 0}/280</span>
+            </span>
+            <textarea
+              rows={4}
+              maxLength={280}
+              value={formData[key] ?? ""}
+              onChange={(event) => setFormData((current) => ({ ...current, [key]: event.target.value.slice(0, 280) }))}
+              placeholder={placeholder}
+              className="resize-y border border-border bg-[#141414] p-3 font-sans text-sm leading-relaxed text-white placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none"
+            />
+          </label>
+        ))}
+      </section>
 
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
@@ -730,6 +775,7 @@ interface DashboardData {
 function OggiTab({ onSwitchTab }: { onSwitchTab: (tab: string, scrollToEntry?: number) => void }) {
   const [backupFeedback, setBackupFeedback] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [isRunningBackup, setIsRunningBackup] = useState(false);
+  const { data: dailyEntries } = useListEntries();
   const {
     data: dashboard,
     isLoading: loading,
@@ -754,6 +800,8 @@ function OggiTab({ onSwitchTab }: { onSwitchTab: (tab: string, scrollToEntry?: n
   }
 
   const todayLabel = new Date(dashboard.todayDate + "T12:00:00").toLocaleDateString("it-IT", { weekday: "long", day: "numeric", month: "long" }).toUpperCase();
+  const todayCard = dailyEntries?.find((entry) => entry.numero === dashboard.todayEntry?.numero);
+  const todayCardImage = todayCard?.cardFeed ? (getPhotoUrl(todayCard.cardFeed) ?? todayCard.cardFeed) : null;
 
   return (
     <div className="space-y-10">
@@ -790,6 +838,28 @@ function OggiTab({ onSwitchTab }: { onSwitchTab: (tab: string, scrollToEntry?: n
           </button>
         )}
       </div>
+
+      {todayCard && (
+        <div className="bg-card border border-border p-6">
+          <div className="mb-4 flex items-center justify-between gap-4">
+            <div>
+              <h2 className="text-[22px] font-serif tracking-wider">CARD DI OGGI</h2>
+              <p className="mt-1 text-[13px] font-sans text-muted-foreground">Anteprima feed rigenerata al salvataggio del giorno.</p>
+            </div>
+            <a href={`${import.meta.env.BASE_URL.replace(/\/$/, "")}/card/${todayCard.numero}`} target="_blank" rel="noopener noreferrer" className="border border-primary px-3 py-2 text-[10px] font-mono uppercase tracking-widest text-primary hover:bg-primary hover:text-primary-foreground">Apri card</a>
+          </div>
+          <div className="grid max-w-2xl grid-cols-2 gap-4">
+            <a href={`${import.meta.env.BASE_URL.replace(/\/$/, "")}/card/${todayCard.numero}?format=feed`} target="_blank" rel="noopener noreferrer" className="overflow-hidden border border-border bg-[#0A0A0A] hover:border-primary">
+              {todayCardImage ? <img src={todayCardImage} alt={`Card feed giorno ${todayCard.numero}`} className="aspect-[1080/1350] w-full object-cover" /> : <DailyCardPreview entry={todayCard} className="aspect-[1080/1350] w-full" />}
+              <span className="block border-t border-border px-3 py-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Feed · PNG</span>
+            </a>
+            <a href={`${import.meta.env.BASE_URL.replace(/\/$/, "")}/card/${todayCard.numero}?format=story`} target="_blank" rel="noopener noreferrer" className="overflow-hidden border border-border bg-[#0A0A0A] hover:border-primary">
+              {todayCard.cardStory ? <img src={getPhotoUrl(todayCard.cardStory) ?? todayCard.cardStory} alt={`Card story giorno ${todayCard.numero}`} className="aspect-[1080/1920] w-full object-cover" /> : <DailyCardPreview entry={todayCard} format="story" className="aspect-[1080/1920] w-full" />}
+              <span className="block border-t border-border px-3 py-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Story · PNG</span>
+            </a>
+          </div>
+        </div>
+      )}
 
       {/* Giorni da completare */}
       <div className="bg-card border border-primary/40 p-6 md:p-8 flex flex-col gap-4">

@@ -35,7 +35,8 @@ interface DayCardProps {
 }
 
 export function DayCard({ entry, featured = false, hookOnly = false }: DayCardProps) {
-  const hasPhoto = Boolean(entry.foto);
+  const cardImage = entry.cardFeed || entry.foto;
+  const hasPhoto = Boolean(cardImage);
   const previewText = entry.testo ? stripHtml(stripDayLabel(entry.testo)) : "";
   const displayedText = hookOnly ? firstSentence(previewText) : previewText;
 
@@ -62,9 +63,10 @@ export function DayCard({ entry, featured = false, hookOnly = false }: DayCardPr
       <div className="relative h-48 sm:h-56 md:h-64 overflow-hidden">
         {hasPhoto ? (
           <img
-            src={getPhotoUrl(entry.foto) ?? undefined}
-            alt={`Giorno ${entry.numero}`}
-            className="w-full h-full object-cover grayscale-[20%] contrast-110 transition-transform duration-700 group-hover:scale-[1.05]"
+            src={getPhotoUrl(cardImage) ?? cardImage ?? undefined}
+            alt={`Card del giorno ${entry.numero}`}
+            loading="lazy"
+            className={`w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.05] ${entry.cardFeed ? "" : "grayscale-[20%] contrast-110"}`}
           />
         ) : (
           <div className="relative h-full w-full border border-iron bg-[#0A0A0A]">
@@ -114,6 +116,11 @@ export function DayCard({ entry, featured = false, hookOnly = false }: DayCardPr
             featured ? "text-[16px] line-clamp-4" : "text-[14px] sm:text-[15px] line-clamp-3"
           }`}>
             {displayedText}
+          </p>
+        )}
+        {entry.attrito && (
+          <p className="mb-4 border-l-2 border-primary/80 pl-3 text-[11px] font-mono uppercase tracking-wide text-muted-foreground line-clamp-2">
+            Attrito · {entry.attrito}
           </p>
         )}
 

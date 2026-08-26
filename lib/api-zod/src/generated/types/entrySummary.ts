@@ -37,6 +37,25 @@ export interface EntrySummary {
   sintesi?: string | null;
   /** @nullable */
   foto?: string | null;
+  /**
+     * @maxLength 280
+     * @nullable
+     */
+  attrito?: string | null;
+  /**
+     * @maxLength 280
+     * @nullable
+     */
+  fatto?: string | null;
+  /**
+     * @maxLength 280
+     * @nullable
+     */
+  nonFatto?: string | null;
+  /** @nullable */
+  cardFeed?: string | null;
+  /** @nullable */
+  cardStory?: string | null;
   /** @nullable */
   tipoAllenamento?: string | null;
   /** @nullable */

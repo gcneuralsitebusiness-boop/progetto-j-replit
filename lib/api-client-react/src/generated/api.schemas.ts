@@ -179,6 +179,24 @@ export interface Entry {
      */
   foto?: string | null;
   /**
+     * The main friction faced on this day
+     * @maxLength 280
+     * @nullable
+     */
+  attrito?: string | null;
+  /**
+     * What was completed on this day
+     * @maxLength 280
+     * @nullable
+     */
+  fatto?: string | null;
+  /**
+     * What was intentionally not completed on this day
+     * @maxLength 280
+     * @nullable
+     */
+  nonFatto?: string | null;
+  /**
      * Custom Instagram card title (falls back to day number)
      * @maxLength 60
      * @nullable
@@ -207,6 +225,16 @@ export interface Entry {
      * @nullable
      */
   cardMostraParole?: boolean | null;
+  /**
+     * Persisted feed card PNG object path
+     * @nullable
+     */
+  cardFeed?: string | null;
+  /**
+     * Persisted story card PNG object path
+     * @nullable
+     */
+  cardStory?: string | null;
   createdAt?: string;
 }
 
@@ -241,6 +269,25 @@ export interface EntrySummary {
   sintesi?: string | null;
   /** @nullable */
   foto?: string | null;
+  /**
+     * @maxLength 280
+     * @nullable
+     */
+  attrito?: string | null;
+  /**
+     * @maxLength 280
+     * @nullable
+     */
+  fatto?: string | null;
+  /**
+     * @maxLength 280
+     * @nullable
+     */
+  nonFatto?: string | null;
+  /** @nullable */
+  cardFeed?: string | null;
+  /** @nullable */
+  cardStory?: string | null;
   /** @nullable */
   tipoAllenamento?: string | null;
   /** @nullable */
@@ -388,6 +435,45 @@ export interface EntryInput {
   sintesi?: string | null;
   /** @nullable */
   foto?: string | null;
+  /**
+     * @maxLength 280
+     * @nullable
+     */
+  attrito?: string | null;
+  /**
+     * @maxLength 280
+     * @nullable
+     */
+  fatto?: string | null;
+  /**
+     * @maxLength 280
+     * @nullable
+     */
+  nonFatto?: string | null;
+  /**
+     * @maxLength 60
+     * @nullable
+     */
+  cardTitolo?: string | null;
+  /**
+     * @maxLength 24
+     * @nullable
+     */
+  cardSottotitolo?: string | null;
+  /** @nullable */
+  cardImmagine?: string | null;
+  /**
+     * @minimum 30
+     * @maximum 90
+     * @nullable
+     */
+  cardOverlay?: number | null;
+  /** @nullable */
+  cardMostraParole?: boolean | null;
+  /** @nullable */
+  cardFeed?: string | null;
+  /** @nullable */
+  cardStory?: string | null;
 }
 
 /**
@@ -531,6 +617,21 @@ export interface EntryUpdate {
   /** @nullable */
   foto?: string | null;
   /**
+     * @maxLength 280
+     * @nullable
+     */
+  attrito?: string | null;
+  /**
+     * @maxLength 280
+     * @nullable
+     */
+  fatto?: string | null;
+  /**
+     * @maxLength 280
+     * @nullable
+     */
+  nonFatto?: string | null;
+  /**
      * @maxLength 60
      * @nullable
      */
@@ -550,6 +651,10 @@ export interface EntryUpdate {
   cardOverlay?: number | null;
   /** @nullable */
   cardMostraParole?: boolean | null;
+  /** @nullable */
+  cardFeed?: string | null;
+  /** @nullable */
+  cardStory?: string | null;
 }
 
 export interface SiteContent {

@@ -108,6 +108,21 @@ export interface EntryUpdate {
   /** @nullable */
   foto?: string | null;
   /**
+     * @maxLength 280
+     * @nullable
+     */
+  attrito?: string | null;
+  /**
+     * @maxLength 280
+     * @nullable
+     */
+  fatto?: string | null;
+  /**
+     * @maxLength 280
+     * @nullable
+     */
+  nonFatto?: string | null;
+  /**
      * @maxLength 60
      * @nullable
      */
@@ -127,4 +142,8 @@ export interface EntryUpdate {
   cardOverlay?: number | null;
   /** @nullable */
   cardMostraParole?: boolean | null;
+  /** @nullable */
+  cardFeed?: string | null;
+  /** @nullable */
+  cardStory?: string | null;
 }

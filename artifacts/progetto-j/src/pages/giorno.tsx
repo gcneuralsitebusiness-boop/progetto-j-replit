@@ -12,6 +12,7 @@ import { DataErrorState } from "@/components/DataErrorState";
 import { getPhotoUrl } from "@workspace/object-storage-web";
 import { usePageMeta } from "@/hooks/use-page-meta";
 import { containsDiaryHtml, sanitizeDiaryHtml } from "@/lib/diary-html";
+import { DailyCardPreview } from "@/components/DailyCardPreview";
 
 function padDay(n: number) {
   return n.toString().padStart(3, "0");
@@ -499,6 +500,7 @@ function GiornoContent({
 }) {
   const photoUrl = getPhotoUrl(entry.foto);
   const hasPhoto = Boolean(entry.foto && photoUrl);
+  const cardFeedUrl = entry.cardFeed ? (getPhotoUrl(entry.cardFeed) ?? entry.cardFeed) : null;
 
   // Build a short description from the first diary sentence, falling back to the date.
   const firstDiaryLine = entry.testo
@@ -524,8 +526,8 @@ function GiornoContent({
   usePageMeta({
     title: `Giorno ${String(entry.numero).padStart(3, "0")} — Progetto J`,
     description: metaDescription,
-    image: hasPhoto ? photoUrl : null,
-    url: `${window.location.origin}/giorno/${entry.numero}`,
+    image: cardFeedUrl ?? (hasPhoto ? photoUrl : null),
+    url: `https://projectj180day.com/giorno/${entry.numero}`,
   });
 
   return (
@@ -582,6 +584,24 @@ function GiornoContent({
           </div>
         </Reveal>
 
+        <Reveal>
+          <section className="mb-10 overflow-hidden border border-iron bg-card">
+            <div className="flex items-center justify-between border-b border-border px-5 py-3">
+              <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">CARD DEL GIORNO</span>
+              <Link href={`/card/${entry.numero}`} className="font-mono text-[10px] uppercase tracking-[0.16em] text-primary hover:text-foreground">Apri / scarica</Link>
+            </div>
+            <Link href={`/card/${entry.numero}`} className="block">
+              <div className="mx-auto max-w-md bg-[#0A0A0A]">
+                {cardFeedUrl ? (
+                  <img src={cardFeedUrl} alt={`Card del giorno ${entry.numero}`} loading="lazy" className="block aspect-[1080/1350] w-full object-cover" />
+                ) : (
+                  <DailyCardPreview entry={entry} className="aspect-[1080/1350] w-full" />
+                )}
+              </div>
+            </Link>
+          </section>
+        </Reveal>
+
         <div className="grid grid-cols-1 md:grid-cols-[140px_1fr] gap-x-8 gap-y-0 max-w-4xl mx-auto px-5">
           {hasData && <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-[140px_1fr] gap-x-8 border-t border-iron py-10">
             <div className="font-sans text-[11px] uppercase tracking-[0.2em] text-muted-foreground md:sticky md:top-24 self-start mb-4 md:mb-0">DATI</div>
@@ -602,6 +622,16 @@ function GiornoContent({
             <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-[140px_1fr] gap-x-8 border-t border-iron py-10">
               <div className="font-sans text-[11px] uppercase tracking-[0.2em] text-muted-foreground md:sticky md:top-24 self-start mb-4 md:mb-0">DIARIO</div>
               <DiaryText text={entry.testo} entryId={entry.id} entryNumero={entry.numero} />
+            </div>
+          )}
+          {(entry.attrito || entry.fatto || entry.nonFatto) && (
+            <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-[140px_1fr] gap-x-8 border-t border-iron py-10">
+              <div className="font-sans text-[11px] uppercase tracking-[0.2em] text-muted-foreground md:sticky md:top-24 self-start mb-4 md:mb-0">BILANCIO</div>
+              <div className="grid gap-4 sm:grid-cols-3">
+                {entry.attrito && <div className="border-l-2 border-primary px-4 py-2"><span className="font-mono text-[10px] uppercase tracking-widest text-primary">Attrito</span><p className="mt-2 text-sm leading-relaxed text-foreground/85">{entry.attrito}</p></div>}
+                {entry.fatto && <div className="border-l-2 border-foreground/40 px-4 py-2"><span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Fatto</span><p className="mt-2 text-sm leading-relaxed text-foreground/85">{entry.fatto}</p></div>}
+                {entry.nonFatto && <div className="border-l-2 border-foreground/40 px-4 py-2"><span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Non fatto</span><p className="mt-2 text-sm leading-relaxed text-foreground/85">{entry.nonFatto}</p></div>}
+              </div>
             </div>
           )}
           <LinkedArticles entryData={entry.data} />

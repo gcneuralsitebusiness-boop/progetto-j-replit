@@ -106,8 +106,11 @@ function drawFilmGrain(ctx: CanvasRenderingContext2D, width: number, height: num
   if (!grainContext) return;
 
   const noise = grainContext.createImageData(grainWidth, grainHeight);
+  // The legacy reel renderer keeps a stable grain too: exports must be repeatable.
+  let seed = (width * 73856093 + height * 19349663) >>> 0;
   for (let index = 0; index < noise.data.length; index += 4) {
-    const value = Math.floor(Math.random() * 256);
+    seed = (Math.imul(seed ^ (seed >>> 15), 2246822519) + 3266489917) >>> 0;
+    const value = seed & 255;
     noise.data[index] = value;
     noise.data[index + 1] = value;
     noise.data[index + 2] = value;

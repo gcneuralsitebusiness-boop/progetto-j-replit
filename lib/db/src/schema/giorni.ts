@@ -39,11 +39,16 @@ export const giorniTable = pgTable("giorni", {
   testo: text("testo"),
   sintesi: text("sintesi"),
   foto: text("foto"),
+  attrito: text("attrito"),
+  fatto: text("fatto"),
+  nonFatto: text("non_fatto"),
   cardTitolo: text("card_titolo"),
   cardSottotitolo: text("card_sottotitolo"),
   cardImmagine: text("card_immagine"),
   cardOverlay: integer("card_overlay"),
   cardMostraParole: boolean("card_mostra_parole"),
+  cardFeed: text("card_feed"),
+  cardStory: text("card_story"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

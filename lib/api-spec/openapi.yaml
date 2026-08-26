@@ -1035,6 +1035,18 @@ components:
         foto:
           type: ["string", "null"]
           description: Photo URL
+        attrito:
+          type: ["string", "null"]
+          maxLength: 280
+          description: The main friction faced on this day
+        fatto:
+          type: ["string", "null"]
+          maxLength: 280
+          description: What was completed on this day
+        nonFatto:
+          type: ["string", "null"]
+          maxLength: 280
+          description: What was intentionally not completed on this day
         cardTitolo:
           type: ["string", "null"]
           maxLength: 60
@@ -1054,6 +1066,12 @@ components:
         cardMostraParole:
           type: ["boolean", "null"]
           description: Show stats/word count on the card (default true)
+        cardFeed:
+          type: ["string", "null"]
+          description: Persisted feed card PNG object path
+        cardStory:
+          type: ["string", "null"]
+          description: Persisted story card PNG object path
         createdAt:
           type: string
 
@@ -1093,6 +1111,19 @@ components:
         sintesi:
           type: ["string", "null"]
         foto:
+          type: ["string", "null"]
+        attrito:
+          type: ["string", "null"]
+          maxLength: 280
+        fatto:
+          type: ["string", "null"]
+          maxLength: 280
+        nonFatto:
+          type: ["string", "null"]
+          maxLength: 280
+        cardFeed:
+          type: ["string", "null"]
+        cardStory:
           type: ["string", "null"]
         tipoAllenamento:
           type: ["string", "null"]
@@ -1192,6 +1223,33 @@ components:
           maxLength: 180
         foto:
           type: ["string", "null"]
+        attrito:
+          type: ["string", "null"]
+          maxLength: 280
+        fatto:
+          type: ["string", "null"]
+          maxLength: 280
+        nonFatto:
+          type: ["string", "null"]
+          maxLength: 280
+        cardTitolo:
+          type: ["string", "null"]
+          maxLength: 60
+        cardSottotitolo:
+          type: ["string", "null"]
+          maxLength: 24
+        cardImmagine:
+          type: ["string", "null"]
+        cardOverlay:
+          type: ["integer", "null"]
+          minimum: 30
+          maximum: 90
+        cardMostraParole:
+          type: ["boolean", "null"]
+        cardFeed:
+          type: ["string", "null"]
+        cardStory:
+          type: ["string", "null"]
 
     EntryUpdate:
       type: object
@@ -1281,6 +1339,15 @@ components:
           maxLength: 180
         foto:
           type: ["string", "null"]
+        attrito:
+          type: ["string", "null"]
+          maxLength: 280
+        fatto:
+          type: ["string", "null"]
+          maxLength: 280
+        nonFatto:
+          type: ["string", "null"]
+          maxLength: 280
         cardTitolo:
           type: ["string", "null"]
           maxLength: 60
@@ -1295,6 +1362,10 @@ components:
           maximum: 90
         cardMostraParole:
           type: ["boolean", "null"]
+        cardFeed:
+          type: ["string", "null"]
+        cardStory:
+          type: ["string", "null"]
 
     SiteContent:
       type: object

@@ -517,11 +517,13 @@ export default function Journaling() {
           </Reveal>
         ) : (
           <>
-            {visibleEntries.map((entry, index) => (
-              <Reveal key={entry.id}>
-                <DayCard entry={entry} featured={index === 0 || index % 5 === 0} />
-              </Reveal>
-            ))}
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+              {visibleEntries.map((entry, index) => (
+                <Reveal key={entry.id}>
+                  <DayCard entry={entry} featured={index === 0} />
+                </Reveal>
+              ))}
+            </div>
             {hasMore && (
               <div className="flex justify-center pt-4 pb-8">
                 <button

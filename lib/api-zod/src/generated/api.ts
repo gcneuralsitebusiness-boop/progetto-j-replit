@@ -40,6 +40,12 @@ export const listEntriesResponseEnergiaMax = 5;
 
 export const listEntriesResponseSintesiMax = 180;
 
+export const listEntriesResponseAttritoMax = 280;
+
+export const listEntriesResponseFattoMax = 280;
+
+export const listEntriesResponseNonFattoMax = 280;
+
 export const listEntriesResponseCardTitoloMax = 60;
 
 export const listEntriesResponseCardSottotitoloMax = 24;
@@ -86,11 +92,16 @@ export const ListEntriesResponseItem = zod.object({
   "testo": zod.string().nullish().describe('Diary text'),
   "sintesi": zod.string().max(listEntriesResponseSintesiMax).nullish().describe('Short Instagram card summary'),
   "foto": zod.string().nullish().describe('Photo URL'),
+  "attrito": zod.string().max(listEntriesResponseAttritoMax).nullish().describe('The main friction faced on this day'),
+  "fatto": zod.string().max(listEntriesResponseFattoMax).nullish().describe('What was completed on this day'),
+  "nonFatto": zod.string().max(listEntriesResponseNonFattoMax).nullish().describe('What was intentionally not completed on this day'),
   "cardTitolo": zod.string().max(listEntriesResponseCardTitoloMax).nullish().describe('Custom Instagram card title (falls back to day number)'),
   "cardSottotitolo": zod.string().max(listEntriesResponseCardSottotitoloMax).nullish().describe('Custom Instagram card subtitle'),
   "cardImmagine": zod.string().nullish().describe('Custom Instagram card background image path'),
   "cardOverlay": zod.number().min(listEntriesResponseCardOverlayMin).max(listEntriesResponseCardOverlayMax).nullish().describe('Card overlay intensity (30-90, default 58)'),
   "cardMostraParole": zod.boolean().nullish().describe('Show stats\/word count on the card (default true)'),
+  "cardFeed": zod.string().nullish().describe('Persisted feed card PNG object path'),
+  "cardStory": zod.string().nullish().describe('Persisted story card PNG object path'),
   "createdAt": zod.string().optional()
 })
 export const ListEntriesResponse = zod.array(ListEntriesResponseItem)
@@ -117,6 +128,19 @@ export const createEntryBodyPlankMin = 0;
 export const createEntryBodyEnergiaMax = 5;
 
 export const createEntryBodySintesiMax = 180;
+
+export const createEntryBodyAttritoMax = 280;
+
+export const createEntryBodyFattoMax = 280;
+
+export const createEntryBodyNonFattoMax = 280;
+
+export const createEntryBodyCardTitoloMax = 60;
+
+export const createEntryBodyCardSottotitoloMax = 24;
+
+export const createEntryBodyCardOverlayMin = 30;
+export const createEntryBodyCardOverlayMax = 90;
 
 
 
@@ -155,7 +179,17 @@ export const CreateEntryBody = zod.object({
   "uscite": zod.number().nullish(),
   "testo": zod.string().nullish(),
   "sintesi": zod.string().max(createEntryBodySintesiMax).nullish(),
-  "foto": zod.string().nullish()
+  "foto": zod.string().nullish(),
+  "attrito": zod.string().max(createEntryBodyAttritoMax).nullish(),
+  "fatto": zod.string().max(createEntryBodyFattoMax).nullish(),
+  "nonFatto": zod.string().max(createEntryBodyNonFattoMax).nullish(),
+  "cardTitolo": zod.string().max(createEntryBodyCardTitoloMax).nullish(),
+  "cardSottotitolo": zod.string().max(createEntryBodyCardSottotitoloMax).nullish(),
+  "cardImmagine": zod.string().nullish(),
+  "cardOverlay": zod.number().min(createEntryBodyCardOverlayMin).max(createEntryBodyCardOverlayMax).nullish(),
+  "cardMostraParole": zod.boolean().nullish(),
+  "cardFeed": zod.string().nullish(),
+  "cardStory": zod.string().nullish()
 })
 
 export const createEntryResponseDataRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
@@ -176,6 +210,12 @@ export const createEntryResponsePlankMin = 0;
 export const createEntryResponseEnergiaMax = 5;
 
 export const createEntryResponseSintesiMax = 180;
+
+export const createEntryResponseAttritoMax = 280;
+
+export const createEntryResponseFattoMax = 280;
+
+export const createEntryResponseNonFattoMax = 280;
 
 export const createEntryResponseCardTitoloMax = 60;
 
@@ -223,11 +263,16 @@ export const CreateEntryResponse = zod.object({
   "testo": zod.string().nullish().describe('Diary text'),
   "sintesi": zod.string().max(createEntryResponseSintesiMax).nullish().describe('Short Instagram card summary'),
   "foto": zod.string().nullish().describe('Photo URL'),
+  "attrito": zod.string().max(createEntryResponseAttritoMax).nullish().describe('The main friction faced on this day'),
+  "fatto": zod.string().max(createEntryResponseFattoMax).nullish().describe('What was completed on this day'),
+  "nonFatto": zod.string().max(createEntryResponseNonFattoMax).nullish().describe('What was intentionally not completed on this day'),
   "cardTitolo": zod.string().max(createEntryResponseCardTitoloMax).nullish().describe('Custom Instagram card title (falls back to day number)'),
   "cardSottotitolo": zod.string().max(createEntryResponseCardSottotitoloMax).nullish().describe('Custom Instagram card subtitle'),
   "cardImmagine": zod.string().nullish().describe('Custom Instagram card background image path'),
   "cardOverlay": zod.number().min(createEntryResponseCardOverlayMin).max(createEntryResponseCardOverlayMax).nullish().describe('Card overlay intensity (30-90, default 58)'),
   "cardMostraParole": zod.boolean().nullish().describe('Show stats\/word count on the card (default true)'),
+  "cardFeed": zod.string().nullish().describe('Persisted feed card PNG object path'),
+  "cardStory": zod.string().nullish().describe('Persisted story card PNG object path'),
   "createdAt": zod.string().optional()
 })
 
@@ -254,6 +299,12 @@ export const getLatestEntriesResponsePlankMin = 0;
 export const getLatestEntriesResponseEnergiaMax = 5;
 
 export const getLatestEntriesResponseSintesiMax = 180;
+
+export const getLatestEntriesResponseAttritoMax = 280;
+
+export const getLatestEntriesResponseFattoMax = 280;
+
+export const getLatestEntriesResponseNonFattoMax = 280;
 
 export const getLatestEntriesResponseCardTitoloMax = 60;
 
@@ -301,11 +352,16 @@ export const GetLatestEntriesResponseItem = zod.object({
   "testo": zod.string().nullish().describe('Diary text'),
   "sintesi": zod.string().max(getLatestEntriesResponseSintesiMax).nullish().describe('Short Instagram card summary'),
   "foto": zod.string().nullish().describe('Photo URL'),
+  "attrito": zod.string().max(getLatestEntriesResponseAttritoMax).nullish().describe('The main friction faced on this day'),
+  "fatto": zod.string().max(getLatestEntriesResponseFattoMax).nullish().describe('What was completed on this day'),
+  "nonFatto": zod.string().max(getLatestEntriesResponseNonFattoMax).nullish().describe('What was intentionally not completed on this day'),
   "cardTitolo": zod.string().max(getLatestEntriesResponseCardTitoloMax).nullish().describe('Custom Instagram card title (falls back to day number)'),
   "cardSottotitolo": zod.string().max(getLatestEntriesResponseCardSottotitoloMax).nullish().describe('Custom Instagram card subtitle'),
   "cardImmagine": zod.string().nullish().describe('Custom Instagram card background image path'),
   "cardOverlay": zod.number().min(getLatestEntriesResponseCardOverlayMin).max(getLatestEntriesResponseCardOverlayMax).nullish().describe('Card overlay intensity (30-90, default 58)'),
   "cardMostraParole": zod.boolean().nullish().describe('Show stats\/word count on the card (default true)'),
+  "cardFeed": zod.string().nullish().describe('Persisted feed card PNG object path'),
+  "cardStory": zod.string().nullish().describe('Persisted story card PNG object path'),
   "createdAt": zod.string().optional()
 })
 export const GetLatestEntriesResponse = zod.array(GetLatestEntriesResponseItem)
@@ -316,6 +372,12 @@ export const GetLatestEntriesResponse = zod.array(GetLatestEntriesResponseItem)
  * @summary List lightweight journal entry summaries
  */
 export const listEntrySummariesResponseDataRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
+export const listEntrySummariesResponseAttritoMax = 280;
+
+export const listEntrySummariesResponseFattoMax = 280;
+
+export const listEntrySummariesResponseNonFattoMax = 280;
+
 
 
 export const ListEntrySummariesResponseItem = zod.object({
@@ -335,6 +397,11 @@ export const ListEntrySummariesResponseItem = zod.object({
   "testo": zod.string().nullish(),
   "sintesi": zod.string().nullish(),
   "foto": zod.string().nullish(),
+  "attrito": zod.string().max(listEntrySummariesResponseAttritoMax).nullish(),
+  "fatto": zod.string().max(listEntrySummariesResponseFattoMax).nullish(),
+  "nonFatto": zod.string().max(listEntrySummariesResponseNonFattoMax).nullish(),
+  "cardFeed": zod.string().nullish(),
+  "cardStory": zod.string().nullish(),
   "tipoAllenamento": zod.string().nullish(),
   "routineCompletata": zod.boolean().nullish()
 })
@@ -388,6 +455,12 @@ export const getEntryResponseEnergiaMax = 5;
 
 export const getEntryResponseSintesiMax = 180;
 
+export const getEntryResponseAttritoMax = 280;
+
+export const getEntryResponseFattoMax = 280;
+
+export const getEntryResponseNonFattoMax = 280;
+
 export const getEntryResponseCardTitoloMax = 60;
 
 export const getEntryResponseCardSottotitoloMax = 24;
@@ -434,11 +507,16 @@ export const GetEntryResponse = zod.object({
   "testo": zod.string().nullish().describe('Diary text'),
   "sintesi": zod.string().max(getEntryResponseSintesiMax).nullish().describe('Short Instagram card summary'),
   "foto": zod.string().nullish().describe('Photo URL'),
+  "attrito": zod.string().max(getEntryResponseAttritoMax).nullish().describe('The main friction faced on this day'),
+  "fatto": zod.string().max(getEntryResponseFattoMax).nullish().describe('What was completed on this day'),
+  "nonFatto": zod.string().max(getEntryResponseNonFattoMax).nullish().describe('What was intentionally not completed on this day'),
   "cardTitolo": zod.string().max(getEntryResponseCardTitoloMax).nullish().describe('Custom Instagram card title (falls back to day number)'),
   "cardSottotitolo": zod.string().max(getEntryResponseCardSottotitoloMax).nullish().describe('Custom Instagram card subtitle'),
   "cardImmagine": zod.string().nullish().describe('Custom Instagram card background image path'),
   "cardOverlay": zod.number().min(getEntryResponseCardOverlayMin).max(getEntryResponseCardOverlayMax).nullish().describe('Card overlay intensity (30-90, default 58)'),
   "cardMostraParole": zod.boolean().nullish().describe('Show stats\/word count on the card (default true)'),
+  "cardFeed": zod.string().nullish().describe('Persisted feed card PNG object path'),
+  "cardStory": zod.string().nullish().describe('Persisted story card PNG object path'),
   "createdAt": zod.string().optional()
 })
 
@@ -468,6 +546,12 @@ export const updateEntryBodyPlankMin = 0;
 export const updateEntryBodyEnergiaMax = 5;
 
 export const updateEntryBodySintesiMax = 180;
+
+export const updateEntryBodyAttritoMax = 280;
+
+export const updateEntryBodyFattoMax = 280;
+
+export const updateEntryBodyNonFattoMax = 280;
 
 export const updateEntryBodyCardTitoloMax = 60;
 
@@ -513,11 +597,16 @@ export const UpdateEntryBody = zod.object({
   "testo": zod.string().nullish(),
   "sintesi": zod.string().max(updateEntryBodySintesiMax).nullish(),
   "foto": zod.string().nullish(),
+  "attrito": zod.string().max(updateEntryBodyAttritoMax).nullish(),
+  "fatto": zod.string().max(updateEntryBodyFattoMax).nullish(),
+  "nonFatto": zod.string().max(updateEntryBodyNonFattoMax).nullish(),
   "cardTitolo": zod.string().max(updateEntryBodyCardTitoloMax).nullish(),
   "cardSottotitolo": zod.string().max(updateEntryBodyCardSottotitoloMax).nullish(),
   "cardImmagine": zod.string().nullish(),
   "cardOverlay": zod.number().min(updateEntryBodyCardOverlayMin).max(updateEntryBodyCardOverlayMax).nullish(),
-  "cardMostraParole": zod.boolean().nullish()
+  "cardMostraParole": zod.boolean().nullish(),
+  "cardFeed": zod.string().nullish(),
+  "cardStory": zod.string().nullish()
 })
 
 export const updateEntryResponseDataRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
@@ -538,6 +627,12 @@ export const updateEntryResponsePlankMin = 0;
 export const updateEntryResponseEnergiaMax = 5;
 
 export const updateEntryResponseSintesiMax = 180;
+
+export const updateEntryResponseAttritoMax = 280;
+
+export const updateEntryResponseFattoMax = 280;
+
+export const updateEntryResponseNonFattoMax = 280;
 
 export const updateEntryResponseCardTitoloMax = 60;
 
@@ -585,11 +680,16 @@ export const UpdateEntryResponse = zod.object({
   "testo": zod.string().nullish().describe('Diary text'),
   "sintesi": zod.string().max(updateEntryResponseSintesiMax).nullish().describe('Short Instagram card summary'),
   "foto": zod.string().nullish().describe('Photo URL'),
+  "attrito": zod.string().max(updateEntryResponseAttritoMax).nullish().describe('The main friction faced on this day'),
+  "fatto": zod.string().max(updateEntryResponseFattoMax).nullish().describe('What was completed on this day'),
+  "nonFatto": zod.string().max(updateEntryResponseNonFattoMax).nullish().describe('What was intentionally not completed on this day'),
   "cardTitolo": zod.string().max(updateEntryResponseCardTitoloMax).nullish().describe('Custom Instagram card title (falls back to day number)'),
   "cardSottotitolo": zod.string().max(updateEntryResponseCardSottotitoloMax).nullish().describe('Custom Instagram card subtitle'),
   "cardImmagine": zod.string().nullish().describe('Custom Instagram card background image path'),
   "cardOverlay": zod.number().min(updateEntryResponseCardOverlayMin).max(updateEntryResponseCardOverlayMax).nullish().describe('Card overlay intensity (30-90, default 58)'),
   "cardMostraParole": zod.boolean().nullish().describe('Show stats\/word count on the card (default true)'),
+  "cardFeed": zod.string().nullish().describe('Persisted feed card PNG object path'),
+  "cardStory": zod.string().nullish().describe('Persisted story card PNG object path'),
   "createdAt": zod.string().optional()
 })
 

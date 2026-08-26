@@ -137,6 +137,24 @@ export interface Entry {
      */
   foto?: string | null;
   /**
+     * The main friction faced on this day
+     * @maxLength 280
+     * @nullable
+     */
+  attrito?: string | null;
+  /**
+     * What was completed on this day
+     * @maxLength 280
+     * @nullable
+     */
+  fatto?: string | null;
+  /**
+     * What was intentionally not completed on this day
+     * @maxLength 280
+     * @nullable
+     */
+  nonFatto?: string | null;
+  /**
      * Custom Instagram card title (falls back to day number)
      * @maxLength 60
      * @nullable
@@ -165,5 +183,15 @@ export interface Entry {
      * @nullable
      */
   cardMostraParole?: boolean | null;
+  /**
+     * Persisted feed card PNG object path
+     * @nullable
+     */
+  cardFeed?: string | null;
+  /**
+     * Persisted story card PNG object path
+     * @nullable
+     */
+  cardStory?: string | null;
   createdAt?: string;
 }
