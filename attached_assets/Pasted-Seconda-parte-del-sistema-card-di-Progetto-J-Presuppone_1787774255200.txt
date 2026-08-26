@@ -1,0 +1,90 @@
+Seconda parte del sistema card di Progetto J. Presuppone il prompt precedente applicato e funzionante.
+
+=== COMPONENTE ===
+
+Crea /artifacts/progetto-j/src/components/DayCard.tsx:
+
+  <DayCard entry={GiornoEntry} allEntries={GiornoEntry[]} variant={CardVariant} format="feed" | "story" />
+
+CardVariant è la union delle 20 stringhe sotto. Ogni variante disegna SOLO la zona centrale; la struttura fissa del prompt 1 è sempre presente e identica.
+
+=== REGOLE VISIVE GLOBALI ===
+
+Valgono per tutte le varianti:
+
+SCALA. Il valore protagonista occupa almeno il 70% della larghezza utile; nel formato story può arrivare a 300px. Parti da enorme e riduci solo finché entra con 32px di margine — mai il contrario. Rapporto minimo tra l'elemento più grande e il più piccolo: 10:1. Kerning -0.03em sui numeri giganti.
+
+ROSSO UNICO. Oltre alla J e alla barra, UN SOLO elemento per card può essere #B81D1D: il più significativo (valore record, cella di oggi, parola chiave). Tutto il resto: #F0EBE3 per i protagonisti, #E8E4DE alle sue opacità, #1A1A1A per le linee.
+
+FUORI REGISTRO. Solo sui numeri protagonisti delle varianti delta, countdown, milestone, record, peggio: disegna il numero prima in #B81D1D opacità 15% spostato 2px in basso a destra, poi il definitivo sopra. Su nient'altro.
+
+ALLINEAMENTI. Numeri sulla stessa riga: baseline condivisa, mai centratura verticale nel box. Etichette a 8px dal proprio valore. Unità di misura in apice piccolo: "83.0" a 120px con "KG" a 24px allineato al top, opacità 0.4. Il vuoto si concentra in una sola zona della card.
+
+DATI MANCANTI. Valore null → "—" in opacità 0.25. Mai stringa vuota, mai zero fittizio.
+
+ATTRITO. Se entry.attrito esiste, va sopra la zona centrale in ogni variante tranne "frase": Bebas Neue 22px (feed) / 26px (story), allineato a sinistra, 40px di spazio sotto. Se contiene una parola tra parentesi quadre tipo [SCAMBIO], quella parola è l'elemento rosso della card e le parentesi non si mostrano.
+
+=== QUOTIDIANE (rotazione) ===
+
+1. "cruscotto" — griglia 2x3: peso, battito, sonno, kcal, allenamento, uscite. Cella: etichetta Mono 10px opacità 0.4, valore Mono 34px baseline-aligned, e sotto una micro-barra 2px che posiziona il valore nel range degli ultimi 30 giorni (riempimento #E8E4DE opacità 0.5). Separatori 1px #1A1A1A.
+
+2. "delta" — il peso in Mono 140px con fuori registro. Sotto, variazione dal giorno precedente in Mono 28px: #00FF41 se in calo con ▼, #B81D1D se in salita con ▲ (questa è l'unica eccezione ammessa alla regola del rosso unico). A fianco, una scala verticale a tacche da 130 a 80, alta quanto il numero, con la tacca alla posizione attuale in rosso: la storia intera in un elemento. In fondo, Mono 12px opacità 0.4: "DA 130.0 — 47.0 IN MENO".
+
+3. "griglia180" — 180 celle 15x12, cella 4px gap 3px. Completati #E8E4DE opacità 0.7, oggi #B81D1D (l'elemento rosso), futuri #1A1A1A. Nessun altro dato.
+
+4. "frase" — la prima frase della sezione più significativa del diario in Bebas Neue 52px, massimo 4 righe, allineata a sinistra. La parola più importante in #B81D1D (selezionabile in admin con le parentesi quadre nel testo, come per l'attrito). In fondo, Mono 11px opacità 0.4: peso · sonno · allenamento.
+
+5. "scontrino" — valori incolonnati: etichetta a sinistra, valore a destra, riempimento di punti medi "·" opacità 0.25. Mono 15px. Linea tratteggiata 1px, poi il totale: "GIORNI FATTI ···· 106".
+
+6. "terminale" — "> cat giorno_{n}.log" in Mono 14px #00FF41, poi i valori come "peso=83.0" uno per riga in Mono 15px, cursore rettangolare pieno #00FF41 in chiusura.
+
+7. "referto" — tre colonne: parametro, valore, range. Fuori range in #B81D1D (elemento rosso), dentro in #E8E4DE. Mono 14px, intestazioni Mono 10px opacità 0.4.
+
+8. "bilancio" — due colonne divise da linea 1px. "FATTO" in Bebas 18px #00FF41 / "NON FATTO" in Bebas 18px #B81D1D. Contenuto dai campi fatto/nonFatto, Inter 15px, una voce per riga.
+
+9. "ekg" — traccia EKG stroke 2px #B81D1D su tutta la larghezza, forma generata dai dati (picchi dove i valori sono alti). Valori appesi ai picchi con filo 1px, Mono 13px.
+
+10. "countdown" — giorni rimasti in Mono 220px, fuori registro, centrato. Sotto, Bebas 20px opacità 0.5: "GIORNI RIMASTI". In fondo, tre valori su una riga, Mono 11px opacità 0.35.
+
+=== CONDIZIONALI ===
+
+11. "record" — quando un valore batte il massimo/minimo storico (calcolato su allEntries). Bordo interno #B81D1D 3px sull'intero perimetro. Valore in Mono 100px con fuori registro, sopra "RECORD" in Bebas 18px #B81D1D, sotto il precedente e la sua data in Mono 12px opacità 0.5.
+
+12. "peggio" — quando un valore è il peggiore degli ultimi 30 giorni. Come la 11 ma etichetta "PEGGIO DEGLI ULTIMI 30" e bordo #8B6914. Stessa dignità visiva: la trasparenza è la tesi del progetto.
+
+13. "milestone" — giorni divisibili per 10. Numero del giorno in Mono 240px con fuori registro. Sotto, percentuale completata in Bebas 24px. Nient'altro.
+
+14. "riposo" — nessun allenamento. Card quasi vuota: "RIPOSO" in Bebas 44px, centrato verticalmente. Sotto, peso e sonno in Mono 12px opacità 0.4. Il vuoto È il messaggio.
+
+15. "viaggio" — quando il diario contiene la sezione "Il Viaggio". "POSIZIONE" in Mono 10px opacità 0.4, poi luogo o coordinate in Mono 26px, linea #B81D1D, valori del giorno in Mono 13px.
+
+16. "settimanale" — la domenica. Sette colonne: sigla giorno Mono 10px, peso Mono 16px baseline-aligned, barra verticale proporzionale al volume di allenamento. In fondo le medie, Mono 13px.
+
+=== FOTO (solo se entry.foto esiste) ===
+
+Per tutte e tre: curva di contrasto a S via ImageData (scuri più profondi, luci compresse), desaturazione, e grana disegnata SOPRA la foto.
+
+17. "barra" — foto a tutta card scurita al 45%. Striscia #0A0A0A 180px in basso con i valori in Mono 15px.
+
+18. "split" — taglio netto al 55%: sopra foto, sotto #0A0A0A con valori in griglia 3x2, Mono 22px.
+
+19. "duotone" — foto mappata su due colori #0A0A0A→#B81D1D via ImageData. Valori sovrapposti in Mono 20px #F0EBE3.
+
+20. "provino" — quattro foto della settimana in griglia 2x2, tutte con identica desaturazione e contrasto PRIMA della composizione, numero del giorno in Mono 10px nell'angolo di ciascuna. Sotto, medie settimanali in Mono 13px.
+
+=== SELEZIONE AUTOMATICA ===
+
+/artifacts/progetto-j/src/lib/pick-variant.ts — pickVariant(entry, allEntries):
+
+1. giorno divisibile per 10 → "milestone"
+2. record storico → "record"
+3. peggiore degli ultimi 30 → "peggio"
+4. domenica → "settimanale"
+5. nessun allenamento → "riposo"
+6. sezione "Il Viaggio" → "viaggio"
+7. foto presente → rotazione tra barra/split/duotone
+8. altrimenti → quotidiana numero (numeroGiorno % 10)
+
+=== SELEZIONE MANUALE ===
+
+In /card e nell'admin del giorno: selettore per forzare qualunque variante, anteprima dal vivo di entrambi i formati, pulsante che esporta i due PNG.
