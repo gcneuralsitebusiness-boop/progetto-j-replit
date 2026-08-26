@@ -1,0 +1,56 @@
+Prima parte del rifacimento del sistema card giornaliere di Progetto J. Questo prompt sistema le fondamenta: campo nuovo, export su canvas, struttura fissa. Le varianti grafiche arrivano nel prompt successivo.
+
+=== A. NUOVO CAMPO "ATTRITO" ===
+
+Aggiungi alla tabella giorni (/lib/db/src/schema/giorni.ts):
+
+  attrito: varchar("attrito", { length: 60 })  // nullable
+
+È la riga che comparirà in cima alla card: non un risultato, ma la cosa che il giorno ha reso difficile. Esempi: "NON REGGO LO SCAMBIO LUNGO", "60 SACCHI. POI DUE ORE DI K1.", "SEI ORE E MEZZA. ANCORA."
+
+Genera e applica la migrazione Drizzle.
+
+Nel form del diario in admin, aggiungi il campo IN CIMA al form:
+- label "ATTRITO" in Bebas Neue; sotto, in Inter 11px opacità 0.5: "La cosa che oggi non ha funzionato. Max 60 caratteri."
+- input a riga singola, contatore caratteri a destra
+- visualizzato in maiuscolo via CSS, ma salvato come digitato
+- non obbligatorio
+
+Aggiungi anche due campi opzionali "fatto" e "nonFatto" (text, nullable): due textarea nel form, una voce per riga, con label "FATTO" e "NON FATTO". Serviranno a una variante card.
+
+Esponi i tre campi in GET /api/entries e GET /api/entries/:numero.
+
+=== B. EXPORT SU CANVAS NATIVO ===
+
+C'è un bug noto: l'export PNG perde lo sfondo. La causa è la pipeline html-to-image. Sostituiscila interamente.
+
+- Crea /artifacts/progetto-j/src/lib/card-canvas.ts
+- La funzione riceve i dati del giorno, la variante e il formato, e disegna direttamente su <canvas> 2D. Nessuna conversione DOM→immagine.
+- PRIMA di disegnare: await document.fonts.load() per Bebas Neue, Inter e JetBrains Mono in tutti i pesi usati, poi await document.fonts.ready. Senza questo il canvas usa font di fallback.
+- Primissima operazione di disegno, sempre: fillRect dell'intera superficie con #0A0A0A.
+- Il vecchio canvas-card-export.ts resta ma non viene più chiamato.
+
+=== C. DOPPIO FORMATO ===
+
+Ogni export produce due file in un'unica azione:
+- 1080x1350 (4:5) per il feed — margini 64px, contenuto centrato verticalmente
+- 1080x1920 (9:16) per le storie — margini 72px, contenuto ancorato al 55% dell'altezza, più vuoto sopra e sotto perché l'interfaccia delle storie copre le estremità
+
+Le due composizioni sono griglie diverse, non la stessa immagine scalata.
+Nomi: giorno-{numero}-feed.png, giorno-{numero}-story.png.
+
+=== D. STRUTTURA FISSA ===
+
+Ogni card, in ogni variante e formato:
+- "J" #B81D1D, Bebas Neue, alto a sinistra, al margine
+- "GIORNO {n} · {180-n} RIMASTI" in JetBrains Mono 13px, #E8E4DE opacità 0.6, alto a destra
+- "PROJECTJ180DAY.COM" in JetBrains Mono 10px, opacità 0.35, basso a sinistra, 24px sopra la barra
+- barra piena #B81D1D, 5px, ancorata al bordo inferiore
+- lungo il bordo destro, ruotata di 90 gradi, in JetBrains Mono 8px opacità 0.25: "PJ-{numero}/180 · {DD.MM.YYYY}" — posizione identica su ogni card
+- grana filmica monocromatica su tutta la superficie: intensità 6% nelle zone scure, 2% su quelle chiare, generata su ImageData con seed fisso derivato dal numero del giorno (stessa card rigenerata = identica)
+- vignettatura radiale dal centro ai bordi, trasparente → nero 4%
+
+=== VINCOLI ===
+#0A0A0A sfondo, #B81D1D rosso, #8B6914 bronzo, #F0EBE3 numeri protagonisti, #E8E4DE testo, #1A1A1A linee, #00FF41 solo completamenti.
+Bebas Neue titoli, Inter corpo, JetBrains Mono dati con tabular figures (cifre a larghezza fissa).
+ZERO border-radius, zero box-shadow, zero glow, zero emoji, zero icone. La profondità viene solo da grana e vignettatura.
