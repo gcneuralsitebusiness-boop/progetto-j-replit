@@ -11,19 +11,19 @@ Playwright's downloaded `chrome-headless-shell` binary links against `libgbm.so.
 The Playwright package can be present while its Chromium cache is absent. In that case `chromium.launch()` reports that the executable does not exist; install the browser before applying the NixOS RPATH fix below.
 
 ## The fix
-Install mesa via nix-env so `libgbm.so.1` lands in `~/.nix-profile/lib`, then patch the binary's RPATH with `patchelf`:
+Install Mesa through the workspace system-dependency flow, then patch the browser binary's RPATH to the installed Nix store library directory:
 
 ```sh
-nix-env -iA nixpkgs.mesa
 CHROMIUM="$HOME/workspace/.cache/ms-playwright/chromium_headless_shell-<version>/chrome-headless-shell-linux64/chrome-headless-shell"
-patchelf --add-rpath "$HOME/.nix-profile/lib" "$CHROMIUM"
+MESA_LIB="$(for package in /nix/store/*-mesa-libgbm-* /nix/store/*-mesa-[0-9]*; do [ -e "$package/lib/libgbm.so.1" ] && printf '%s\n' "$package/lib" && break; done)"
+patchelf --add-rpath "$MESA_LIB" "$CHROMIUM"
 ```
 
 After patching, `ldd` reports no missing libraries and the tests run cleanly.
 
-**Why:** NixOS does not expose nix-profile libs to the system linker automatically. The packaged Playwright binary expects a standard FHS layout. `patchelf` embeds the nix path directly in the binary's RPATH so it finds `libgbm.so.1` without LD_LIBRARY_PATH manipulation (which causes library conflicts when mixing nix and system libs).
+**Why:** The workspace system-dependency flow makes Mesa available from `/nix/store`, not necessarily at `~/.nix-profile/lib`. The packaged Playwright binary expects a standard FHS layout. `patchelf` embeds the actual library directory directly in its RPATH so it finds `libgbm.so.1` without `LD_LIBRARY_PATH`, which can cause library conflicts when mixing Nix and system libraries.
 
-**How to apply:** Any time you install a new version of `@playwright/test` and run `playwright install chromium`, repeat the patchelf step. The `e2e/package.json` has an `install-browsers` script as a reminder.
+**How to apply:** Any time Playwright downloads a new Chromium version, repeat the RPATH step for the new `chrome-headless-shell` binary. The browser package can be present while its cache is absent, so run `playwright install chromium` before patching when launch reports a missing executable.
 
 ## Other libraries
 Most other libraries (`libudev.so.1`, `libnss*`, etc.) are already present in `/lib/x86_64-linux-gnu` or resolved through the nix store RPATH that was already set on the binary. Only `libgbm` required the extra nix-env install.

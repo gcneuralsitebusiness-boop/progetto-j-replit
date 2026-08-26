@@ -16,6 +16,7 @@ import {
   type DailyCardFormat,
   type DailyCardVariant,
 } from "@/lib/daily-card";
+import { stripHtml } from "@/lib/strip-html";
 import { usePageMeta } from "@/hooks/use-page-meta";
 
 function CardContent({ entry, entries }: { entry: Entry; entries: Entry[] }) {
@@ -87,7 +88,7 @@ function CardContent({ entry, entries }: { entry: Entry; entries: Entry[] }) {
 
   const copySummary = async () => {
     try {
-      await navigator.clipboard.writeText(entry.sintesi || entry.testo || `Giorno ${entry.numero} — Progetto J`);
+      await navigator.clipboard.writeText(stripHtml(entry.sintesi || entry.testo || `Giorno ${entry.numero} — Progetto J`).replace(/\s+/g, " ").trim());
     } catch {
       setError("Copia non disponibile in questo browser.");
     }
