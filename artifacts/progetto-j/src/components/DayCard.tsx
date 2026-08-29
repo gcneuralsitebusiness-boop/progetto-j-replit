@@ -35,7 +35,9 @@ interface DayCardProps {
 }
 
 export function DayCard({ entry, featured = false, hookOnly = false }: DayCardProps) {
-  const cardImage = entry.cardFeed || entry.foto;
+  // The public day image is the uploaded photo only. Generated social cards
+  // may contain diary copy and metrics, but must not replace the image itself.
+  const cardImage = entry.foto;
   const hasPhoto = Boolean(cardImage);
   const previewText = entry.testo ? stripHtml(stripDayLabel(entry.testo)) : "";
   const displayedText = hookOnly ? firstSentence(previewText) : previewText;
@@ -64,9 +66,9 @@ export function DayCard({ entry, featured = false, hookOnly = false }: DayCardPr
         {hasPhoto ? (
           <img
             src={getPhotoUrl(cardImage) ?? cardImage ?? undefined}
-            alt={`Card del giorno ${entry.numero}`}
+            alt={`Immagine del giorno ${entry.numero}`}
             loading="lazy"
-            className={`w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.05] ${entry.cardFeed ? "" : "grayscale-[20%] contrast-110"}`}
+            className="w-full h-full object-cover grayscale-[20%] contrast-110 transition-transform duration-700 group-hover:scale-[1.05]"
           />
         ) : (
           <div className="relative h-full w-full border border-iron bg-[#0A0A0A]">

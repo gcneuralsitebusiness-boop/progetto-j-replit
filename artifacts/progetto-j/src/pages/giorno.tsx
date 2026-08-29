@@ -12,7 +12,6 @@ import { DataErrorState } from "@/components/DataErrorState";
 import { getPhotoUrl } from "@workspace/object-storage-web";
 import { usePageMeta } from "@/hooks/use-page-meta";
 import { containsDiaryHtml, sanitizeDiaryHtml } from "@/lib/diary-html";
-import { DailyCardPreview } from "@/components/DailyCardPreview";
 
 function padDay(n: number) {
   return n.toString().padStart(3, "0");
@@ -500,7 +499,6 @@ function GiornoContent({
 }) {
   const photoUrl = getPhotoUrl(entry.foto);
   const hasPhoto = Boolean(entry.foto && photoUrl);
-  const cardFeedUrl = entry.cardFeed ? (getPhotoUrl(entry.cardFeed) ?? entry.cardFeed) : null;
 
   // Build a short description from the first diary sentence, falling back to the date.
   const firstDiaryLine = entry.testo
@@ -526,7 +524,7 @@ function GiornoContent({
   usePageMeta({
     title: `Giorno ${String(entry.numero).padStart(3, "0")} — Progetto J`,
     description: metaDescription,
-    image: cardFeedUrl ?? (hasPhoto ? photoUrl : null),
+    image: hasPhoto ? photoUrl : null,
     url: `https://projectj180day.com/giorno/${entry.numero}`,
   });
 
@@ -587,15 +585,17 @@ function GiornoContent({
         <Reveal>
           <section className="mb-10 overflow-hidden border border-iron bg-card">
             <div className="flex items-center justify-between border-b border-border px-5 py-3">
-              <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">CARD DEL GIORNO</span>
+              <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">IMMAGINE DEL GIORNO</span>
               <Link href={`/card/${entry.numero}`} className="font-mono text-[10px] uppercase tracking-[0.16em] text-primary hover:text-foreground">Apri / scarica</Link>
             </div>
             <Link href={`/card/${entry.numero}`} className="block">
               <div className="mx-auto max-w-md bg-[#0A0A0A]">
-                {cardFeedUrl ? (
-                  <img src={cardFeedUrl} alt={`Card del giorno ${entry.numero}`} loading="lazy" className="block aspect-[1080/1350] w-full object-cover" />
+                {hasPhoto ? (
+                  <img src={photoUrl ?? undefined} alt={`Immagine del giorno ${entry.numero}`} loading="lazy" className="block aspect-[1080/1350] w-full object-cover" />
                 ) : (
-                  <DailyCardPreview entry={entry} className="aspect-[1080/1350] w-full" />
+                  <div className="flex aspect-[1080/1350] w-full items-center justify-center px-6 text-center font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                    Nessuna immagine disponibile
+                  </div>
                 )}
               </div>
             </Link>

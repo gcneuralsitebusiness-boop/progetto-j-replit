@@ -20,7 +20,6 @@ import { PlannerTab } from "@/components/admin/PlannerTab";
 import { DailyTrackingPanel, type TrackingKey } from "@/components/admin/DailyTrackingPanel";
 import { DiaryHtmlEditor } from "@/components/admin/DiaryHtmlEditor";
 import { AdminRetry, AdminStatus } from "@/components/admin/AdminStatus";
-import { DailyCardPreview } from "@/components/DailyCardPreview";
 import type { Entry, EntryInput, PageItem } from "@workspace/api-client-react";
 import { useUpload, getPhotoUrl } from "@workspace/object-storage-web";
 import { format } from "date-fns";
@@ -801,7 +800,7 @@ function OggiTab({ onSwitchTab }: { onSwitchTab: (tab: string, scrollToEntry?: n
 
   const todayLabel = new Date(dashboard.todayDate + "T12:00:00").toLocaleDateString("it-IT", { weekday: "long", day: "numeric", month: "long" }).toUpperCase();
   const todayCard = dailyEntries?.find((entry) => entry.numero === dashboard.todayEntry?.numero);
-  const todayCardImage = todayCard?.cardFeed ? (getPhotoUrl(todayCard.cardFeed) ?? todayCard.cardFeed) : null;
+  const todayCardImage = todayCard?.foto ? (getPhotoUrl(todayCard.foto) ?? todayCard.foto) : null;
 
   return (
     <div className="space-y-10">
@@ -850,11 +849,11 @@ function OggiTab({ onSwitchTab }: { onSwitchTab: (tab: string, scrollToEntry?: n
           </div>
           <div className="grid max-w-2xl grid-cols-2 gap-4">
             <a href={`${import.meta.env.BASE_URL.replace(/\/$/, "")}/card/${todayCard.numero}?format=feed`} target="_blank" rel="noopener noreferrer" className="overflow-hidden border border-border bg-[#0A0A0A] hover:border-primary">
-              {todayCardImage ? <img src={todayCardImage} alt={`Card feed giorno ${todayCard.numero}`} className="aspect-[1080/1350] w-full object-cover" /> : <DailyCardPreview entry={todayCard} className="aspect-[1080/1350] w-full" />}
+              {todayCardImage ? <img src={todayCardImage} alt={`Immagine del giorno ${todayCard.numero}`} className="aspect-[1080/1350] w-full object-cover" /> : <div className="flex aspect-[1080/1350] w-full items-center justify-center px-6 text-center font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Nessuna immagine disponibile</div>}
               <span className="block border-t border-border px-3 py-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Feed · PNG</span>
             </a>
             <a href={`${import.meta.env.BASE_URL.replace(/\/$/, "")}/card/${todayCard.numero}?format=story`} target="_blank" rel="noopener noreferrer" className="overflow-hidden border border-border bg-[#0A0A0A] hover:border-primary">
-              {todayCard.cardStory ? <img src={getPhotoUrl(todayCard.cardStory) ?? todayCard.cardStory} alt={`Card story giorno ${todayCard.numero}`} className="aspect-[1080/1920] w-full object-cover" /> : <DailyCardPreview entry={todayCard} format="story" className="aspect-[1080/1920] w-full" />}
+              {todayCard.cardStory ? <img src={getPhotoUrl(todayCard.cardStory) ?? todayCard.cardStory} alt={`Card story giorno ${todayCard.numero}`} className="aspect-[1080/1920] w-full object-cover" /> : <div className="flex aspect-[1080/1920] w-full items-center justify-center px-6 text-center font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Card story non disponibile</div>}
               <span className="block border-t border-border px-3 py-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Story · PNG</span>
             </a>
           </div>

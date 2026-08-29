@@ -12,6 +12,11 @@ import type { Article, ArticleInput, ArticleUpdate } from "@workspace/api-client
 import { useUpload, getPhotoUrl } from "@workspace/object-storage-web";
 import { ARTICLE_CATEGORIES, isArticleCategory } from "@/constants/articleCategories";
 import { ArrowRight, Eye } from "lucide-react";
+import CardCustomizer, {
+  customizationFromRecord,
+  EMPTY_CUSTOMIZATION,
+  type CardCustomization,
+} from "@/components/CardCustomizer";
 
 /** Max pixel dimension for the longer side of a cover image. */
 const MAX_IMAGE_PX = 1920;
@@ -110,9 +115,13 @@ export function ArticoliTab({ startEditSlug, onEditStarted }: { startEditSlug?: 
   const { data: articles } = useListArticles();
   const create = useCreateArticle();
   const update = useUpdateArticle();
+  const cardUpdate = useUpdateArticle();
   const del = useDeleteArticle();
   const [editing, setEditing] = useState<Article | null>(null);
   const [form, setForm] = useState({ ...EMPTY });
+  const [cardCustomization, setCardCustomization] = useState<CardCustomization>({ ...EMPTY_CUSTOMIZATION });
+  const [cardSaved, setCardSaved] = useState(false);
+  const [cardSaveError, setCardSaveError] = useState<string | null>(null);
   const [slugTouched, setSlugTouched] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -127,6 +136,7 @@ export function ArticoliTab({ startEditSlug, onEditStarted }: { startEditSlug?: 
   const PAGE_SIZE = 20;
 
   const imageInputRef = useRef<HTMLInputElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
 
   const { uploadFile, isUploading, progress, error: uploadError } = useUpload({
     onSuccess: (res) => setForm((f) => ({ ...f, immagine: res.objectPath })),
@@ -152,6 +162,9 @@ export function ArticoliTab({ startEditSlug, onEditStarted }: { startEditSlug?: 
   const reset = () => {
     setEditing(null);
     setForm({ ...EMPTY });
+    setCardCustomization({ ...EMPTY_CUSTOMIZATION });
+    setCardSaved(false);
+    setCardSaveError(null);
     setSlugTouched(false);
     setSubmitError(null);
     setExternalImageUrl("");
@@ -180,7 +193,7 @@ export function ArticoliTab({ startEditSlug, onEditStarted }: { startEditSlug?: 
       return;
     }
 
-    if (!form.slug.trim() || !form.titolo.trim() || !isArticleCategory(form.categoria)) {
+    if (!form.slug.trim() || !form.titolo.trim() || !form.categoria.trim()) {
       setSubmitError("Slug, titolo e categoria sono obbligatori.");
       return;
     }
@@ -216,6 +229,9 @@ export function ArticoliTab({ startEditSlug, onEditStarted }: { startEditSlug?: 
     setEditing(a);
     setSlugTouched(true); // preserve existing slug when editing
     setSubmitError(null);
+    setCardCustomization(customizationFromRecord(a));
+    setCardSaved(false);
+    setCardSaveError(null);
     setForm({
       slug: a.slug,
       titolo: a.titolo,
@@ -227,6 +243,31 @@ export function ArticoliTab({ startEditSlug, onEditStarted }: { startEditSlug?: 
     });
     setExternalImageUrl("");
     setImagePreviewError(false);
+    window.setTimeout(() => formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 0);
+  };
+
+  const handleCardChange = (patch: Partial<CardCustomization>) => {
+    setCardCustomization((current) => ({ ...current, ...patch }));
+    setCardSaved(false);
+    setCardSaveError(null);
+  };
+
+  const handleSaveCard = () => {
+    if (!editing) return;
+    cardUpdate.mutate(
+      { id: editing.id, data: cardCustomization },
+      {
+        onSuccess: (updated) => {
+          setEditing(updated);
+          setCardCustomization(customizationFromRecord(updated));
+          setCardSaved(true);
+          invalidate();
+        },
+        onError: (error) => {
+          setCardSaveError(error instanceof Error ? error.message : "Salvataggio copertina fallito. Riprova.");
+        },
+      },
+    );
   };
 
   const handleImageFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -282,7 +323,7 @@ export function ArticoliTab({ startEditSlug, onEditStarted }: { startEditSlug?: 
 
   return (
     <div className="space-y-8">
-      <form onSubmit={handleSubmit} className="bg-card border border-border p-6 flex flex-col gap-4">
+      <form ref={formRef} onSubmit={handleSubmit} className="bg-card border border-border p-6 flex flex-col gap-4 scroll-mt-6">
         <h3 className="text-[22px] font-serif tracking-wider">{editing ? "MODIFICA ARTICOLO" : "NUOVO ARTICOLO"}</h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -536,6 +577,20 @@ export function ArticoliTab({ startEditSlug, onEditStarted }: { startEditSlug?: 
         </div>
       </form>
 
+      {editing && (
+        <CardCustomizer
+          value={cardCustomization}
+          onChange={handleCardChange}
+          onSave={handleSaveCard}
+          saving={cardUpdate.isPending}
+          saved={cardSaved}
+          error={cardSaveError}
+          titlePlaceholder={editing.titolo}
+          subtitlePlaceholder={editing.categoria}
+          wordToggleLabel="Mostra conteggio parole nella card"
+        />
+      )}
+
       {/* Admin preview — latest article regardless of published state */}
       {(() => {
         const latest = articles
@@ -544,8 +599,9 @@ export function ArticoliTab({ startEditSlug, onEditStarted }: { startEditSlug?: 
         if (!latest) return null;
         const excerpt = getArticlePlainText(latest.contenuto).slice(0, 180).replace(/\s+\S*$/, "") +
           (getArticlePlainText(latest.contenuto).length > 180 ? "…" : "");
-        const coverUrl = latest.immagine
-          ? (getPhotoUrl(latest.immagine) ?? (latest.immagine.startsWith("http") ? latest.immagine : null))
+        const coverPath = latest.cardImmagine ?? latest.immagine;
+        const coverUrl = coverPath
+          ? (getPhotoUrl(coverPath) ?? (coverPath.startsWith("http") ? coverPath : null))
           : null;
         const isDraft = !latest.pubblicato;
         return (
@@ -763,8 +819,8 @@ export function ArticoliTab({ startEditSlug, onEditStarted }: { startEditSlug?: 
                     >
                       Card Story
                     </a>
-                    <button onClick={() => startEdit(a)} className="text-[13px] uppercase tracking-wider font-sans text-foreground hover:text-primary transition-colors">Modifica</button>
-                    <button onClick={() => handleDelete(a.id)} disabled={del.isPending} className="text-[13px] uppercase tracking-wider font-sans text-destructive hover:text-destructive/80 transition-colors">Elimina</button>
+                    <button type="button" onClick={() => startEdit(a)} className="text-[13px] uppercase tracking-wider font-sans text-foreground hover:text-primary transition-colors">Modifica</button>
+                    <button type="button" onClick={() => handleDelete(a.id)} disabled={del.isPending} className="text-[13px] uppercase tracking-wider font-sans text-destructive hover:text-destructive/80 transition-colors">Elimina</button>
                   </div>
                 </div>
               ))}

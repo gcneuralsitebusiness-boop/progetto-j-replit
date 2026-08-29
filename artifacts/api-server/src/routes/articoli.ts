@@ -2,7 +2,7 @@ import { Router } from "express";
 import { db } from "@workspace/db";
 import { articoliTable } from "@workspace/db/schema";
 import { isArticleCategory, isLegacyArticleCategory, normalizeArticleCategory } from "../constants/articleCategories";
-import { eq, and } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 
 const router = Router();
 
@@ -29,7 +29,9 @@ export function validateCardFields(body: Record<string, unknown>): string | null
 }
 
 router.get("/articles", async (req, res): Promise<void> => {
-  const query = db.select().from(articoliTable).orderBy(articoliTable.data);
+  // Newest first everywhere: public archive, admin list and related-article navigation
+  // all consume this endpoint. Keep the id as a deterministic tie-breaker.
+  const query = db.select().from(articoliTable).orderBy(desc(articoliTable.data), desc(articoliTable.id));
   const rows = await (req.session?.adminAuthenticated
     ? query
     : query.where(eq(articoliTable.pubblicato, true)));
