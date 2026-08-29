@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
 import { contenutiTable } from "@workspace/db/schema";
+import { isHttpsUrlOrEmpty } from "../lib/validation";
 
 const router = Router();
 
@@ -75,6 +76,10 @@ router.put("/content/:chiave", async (req, res): Promise<void> => {
   const valore = req.body?.valore;
   if (typeof valore !== "string") {
     res.status(400).json({ error: "valore must be a string" });
+    return;
+  }
+  if (chiave === "instagram_url" && !isHttpsUrlOrEmpty(valore)) {
+    res.status(400).json({ error: "instagram_url must use HTTPS" });
     return;
   }
 

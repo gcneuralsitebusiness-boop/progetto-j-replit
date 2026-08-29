@@ -57,13 +57,30 @@ router.post("/admin/login", async (req, res): Promise<void> => {
   }
 
   failedLogins.delete(ip);
-  req.session.adminAuthenticated = true;
-  res.json(AdminLoginResponse.parse({ authenticated: true }));
+  req.session.regenerate((error) => {
+    if (error) {
+      req.log.error({ err: error }, "Failed to regenerate admin session");
+      res.status(500).json({ error: "Impossibile creare una sessione sicura." });
+      return;
+    }
+    req.session.adminAuthenticated = true;
+    res.json(AdminLoginResponse.parse({ authenticated: true }));
+  });
 });
 
 // POST /admin/logout — clear session
 router.post("/admin/logout", async (req, res): Promise<void> => {
-  req.session.destroy(() => {
+  req.session.destroy((error) => {
+    if (error) {
+      req.log.error({ err: error }, "Failed to destroy admin session");
+      res.status(500).json({ error: "Impossibile chiudere la sessione." });
+      return;
+    }
+    res.clearCookie("connect.sid", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+    });
     res.json(AdminLogoutResponse.parse({ authenticated: false }));
   });
 });

@@ -2,6 +2,7 @@ import { Router } from "express";
 import { db } from "@workspace/db";
 import { coachingTable } from "@workspace/db/schema";
 import { eq } from "drizzle-orm";
+import { isHttpsUrlOrEmpty } from "../lib/validation";
 
 const router = Router();
 
@@ -30,6 +31,13 @@ router.put("/coaching", async (req, res): Promise<void> => {
   const updates: Partial<typeof coachingTable.$inferInsert> = {};
   for (const key of ["heroTitolo", "heroSottotitolo", "descrizione", "communityCta", "communityUrl", "email"] as const) {
     if (req.body[key] !== undefined) updates[key] = req.body[key];
+  }
+  if (req.body.communityUrl !== undefined &&
+      req.body.communityUrl !== "" &&
+      req.body.communityUrl !== "#" &&
+      !isHttpsUrlOrEmpty(req.body.communityUrl)) {
+    res.status(400).json({ error: "communityUrl must use HTTPS" });
+    return;
   }
   if (req.body.visibile !== undefined) updates.visibile = req.body.visibile;
   updates.updatedAt = new Date();

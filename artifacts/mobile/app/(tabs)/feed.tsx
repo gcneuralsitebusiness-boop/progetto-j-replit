@@ -18,7 +18,7 @@ import { Feather } from '@expo/vector-icons';
 export default function FeedScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { data: entries, isLoading, refetch } = useListEntries();
+  const { data: entries, isLoading, isError, refetch } = useListEntries();
   const [refreshing, setRefreshing] = React.useState(false);
 
   const onRefresh = async () => {
@@ -34,7 +34,15 @@ export default function FeedScreen() {
   );
 
   const renderEmpty = () =>
-    isLoading ? null : (
+    isLoading ? null : isError ? (
+      <View style={styles.emptyState}>
+        <Feather name="wifi-off" size={28} color={colors.mutedForeground} />
+        <Text style={[styles.emptyTitle, { color: colors.foreground }]}>DATI NON DISPONIBILI</Text>
+        <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
+          Controlla la connessione e riprova.
+        </Text>
+      </View>
+    ) : (
       <View style={styles.emptyState}>
         <Feather name="calendar" size={28} color={colors.mutedForeground} />
         <Text style={[styles.emptyTitle, { color: colors.foreground }]}>

@@ -4,6 +4,7 @@ import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useColors } from '@/hooks/useColors';
 import type { Entry } from '@workspace/api-client-react';
+import { getStorageObjectUrl } from '@/lib/storage-url';
 
 function padDay(n: number): string {
   return n.toString().padStart(3, '0');
@@ -28,9 +29,7 @@ export function DayCard({ entry, compact = false }: { entry: Entry; compact?: bo
   const colors = useColors();
   const handlePress = () => router.push(`/day/${entry.id}`);
 
-  const photoUrl = entry.foto
-    ? `https://${process.env.EXPO_PUBLIC_DOMAIN}/api/storage/objects/${entry.foto}`
-    : null;
+  const photoUrl = getStorageObjectUrl(entry.foto);
 
   const stats: Stat[] = [];
   if (entry.kcal != null) stats.push({ label: 'KCAL', value: String(entry.kcal) });

@@ -4,6 +4,8 @@ import {
   RequestUploadUrlResponse,
 } from '@workspace/api-zod';
 import { Router, type IRouter, type Request, type Response } from 'express';
+import { and, eq, or } from 'drizzle-orm';
+import { db, contenutiTable, giorniTable, sponsorTable } from '@workspace/db';
 
 import {
   ObjectNotFoundError,
@@ -17,6 +19,46 @@ const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
 
 function isAdmin(req: Request): boolean {
   return Boolean(req.session?.adminAuthenticated);
+}
+
+async function isPublicContentObject(objectPath: string): Promise<boolean> {
+  const [day] = await db
+    .select({ id: giorniTable.id })
+    .from(giorniTable)
+    .where(
+      or(
+        eq(giorniTable.foto, objectPath),
+        eq(giorniTable.cardImmagine, objectPath),
+        eq(giorniTable.cardFeed, objectPath),
+        eq(giorniTable.cardStory, objectPath),
+      ),
+    )
+    .limit(1);
+  if (day) return true;
+
+  const [content] = await db
+    .select({ chiave: contenutiTable.chiave })
+    .from(contenutiTable)
+    .where(
+      and(
+        eq(contenutiTable.chiave, 'chi_sono_foto'),
+        eq(contenutiTable.valore, objectPath),
+      ),
+    )
+    .limit(1);
+  if (content) return true;
+
+  const [sponsor] = await db
+    .select({ id: sponsorTable.id })
+    .from(sponsorTable)
+    .where(
+      and(
+        eq(sponsorTable.logo, objectPath),
+        eq(sponsorTable.visibile, true),
+      ),
+    )
+    .limit(1);
+  return Boolean(sponsor);
 }
 
 /**
@@ -126,15 +168,36 @@ router.get('/storage/objects/*path', async (req: Request, res: Response) => {
   try {
     const raw = req.params.path;
     const wildcardPath = Array.isArray(raw) ? raw.join('/') : raw;
+    const pathParts = wildcardPath.split('/');
+    if (
+      pathParts.some((part) => !part || part === '.' || part === '..' || part.includes('\0'))
+    ) {
+      res.status(404).json({ error: 'Object not found' });
+      return;
+    }
     const objectPath = `/objects/${wildcardPath}`;
     const objectFile =
       await objectStorageService.getObjectEntityFile(objectPath);
+
+    const admin = isAdmin(req);
+    const aclAllowed = admin || await objectStorageService.canAccessObjectEntity({
+      objectFile,
+    });
+    const publicContent = !admin && !aclAllowed
+      ? await isPublicContentObject(objectPath)
+      : false;
+    if (!aclAllowed && !publicContent) {
+      res.status(404).json({ error: 'Object not found' });
+      return;
+    }
 
     const response = await objectStorageService.downloadObject(objectFile);
 
     res.status(response.status);
     response.headers.forEach((value, key) => res.setHeader(key, value));
-     res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    if (publicContent || aclAllowed) {
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    }
 
     if (response.body) {
       const nodeStream = Readable.fromWeb(

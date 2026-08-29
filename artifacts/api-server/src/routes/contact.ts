@@ -3,10 +3,16 @@ import { desc, eq } from "drizzle-orm";
 import { db } from "@workspace/db";
 import { contattiTable } from "@workspace/db/schema";
 import { notify } from "../lib/notify";
+import { createRateLimiter } from "../lib/rateLimit";
 
 const router = Router();
+const contactRateLimit = createRateLimiter({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: "Troppe richieste. Riprova tra qualche minuto.",
+});
 
-router.post("/contact", async (req, res): Promise<void> => {
+router.post("/contact", contactRateLimit, async (req, res): Promise<void> => {
   const { nome, email, tipo, messaggio } = req.body ?? {};
 
   if (

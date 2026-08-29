@@ -154,7 +154,7 @@ export function AnalyticsTab() {
 
   const load = useCallback(async (p: Period) => {
     try {
-      const res = await fetch(`/api/admin/analytics?period=${p}`, { credentials: "include" });
+      const res = await fetch(`${import.meta.env.BASE_URL}api/admin/analytics?period=${p}`, { credentials: "include" });
       if (!res.ok) throw new Error();
       setData(await res.json());
       setError(false);

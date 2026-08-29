@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Platform,
   Dimensions,
+  ActivityIndicator,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, router } from 'expo-router';
@@ -14,6 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { useListEntries } from '@workspace/api-client-react';
 import { useColors } from '@/hooks/useColors';
+import { getStorageObjectUrl } from '@/lib/storage-url';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -112,23 +114,49 @@ export default function DayDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { data: entries } = useListEntries();
+  const { data: entries, isLoading, isError, refetch } = useListEntries();
 
   const entry = entries?.find(e => String(e.id) === id);
 
-  if (!entry) {
+  if (isLoading) {
     return (
       <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
-        <Text style={[styles.loadingText, { color: colors.mutedForeground }]}>
-          Caricamento...
-        </Text>
+        <ActivityIndicator color={colors.primary} />
+        <Text style={[styles.loadingText, { color: colors.mutedForeground }]}>Caricamento...</Text>
       </View>
     );
   }
 
-  const photoUrl = entry.foto
-    ? `https://${process.env.EXPO_PUBLIC_DOMAIN}/api/storage/objects/${entry.foto}`
-    : null;
+  if (isError) {
+    return (
+      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+        <Feather name="wifi-off" size={28} color={colors.mutedForeground} />
+        <Text style={[styles.loadingText, { color: colors.foreground }]}>Impossibile caricare questo giorno.</Text>
+        <TouchableOpacity
+          style={[styles.retryButton, { borderColor: colors.primary }]}
+          onPress={() => { void refetch(); }}
+        >
+          <Text style={[styles.retryButtonText, { color: colors.primary }]}>RIPROVA</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  if (!entry) {
+    return (
+      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+        <Text style={[styles.loadingText, { color: colors.foreground }]}>Giorno non trovato.</Text>
+        <TouchableOpacity
+          style={[styles.retryButton, { borderColor: colors.primary }]}
+          onPress={() => router.back()}
+        >
+          <Text style={[styles.retryButtonText, { color: colors.primary }]}>TORNA INDIETRO</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  const photoUrl = getStorageObjectUrl(entry.foto);
 
   // Compute fractions for bars (reference max values)
   const kcalFraction = entry.kcal ? entry.kcal / 3500 : 0;
@@ -347,8 +375,18 @@ export default function DayDetailScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1 },
 
-  loadingContainer: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  loadingContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 14 },
   loadingText: { fontSize: 14, fontFamily: 'Inter_400Regular', letterSpacing: 2 },
+  retryButton: {
+    borderWidth: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  retryButtonText: {
+    fontSize: 11,
+    letterSpacing: 2,
+    fontFamily: 'Inter_600SemiBold',
+  },
 
   // Hero
   heroContainer: { height: 240, position: 'relative' },

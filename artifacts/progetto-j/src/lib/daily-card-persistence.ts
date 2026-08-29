@@ -6,7 +6,7 @@ import {
 import { getPhotoUrl } from "@workspace/object-storage-web";
 
 async function uploadPng(blob: Blob, filename: string): Promise<string> {
-  const response = await fetch("/api/storage/uploads/request-url", {
+  const response = await fetch(`${import.meta.env.BASE_URL}api/storage/uploads/request-url`, {
     method: "POST",
     credentials: "include",
     headers: { "Content-Type": "application/json" },
@@ -36,7 +36,7 @@ export async function persistDailyCardImages(entry: DailyCardInput, allEntries: 
     uploadPng(feed, `progetto-j-giorno-${String(entry.numero).padStart(3, "0")}-feed.png`),
     uploadPng(story, `progetto-j-giorno-${String(entry.numero).padStart(3, "0")}-story.png`),
   ]);
-  const patched = await fetch(`/api/entries/${entry.numero}`, {
+  const patched = await fetch(`${import.meta.env.BASE_URL}api/entries/${entry.numero}`, {
     method: "PATCH",
     credentials: "include",
     headers: { "Content-Type": "application/json" },

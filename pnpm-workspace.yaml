@@ -158,4 +158,17 @@ overrides:
   "@expo/ngrok-bin>@expo/ngrok-bin-win32-x64": "-"
   # drizzle-kit uses esbuild internally on an older version that's vulnerable, this overrides it
   "@esbuild-kit/esm-loader": "npm:tsx@^4.21.0"
-  esbuild: "0.27.3"
+  esbuild: "0.28.1"
+  # Keep each minimatch major on its compatible, patched brace-expansion line.
+  "minimatch@3>brace-expansion": "1.1.18"
+  "minimatch@9>brace-expansion": "2.1.4"
+  "minimatch@10>brace-expansion": "5.0.9"
+  "js-yaml@3": "3.15.1"
+  "js-yaml@4": "4.3.2"
+  postcss: "8.5.26"
+  nanoid: "3.3.18"
+  "fast-uri": "3.1.6"
+  "linkify-it": "5.0.2"
+  undici: "6.28.0"
+  tar: "7.5.22"
+  uuid: "11.1.1"

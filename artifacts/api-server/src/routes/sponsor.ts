@@ -2,6 +2,7 @@ import { Router } from "express";
 import { db } from "@workspace/db";
 import { sponsorTable, sponsorLevels } from "@workspace/db/schema";
 import { eq } from "drizzle-orm";
+import { isHttpsUrlOrEmpty, isImageReference } from "../lib/validation";
 
 const router = Router();
 
@@ -21,7 +22,7 @@ router.post("/sponsors", async (req, res): Promise<void> => {
   }
 
   const { nome, descrizione, url, logo, livello, ordine, visibile } = req.body;
-  if (!nome || typeof nome !== "string") {
+  if (!nome || typeof nome !== "string" || !isHttpsUrlOrEmpty(url) || !isImageReference(logo)) {
     res.status(400).json({ error: "nome is required" });
     return;
   }
@@ -31,8 +32,8 @@ router.post("/sponsors", async (req, res): Promise<void> => {
     .values({
       nome,
       descrizione: typeof descrizione === "string" ? descrizione : "",
-      url: typeof url === "string" ? url : "",
-      logo: typeof logo === "string" ? logo : null,
+      url: url.trim(),
+      logo: logo ? logo.trim() : null,
       livello: sponsorLevels.includes(livello) ? livello : "Bronze",
       ordine: typeof ordine === "number" ? ordine : 0,
       visibile: typeof visibile === "boolean" ? visibile : true,
@@ -55,8 +56,24 @@ router.put("/sponsors/:id", async (req, res): Promise<void> => {
   }
 
   const updates: Partial<typeof sponsorTable.$inferInsert> = {};
-  for (const key of ["nome", "descrizione", "url", "logo"] as const) {
-    if (req.body[key] !== undefined) updates[key] = req.body[key];
+  for (const key of ["nome", "descrizione"] as const) {
+    if (req.body[key] !== undefined && typeof req.body[key] === "string") {
+      updates[key] = req.body[key];
+    }
+  }
+  if (req.body.url !== undefined) {
+    if (!isHttpsUrlOrEmpty(req.body.url)) {
+      res.status(400).json({ error: "url must use HTTPS" });
+      return;
+    }
+    updates.url = req.body.url.trim();
+  }
+  if (req.body.logo !== undefined) {
+    if (!isImageReference(req.body.logo)) {
+      res.status(400).json({ error: "logo reference is not allowed" });
+      return;
+    }
+    updates.logo = req.body.logo ? req.body.logo.trim() : null;
   }
   if (req.body.livello !== undefined && sponsorLevels.includes(req.body.livello)) {
     updates.livello = req.body.livello;

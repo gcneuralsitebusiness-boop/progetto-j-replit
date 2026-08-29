@@ -51,7 +51,7 @@ export function AccessoBlock() {
     setIsSubmitting(true);
     setSubmitError(null);
     try {
-      const response = await fetch("/api/candidature", {
+      const response = await fetch(`${import.meta.env.BASE_URL}api/candidature`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

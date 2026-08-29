@@ -282,7 +282,7 @@ function EntryForm({ initialData, previousEntry, onSuccess, onCancel }: { initia
   // Load draft when editing an entry
   useEffect(() => {
     if (!initialData) { isMounted.current = true; return; }
-    fetch(`/api/admin/drafts/${initialData.numero}`, { credentials: "include" })
+    fetch(`${import.meta.env.BASE_URL}api/admin/drafts/${initialData.numero}`, { credentials: "include" })
       .then((r) => (r.ok ? r.json() : null))
       .then((draft: { updatedAt: string; dati: Partial<EntryInput> } | null) => {
         if (!draft) return;
@@ -298,7 +298,7 @@ function EntryForm({ initialData, previousEntry, onSuccess, onCancel }: { initia
     if (!initialData || !isMounted.current) return;
     if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
     autosaveTimer.current = setTimeout(() => {
-      fetch("/api/admin/drafts", {
+      fetch(`${import.meta.env.BASE_URL}api/admin/drafts`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -309,7 +309,7 @@ function EntryForm({ initialData, previousEntry, onSuccess, onCancel }: { initia
   }, [formData]);
 
   const deleteDraft = useCallback((numero: number) => {
-    fetch(`/api/admin/drafts/${numero}`, { method: "DELETE", credentials: "include" }).catch(() => {});
+    fetch(`${import.meta.env.BASE_URL}api/admin/drafts/${numero}`, { method: "DELETE", credentials: "include" }).catch(() => {});
   }, []);
 
   // ─── Submit ────────────────────────────────────────────────────────────────
@@ -783,7 +783,7 @@ function OggiTab({ onSwitchTab }: { onSwitchTab: (tab: string, scrollToEntry?: n
   } = useQuery<DashboardData>({
     queryKey: ["admin-dashboard"],
     queryFn: async () => {
-      const response = await fetch("/api/admin/dashboard", { credentials: "include" });
+      const response = await fetch(`${import.meta.env.BASE_URL}api/admin/dashboard`, { credentials: "include" });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       return response.json() as Promise<DashboardData>;
     },
@@ -940,7 +940,7 @@ function OggiTab({ onSwitchTab }: { onSwitchTab: (tab: string, scrollToEntry?: n
           onClick={() => {
             setBackupFeedback(null);
             setIsRunningBackup(true);
-            void fetch("/api/admin/backup/run", { method: "POST", credentials: "include" })
+            void fetch(`${import.meta.env.BASE_URL}api/admin/backup/run`, { method: "POST", credentials: "include" })
               .then(async (response) => {
                 const body = await response.json().catch(() => ({}));
                 if (!response.ok) throw new Error(body.error ?? `HTTP ${response.status}`);

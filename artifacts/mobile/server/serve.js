@@ -46,9 +46,8 @@ function getAppName() {
 }
 
 function serveManifest(platform, res) {
-  const manifestPath = path.join(STATIC_ROOT, platform, 'manifest.json');
-
-  if (!fs.existsSync(manifestPath)) {
+  const manifest = STATIC_FILES.get(`${platform}/manifest.json`);
+  if (!manifest) {
     res.writeHead(404, { 'content-type': 'application/json' });
     res.end(
       JSON.stringify({ error: `Manifest not found for platform: ${platform}` }),
@@ -56,13 +55,12 @@ function serveManifest(platform, res) {
     return;
   }
 
-  const manifest = fs.readFileSync(manifestPath, 'utf-8');
   res.writeHead(200, {
     'content-type': 'application/json',
     'expo-protocol-version': '1',
     'expo-sfv-version': '0',
   });
-  res.end(manifest);
+  res.end(manifest.content);
 }
 
 function serveLandingPage(req, res, landingPageTemplate, appName) {
@@ -81,31 +79,62 @@ function serveLandingPage(req, res, landingPageTemplate, appName) {
   res.end(html);
 }
 
-function serveStaticFile(urlPath, res) {
-  const safePath = path.normalize(urlPath).replace(/^(\.\.(\/|\\|$))+/, '');
-  const filePath = path.join(STATIC_ROOT, safePath);
+function buildStaticFileIndex(root) {
+  const files = new Map();
 
-  if (!filePath.startsWith(STATIC_ROOT)) {
-    res.writeHead(403);
-    res.end('Forbidden');
-    return;
+  function walk(directory, relativeDirectory) {
+    if (!fs.existsSync(directory)) return;
+
+    for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+      const absolutePath = path.join(directory, entry.name);
+      const relativePath = relativeDirectory
+        ? `${relativeDirectory}/${entry.name}`
+        : entry.name;
+
+      if (entry.isDirectory()) {
+        walk(absolutePath, relativePath);
+      } else if (entry.isFile()) {
+        files.set(relativePath, {
+          extension: path.extname(entry.name).toLowerCase(),
+          content: fs.readFileSync(absolutePath),
+        });
+      }
+    }
   }
 
-  if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
-    res.writeHead(404);
-    res.end('Not Found');
-    return;
+  walk(root, '');
+  return files;
+}
+
+function getStaticAsset(urlPath) {
+  let decodedPath;
+  try {
+    decodedPath = decodeURIComponent(urlPath);
+  } catch {
+    return { error: 400 };
   }
 
-  const ext = path.extname(filePath).toLowerCase();
-  const contentType = MIME_TYPES[ext] || 'application/octet-stream';
-  const content = fs.readFileSync(filePath);
+  const relativePath = decodedPath.replace(/^[/\\]+/, '').replace(/\\/g, '/');
+  const pathSegments = relativePath.split('/');
+  if (
+    decodedPath.includes('\0') ||
+    pathSegments.some((segment) => segment === '..' || segment === '.')
+  ) {
+    return { error: 403 };
+  }
+
+  return STATIC_FILES.get(relativePath) || { error: 404 };
+}
+
+function serveStaticFile(asset, res) {
+  const contentType = MIME_TYPES[asset.extension] || 'application/octet-stream';
   res.writeHead(200, { 'content-type': contentType });
-  res.end(content);
+  res.end(asset.content);
 }
 
 const landingPageTemplate = fs.readFileSync(TEMPLATE_PATH, 'utf-8');
 const appName = getAppName();
+const STATIC_FILES = buildStaticFileIndex(STATIC_ROOT);
 
 const server = http.createServer((req, res) => {
   const url = new URL(req.url || '/', `http://${req.headers.host}`);
@@ -126,7 +155,13 @@ const server = http.createServer((req, res) => {
     }
   }
 
-  serveStaticFile(pathname, res);
+  const asset = getStaticAsset(pathname);
+  if ('error' in asset) {
+    res.writeHead(asset.error);
+    res.end(asset.error === 404 ? 'Not Found' : asset.error === 400 ? 'Invalid path' : 'Forbidden');
+    return;
+  }
+  serveStaticFile(asset, res);
 });
 
 const port = parseInt(process.env.PORT || '3000', 10);

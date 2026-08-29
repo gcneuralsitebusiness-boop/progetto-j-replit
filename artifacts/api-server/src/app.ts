@@ -4,6 +4,7 @@ import pinoHttp from "pino-http";
 import session from "express-session";
 import router from "./routes";
 import { logger } from "./lib/logger";
+import { PostgresSessionStore } from "./lib/sessionStore";
 
 const app: Express = express();
 
@@ -43,8 +44,28 @@ app.use(
 // Trust the reverse proxy so secure cookies work behind HTTPS termination
 app.set("trust proxy", 1);
 
+const configuredOrigins = new Set(
+  [
+    process.env.REPLIT_DEV_DOMAIN,
+    ...(process.env.REPLIT_DOMAINS ?? "").split(","),
+  ]
+    .filter(Boolean)
+    .flatMap((domain) => domain!.startsWith("http") ? [domain!] : [`https://${domain}`]),
+);
+
+function isAllowedOrigin(origin: string): boolean {
+  if (/^https?:\/\/localhost(?::\d+)?$/.test(origin)) return true;
+  return configuredOrigins.has(origin);
+}
+
 app.use(cors({
-  origin: true,
+  origin: (origin, callback) => {
+    if (!origin || isAllowedOrigin(origin)) {
+      callback(null, origin ?? false);
+      return;
+    }
+    callback(null, false);
+  },
   credentials: true,
 }));
 
@@ -59,6 +80,7 @@ if (!sessionSecret) {
 app.use(
   session({
     secret: sessionSecret,
+    store: new PostgresSessionStore(),
     resave: false,
     saveUninitialized: false,
     cookie: {
@@ -69,6 +91,27 @@ app.use(
     },
   }),
 );
+
+// Cookies alone are not enough for authenticated state-changing requests:
+// reject browser requests that explicitly identify a different site.
+app.use("/api", (req, res, next) => {
+  const stateChanging = ["POST", "PUT", "PATCH", "DELETE"].includes(req.method);
+  const authenticated = req.session?.adminAuthenticated === true;
+  const fetchSite = req.get("Sec-Fetch-Site");
+  const origin = req.get("Origin");
+  const requestOrigin = `${req.protocol}://${req.get("Host")}`;
+
+  if (
+    stateChanging &&
+    authenticated &&
+    (fetchSite === "cross-site" ||
+      (origin && origin !== requestOrigin && !isAllowedOrigin(origin)))
+  ) {
+    res.status(403).json({ error: "Richiesta non autorizzata." });
+    return;
+  }
+  next();
+});
 
 app.use("/api", router);
 

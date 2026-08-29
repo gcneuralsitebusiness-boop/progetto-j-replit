@@ -52,12 +52,7 @@ function sanitize(s: string): string {
 
 router.post("/candidature", async (req, res): Promise<void> => {
   // Rate limiting
-  const ip =
-    (Array.isArray(req.headers["x-forwarded-for"])
-      ? req.headers["x-forwarded-for"][0]
-      : req.headers["x-forwarded-for"]) ??
-    req.socket.remoteAddress ??
-    "unknown";
+  const ip = req.ip || req.socket.remoteAddress || "unknown";
 
   const now = Date.now();
   const timestamps = (rateLimitMap.get(ip) ?? []).filter(

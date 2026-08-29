@@ -3,11 +3,17 @@ import { desc, eq } from "drizzle-orm";
 import { db } from "@workspace/db";
 import { iscrittiTable } from "@workspace/db/schema";
 import { notify } from "../lib/notify";
+import { createRateLimiter } from "../lib/rateLimit";
 
 const router = Router();
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const subscribeRateLimit = createRateLimiter({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: "Troppe richieste. Riprova tra qualche minuto.",
+});
 
-router.post("/subscribe", async (req, res): Promise<void> => {
+router.post("/subscribe", subscribeRateLimit, async (req, res): Promise<void> => {
   const email = typeof req.body?.email === "string" ? req.body.email.trim().toLowerCase() : "";
 
   if (!emailPattern.test(email)) {

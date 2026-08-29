@@ -53,7 +53,7 @@ function metricStats(entries: Entry[], selector: (entry: Entry) => number | null
   };
 }
 
-function display(value: number | null, suffix = "", decimals = 1) {
+function display(value: number | null | undefined, suffix = "", decimals = 1) {
   return value == null ? "—" : `${value.toLocaleString("it-IT", { maximumFractionDigits: decimals })}${suffix}`;
 }
 
@@ -351,13 +351,21 @@ export default function Statistiche() {
   const months: Date[] = [];
   for (let cursor = new Date(startMonth); !isAfter(cursor, endDate); cursor.setMonth(cursor.getMonth() + 1)) months.push(new Date(cursor));
   const byDate = new Map(data.all.map((entry) => [entry.data, entry]));
+  const firstWeight = data.body.find((entry) => entry.peso != null)?.peso ?? null;
+  const lastWeight = [...data.body].reverse().find((entry) => entry.peso != null)?.peso ?? null;
   const lastWeightIndex = data.body.reduce(
     (lastIndex, entry, index) => (entry.peso != null ? index : lastIndex),
     -1,
   );
   const heroStats = [
     { label: "GIORNI COMPLETATI", value: data.currentDay, caption: "giorno corrente" },
-    { label: "KG PERSI", value: 47, caption: "da 130 KG a 83 KG" },
+    {
+      label: "KG PERSI",
+      value: data.weightLost,
+      caption: firstWeight != null && lastWeight != null
+        ? `da ${firstWeight.toFixed(1)} KG a ${lastWeight.toFixed(1)} KG`
+        : "dati peso insufficienti",
+    },
     { label: "ALLENAMENTI TOTALI", value: data.totalSessions, caption: "tutto il percorso" },
     { label: "STREAK RECORD", value: data.streak.record, caption: "massimo storico" },
     { label: "STREAK ATTUALE", value: data.streak.current, caption: "giorni consecutivi" },

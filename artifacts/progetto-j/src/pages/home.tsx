@@ -103,13 +103,12 @@ export default function Home() {
                   duration={1600}
                 />
               </div>
-              <div className="measured mt-7 text-[16px] uppercase tracking-[0.12em] sm:text-[18px]">
-                  <span className="text-muted-foreground line-through">130 KG</span>
-                  <span className="mx-3 text-primary">→</span>
-                  <span className="text-[hsl(var(--acid))]">83 KG</span>
-              </div>
               {firstWeight != null && currentWeight != null && (
-                <p className="mt-3 font-mono text-[11px] tracking-[0.12em] text-foreground/50">PROGETTO: {firstWeight.toFixed(1)} → {currentWeight.toFixed(1)}</p>
+                <div className="measured mt-7 text-[16px] uppercase tracking-[0.12em] sm:text-[18px]">
+                  <span className="text-muted-foreground line-through">{firstWeight.toFixed(1)} KG</span>
+                  <span className="mx-3 text-primary">→</span>
+                  <span className="text-[hsl(var(--acid))]">{currentWeight.toFixed(1)} KG</span>
+                </div>
               )}
               <p className="mt-5 max-w-sm text-center font-sans text-[13px] uppercase tracking-[0.2em] text-muted-foreground sm:text-[14px]">
                 NON È MOTIVAZIONE. SONO NUMERI. 180 GIORNI, TUTTI PUBBLICI.

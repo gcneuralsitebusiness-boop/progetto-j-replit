@@ -2,6 +2,7 @@ import { Router } from "express";
 import { db } from "@workspace/db";
 import { socialTable } from "@workspace/db/schema";
 import { eq } from "drizzle-orm";
+import { isHttpsUrl } from "../lib/validation";
 
 const router = Router();
 
@@ -21,7 +22,7 @@ router.post("/social", async (req, res): Promise<void> => {
   }
 
   const { nome, url, icona, descrizione, ordine, visibile } = req.body;
-  if (!nome || !url || typeof nome !== "string" || typeof url !== "string") {
+  if (!nome || typeof nome !== "string" || !isHttpsUrl(url)) {
     res.status(400).json({ error: "nome and url are required" });
     return;
   }
@@ -54,8 +55,17 @@ router.put("/social/:id", async (req, res): Promise<void> => {
   }
 
   const updates: Partial<typeof socialTable.$inferInsert> = {};
-  for (const key of ["nome", "url", "icona", "descrizione"] as const) {
-    if (req.body[key] !== undefined) updates[key] = req.body[key];
+  for (const key of ["nome", "icona", "descrizione"] as const) {
+    if (req.body[key] !== undefined && typeof req.body[key] === "string") {
+      updates[key] = req.body[key];
+    }
+  }
+  if (req.body.url !== undefined) {
+    if (!isHttpsUrl(req.body.url)) {
+      res.status(400).json({ error: "url must use HTTPS" });
+      return;
+    }
+    updates.url = req.body.url.trim();
   }
   if (req.body.ordine !== undefined) updates.ordine = req.body.ordine;
   if (req.body.visibile !== undefined) updates.visibile = req.body.visibile;

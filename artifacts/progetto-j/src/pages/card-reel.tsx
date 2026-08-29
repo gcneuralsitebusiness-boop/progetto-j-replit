@@ -443,7 +443,7 @@ export default function CardReel() {
   }, []);
 
   const handleDownload = async () => {
-    if (!cardRef.current) return;
+    if (!cardRef.current || !entry) return;
     setDownloading(true);
     setDownloadError(null);
     try {

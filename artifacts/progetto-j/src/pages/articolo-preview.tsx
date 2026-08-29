@@ -25,7 +25,7 @@ function readingTime(testo: string): number {
 }
 
 async function fetchArticlePreview(slug: string) {
-  const res = await fetch(`/api/admin/articles/${encodeURIComponent(slug)}/preview`, {
+  const res = await fetch(`${import.meta.env.BASE_URL}api/admin/articles/${encodeURIComponent(slug)}/preview`, {
     credentials: "include",
   });
   if (res.status === 401) throw new Error("401");
