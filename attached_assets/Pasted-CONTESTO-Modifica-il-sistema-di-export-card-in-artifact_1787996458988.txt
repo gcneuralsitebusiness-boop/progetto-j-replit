@@ -1,0 +1,144 @@
+CONTESTO
+Modifica il sistema di export card in /artifacts/progetto-j/src/lib/canvas-card-export.ts
+e la pagina /artifacts/progetto-j/src/pages/card.tsx.
+Non toccare schema DB, API o altre pagine. Non introdurre librerie esterne.
+Rendering nativo su <canvas>, nessun html2canvas.
+
+OBIETTIVO
+Aggiornare il rendering grafico delle card giornaliere. Il design system resta
+invariato. Cambiano composizione e trattamento di superficie.
+
+TOKEN (invariati, centralizzali in un oggetto TOKENS in cima al file)
+nero #0A0A0A · rosso #B81D1D · bronzo #8B6914 · testo #E8E4DE
+hero #F0EBE3 · linea #1A1A1A
+Font: Bebas Neue (titoli), Inter (corpo), JetBrains Mono (dati)
+Zero raggi, zero ombre morbide, zero icone, zero emoji.
+
+FORMATI
+A) 1080 x 1350 (4:5)
+B) 1080 x 1920 (9:16)
+Renderizza a devicePixelRatio 2 con ctx.scale(2,2), esporta PNG.
+Prima di qualsiasi disegno: await document.fonts.ready
+
+=== 1. FUNZIONI DI SUPERFICIE (nuove, riusabili da tutte le varianti) ===
+
+drawGrain(ctx, w, h)
+  Genera rumore una volta sola con createImageData, valori RGB casuali,
+  alpha 255. Salvalo in un canvas offscreen module-level e riusalo sempre.
+  Disegnalo con globalAlpha 0.06 e globalCompositeOperation 'screen'.
+  Seed deterministico: usa un PRNG semplice (mulberry32) con seed = numeroGiorno,
+  così la stessa card riesporta identica.
+
+drawEdgeDensity(ctx, w, h)
+  NON una vignettatura radiale centrata. Due gradienti lineari:
+  - orizzontale: rgba(0,0,0,.50) a 0%, trasparente a 9%, trasparente a 91%,
+    rgba(0,0,0,.38) a 100%
+  - verticale: rgba(0,0,0,.30) a 0%, trasparente a 7%, trasparente a 93%,
+    rgba(0,0,0,.50) a 100%
+
+drawFold(ctx, w, h)
+  Piega orizzontale a y = h * 0.41.
+  Riga 1px rgba(255,255,255,.045), sotto riga 2px rgba(0,0,0,.28),
+  poi gradiente da rgba(0,0,0,.16) a trasparente alto 80px.
+
+drawSpine(ctx, w, h, testo)
+  Testo ruotato 90° sul bordo destro, centrato verticalmente, x = w - 20.
+  JetBrains Mono 14px, letterSpacing .42em (simulalo disegnando
+  carattere per carattere), colore #4E4A46, maiuscolo.
+  Formato: "PJ/109/180 · REGISTRO GIORNALIERO · REV.0"
+
+drawRuler(ctx, w, h, giorno)
+  180 tacche in fondo, area larga w-112 centrata, bottom 10px, gap 1px.
+  giorno passati: #8E8A85 alto 9px
+  giorno corrente: #B81D1D alto 22px
+  futuri: #242424 alto 5px
+  ogni decima tacca: +4px di altezza
+
+drawDataField(ctx, w, h, giorno)
+  Griglia 12 colonne x 15 righe che copre tutta la card, globalAlpha 0.075.
+  Bordo destro e inferiore di ogni cella 1px #3A3A3A.
+  Celle < giorno riempite #8E8A85, cella = giorno riempita #B81D1D.
+
+ORDINE DI DISEGNO obbligatorio:
+  fondo nero → drawDataField (se prevista) → contenuto → drawRuler
+  → drawSpine → drawFold (se prevista) → drawEdgeDensity → drawGrain
+
+=== 2. TESTATA E PIEDE (comuni) ===
+
+Margine base 56px.
+Testata a y=56:
+  sinistra: "J" Bebas 78px colore rosso, letterSpacing -.03em
+  destra, allineata a destra, JetBrains Mono:
+    riga 1: etichetta variante, 13px, letterSpacing .16em, #7E7A75, maiuscolo
+    riga 2: numero giorno, 34px, bold 700, #E8E4DE
+    riga 3: data DD.MM.YY, 13px, #7E7A75
+
+Piede a bottom 88px:
+  sinistra: "PROJECTJ180DAY.COM" Mono 15px letterSpacing .24em #7E7A75
+
+RIMUOVI il riquadro di taglio interno e i crocini di registro della versione
+precedente. Erano una cornice e chiudevano la composizione.
+
+=== 3. VARIANTI DA IMPLEMENTARE ===
+
+VARIANTE "fuori-squadra"  (default per i giorni non speciali)
+  Numero giorno in Bebas 660px, letterSpacing -.055em, colore #F0EBE3.
+  Posizione: x = -38 (esce dal bordo SINISTRO), baseline a y = h - 300.
+  Fantasma rosso: stesso testo, colore #B81D1D, globalAlpha .20,
+  offset +7px x, +5px y, disegnato PRIMA del testo pieno.
+  Sotto, a bottom 170: campo ATTRITO in Bebas 62px, line-height 1.02,
+  colore #F0EBE3. Se il testo contiene un punto, la parte dopo il primo
+  punto va in colore rosso.
+  Include: drawRuler, drawSpine, drawFold, drawEdgeDensity, drawGrain.
+
+VARIANTE "sovrastampa"
+  Testo ATTRITO in Bebas 196px, line-height .86, x=56, y=300, colore #F0EBE3,
+  massimo 3 righe con a capo automatico.
+  Sopra una riga a scelta (la seconda) disegna una fascia rossa:
+    ctx.globalCompositeOperation = 'multiply'
+    fillStyle #B81D1D
+    rettangolo che parte da x=0 (esce a sinistra) largo 760, alto 96,
+    allineato alla riga scelta
+    poi ripeti lo stesso rettangolo con globalCompositeOperation 'screen'
+    e globalAlpha .22
+    infine ripristina 'source-over'
+  Sotto, margine 56: SINTESI in Inter 30px line-height 1.5 colore #9A958F,
+  larghezza massima 80%.
+  Include: drawRuler, drawSpine, drawEdgeDensity, drawGrain.
+
+VARIANTE "campo-dati"  (usala ogni 10 giorni, quando giorno % 10 === 0)
+  drawDataField come sfondo.
+  Al centro verticale (46%):
+    numero giorno Bebas 300px, letterSpacing -.04em, #F0EBE3
+    sotto, Mono 16px letterSpacing .30em #7E7A75 maiuscolo:
+      "GIORNI PUBBLICI · NESSUNO CANCELLATO"
+    sotto, margine 64: linea 2px rossa larga 88%, poi ATTRITO in
+    Bebas 58px line-height 1.05 colore #E8E4DE.
+  Include: drawSpine, drawFold, drawEdgeDensity, drawGrain. NIENTE regolo
+  (il campo dati lo sostituisce).
+
+Rotazione: numeroGiorno % 10 === 0 → "campo-dati".
+Altrimenti alterna "fuori-squadra" e "sovrastampa" su numeroGiorno % 2.
+Mantieni comunque un selettore manuale nella UI per forzare la variante.
+
+=== 4. TESTO A CAPO ===
+Implementa wrapText(ctx, testo, x, y, maxWidth, lineHeight) che misura con
+ctx.measureText e va a capo per parole. Nessun troncamento silenzioso:
+se ATTRITO supera lo spazio disponibile, riduci progressivamente il
+font-size del 4% per volta fino a farlo entrare, minimo 60% della
+dimensione iniziale. Se ancora non entra, allora tronca su confine di
+parola e aggiungi un punto.
+
+=== 5. UI in card.tsx ===
+- Selettore variante
+- Selettore formato 4:5 / 9:16
+- Anteprima live
+- Pulsante "Scarica PNG", nome file: PJ-109-fuori-squadra-4x5.png
+
+VERIFICA prima di consegnare
+- Le tre varianti esportano senza errori a entrambi i formati
+- I font sono caricati (nessun fallback a sans-serif di sistema)
+- Riesportando lo stesso giorno la grana è identica
+- Il numero in "fuori-squadra" è visibilmente tagliato dal bordo sinistro
+- La fascia in "sovrastampa" produce granata scuro dove passa sopra l'avorio
+- Nessun raggio di bordo, nessuna ombra sfocata
