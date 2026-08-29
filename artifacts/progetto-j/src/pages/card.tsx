@@ -5,33 +5,67 @@ import type { Entry } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { getPhotoUrl } from "@workspace/object-storage-web";
 import CardCustomizer, { customizationFromRecord, type CardCustomization } from "@/components/CardCustomizer";
-import { DailyCardPreview } from "@/components/DailyCardPreview";
 import {
-  CARD_HEIGHTS,
-  CARD_WIDTH,
-  DAILY_CARD_VARIANTS,
-  downloadDailyCard,
-  isDailyCardVariant,
-  makeDailyCardData,
-  type DailyCardFormat,
-  type DailyCardVariant,
-} from "@/lib/daily-card";
+  DAILY_CANVAS_VARIANTS,
+  dailyCardCanvasDataUrl,
+  dailyCanvasFilename,
+  dailyCanvasVariant,
+  downloadDailyCardCanvas,
+  isDailyCanvasVariant,
+  type DailyCanvasCardData,
+  type DailyCanvasFormat,
+  type DailyCanvasVariant,
+} from "@/lib/canvas-card-export";
 import { stripHtml } from "@/lib/strip-html";
 import { usePageMeta } from "@/hooks/use-page-meta";
 
-function CardContent({ entry, entries }: { entry: Entry; entries: Entry[] }) {
+function cardDateLabel(value: string) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  return match ? `${match[3]}.${match[2]}.${match[1].slice(2)}` : value;
+}
+
+function DailyCanvasPreview({ data, className }: { data: DailyCanvasCardData; className?: string }) {
+  const [src, setSrc] = useState<string | null>(null);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    setSrc(null);
+    setFailed(false);
+    dailyCardCanvasDataUrl(data)
+      .then((next) => { if (active) setSrc(next); })
+      .catch(() => { if (active) setFailed(true); });
+    return () => { active = false; };
+  }, [data]);
+
+  return (
+    <div className={`h-full w-full overflow-hidden bg-[#0A0A0A] ${className ?? ""}`}>
+      {failed ? (
+        <div className="flex h-full items-center justify-center border border-border font-mono text-[10px] text-muted-foreground">
+          ANTEPRIMA NON DISPONIBILE
+        </div>
+      ) : src ? (
+        <img src={src} alt={`Card del giorno ${data.dayNumber}`} className="block h-full w-full object-cover" />
+      ) : (
+        <div className="h-full animate-pulse bg-[#141414]" />
+      )}
+    </div>
+  );
+}
+
+function CardContent({ entry }: { entry: Entry }) {
   const search = useSearch();
   const queryClient = useQueryClient();
   const { data: auth } = useAdminMe();
   const updateMutation = useUpdateEntry();
   const params = new URLSearchParams(search);
-  const defaultFormat: DailyCardFormat = params.get("format") === "story" ? "story" : "feed";
+  const defaultFormat: DailyCanvasFormat = params.get("format") === "story" ? "story" : "feed";
   const variantParam = params.get("variant");
-  const defaultVariant: DailyCardVariant | null = isDailyCardVariant(variantParam) ? variantParam : null;
-  const [format, setFormat] = useState<DailyCardFormat>(defaultFormat);
-  const [variant, setVariant] = useState<DailyCardVariant | null>(defaultVariant);
+  const defaultVariant: DailyCanvasVariant | null = isDailyCanvasVariant(variantParam) ? variantParam : null;
+  const [format, setFormat] = useState<DailyCanvasFormat>(defaultFormat);
+  const [variant, setVariant] = useState<DailyCanvasVariant | null>(defaultVariant);
   const [custom, setCustom] = useState<CardCustomization>(customizationFromRecord(entry));
-  const [downloading, setDownloading] = useState<DailyCardFormat | null>(null);
+  const [downloading, setDownloading] = useState<DailyCanvasFormat | null>(null);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -43,18 +77,30 @@ function CardContent({ entry, entries }: { entry: Entry; entries: Entry[] }) {
   const combined = useMemo(() => ({ ...entry, ...custom }), [entry, custom]);
   const photoPath = combined.cardImmagine || combined.foto;
   const photoUrl = photoPath ? (getPhotoUrl(photoPath) ?? photoPath) : null;
-  const cardData = makeDailyCardData(combined, format, variant, entries, photoUrl);
+  const cardData = useMemo<DailyCanvasCardData>(() => ({
+    dayNumber: entry.numero,
+    dateLabel: cardDateLabel(entry.data),
+    attrito: entry.attrito,
+    summary: combined.cardTitolo || entry.sintesi || entry.testo,
+    photoUrl,
+    subtitle: combined.cardSottotitolo,
+    overlay: combined.cardOverlay,
+    showWords: combined.cardMostraParole,
+    wordCount: stripHtml(entry.testo || "").split(/\s+/).filter(Boolean).length,
+    format,
+    variant,
+  }), [combined.cardMostraParole, combined.cardOverlay, combined.cardSottotitolo, combined.cardTitolo, entry, format, photoUrl, variant]);
   const feedPath = entry.cardFeed ? (getPhotoUrl(entry.cardFeed) ?? entry.cardFeed) : null;
   const canonical = `https://projectj180day.com/card/${entry.numero}`;
 
   usePageMeta({
     title: `Card giorno ${String(entry.numero).padStart(3, "0")} — Progetto J`,
-    description: entry.sintesi || `Card del giorno ${entry.numero} del percorso Progetto J.`,
+    description: stripHtml(entry.sintesi || entry.testo || `Card del giorno ${entry.numero} del percorso Progetto J.`),
     image: feedPath,
     url: canonical,
   });
 
-  const setSearch = (nextFormat: DailyCardFormat, nextVariant: DailyCardVariant | null) => {
+  const setSearch = (nextFormat: DailyCanvasFormat, nextVariant: DailyCanvasVariant | null) => {
     const next = new URLSearchParams();
     next.set("format", nextFormat);
     if (nextVariant) next.set("variant", nextVariant);
@@ -63,11 +109,14 @@ function CardContent({ entry, entries }: { entry: Entry; entries: Entry[] }) {
     setVariant(nextVariant);
   };
 
-  const download = async (nextFormat: DailyCardFormat) => {
+  const download = async (nextFormat: DailyCanvasFormat) => {
     setDownloading(nextFormat);
     setError(null);
     try {
-      await downloadDailyCard(makeDailyCardData(combined, nextFormat, variant, entries, photoUrl));
+      await downloadDailyCardCanvas({
+        ...cardData,
+        format: nextFormat,
+      }, dailyCanvasFilename(entry.numero, dailyCanvasVariant(cardData, variant), nextFormat));
     } catch {
       setError("Impossibile generare il PNG. Verifica l'immagine e riprova.");
     } finally {
@@ -94,13 +143,13 @@ function CardContent({ entry, entries }: { entry: Entry; entries: Entry[] }) {
     }
   };
 
-  const previewHeight = CARD_HEIGHTS[format] / CARD_WIDTH * 100;
+  const previewHeight = (format === "feed" ? 1350 : 1920) / 1080 * 100;
   return (
     <main className="min-h-screen bg-[#080808] px-3 py-7 text-white">
       <div className="mx-auto flex max-w-6xl flex-col gap-6">
         <header className="flex flex-col gap-4 border-b border-white/15 pb-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <div className="font-mono text-[10px] uppercase tracking-[0.28em] text-white/55">Card giornaliera · {format === "feed" ? "1080 × 1350" : "1080 × 1920"}</div>
+            <div className="font-mono text-[10px] uppercase tracking-[0.28em] text-white/55">Card giornaliera · {format === "feed" ? "1080 × 1350 · 4:5" : "1080 × 1920 · 9:16"}</div>
             <h1 className="bebas mt-2 text-5xl leading-none text-[#B81D1D]">GIORNO {String(entry.numero).padStart(3, "0")}</h1>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -114,19 +163,19 @@ function CardContent({ entry, entries }: { entry: Entry; entries: Entry[] }) {
 
         <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
           <div className="mx-auto w-full max-w-[620px]">
-            <div className="overflow-hidden border border-white/15 bg-black shadow-2xl" style={{ aspectRatio: `1080 / ${CARD_HEIGHTS[format]}` }}>
-              <DailyCardPreview entry={combined} format={format} variant={variant} className="h-full w-full" />
+            <div className="overflow-hidden border border-white/15 bg-black" style={{ aspectRatio: `1080 / ${format === "feed" ? 1350 : 1920}` }}>
+              <DailyCanvasPreview data={cardData} />
             </div>
-            <p className="mt-3 text-center font-mono text-[10px] uppercase tracking-[0.18em] text-white/45">Anteprima in scala · formato reale {CARD_WIDTH} × {CARD_HEIGHTS[format]}</p>
+            <p className="mt-3 text-center font-mono text-[10px] uppercase tracking-[0.18em] text-white/45">Anteprima in scala · formato reale 1080 × {format === "feed" ? 1350 : 1920}</p>
           </div>
           <aside className="border border-white/15 bg-[#0d0d0c] p-4">
             <div className="mb-3 font-mono text-[10px] uppercase tracking-[0.24em] text-white/55">Variante</div>
             <div className="grid grid-cols-2 gap-2">
               <button onClick={() => setSearch(format, null)} className={`border px-2 py-2 text-left font-mono text-[9px] uppercase tracking-wide ${variant === null ? "border-[#B81D1D] text-[#F4F1EC]" : "border-white/15 text-white/55"}`}>Automatica</button>
-              {DAILY_CARD_VARIANTS.map((item) => <button key={item} onClick={() => setSearch(format, item)} className={`border px-2 py-2 text-left font-mono text-[9px] uppercase tracking-wide ${variant === item ? "border-[#B81D1D] bg-[#B81D1D] text-white" : "border-white/15 text-white/55 hover:text-white"}`}>{item.replaceAll("_", " ")}</button>)}
+              {DAILY_CANVAS_VARIANTS.map((item) => <button key={item} onClick={() => setSearch(format, item)} className={`border px-2 py-2 text-left font-mono text-[9px] uppercase tracking-wide ${variant === item ? "border-[#B81D1D] bg-[#B81D1D] text-white" : "border-white/15 text-white/55 hover:text-white"}`}>{item}</button>)}
             </div>
             <div className="mt-5 border-t border-white/10 pt-4 text-[10px] font-mono uppercase tracking-widest text-white/45">
-              Seed: {entry.numero}-{format}-{cardData.variant}<br />Safe area story: 250–1660 px
+              Automatico: {dailyCanvasVariant(cardData, variant)}<br />Seed: {entry.numero}-{format}-{variant ?? "automatico"}
             </div>
           </aside>
         </section>
@@ -146,5 +195,5 @@ export default function Card() {
   const entry = entries?.find((item) => item.numero === numero);
   if (isLoading) return <div className="min-h-screen bg-[#080808] flex items-center justify-center font-mono text-xs uppercase tracking-widest text-white/50">Caricamento card…</div>;
   if (isError || !entry || !entries) return <div className="min-h-screen bg-[#080808] flex items-center justify-center font-mono text-xs uppercase tracking-widest text-white/50">Giorno non trovato</div>;
-  return <CardContent entry={entry} entries={entries} />;
+  return <CardContent entry={entry} />;
 }

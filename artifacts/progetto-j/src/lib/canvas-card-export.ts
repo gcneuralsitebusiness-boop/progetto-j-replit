@@ -1,12 +1,25 @@
 import { stripHtml } from "@/lib/strip-html";
 
-const BLACK = "#0A0A0A";
-const RED = "#B81D1D";
-const WHITE = "#E8E4DE";
+export const TOKENS = {
+  black: "#0A0A0A",
+  red: "#B81D1D",
+  bronze: "#8B6914",
+  text: "#E8E4DE",
+  hero: "#F0EBE3",
+  line: "#1A1A1A",
+  muted: "#7E7A75",
+  grain: "#8E8A85",
+  spine: "#4E4A46",
+  grid: "#3A3A3A",
+} as const;
+
+const BLACK = TOKENS.black;
+const RED = TOKENS.red;
+const WHITE = TOKENS.text;
 const GREY = "#6E6A65";
 const DARK_GREY = "#4A4744";
 
-type CanvasFont = "Bebas Neue" | "Inter" | "Arial";
+type CanvasFont = "Bebas Neue" | "Inter" | "JetBrains Mono" | "Arial";
 
 export interface CanvasStat {
   value: string;
@@ -63,8 +76,10 @@ function loadImage(url: string): Promise<HTMLImageElement> {
 }
 
 async function waitForCanvasFonts() {
-  await document.fonts.load('bold 120px "Bebas Neue"');
+  await document.fonts.load('400 660px "Bebas Neue"');
   await document.fonts.load('400 34px "Inter"');
+  await document.fonts.load('400 16px "JetBrains Mono"');
+  await document.fonts.load('700 34px "JetBrains Mono"');
   await document.fonts.ready;
 }
 
@@ -172,6 +187,457 @@ function drawCanvasImage(
 
 async function loadOptionalImage(url: string | null) {
   return url ? loadImage(url) : null;
+}
+
+export const DAILY_CANVAS_FORMATS = ["feed", "story"] as const;
+export type DailyCanvasFormat = (typeof DAILY_CANVAS_FORMATS)[number];
+
+export const DAILY_CANVAS_VARIANTS = ["fuori-squadra", "sovrastampa", "campo-dati"] as const;
+export type DailyCanvasVariant = (typeof DAILY_CANVAS_VARIANTS)[number];
+
+export interface DailyCanvasCardInput {
+  dayNumber: number;
+  dateLabel: string;
+  attrito: string | null | undefined;
+  summary: string | null | undefined;
+  photoUrl: string | null;
+  subtitle?: string | null;
+  overlay?: number | null;
+  showWords?: boolean | null;
+  wordCount?: number | null;
+}
+
+export interface DailyCanvasCardData extends DailyCanvasCardInput {
+  format: DailyCanvasFormat;
+  variant?: DailyCanvasVariant | null;
+}
+
+const DAILY_CARD_WIDTH = 1080;
+const DAILY_CARD_HEIGHTS: Record<DailyCanvasFormat, number> = { feed: 1350, story: 1920 };
+const DAILY_CARD_DPR = 2;
+let dailyGrainCache: { key: string; canvas: HTMLCanvasElement } | null = null;
+
+function cleanCanvasText(value: string | null | undefined) {
+  return stripHtml(value ?? "").replace(/\s+/g, " ").trim();
+}
+
+export function dailyCanvasVariant(data: DailyCanvasCardInput, requested?: string | null): DailyCanvasVariant {
+  if (requested === "fuori-squadra" || requested === "sovrastampa" || requested === "campo-dati") return requested;
+  if (data.dayNumber % 10 === 0) return "campo-dati";
+  return data.dayNumber % 2 === 0 ? "fuori-squadra" : "sovrastampa";
+}
+
+export function isDailyCanvasVariant(value: string | null | undefined): value is DailyCanvasVariant {
+  return DAILY_CANVAS_VARIANTS.includes(value as DailyCanvasVariant);
+}
+
+export function dailyCanvasFilename(dayNumber: number, variant: DailyCanvasVariant, format: DailyCanvasFormat) {
+  const formatLabel = format === "feed" ? "4x5" : "9x16";
+  return `PJ-${String(dayNumber).padStart(3, "0")}-${variant}-${formatLabel}.png`;
+}
+
+function mulberry32(seed: number) {
+  let value = (seed >>> 0) || 1;
+  return () => {
+    value += 0x6D2B79F5;
+    let result = value;
+    result = Math.imul(result ^ (result >>> 15), result | 1);
+    result ^= result + Math.imul(result ^ (result >>> 7), result | 61);
+    return ((result ^ (result >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function drawDailyGrain(ctx: CanvasRenderingContext2D, width: number, height: number, seed: number) {
+  const grainWidth = Math.ceil(width / 4);
+  const grainHeight = Math.ceil(height / 4);
+  const key = `${grainWidth}x${grainHeight}:${seed}`;
+  if (!dailyGrainCache || dailyGrainCache.key !== key) {
+    const canvas = document.createElement("canvas");
+    canvas.width = grainWidth;
+    canvas.height = grainHeight;
+    const grainContext = canvas.getContext("2d");
+    if (!grainContext) return;
+    const noise = grainContext.createImageData(grainWidth, grainHeight);
+    const random = mulberry32(seed);
+    for (let index = 0; index < noise.data.length; index += 4) {
+      const channel = Math.floor(random() * 256);
+      noise.data[index] = channel;
+      noise.data[index + 1] = channel;
+      noise.data[index + 2] = channel;
+      noise.data[index + 3] = 255;
+    }
+    grainContext.putImageData(noise, 0, 0);
+    dailyGrainCache = { key, canvas };
+  }
+  ctx.save();
+  ctx.globalAlpha = 0.06;
+  ctx.globalCompositeOperation = "screen";
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(dailyGrainCache.canvas, 0, 0, width, height);
+  ctx.restore();
+}
+
+function drawDataField(ctx: CanvasRenderingContext2D, width: number, height: number, dayNumber: number) {
+  const columns = 12;
+  const rows = 15;
+  const cellWidth = width / columns;
+  const cellHeight = height / rows;
+  const current = Math.min(180, Math.max(1, dayNumber));
+  ctx.save();
+  ctx.globalAlpha = 0.075;
+  for (let row = 0; row < rows; row += 1) {
+    for (let column = 0; column < columns; column += 1) {
+      const index = row * columns + column + 1;
+      if (index < current) {
+        ctx.fillStyle = TOKENS.grain;
+        ctx.fillRect(column * cellWidth, row * cellHeight, cellWidth, cellHeight);
+      } else if (index === current) {
+        ctx.fillStyle = TOKENS.red;
+        ctx.fillRect(column * cellWidth, row * cellHeight, cellWidth, cellHeight);
+      }
+      ctx.strokeStyle = TOKENS.grid;
+      ctx.lineWidth = 1;
+      ctx.strokeRect(column * cellWidth, row * cellHeight, cellWidth, cellHeight);
+    }
+  }
+  ctx.restore();
+}
+
+function drawEdgeDensity(ctx: CanvasRenderingContext2D, width: number, height: number) {
+  const horizontal = ctx.createLinearGradient(0, 0, width, 0);
+  horizontal.addColorStop(0, "rgba(0,0,0,.50)");
+  horizontal.addColorStop(0.09, "rgba(0,0,0,0)");
+  horizontal.addColorStop(0.91, "rgba(0,0,0,0)");
+  horizontal.addColorStop(1, "rgba(0,0,0,.38)");
+  ctx.fillStyle = horizontal;
+  ctx.fillRect(0, 0, width, height);
+
+  const vertical = ctx.createLinearGradient(0, 0, 0, height);
+  vertical.addColorStop(0, "rgba(0,0,0,.30)");
+  vertical.addColorStop(0.07, "rgba(0,0,0,0)");
+  vertical.addColorStop(0.93, "rgba(0,0,0,0)");
+  vertical.addColorStop(1, "rgba(0,0,0,.50)");
+  ctx.fillStyle = vertical;
+  ctx.fillRect(0, 0, width, height);
+}
+
+function drawFold(ctx: CanvasRenderingContext2D, width: number, height: number) {
+  const y = height * 0.41;
+  ctx.strokeStyle = "rgba(255,255,255,.045)";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(0, y);
+  ctx.lineTo(width, y);
+  ctx.stroke();
+  ctx.strokeStyle = "rgba(0,0,0,.28)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(0, y + 2);
+  ctx.lineTo(width, y + 2);
+  ctx.stroke();
+  const gradient = ctx.createLinearGradient(0, y + 3, 0, y + 83);
+  gradient.addColorStop(0, "rgba(0,0,0,.16)");
+  gradient.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, y + 3, width, 80);
+}
+
+function drawRuler(ctx: CanvasRenderingContext2D, width: number, height: number, dayNumber: number) {
+  const start = 56;
+  const end = width - 56;
+  const gap = 1;
+  const tickWidth = (end - start - gap * 179) / 180;
+  const current = Math.min(180, Math.max(1, dayNumber));
+  ctx.save();
+  for (let index = 1; index <= 180; index += 1) {
+    const x = start + (index - 1) * (tickWidth + gap);
+    const isTenth = index % 10 === 0;
+    const tickHeight = index === current ? 22 : index < current ? 9 : 5;
+    ctx.fillStyle = index === current ? TOKENS.red : index < current ? TOKENS.grain : "#242424";
+    ctx.fillRect(x, height - 10 - tickHeight, tickWidth, tickHeight + (isTenth ? 4 : 0));
+  }
+  ctx.restore();
+}
+
+function drawSpine(ctx: CanvasRenderingContext2D, width: number, height: number, dayNumber: number) {
+  ctx.save();
+  ctx.translate(width - 20, height / 2);
+  ctx.rotate(-Math.PI / 2);
+  setFont(ctx, 14, "JetBrains Mono");
+  ctx.fillStyle = TOKENS.spine;
+  ctx.textAlign = "center";
+  drawSpacedText(ctx, `PJ/${String(dayNumber).padStart(3, "0")}/180 · REGISTRO GIORNALIERO · REV.0`, 0, 0, 5.88, "center");
+  ctx.restore();
+}
+
+function wrapDailyText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number) {
+  const lines: string[] = [];
+  let line = "";
+  for (const word of text.split(/\s+/).filter(Boolean)) {
+    if (ctx.measureText(word).width > maxWidth) {
+      if (line) {
+        lines.push(line);
+        line = "";
+      }
+      let chunk = "";
+      for (const character of word) {
+        const candidate = `${chunk}${character}`;
+        if (chunk && ctx.measureText(candidate).width > maxWidth) {
+          lines.push(chunk);
+          chunk = character;
+        } else {
+          chunk = candidate;
+        }
+      }
+      line = chunk;
+      continue;
+    }
+    const candidate = line ? `${line} ${word}` : word;
+    if (line && ctx.measureText(candidate).width > maxWidth) {
+      lines.push(line);
+      line = word;
+    } else {
+      line = candidate;
+    }
+  }
+  if (line) lines.push(line);
+  return lines;
+}
+
+function fitAttrito(ctx: CanvasRenderingContext2D, text: string, maxWidth: number, maxLines: number, initialSize: number) {
+  const minimum = initialSize * 0.6;
+  let size = initialSize;
+  while (size >= minimum) {
+    setFont(ctx, size, "Bebas Neue");
+    const lines = wrapDailyText(ctx, text, maxWidth);
+    if (lines.length <= maxLines) return { size, lines, truncated: false };
+    size *= 0.96;
+  }
+
+  setFont(ctx, minimum, "Bebas Neue");
+  const lines = wrapDailyText(ctx, text, maxWidth);
+  if (lines.length <= maxLines) return { size: minimum, lines, truncated: false };
+  const kept = lines.slice(0, maxLines);
+  let last = kept[kept.length - 1] ?? "";
+  const omitted = lines.slice(maxLines).join(" ");
+  while (last && ctx.measureText(`${last}.`).width > maxWidth) last = last.replace(/\s+\S*$/, "");
+  kept[kept.length - 1] = `${last.replace(/[.…]+$/, "")}.`;
+  return { size: minimum, lines: kept, truncated: Boolean(omitted) };
+}
+
+function drawAttritoLines(
+  ctx: CanvasRenderingContext2D,
+  lines: string[],
+  x: number,
+  firstBaseline: number,
+  lineHeight: number,
+  size: number,
+  splitColor = true,
+  primaryColor: string = TOKENS.hero,
+) {
+  setFont(ctx, size, "Bebas Neue");
+  let afterFirstPeriod = false;
+  lines.forEach((line, index) => {
+    const baseline = firstBaseline + index * lineHeight;
+    ctx.textAlign = "left";
+    if (afterFirstPeriod && splitColor) {
+      ctx.fillStyle = TOKENS.red;
+      ctx.fillText(line, x, baseline);
+      return;
+    }
+    const split = splitColor ? line.indexOf(".") : -1;
+    ctx.fillStyle = primaryColor;
+    ctx.fillText(line, x, baseline);
+    if (split >= 0 && split < line.length - 1) {
+      const prefix = line.slice(0, split + 1);
+      ctx.fillStyle = TOKENS.red;
+      ctx.fillText(line.slice(split + 1), x + ctx.measureText(prefix).width, baseline);
+      afterFirstPeriod = true;
+    } else if (split >= 0) {
+      afterFirstPeriod = true;
+    }
+  });
+}
+
+function drawDailyHeader(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  variant: DailyCanvasVariant,
+  dayNumber: number,
+  dateLabel: string,
+  subtitle: string,
+  showWords: boolean,
+  wordCount: number,
+) {
+  setFont(ctx, 78, "Bebas Neue");
+  ctx.fillStyle = TOKENS.red;
+  ctx.textAlign = "left";
+  ctx.fillText("J", 56, 112);
+
+  setFont(ctx, 12, "JetBrains Mono");
+  ctx.fillStyle = TOKENS.muted;
+  drawSpacedText(ctx, subtitle || "PROGETTO J", 56, 142, 2.16);
+  if (showWords) {
+    setFont(ctx, 11, "JetBrains Mono");
+    ctx.fillStyle = TOKENS.bronze;
+    drawSpacedText(ctx, `${wordCount} PAROLE`, 56, 168, 1.65);
+  }
+
+  setFont(ctx, 13, "JetBrains Mono");
+  ctx.fillStyle = TOKENS.muted;
+  ctx.textAlign = "right";
+  drawSpacedText(ctx, variant.toUpperCase(), width - 56, 66, 2.08, "right");
+  setFont(ctx, 34, "JetBrains Mono", "700");
+  ctx.fillStyle = TOKENS.text;
+  ctx.fillText(String(dayNumber).padStart(3, "0"), width - 56, 103);
+  setFont(ctx, 13, "JetBrains Mono");
+  ctx.fillStyle = TOKENS.muted;
+  ctx.fillText(dateLabel, width - 56, 130);
+}
+
+function drawDailyFooter(ctx: CanvasRenderingContext2D, height: number) {
+  setFont(ctx, 15, "JetBrains Mono");
+  ctx.fillStyle = TOKENS.muted;
+  ctx.textAlign = "left";
+  drawSpacedText(ctx, "PROJECTJ180DAY.COM", 56, height - 88, 3.6);
+}
+
+function drawDailySummary(ctx: CanvasRenderingContext2D, summary: string, x: number, y: number, maxWidth: number, maxLines = 3) {
+  if (!summary) return;
+  let size = 30;
+  let lines: string[] = [];
+  while (size >= 18) {
+    setFont(ctx, size, "Inter");
+    lines = wrapDailyText(ctx, summary, maxWidth);
+    if (lines.length <= maxLines) break;
+    size -= 1;
+  }
+  if (lines.length > maxLines) {
+    lines = lines.slice(0, maxLines);
+    let last = lines[lines.length - 1] ?? "";
+    while (last && ctx.measureText(`${last}.`).width > maxWidth) last = last.replace(/\s+\S*$/, "");
+    lines[lines.length - 1] = `${last.replace(/[.…]+$/, "")}.`;
+  }
+  ctx.fillStyle = "#9A958F";
+  ctx.textAlign = "left";
+  lines.forEach((line, index) => ctx.fillText(line, x, y + index * size * 1.5));
+}
+
+function drawOutsideTeam(ctx: CanvasRenderingContext2D, width: number, height: number, attrito: string) {
+  const number = String(Math.round(Number(ctx.canvas.dataset.day ?? "0"))).padStart(3, "0");
+  const baseline = height - 300;
+  setFont(ctx, 660, "Bebas Neue");
+  ctx.textAlign = "left";
+  ctx.fillStyle = TOKENS.red;
+  ctx.globalAlpha = 0.2;
+  drawSpacedText(ctx, number, -31, baseline + 5, -36.3);
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = TOKENS.hero;
+  drawSpacedText(ctx, number, -38, baseline, -36.3);
+
+  const fitted = fitAttrito(ctx, attrito, width - 112, 2, 62);
+  drawAttritoLines(ctx, fitted.lines, 56, height - 170 - (fitted.lines.length - 1) * 63, 63, fitted.size);
+}
+
+function drawOverprint(ctx: CanvasRenderingContext2D, width: number, height: number, attrito: string, summary: string) {
+  const fitted = fitAttrito(ctx, attrito, width - 112, 3, 196);
+  const lineHeight = fitted.size * 0.86;
+  const firstBaseline = 300;
+  const bandLineY = firstBaseline + Math.min(1, Math.max(0, fitted.lines.length - 1)) * lineHeight;
+  drawAttritoLines(ctx, fitted.lines, 56, firstBaseline, lineHeight, fitted.size);
+  ctx.save();
+  ctx.globalCompositeOperation = "multiply";
+  ctx.fillStyle = TOKENS.red;
+  ctx.fillRect(0, bandLineY - 86, 760, 96);
+  ctx.globalCompositeOperation = "screen";
+  ctx.globalAlpha = 0.22;
+  ctx.fillRect(0, bandLineY - 86, 760, 96);
+  ctx.restore();
+  drawDailySummary(ctx, summary, 56, Math.min(height - 270, firstBaseline + fitted.lines.length * lineHeight + 100), width * 0.8);
+}
+
+function drawDataFieldCard(ctx: CanvasRenderingContext2D, width: number, height: number, dayNumber: number, attrito: string) {
+  const centerY = height * 0.46;
+  setFont(ctx, 300, "Bebas Neue");
+  ctx.fillStyle = TOKENS.hero;
+  ctx.textAlign = "center";
+  drawSpacedText(ctx, String(dayNumber).padStart(3, "0"), width / 2, centerY, -12, "center");
+  setFont(ctx, 16, "JetBrains Mono");
+  ctx.fillStyle = TOKENS.muted;
+  drawSpacedText(ctx, "GIORNI PUBBLICI · NESSUNO CANCELLATO", width / 2, centerY + 54, 4.8, "center");
+  ctx.fillStyle = TOKENS.red;
+  ctx.fillRect(64, centerY + 96, width - 128, 2);
+  const fitted = fitAttrito(ctx, attrito, width - 128, 3, 58);
+  drawAttritoLines(ctx, fitted.lines, 64, centerY + 178, 61, fitted.size, false, TOKENS.text);
+}
+
+function dailyCanvasInput(data: DailyCanvasCardData) {
+  const variant = dailyCanvasVariant(data, data.variant);
+  return {
+    ...data,
+    variant,
+    attrito: cleanCanvasText(data.attrito) || "NESSUN ATTRITO REGISTRATO.",
+    summary: cleanCanvasText(data.summary),
+    subtitle: cleanCanvasText(data.subtitle),
+    overlay: Math.min(90, Math.max(30, data.overlay ?? 55)),
+    showWords: data.showWords !== false,
+    wordCount: Math.max(0, Math.round(data.wordCount ?? 0)),
+  };
+}
+
+export async function renderDailyCardCanvas(data: DailyCanvasCardData): Promise<HTMLCanvasElement> {
+  await waitForCanvasFonts();
+  const input = dailyCanvasInput(data);
+  const width = DAILY_CARD_WIDTH;
+  const height = DAILY_CARD_HEIGHTS[input.format];
+  const working = document.createElement("canvas");
+  working.width = width * DAILY_CARD_DPR;
+  working.height = height * DAILY_CARD_DPR;
+  working.dataset.day = String(input.dayNumber);
+  const ctx = working.getContext("2d");
+  if (!ctx) throw new Error("Canvas 2D non disponibile");
+  ctx.scale(DAILY_CARD_DPR, DAILY_CARD_DPR);
+  ctx.fillStyle = TOKENS.black;
+  ctx.fillRect(0, 0, width, height);
+  const image = await loadOptionalImage(input.photoUrl).catch(() => null);
+  if (image) drawCover(ctx, image, width, height, 1, "grayscale(18%) contrast(106%)");
+  const overlay = input.overlay / 100;
+  const backdrop = ctx.createLinearGradient(0, 0, 0, height);
+  backdrop.addColorStop(0, image ? `rgba(0,0,0,${overlay * 0.65})` : TOKENS.black);
+  backdrop.addColorStop(0.58, image ? `rgba(0,0,0,${overlay})` : "#11110F");
+  backdrop.addColorStop(1, image ? `rgba(0,0,0,${Math.min(0.96, overlay + 0.24)})` : "rgba(0,0,0,.90)");
+  ctx.fillStyle = backdrop;
+  ctx.fillRect(0, 0, width, height);
+
+  if (input.variant === "campo-dati") drawDataField(ctx, width, height, input.dayNumber);
+  drawDailyHeader(ctx, width, input.variant, input.dayNumber, input.dateLabel, input.subtitle, input.showWords, input.wordCount);
+  if (input.variant === "fuori-squadra") drawOutsideTeam(ctx, width, height, input.attrito);
+  if (input.variant === "sovrastampa") drawOverprint(ctx, width, height, input.attrito, input.summary);
+  if (input.variant === "campo-dati") drawDataFieldCard(ctx, width, height, input.dayNumber, input.attrito);
+  drawDailyFooter(ctx, height);
+  if (input.variant !== "campo-dati") drawRuler(ctx, width, height, input.dayNumber);
+  drawSpine(ctx, width, height, input.dayNumber);
+  if (input.variant !== "sovrastampa") drawFold(ctx, width, height);
+  drawEdgeDensity(ctx, width, height);
+  drawDailyGrain(ctx, width, height, input.dayNumber);
+
+  const output = document.createElement("canvas");
+  output.width = width;
+  output.height = height;
+  const outputContext = output.getContext("2d");
+  if (!outputContext) throw new Error("Canvas 2D non disponibile");
+  outputContext.drawImage(working, 0, 0, width, height);
+  return output;
+}
+
+export async function dailyCardCanvasDataUrl(data: DailyCanvasCardData) {
+  return (await renderDailyCardCanvas(data)).toDataURL("image/png");
+}
+
+export async function downloadDailyCardCanvas(data: DailyCanvasCardData, filename?: string) {
+  const input = dailyCanvasInput(data);
+  const canvas = await renderDailyCardCanvas(input);
+  await drawCanvasImage(canvas, filename ?? dailyCanvasFilename(input.dayNumber, input.variant, input.format));
 }
 
 export async function downloadDailyCanvasCard({
