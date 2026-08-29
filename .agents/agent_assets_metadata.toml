@@ -20,3 +20,10 @@ uri = "file://attached_assets/progetto-j-copy-completo.md"
 type = "text"
 title = "Progetto J — Copy completo del sito"
 description = "Esportazione in Markdown del copy pubblico, dei dati testuali del Journaling giorno per giorno e del testo completo degli articoli. Nessun codice o dato dell’app è stato modificato."
+
+[[outputs]]
+id = "lqSC3GPsUZqT7I9ta4Fxq"
+uri = "file://exports/testo-articoli.md"
+type = "text"
+title = "Testo estratto da tutti gli articoli"
+description = "File Markdown con il testo pulito di 14 articoli, incluse le bozze."
