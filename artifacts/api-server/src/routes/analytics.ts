@@ -4,6 +4,9 @@ import { pageviewsTable, pageviewsDailyTable, articoliTable } from "@workspace/d
 import { and, gte, sql, desc, eq, type SQL } from "drizzle-orm";
 
 const router: IRouter = Router();
+const SESSION_RAW_LIMIT = 5_000;
+const SESSION_DISPLAY_LIMIT = 100;
+const SESSION_PAGE_LIMIT = 100;
 
 // ─── Rate limiter (in-memory, 20 req/min per IP) ──────────────────────────────
 const rateLimits = new Map<string, { count: number; windowStart: number }>();
@@ -182,6 +185,112 @@ function finalizeStats(s: PageStats) {
   };
 }
 
+function sourceLabel(referrer: string | null): string {
+  const value = (referrer ?? "").trim().toLowerCase();
+  if (!value || value === "direct") return "Diretto";
+  if (value.includes("instagram") || value === "ig") return "Instagram";
+  if (value.includes("google")) return "Google";
+  if (value.includes("whatsapp") || value === "wa") return "WhatsApp";
+  if (value.includes("telegram") || value === "tg") return "Telegram";
+  return "Altro";
+}
+
+type SessionPageRow = {
+  id: number;
+  timestamp: Date;
+  path: string;
+  referrer: string | null;
+  device: string;
+  durationSec: number | null;
+  scrollDepth: number | null;
+  sessionId: string | null;
+  viewId: string | null;
+  closed: number;
+  lastSeen: Date;
+};
+
+function buildAnonymousSessions(rows: SessionPageRow[], nowMs: number) {
+  type SessionGroup = {
+    key: string;
+    sessionId: string | null;
+    startedMs: number;
+    lastActivityMs: number;
+    durationSum: number;
+    device: string;
+    referrer: string | null;
+    active: boolean;
+    pages: SessionPageRow[];
+  };
+
+  const groups = new Map<string, SessionGroup>();
+  for (const row of rows) {
+    const sessionId = typeof row.sessionId === "string" && row.sessionId.trim()
+      ? row.sessionId.trim()
+      : null;
+    const key = sessionId ? `session:${sessionId}` : `page:${row.id}`;
+    const timestampMs = row.timestamp.getTime();
+    const lastSeenMs = row.lastSeen.getTime();
+    const durationSec = row.durationSec != null && Number.isFinite(row.durationSec)
+      ? Math.max(0, row.durationSec)
+      : 0;
+    const pageEndMs = Math.max(timestampMs, lastSeenMs, timestampMs + durationSec * 1_000);
+    const current = groups.get(key);
+
+    if (!current) {
+      groups.set(key, {
+        key,
+        sessionId,
+        startedMs: timestampMs,
+        lastActivityMs: pageEndMs,
+        durationSum: durationSec,
+        device: row.device,
+        referrer: row.referrer || null,
+        active: row.closed === 0 && lastSeenMs >= nowMs - 5 * 60_000,
+        pages: [row],
+      });
+      continue;
+    }
+
+    current.startedMs = Math.min(current.startedMs, timestampMs);
+    current.lastActivityMs = Math.max(current.lastActivityMs, pageEndMs);
+    current.durationSum += durationSec;
+    current.active ||= row.closed === 0 && lastSeenMs >= nowMs - 5 * 60_000;
+    if (!current.referrer && row.referrer) current.referrer = row.referrer;
+    current.pages.push(row);
+  }
+
+  return [...groups.values()]
+    .sort((a, b) => b.lastActivityMs - a.lastActivityMs)
+    .slice(0, SESSION_DISPLAY_LIMIT)
+    .map((group) => {
+      const pages = [...group.pages]
+        .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime() || a.id - b.id)
+        .slice(0, SESSION_PAGE_LIMIT);
+      const timelineDuration = Math.max(0, Math.round((group.lastActivityMs - group.startedMs) / 1_000));
+      const durationSec = Math.max(timelineDuration, Math.round(group.durationSum));
+      const displayId = group.sessionId
+        ? `ANON-${group.sessionId.slice(0, 8).toUpperCase()}`
+        : `SINGOLA-${group.pages[0]?.id ?? "—"}`;
+
+      return {
+        id: displayId,
+        startedAt: new Date(group.startedMs).toISOString(),
+        lastActivityAt: new Date(group.lastActivityMs).toISOString(),
+        durationSec,
+        device: group.device === "mobile" ? "mobile" : "desktop",
+        source: sourceLabel(group.referrer),
+        active: group.active,
+        pageCount: group.pages.length,
+        pages: pages.map((page) => ({
+          path: page.path,
+          timestamp: page.timestamp.toISOString(),
+          durationSec: page.durationSec,
+          scrollDepth: page.scrollDepth,
+        })),
+      };
+    });
+}
+
 // ─── GET /admin/analytics ─────────────────────────────────────────────────────
 router.get("/admin/analytics", async (req, res): Promise<void> => {
   if (!req.session?.adminAuthenticated) {
@@ -226,6 +335,8 @@ router.get("/admin/analytics", async (req, res): Promise<void> => {
       rawSources,
       rawDevices,
       realtimeRows,
+      rawSessionRows,
+      rawSessionCount,
       allArticoli,
       dailyPages,
       dailySources,
@@ -269,6 +380,32 @@ router.get("/admin/analytics", async (req, res): Promise<void> => {
         .where(and(gte(pageviewsTable.lastSeen, fiveMinAgo), eq(pageviewsTable.closed, 0)))
         .groupBy(pageviewsTable.path)
         .orderBy(desc(sql`count(*)`)),
+      // Session detail is intentionally raw-only: the daily rollup cannot
+      // reconstruct the order of pages for an anonymous visitor.
+      db
+        .select({
+          id: pageviewsTable.id,
+          timestamp: pageviewsTable.timestamp,
+          path: pageviewsTable.path,
+          referrer: pageviewsTable.referrer,
+          device: pageviewsTable.device,
+          durationSec: pageviewsTable.durationSec,
+          scrollDepth: pageviewsTable.scrollDepth,
+          sessionId: pageviewsTable.sessionId,
+          viewId: pageviewsTable.viewId,
+          closed: pageviewsTable.closed,
+          lastSeen: pageviewsTable.lastSeen,
+        })
+        .from(pageviewsTable)
+        .where(rawWhere)
+        .orderBy(desc(pageviewsTable.timestamp), desc(pageviewsTable.id))
+        .limit(SESSION_RAW_LIMIT),
+      db
+        .select({
+          count: sql<number>`count(distinct coalesce(${pageviewsTable.sessionId}, ${pageviewsTable.id}::text))::int`,
+        })
+        .from(pageviewsTable)
+        .where(rawWhere),
       db.select({ slug: articoliTable.slug, titolo: articoliTable.titolo }).from(articoliTable),
       // Historical rollup (only needed for "Tutto")
       includeDaily
@@ -355,6 +492,8 @@ router.get("/admin/analytics", async (req, res): Promise<void> => {
     };
 
     const realtimeTotal = realtimeRows.reduce((s, r) => s + r.count, 0);
+    const sessions = buildAnonymousSessions(rawSessionRows, Date.now());
+    const totalSessions = Number(rawSessionCount[0]?.count ?? 0);
 
     res.json({
       overview: {
@@ -369,6 +508,12 @@ router.get("/admin/analytics", async (req, res): Promise<void> => {
       sources,
       devices,
       realtime: { total: realtimeTotal, pages: realtimeRows },
+      sessions: {
+        items: sessions,
+        total: totalSessions,
+        truncated: rawSessionRows.length >= SESSION_RAW_LIMIT || totalSessions > SESSION_DISPLAY_LIMIT,
+        rawOnly: true,
+      },
     });
   } catch {
     res.status(500).json({ error: "Errore interno" });

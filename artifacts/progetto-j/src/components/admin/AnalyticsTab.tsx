@@ -3,6 +3,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   BarChart, Bar, LabelList,
 } from "recharts";
+import { ChevronDown } from "lucide-react";
 import { AdminRetry, AdminStatus } from "./AdminStatus";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -16,6 +17,27 @@ interface AnalyticsData {
   sources: { name: string; count: number }[];
   devices: { mobile: number; desktop: number; mobileCount: number; desktopCount: number };
   realtime: { total: number; pages: { path: string; count: number }[] };
+  sessions: {
+    items: {
+      id: string;
+      startedAt: string;
+      lastActivityAt: string;
+      durationSec: number;
+      device: "mobile" | "desktop";
+      source: string;
+      active: boolean;
+      pageCount: number;
+      pages: {
+        path: string;
+        timestamp: string;
+        durationSec: number | null;
+        scrollDepth: number | null;
+      }[];
+    }[];
+    total: number;
+    truncated: boolean;
+    rawOnly: boolean;
+  };
 }
 
 type Period = "today" | "7d" | "30d" | "all";
@@ -41,6 +63,16 @@ function fmtScroll(pct: number | null): string {
   return pct == null ? "—" : `${pct}%`;
 }
 
+function fmtDateTime(value: string): string {
+  return new Intl.DateTimeFormat("it-IT", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(value));
+}
+
 function appPath(path: string): string {
   const base = import.meta.env.BASE_URL.replace(/\/$/, "");
   const normalized = path.startsWith("/") ? path : `/${path}`;
@@ -55,6 +87,89 @@ function adminArticlePath(slug: string): string {
 
 function adminDiaryPath(day: string): string {
   return `${import.meta.env.BASE_URL}admin?editDay=${encodeURIComponent(day)}`;
+}
+
+function AnonymousSessions({ sessions }: { sessions: AnalyticsData["sessions"] }) {
+  const [expanded, setExpanded] = useState<string | null>(null);
+
+  if (sessions.items.length === 0) {
+    return <p className="text-muted-foreground font-sans text-[14px]">Nessuna sessione anonima nel periodo selezionato.</p>;
+  }
+
+  return (
+    <div className="space-y-3">
+      <p className="mb-5 max-w-3xl text-[11px] uppercase leading-relaxed tracking-widest text-muted-foreground">
+        {sessions.total} sessioni anonime. L’identificativo è tecnico e non indica il nome della persona.
+        Il dettaglio è disponibile per i dati grezzi conservati.
+      </p>
+      {sessions.items.map((session) => {
+        const isOpen = expanded === session.id;
+        return (
+          <div key={session.id} className="border border-border bg-[#111111]">
+            <button
+              type="button"
+              aria-expanded={isOpen}
+              onClick={() => setExpanded(isOpen ? null : session.id)}
+              className="flex w-full items-center gap-4 p-4 text-left transition-colors hover:bg-[#161616] focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary md:p-5"
+            >
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                  <span className="font-mono text-[11px] tracking-[0.12em] text-foreground">{session.id}</span>
+                  <span className={`border px-2 py-0.5 text-[9px] uppercase tracking-[0.16em] ${session.active ? "border-green-500/50 text-green-400" : "border-border text-muted-foreground"}`}>
+                    {session.active ? "Attiva" : "Conclusa"}
+                  </span>
+                </div>
+                <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] uppercase tracking-wider text-muted-foreground">
+                  <span>{fmtDateTime(session.startedAt)}</span>
+                  <span>{session.pageCount} {session.pageCount === 1 ? "pagina" : "pagine"}</span>
+                  <span>{fmtDuration(session.durationSec)}</span>
+                  <span>{session.device}</span>
+                </div>
+              </div>
+              <ChevronDown size={17} className={`shrink-0 text-primary transition-transform ${isOpen ? "rotate-180" : ""}`} aria-hidden="true" />
+            </button>
+            {isOpen && (
+              <div className="border-t border-border px-4 pb-5 pt-4 md:px-5">
+                <div className="mb-4 grid grid-cols-1 gap-3 text-[11px] uppercase tracking-wider text-muted-foreground sm:grid-cols-3">
+                  <div><span className="block text-[9px] text-iron">Ultima attività</span>{fmtDateTime(session.lastActivityAt)}</div>
+                  <div><span className="block text-[9px] text-iron">Provenienza</span>{session.source}</div>
+                  <div><span className="block text-[9px] text-iron">Durata stimata</span>{fmtDuration(session.durationSec)}</div>
+                </div>
+                <ol className="space-y-2 border-l border-border pl-4">
+                  {session.pages.map((page, index) => (
+                    <li key={`${page.timestamp}-${page.path}-${index}`} className="relative">
+                      <span className="absolute -left-[21px] top-1.5 h-2 w-2 rounded-full bg-primary" aria-hidden="true" />
+                      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                        <span className="font-mono text-[10px] text-muted-foreground">{fmtDateTime(page.timestamp)}</span>
+                        <a
+                          href={appPath(page.path)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="break-all font-sans text-[13px] text-foreground hover:text-primary"
+                        >
+                          {page.path}
+                        </a>
+                      </div>
+                      <div className="mt-1 text-[10px] uppercase tracking-wider text-muted-foreground">
+                        {page.durationSec == null ? "Durata non ancora disponibile" : `Durata ${fmtDuration(page.durationSec)}`}
+                        {" · "}
+                        {page.scrollDepth == null ? "Scroll non rilevato" : `Scroll ${page.scrollDepth}%`}
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            )}
+          </div>
+        );
+      })}
+      {sessions.truncated && (
+        <p className="border border-dashed border-iron px-4 py-3 text-[11px] uppercase leading-relaxed tracking-wider text-muted-foreground">
+          Mostrate le sessioni più recenti entro il limite della dashboard. I dati storici aggregati non contengono il percorso della singola sessione.
+        </p>
+      )}
+    </div>
+  );
 }
 
 // ─── Section wrapper ──────────────────────────────────────────────────────────
@@ -217,6 +332,11 @@ export function AnalyticsTab() {
           </div>
         )}
       </div>
+
+      {/* ── Anonymous sessions ── */}
+      <Section title="Sessioni anonime">
+        <AnonymousSessions sessions={data.sessions} />
+      </Section>
 
       {/* ── Overview ── */}
       <Section title="Panoramica">

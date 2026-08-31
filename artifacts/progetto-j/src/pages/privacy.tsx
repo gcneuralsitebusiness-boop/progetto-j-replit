@@ -21,7 +21,7 @@ export default function Privacy() {
             <h2>Dati del diario</h2>
             <p>I dati del percorso pubblicati sul sito appartengono al progetto editoriale di Progetto J e vengono mostrati come diario documentale.</p>
             <h2>Analytics anonimi</h2>
-            <p>Il sito raccoglie statistiche aggregate sulle visite, come pagina consultata, dispositivo e durata approssimativa. Non viene usato un account pubblico e il tracker non memorizza cookie identificativi.</p>
+            <p>Il sito raccoglie statistiche anonime sulle visite, come pagina consultata, dispositivo, orari e durata approssimativa. Nell’area privata queste pageview possono essere raggruppate in sessioni tecniche per ricostruire la sequenza di navigazione, senza nome, email, indirizzo IP o fingerprint. Non viene usato un account pubblico e il tracker non memorizza cookie identificativi.</p>
             <h2>Newsletter e contatti</h2>
             <p>Se invii il tuo indirizzo email o un messaggio tramite i moduli, i dati vengono usati esclusivamente per rispondere alla richiesta o inviare il report richiesto.</p>
             <h2>Richieste</h2>
