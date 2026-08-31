@@ -5,7 +5,7 @@ import {
 } from '@workspace/api-zod';
 import { Router, type IRouter, type Request, type Response } from 'express';
 import { and, eq, or } from 'drizzle-orm';
-import { db, contenutiTable, giorniTable, sponsorTable } from '@workspace/db';
+import { db, articoliTable, contenutiTable, giorniTable, sponsorTable } from '@workspace/db';
 
 import {
   ObjectNotFoundError,
@@ -47,6 +47,21 @@ async function isPublicContentObject(objectPath: string): Promise<boolean> {
     )
     .limit(1);
   if (content) return true;
+
+  const [article] = await db
+    .select({ id: articoliTable.id })
+    .from(articoliTable)
+    .where(
+      and(
+        eq(articoliTable.pubblicato, true),
+        or(
+          eq(articoliTable.immagine, objectPath),
+          eq(articoliTable.cardImmagine, objectPath),
+        ),
+      ),
+    )
+    .limit(1);
+  if (article) return true;
 
   const [sponsor] = await db
     .select({ id: sponsorTable.id })

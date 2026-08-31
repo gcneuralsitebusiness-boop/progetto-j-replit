@@ -143,6 +143,121 @@ function ChartEmpty({ label }: { label: string }) {
   );
 }
 
+type NumericAxisScale = {
+  domain: [number, number];
+  ticks: number[];
+};
+
+function buildAxisScale(
+  values: number[],
+  step: number,
+  padding: number,
+  preferredMinimum?: number,
+): NumericAxisScale {
+  if (values.length === 0) {
+    const fallbackMax = (preferredMinimum ?? 0) + step * 2;
+    return {
+      domain: [preferredMinimum ?? 0, fallbackMax],
+      ticks: [preferredMinimum ?? 0, preferredMinimum != null ? preferredMinimum + step : step, fallbackMax],
+    };
+  }
+
+  const calculatedMinimum = Math.floor((Math.min(...values) - padding) / step) * step;
+  const minimum = preferredMinimum == null
+    ? calculatedMinimum
+    : Math.min(preferredMinimum, calculatedMinimum);
+  const maximum = Math.max(
+    minimum + step,
+    Math.ceil((Math.max(...values) + padding) / step) * step,
+  );
+  const ticks = Array.from(
+    { length: Math.floor((maximum - minimum) / step) + 1 },
+    (_, index) => Number((minimum + index * step).toFixed(2)),
+  );
+
+  return { domain: [minimum, maximum], ticks };
+}
+
+type ForceMetricKey = "flessioni" | "trazioni" | "squat" | "plank" | "mobilita";
+
+type ForcePoint = {
+  label: string;
+  flessioni?: number;
+  trazioni?: number;
+  squat?: number;
+  plank?: number;
+  mobilita?: number;
+};
+
+const FORCE_METRICS: Array<{
+  key: ForceMetricKey;
+  title: string;
+  unit: string;
+  color: string;
+  step: number;
+  padding: number;
+}> = [
+  { key: "flessioni", title: "Flessioni", unit: "ripetizioni", color: COLORS.red, step: 10, padding: 2 },
+  { key: "trazioni", title: "Trazioni", unit: "ripetizioni", color: COLORS.ink, step: 5, padding: 1 },
+  { key: "squat", title: "Squat", unit: "ripetizioni", color: COLORS.acid, step: 10, padding: 2 },
+  { key: "plank", title: "Plank", unit: "secondi", color: COLORS.copper, step: 30, padding: 5 },
+  { key: "mobilita", title: "Mobilità gamba", unit: "livello", color: COLORS.ink, step: 1, padding: 0.25 },
+];
+
+function ForceMetricChart({
+  metric,
+  points,
+}: {
+  metric: (typeof FORCE_METRICS)[number];
+  points: ForcePoint[];
+}) {
+  const metricPoints = points.filter((point) => point[metric.key] != null);
+  const values = metricPoints
+    .map((point) => point[metric.key])
+    .filter((value): value is number => value != null && Number.isFinite(value));
+  const scale = buildAxisScale(values, metric.step, metric.padding);
+
+  return (
+    <div className="border border-border bg-[#111111] p-4">
+      <div className="mb-2 flex items-baseline justify-between gap-3">
+        <h3 className="font-serif text-[16px] tracking-[0.12em] text-foreground bebas">{metric.title}</h3>
+        <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-muted-foreground">
+          {metricPoints.length} {metricPoints.length === 1 ? "valore" : "valori"}
+        </span>
+      </div>
+      <div className="h-[190px] w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={metricPoints} margin={{ top: 10, right: 8, left: 0, bottom: 0 }}>
+            <CartesianGrid vertical={false} stroke="#1A1A1A" strokeDasharray="2 5" />
+            <XAxis dataKey="label" tick={{ fill: COLORS.gray, fontSize: 10 }} tickLine={false} axisLine={false} />
+            <YAxis
+              domain={scale.domain}
+              ticks={scale.ticks}
+              tick={{ fill: COLORS.gray, fontSize: 10 }}
+              tickLine={false}
+              axisLine={false}
+              tickFormatter={(value: number) => String(value)}
+            />
+            <Tooltip
+              contentStyle={tooltipStyle}
+              formatter={(value: number) => [`${value} ${metric.unit}`, metric.title]}
+            />
+            <Line
+              type="monotone"
+              dataKey={metric.key}
+              name={metric.title}
+              stroke={metric.color}
+              strokeWidth={2}
+              dot={{ r: 4, fill: metric.color, strokeWidth: 0 }}
+              connectNulls={false}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
+}
+
 function ChartReveal({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   const { ref, isVisible } = useReveal<HTMLDivElement>();
   const animated = useRef(false);
@@ -300,13 +415,22 @@ export default function Statistiche() {
       battito: entry.battito ?? undefined,
       sonno: entry.sonno ?? undefined,
     }));
-    const force = recent.map((entry) => ({
-      ...entry,
+    const force: ForcePoint[] = recent.map((entry) => ({
       label: String(entry.numero),
       flessioni: parseReps(entry.routineFlessioni) ?? undefined,
+      trazioni: parseReps(entry.routineTrazioni) ?? undefined,
+      squat: parseReps(entry.routineSquat) ?? undefined,
       plank: entry.plank ?? undefined,
       mobilita: liftLevel(entry.sollevamentoGamba) ?? undefined,
     }));
+    const weightValues = body
+      .map((entry) => entry.peso)
+      .filter((value): value is number => value != null && Number.isFinite(value));
+    const pulseValues = recovery
+      .map((entry) => entry.battito)
+      .filter((value): value is number => value != null && Number.isFinite(value));
+    const weightScale = buildAxisScale(weightValues, 5, 1, 75);
+    const pulseScale = buildAxisScale(pulseValues, 10, 5);
     const sessions = recent.filter((entry) => entry.tipoAllenamento && entry.tipoAllenamento !== "NESSUNO").length;
     const totalSessions = all.filter((entry) => entry.tipoAllenamento && entry.tipoAllenamento !== "NESSUNO").length;
     const currentDay = all.length ? Math.max(...all.map((entry) => entry.numero)) : 0;
@@ -325,6 +449,7 @@ export default function Statistiche() {
     const underHydrated = hydrationEntries.filter((entry) => (waterLiters(entry) ?? 0) < hydrationTarget(entry));
     return {
       all, recent, tracked, body, recovery, force, hydration, streak, sessions, totalSessions, currentDay,
+      weightScale, pulseScale,
       hydrationSummary: {
         average: average(hydrationEntries, waterLiters),
         target: average(hydrationEntries, hydrationTarget),
@@ -454,7 +579,14 @@ export default function Statistiche() {
                     </defs>
                     <CartesianGrid vertical={false} stroke="#1A1A1A" strokeDasharray="2 5" />
                     <XAxis dataKey="label" tick={{ fill: COLORS.gray, fontSize: 10 }} tickLine={false} axisLine={false} />
-                    <YAxis unit=" kg" tick={{ fill: COLORS.gray, fontSize: 10 }} tickLine={false} axisLine={false} />
+                    <YAxis
+                      unit=" kg"
+                      domain={data.weightScale.domain}
+                      ticks={data.weightScale.ticks}
+                      tick={{ fill: COLORS.gray, fontSize: 10 }}
+                      tickLine={false}
+                      axisLine={false}
+                    />
                     <Tooltip contentStyle={tooltipStyle} formatter={(value: number) => [`${value} kg`, "Peso"]} />
                     <Area type="monotone" dataKey="peso" fill="url(#pesoGrad)" stroke="none" connectNulls={false} />
                     <Line
@@ -510,7 +642,7 @@ export default function Statistiche() {
                 <ChartReveal className="h-[230px]">
                   {data.recovery.some((entry) => entry.battito != null) ? (
                     <ResponsiveContainer width="100%" height="100%">
-                      <ComposedChart data={data.recovery} margin={{ top: 10, right: 8, left: -20, bottom: 0 }}>
+                      <ComposedChart data={data.recovery} margin={{ top: 10, right: 8, left: 0, bottom: 0 }}>
                         <defs>
                           <linearGradient id="battitoGrad" x1="0" y1="0" x2="0" y2="1">
                             <stop offset="0%" stopColor={COLORS.ink} stopOpacity={0.15} />
@@ -519,7 +651,14 @@ export default function Statistiche() {
                         </defs>
                         <CartesianGrid vertical={false} stroke="#1A1A1A" strokeDasharray="2 5" />
                         <XAxis dataKey="label" tick={{ fill: COLORS.gray, fontSize: 10 }} tickLine={false} axisLine={false} />
-                        <YAxis unit=" bpm" tick={{ fill: COLORS.gray, fontSize: 10 }} tickLine={false} axisLine={false} />
+                        <YAxis
+                          unit=" bpm"
+                          domain={data.pulseScale.domain}
+                          ticks={data.pulseScale.ticks}
+                          tick={{ fill: COLORS.gray, fontSize: 10 }}
+                          tickLine={false}
+                          axisLine={false}
+                        />
                         <Tooltip contentStyle={tooltipStyle} formatter={(value: number) => [`${value} bpm`, "Battito"]} />
                         <Area type="monotone" dataKey="battito" fill="url(#battitoGrad)" stroke="none" connectNulls={false} />
                         <Line type="monotone" dataKey="battito" name="Battito" stroke={COLORS.ink} strokeWidth={3} dot={{ r: 3, fill: COLORS.ink }} connectNulls={false} />
@@ -577,19 +716,20 @@ export default function Statistiche() {
 
         <Reveal>
           <Section title="Progressione forza">
-            <ChartReveal className="h-[300px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={data.force} margin={{ top: 10, right: 8, left: -20, bottom: 0 }}>
-                  <CartesianGrid vertical={false} stroke="#1A1A1A" strokeDasharray="2 5" />
-                  <XAxis dataKey="label" tick={{ fill: COLORS.gray, fontSize: 10 }} tickLine={false} axisLine={false} />
-                  <YAxis tick={{ fill: COLORS.gray, fontSize: 10 }} tickLine={false} axisLine={false} />
-                  <Tooltip contentStyle={tooltipStyle} />
-                  <Line type="monotone" dataKey="flessioni" name="Flessioni" stroke={COLORS.red} strokeWidth={2} dot={false} connectNulls={false} />
-                  <Line type="monotone" dataKey="plank" name="Plank sec" stroke={COLORS.copper} strokeWidth={2} dot={false} connectNulls={false} />
-                  <Line type="monotone" dataKey="mobilita" name="Mobilità gamba" stroke={COLORS.ink} strokeWidth={2} dot={false} connectNulls={false} />
-                </LineChart>
-              </ResponsiveContainer>
-            </ChartReveal>
+            <p className="mb-5 max-w-2xl text-[11px] uppercase tracking-widest text-muted-foreground">
+              Ogni prova ha la propria scala: nessun esercizio viene schiacciato dagli altri.
+            </p>
+            {data.force.some((point) => FORCE_METRICS.some((metric) => point[metric.key] != null)) ? (
+              <ChartReveal className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                {FORCE_METRICS
+                  .filter((metric) => data.force.some((point) => point[metric.key] != null))
+                  .map((metric) => (
+                    <ForceMetricChart key={metric.key} metric={metric} points={data.force} />
+                  ))}
+              </ChartReveal>
+            ) : (
+              <ChartEmpty label="Nessun dato di forza nel periodo selezionato." />
+            )}
           </Section>
         </Reveal>
         <PulseTrace entries={data.all} variant="divider" />
