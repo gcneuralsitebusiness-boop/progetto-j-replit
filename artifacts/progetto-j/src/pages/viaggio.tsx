@@ -276,7 +276,7 @@ export default function Viaggio() {
           <h2 id="mappa-heading" className="sr-only">Mappa dei paesi visitati e delle tappe pianificate</h2>
           <div
             ref={mapRef}
-            className="journey-map relative aspect-[2/1] w-full overflow-hidden border border-[#1A1A1A] bg-[#0A0A0A]"
+            className="journey-map relative aspect-[1.55/1] w-full overflow-hidden border border-[#1A1A1A] bg-[#0A0A0A] sm:aspect-[2/1]"
             data-testid="map-viaggio"
           >
             {mapState === "loading" && (
