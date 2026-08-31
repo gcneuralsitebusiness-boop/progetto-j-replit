@@ -54,6 +54,7 @@ export function Navbar() {
     { href: "/chi-sono", label: "Chi Sono" },
     { href: "/journaling", label: "Journaling" },
     { href: "/statistiche", label: "Statistiche" },
+    { href: "/viaggio", label: "Il Viaggio" },
     { href: "/articoli", label: "Articoli" },
     { href: "/#accesso", label: "Richiedi accesso", accent: true },
   ];

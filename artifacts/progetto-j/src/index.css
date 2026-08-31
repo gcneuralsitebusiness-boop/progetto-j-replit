@@ -453,6 +453,157 @@ body::before {
   letter-spacing: 0.03em;
 }
 
+/* Journey map: injected SVG classes intentionally stay global. */
+.journey-map-svg,
+.journey-map-svg > svg {
+  width: 100%;
+  height: 100%;
+}
+.journey-map .paese {
+  fill: #0A0A0A !important;
+  stroke: #2A2A2A !important;
+  stroke-width: 0.8 !important;
+  transition: none !important;
+}
+.journey-map .paese--visitato {
+  fill: #B81D1D !important;
+  stroke: #0A0A0A !important;
+}
+.journey-map .paese--pianificato {
+  fill: #8B6914 !important;
+  stroke: #0A0A0A !important;
+}
+.journey-map .paese--visitato:hover,
+.journey-map .paese--pianificato:hover {
+  opacity: 0.78;
+}
+.journey-marker {
+  position: absolute;
+  z-index: 2;
+  pointer-events: auto;
+  transform: translate(-50%, -50%);
+}
+.journey-marker-button {
+  position: relative;
+  display: grid;
+  width: 19px;
+  height: 19px;
+  place-items: center;
+  border: 1px solid rgb(139 105 20 / 0.45);
+  background: transparent;
+  color: #8B6914;
+}
+.journey-marker-button:focus-visible {
+  outline: 1px solid #F0EBE3;
+  outline-offset: 3px;
+}
+.journey-marker-core {
+  display: block;
+  width: 9px;
+  height: 9px;
+  background: #8B6914;
+}
+.journey-marker-label {
+  position: absolute;
+  top: 50%;
+  left: 28px;
+  display: flex;
+  width: max-content;
+  align-items: center;
+  gap: 5px;
+  transform: translateY(-50%);
+  color: #8B6914;
+  font-family: var(--app-font-mono);
+  font-size: 7px;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+.journey-marker-label::before {
+  content: "";
+  width: 12px;
+  height: 1px;
+  background: rgb(139 105 20 / 0.6);
+}
+.journey-marker-label--left {
+  right: 28px;
+  left: auto;
+  flex-direction: row-reverse;
+}
+.journey-marker-panel {
+  position: absolute;
+  top: 50%;
+  left: 27px;
+  z-index: 4;
+  display: grid;
+  width: 145px;
+  gap: 4px;
+  border: 1px solid #8B6914;
+  background: #0A0A0A;
+  padding: 12px;
+  color: #8E8A85;
+  font-family: var(--app-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  line-height: 1.45;
+  text-transform: uppercase;
+  transform: translateY(-50%);
+}
+.journey-marker-panel strong {
+  color: #E8E4DE;
+  font-weight: 500;
+}
+.journey-marker-panel--left {
+  right: 27px;
+  left: auto;
+}
+.journey-stop {
+  border-left: 0 solid transparent;
+}
+.journey-stop--highlighted {
+  border-left-width: 3px;
+  padding-left: 16px;
+  animation: journey-stop-highlight 2s steps(1, end) forwards;
+}
+@keyframes journey-stop-highlight {
+  0%,
+  99% {
+    border-left-color: #8B6914;
+  }
+  100% {
+    border-left-color: transparent;
+  }
+}
+@media (min-width: 640px) {
+  .journey-marker-label {
+    gap: 8px;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+  }
+  .journey-marker-label::before {
+    width: 18px;
+  }
+  .journey-stop--highlighted {
+    padding-left: 29px;
+  }
+  .journey-marker-panel {
+    top: 27px;
+    left: 0;
+    width: 220px;
+    transform: none;
+  }
+  .journey-marker-panel--left {
+    right: 0;
+    left: auto;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .journey-stop--highlighted {
+    animation-duration: 2s !important;
+  }
+}
+
 /* Diary HTML authored in the admin textarea. */
 .diary-html h1,
 .diary-html h2,

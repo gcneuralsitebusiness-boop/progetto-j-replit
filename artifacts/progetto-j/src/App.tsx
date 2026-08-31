@@ -16,6 +16,7 @@ const Social = lazy(() => import('@/pages/social'));
 const Sponsor = lazy(() => import('@/pages/sponsor'));
 const Articoli = lazy(() => import('@/pages/articoli'));
 const Articolo = lazy(() => import('@/pages/articolo'));
+const Viaggio = lazy(() => import('@/pages/viaggio'));
 const ArticoloPreview = lazy(() => import('@/pages/articolo-preview'));
 const Coaching = lazy(() => import('@/pages/coaching'));
 const GiornoDetail = lazy(() => import('@/pages/giorno'));
@@ -96,6 +97,7 @@ function PageMetadata() {
       "/journaling": { title: "Journaling — Progetto J", description: "Il diario operativo di Progetto J: giorni, dati, allenamento e disciplina." },
       "/statistiche": { title: "Statistiche — Progetto J", description: "I dati aggregati del percorso Progetto J: peso, sonno, allenamento e progressi." },
       "/chi-sono": { title: "Chi sono — Progetto J", description: "La storia, il metodo e la persona dietro Progetto J." },
+      "/viaggio": { title: "Il viaggio di J — Progetto J", description: "Otto paesi visitati, quattro da prendere. Quattro discipline, quattro posti dove sono nate." },
       "/articoli": { title: "Articoli — Progetto J", description: "Riflessioni, metodo e lezioni raccolte durante il percorso Progetto J." },
       "/coaching": { title: "Coaching — Progetto J", description: "Un protocollo di 12 settimane basato su allenamento, nutrizione, sonno e dati." },
       "/social": { title: "Social — Progetto J", description: "Segui Progetto J sui canali social e contatta il progetto." },
@@ -145,6 +147,7 @@ function App() {
               <Route path="/chi-sono" component={ChiSono} />
               <Route path="/social" component={Social} />
               <Route path="/sponsor" component={Sponsor} />
+              <Route path="/viaggio" component={Viaggio} />
               <Route path="/articoli" component={Articoli} />
               <Route path="/a/:slug" component={Articolo} />
               <Route path="/coaching" component={Coaching} />
