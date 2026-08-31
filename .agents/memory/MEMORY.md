@@ -19,3 +19,4 @@
 - [Playwright Chromium on NixOS](playwright-nixos-setup.md) — after `playwright install chromium`, patchelf the binary with `~/.nix-profile/lib` (needs `nix-env -iA nixpkgs.mesa` first) or the browser won't launch.
 - [Mockup sandbox typecheck](mockup-sandbox-typecheck.md) — sandbox-wide typecheck can fail on duplicate React types in bundled UI components; verify isolated previews separately.
 - [Mobile static server safety](mobile-static-server-safety.md) — index built files at startup so request paths select assets by key, never filesystem paths.
+- [Highmaps journey map projection](highmaps-journey-map.md) — the checked-in SVG needs its cropped viewBox and calibrated marker projection kept in sync.

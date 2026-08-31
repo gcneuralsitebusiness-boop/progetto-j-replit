@@ -460,8 +460,8 @@ body::before {
   height: 100%;
 }
 .journey-map .paese {
-  fill: #0A0A0A !important;
-  stroke: #2A2A2A !important;
+  fill: #151515 !important;
+  stroke: #454545 !important;
   stroke-width: 0.8 !important;
   transition: none !important;
 }
