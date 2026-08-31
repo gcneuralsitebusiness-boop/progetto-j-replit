@@ -9,6 +9,9 @@ const PAGE_URL = "https://projectj180day.com/viaggio";
 const PAGE_IMAGE = "https://projectj180day.com/og-image.jpg";
 
 type MapState = "loading" | "ready" | "error";
+type JourneyFilter = "tutte" | TappaViaggio["disciplina"];
+
+const DISCIPLINE: TappaViaggio["disciplina"][] = ["Muay Thai", "Lotta", "K1", "BJJ"];
 
 function formatDateTime(value: string): string {
   const [date, time] = value.split("T");
@@ -129,7 +132,11 @@ export default function Viaggio() {
   const [activeMarker, setActiveMarker] = useState<string | null>(null);
   const [highlightedCard, setHighlightedCard] = useState<string | null>(null);
   const [highlightCycle, setHighlightCycle] = useState(0);
+  const [activeFilter, setActiveFilter] = useState<JourneyFilter>("tutte");
   const mapRef = useRef<HTMLDivElement>(null);
+  const visibleTappe = activeFilter === "tutte"
+    ? TAPPE
+    : TAPPE.filter((tappa) => tappa.disciplina === activeFilter);
 
   usePageMeta({
     title: PAGE_TITLE,
@@ -168,8 +175,16 @@ export default function Viaggio() {
     return () => document.removeEventListener("pointerdown", closeMarker);
   }, [activeMarker]);
 
-  const activateMarker = (tappa: TappaViaggio) => {
-    setActiveMarker((current) => (current === tappa.id ? null : tappa.id));
+  useEffect(() => {
+    if (activeMarker && !visibleTappe.some((tappa) => tappa.id === activeMarker)) {
+      setActiveMarker(null);
+    }
+  }, [activeMarker, visibleTappe]);
+
+  const focusTappa = (tappa: TappaViaggio, openMarker = true) => {
+    if (openMarker) {
+      setActiveMarker((current) => (current === tappa.id ? null : tappa.id));
+    }
     setHighlightedCard(tappa.id);
     setHighlightCycle((cycle) => cycle + 1);
 
@@ -180,6 +195,10 @@ export default function Viaggio() {
       behavior: reducedMotion ? "auto" : "smooth",
       block: "center",
     });
+  };
+
+  const activateMarker = (tappa: TappaViaggio) => {
+    focusTappa(tappa);
   };
 
   return (
@@ -223,6 +242,36 @@ export default function Viaggio() {
           ))}
         </section>
 
+        <section aria-labelledby="esplora-heading" className="border-b border-[#1A1A1A] py-8 sm:py-10">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 id="esplora-heading" className="font-mono text-[11px] uppercase tracking-[0.2em] text-[#E8E4DE]">
+                Esplora le tappe
+              </h2>
+              <p className="mt-2 text-[14px] text-[#6E6A66]">
+                Una vista temporanea. I dati originali restano invariati.
+              </p>
+            </div>
+            <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#6E6A66]">
+              {visibleTappe.length} di {TAPPE.length} visibili
+            </span>
+          </div>
+          <div className="journey-filter-list mt-6" role="group" aria-label="Filtra per disciplina">
+            {(["tutte", ...DISCIPLINE] as JourneyFilter[]).map((filter) => (
+              <button
+                key={filter}
+                type="button"
+                className={`journey-filter${activeFilter === filter ? " journey-filter--active" : ""}`}
+                aria-pressed={activeFilter === filter}
+                onClick={() => setActiveFilter(filter)}
+                data-testid={`button-filter-${filter.toLowerCase().replace(/\s+/g, "-")}`}
+              >
+                {filter === "tutte" ? "Tutte" : filter}
+              </button>
+            ))}
+          </div>
+        </section>
+
         <section aria-labelledby="mappa-heading" className="pt-12 sm:pt-16">
           <h2 id="mappa-heading" className="sr-only">Mappa dei paesi visitati e delle tappe pianificate</h2>
           <div
@@ -252,7 +301,7 @@ export default function Viaggio() {
             )}
             {mapState === "ready" && (
               <div className="absolute inset-0 pointer-events-none">
-                {TAPPE.map((tappa) => (
+                {visibleTappe.map((tappa) => (
                   <Marker
                     key={tappa.id}
                     tappa={tappa}
@@ -278,7 +327,26 @@ export default function Viaggio() {
 
         <section aria-labelledby="tappe-heading" className="mt-10 sm:mt-14">
           <h2 id="tappe-heading" className="sr-only">Tappe di allenamento pianificate</h2>
-          {TAPPE.map((tappa) => (
+          <ol className="journey-timeline" aria-label="Percorso delle quattro tappe">
+            {TAPPE.map((tappa) => {
+              const isFilteredOut = activeFilter !== "tutte" && tappa.disciplina !== activeFilter;
+              return (
+                <li key={`timeline-${tappa.id}`} className={isFilteredOut ? "journey-timeline__item--muted" : ""}>
+                  <button
+                    type="button"
+                    className="journey-timeline__button"
+                    onClick={() => focusTappa(tappa, false)}
+                    aria-label={`Vai alla tappa ${String(tappa.ordine).padStart(2, "0")}: ${tappa.paese}`}
+                    data-testid={`button-timeline-${tappa.id}`}
+                  >
+                    <span className="journey-timeline__number">{String(tappa.ordine).padStart(2, "0")}</span>
+                    <span className="journey-timeline__label">{tappa.paese}</span>
+                  </button>
+                </li>
+              );
+            })}
+          </ol>
+          {visibleTappe.map((tappa) => (
             <article
               id={`tappa-${tappa.id}`}
               key={`${tappa.id}-${highlightedCard === tappa.id ? highlightCycle : 0}`}
