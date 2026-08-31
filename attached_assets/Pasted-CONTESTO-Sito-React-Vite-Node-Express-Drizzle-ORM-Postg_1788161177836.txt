@@ -1,0 +1,280 @@
+CONTESTO
+Sito React + Vite, Node/Express, Drizzle ORM + PostgreSQL.
+Percorsi: /artifacts/progetto-j/src/pages/ e /artifacts/progetto-j/src/components/
+Design system già in uso in tutto il sito. NON modificarlo, NON introdurre
+colori o font nuovi.
+
+OBIETTIVO
+Nuova pagina /viaggio — "IL VIAGGIO DI J". Una mappa del mondo con i paesi
+già visitati, le quattro tappe di allenamento pianificate, e le schede
+dettagliate di ciascuna.
+
+╔══════════════════════════════════════════════════════════╗
+║ 1. VINCOLI DI PERFORMANCE — leggi prima di tutto         ║
+╚══════════════════════════════════════════════════════════╝
+
+Questa pagina NON deve rallentare il sito. Regole non negoziabili:
+
+- NESSUNA libreria di mappe. Vietati: Leaflet, Mapbox, react-simple-maps,
+  d3-geo, topojson-client, Google Maps. Zero dipendenze nuove nel bundle.
+- L'SVG del mondo va incluso come file statico in /public/mappa-mondo.svg
+  e caricato con fetch + dangerouslySetInnerHTML, NON importato come
+  componente React. Un world map inline in JSX aggiunge 200-600 KB al
+  bundle JS e blocca il primo render.
+- Usa una mappa a BASSA risoluzione (semplificata, ~50-120 KB). Una mappa
+  ad alta densità di vertici manda in crisi il rendering su mobile.
+  Se il file supera 150 KB, semplificala prima di usarla.
+- Code splitting: la pagina va caricata con React.lazy + Suspense, così
+  la mappa non pesa sulle altre rotte.
+- Colorazione paesi: applica le classi UNA VOLTA SOLA dopo il caricamento
+  dell'SVG, dentro un useEffect con dependency array vuoto. NON ricolorare
+  a ogni render, NON usare state per i colori dei paesi.
+- Vietate transizioni CSS su fill dei path. Con centinaia di path la
+  transizione fa collassare il framerate su mobile.
+- I punti delle tappe sono <circle> React sovrapposti all'SVG in un layer
+  separato, posizionati in percentuale. NON toccare l'SVG per aggiungerli.
+- Fallback: se il fetch dell'SVG fallisce, mostra comunque le quattro
+  schede tappa e i contatori. La pagina non deve mai risultare vuota.
+
+╔══════════════════════════════════════════════════════════╗
+║ 2. DESIGN SYSTEM (vincolante)                            ║
+╚══════════════════════════════════════════════════════════╝
+
+Sfondo              #0A0A0A
+Rosso               #B81D1D    paesi visitati
+Bronzo              #8B6914    tappe pianificate
+Testo               #E8E4DE
+Numeri protagonisti #F0EBE3
+Linee               #1A1A1A
+Bordo paesi neutri  #2A2A2A a 1px
+Testo secondario    #8E8A85
+Testo terziario     #6E6A66
+
+Bebas Neue (titoli) · Inter (corpo) · JetBrains Mono (dati e date)
+ZERO border-radius. ZERO box-shadow. ZERO emoji. ZERO icone.
+Numeri sempre con font-variant-numeric: tabular-nums.
+
+╔══════════════════════════════════════════════════════════╗
+║ 3. DATI                                                  ║
+╚══════════════════════════════════════════════════════════╝
+
+Crea /artifacts/progetto-j/src/data/viaggio.ts
+
+export const VISITATI = [
+  { iso: 'ITA', nome: 'Italia' },
+  { iso: 'AUT', nome: 'Austria' },
+  { iso: 'CZE', nome: 'Cechia' },
+  { iso: 'DEU', nome: 'Germania' },
+  { iso: 'ALB', nome: 'Albania' },
+  { iso: 'LTU', nome: 'Lituania' },
+  { iso: 'POL', nome: 'Polonia' },
+  { iso: 'BLR', nome: 'Bielorussia' }
+];
+
+export const TAPPE = [
+  {
+    id: 'thailandia', ordine: 1,
+    paese: 'Thailandia', iso: 'THA', coloraPaese: true,
+    citta: 'Chalong, Phuket', lat: 7.8412, lng: 98.3383,
+    disciplina: 'Muay Thai',
+    palestra: 'Nak Suu Muay Thai Camp',
+    partenza: '2027-02-14T06:35', partenzaDa: 'Bologna BLQ',
+    ritorno:  '2027-03-14T23:50', ritornoDa: 'Phuket HKT',
+    durataGiorni: 28, stato: 'pianificato'
+  },
+  {
+    id: 'dagestan', ordine: 2,
+    paese: 'Dagestan', iso: 'RUS', coloraPaese: false,
+    citta: 'Makhachkala', lat: 42.9849, lng: 47.5047,
+    disciplina: 'Lotta',
+    palestra: 'Gortsy Wrestling Club',
+    partenza: '2027-08-16T05:20', partenzaDa: 'Bologna BLQ',
+    ritorno:  '2027-09-06T21:15', ritornoDa: 'Makhachkala MCX',
+    durataGiorni: 21, stato: 'pianificato'
+  },
+  {
+    id: 'olanda', ordine: 3,
+    paese: 'Olanda', iso: 'NLD', coloraPaese: true,
+    citta: 'Amsterdam', lat: 52.3676, lng: 4.9041,
+    disciplina: 'K1',
+    palestra: 'Zwarte Kooi Gym',
+    partenza: '2028-02-12T07:10', partenzaDa: 'Bologna BLQ',
+    ritorno:  '2028-03-04T19:40', ritornoDa: 'Amsterdam AMS',
+    durataGiorni: 21, stato: 'pianificato'
+  },
+  {
+    id: 'brasile', ordine: 4,
+    paese: 'Brasile', iso: 'BRA', coloraPaese: false,
+    citta: 'Rio de Janeiro', lat: -22.9068, lng: -43.1729,
+    disciplina: 'BJJ',
+    palestra: 'Academia Fundo Azul',
+    partenza: '2028-08-21T09:45', partenzaDa: 'Bologna BLQ',
+    ritorno:  '2028-09-25T22:30', ritornoDa: 'Rio GIG',
+    durataGiorni: 35, stato: 'pianificato'
+  }
+];
+
+Quando una tappa diventa reale: cambia stato in 'visitato' e aggiungi
+l'iso a VISITATI. Nient'altro.
+
+╔══════════════════════════════════════════════════════════╗
+║ 4. MAPPA — regole di colorazione                         ║
+╚══════════════════════════════════════════════════════════╝
+
+Prima di scrivere il CSS, VERIFICA che i path dell'SVG scelto abbiano
+id o attributo data corrispondente al codice ISO-3166 alpha-3 (es. "ITA").
+Se usano nomi o codici a due lettere, adatta la mappatura. Se non lo
+verifichi, niente si colorerà e non sarà evidente il motivo.
+
+.paese              fill #0A0A0A, stroke #2A2A2A, stroke-width .8
+.paese--visitato    fill #B81D1D, stroke #0A0A0A, stroke-width .8
+.paese--pianificato fill #8B6914, stroke #0A0A0A, stroke-width .8
+
+Oceano/sfondo mappa: #0A0A0A, nessun bordo, nessuna griglia.
+
+CRITICO — Dagestan e Rio de Janeiro NON sono paesi.
+Il Dagestan è una repubblica della Federazione Russa, Rio è una città.
+Colorare Russia e Brasile interi direbbe una cosa falsa.
+  - coloraPaese: true  → il paese viene riempito di bronzo (THA, NLD)
+  - coloraPaese: false → il paese resta #0A0A0A, compare SOLO il punto
+Russia e Brasile restano quindi non colorate.
+
+╔══════════════════════════════════════════════════════════╗
+║ 5. MAPPA — punti tappa                                   ║
+╚══════════════════════════════════════════════════════════╝
+
+Layer assoluto sopra l'SVG, position: absolute, inset: 0, pointer-events
+solo sui punti.
+
+Ogni tappa:
+  - quadrato 9x9px #8B6914 (NON un cerchio: il design system è brutalista,
+    zero raggi, quindi il marcatore è un quadrato)
+  - anello esterno: quadrato 19x19px, solo bordo 1px #8B6914 a opacità .45
+  - linea sottile 1px #8B6914 opacità .6 che collega il marcatore
+    all'etichetta
+  - etichetta: JetBrains Mono 11px letterSpacing .14em maiuscolo #8B6914,
+    formato "01 · MUAY THAI"
+
+Posizionamento: converti lat/lng in percentuale con proiezione equirettangolare
+  x% = (lng + 180) / 360 * 100
+  y% = (90 - lat) / 180 * 100
+Se l'SVG usa Mercator, applica invece:
+  y = (1 - Math.log(Math.tan(latRad) + 1/Math.cos(latRad)) / Math.PI) / 2 * 100
+Verifica visivamente che i quattro punti cadano nel posto giusto e correggi
+se serve — questa è la parte che sbaglia più spesso.
+
+╔══════════════════════════════════════════════════════════╗
+║ 6. LAYOUT PAGINA                                         ║
+╚══════════════════════════════════════════════════════════╝
+
+── TESTATA ──────────────────────────────────────────────
+Occhiello, Mono 12px letterSpacing .3em #6E6A66 maiuscolo:
+  PROGETTO J · MAPPA
+
+Titolo, Bebas, due righe, allineato a sinistra:
+  riga 1  IL VIAGGIO      (72px, #E8E4DE)
+  riga 2  DI J            (128px, #F0EBE3, letterSpacing -.03em)
+Su mobile: 48px / 84px.
+
+Sottotitolo, Inter 18px line-height 1.5 #8E8A85, larghezza max 46ch:
+  Quattro discipline. Quattro posti dove sono nate.
+
+Linea 1px #1A1A1A a tutta larghezza.
+
+── CONTATORI ────────────────────────────────────────────
+Tre celle in griglia, separate da bordo 1px #1A1A1A.
+Numero Bebas 88px #F0EBE3 tabular-nums, etichetta sotto
+Mono 11px letterSpacing .22em #6E6A66:
+
+   8            4                4
+   VISITATI     DA PRENDERE      DISCIPLINE
+
+Su mobile: numeri 56px, griglia resta a tre colonne.
+
+── MAPPA ────────────────────────────────────────────────
+A tutta larghezza del contenitore, aspect-ratio 2/1, sfondo #0A0A0A.
+Mentre carica: rettangolo #0A0A0A con bordo 1px #1A1A1A e al centro
+Mono 12px #6E6A66 "CARICAMENTO MAPPA". Nessuno spinner, nessuna animazione.
+
+Legenda sotto, Mono 11px letterSpacing .18em maiuscolo, in riga:
+  [quadrato 9px #B81D1D]  VISITATO
+  [quadrato 9px #8B6914]  DA PRENDERE
+
+── SCHEDE TAPPA ─────────────────────────────────────────
+Quattro blocchi, separati da linea 1px #1A1A1A, padding verticale 40px.
+
+Struttura di ogni scheda, due colonne (su mobile diventa una):
+
+  colonna sinistra, larghezza 64px:
+    numero ordine, Bebas 56px #B81D1D, tabular-nums   →  01
+
+  colonna destra:
+    riga 1: nome paese Bebas 44px #F0EBE3
+            + a destra badge PIANIFICATO
+              (Mono 10px letterSpacing .22em #8B6914,
+               bordo 1px #8B6914, padding 4px 10px, nessun raggio)
+    riga 2: disciplina Bebas 30px #B81D1D
+    riga 3: palestra · città, Inter 16px #8E8A85
+    riga 4: griglia dati Mono 14px #E8E4DE tabular-nums,
+            etichette Mono 10px letterSpacing .2em #6E6A66:
+
+            PARTENZA           RITORNO            DURATA
+            14.02.2027 06:35   14.03.2027 23:50   28 GIORNI
+            Bologna BLQ        Phuket HKT
+
+── PIEDE ────────────────────────────────────────────────
+Linea 1px #1A1A1A, poi Mono 12px letterSpacing .2em #6E6A66:
+  DATE PIANIFICATE — NESSUN VOLO PRENOTATO
+
+OBBLIGATORIO. Le date sono una dichiarazione d'intenti, non prenotazioni
+reali. Il progetto si regge sul fatto che i dati pubblicati sono veri:
+questa riga protegge quella credibilità.
+
+╔══════════════════════════════════════════════════════════╗
+║ 7. INTERAZIONE                                           ║
+╚══════════════════════════════════════════════════════════╝
+
+- Hover su paese colorato: opacity .78. NESSUNA transizione CSS su fill.
+- Hover/tap su marcatore tappa: pannello quadrato, fondo #0A0A0A,
+  bordo 1px #8B6914, Mono 12px, con città, disciplina, palestra, date.
+  Nessun raggio, nessuna ombra, nessuna animazione di entrata.
+- Click su un marcatore: scroll fluido alla scheda corrispondente, che
+  riceve un bordo sinistro 3px #8B6914 per 2 secondi.
+- Su mobile il pannello si apre al tap e si chiude toccando fuori.
+- prefers-reduced-motion: disattiva lo scroll fluido.
+
+╔══════════════════════════════════════════════════════════╗
+║ 8. ROUTING, NAV, SEO                                     ║
+╚══════════════════════════════════════════════════════════╝
+
+Rotta: /viaggio, caricata con React.lazy.
+Navbar: voce "IL VIAGGIO", stile coerente con le esistenti.
+
+title: Il viaggio di J — Progetto J
+description: Otto paesi visitati, quattro da prendere. Quattro discipline,
+quattro posti dove sono nate.
+canonical: https://projectj180day.com/viaggio
+og:url: https://projectj180day.com/viaggio
+og:image: un'immagine su dominio projectj180day.com
+
+ATTENZIONE: canonical, og:url e og:image su questo sito puntano attualmente
+a replit.app. Su questa pagina devono puntare a projectj180day.com.
+
+╔══════════════════════════════════════════════════════════╗
+║ 9. VERIFICA PRIMA DI CONSEGNARE                          ║
+╚══════════════════════════════════════════════════════════╝
+
+[ ] Nessuna dipendenza npm aggiunta
+[ ] L'SVG è in /public, non nel bundle JS
+[ ] Il file SVG pesa meno di 150 KB
+[ ] La pagina è in React.lazy e non pesa sulle altre rotte
+[ ] Gli 8 paesi visitati sono rossi
+[ ] Thailandia e Olanda sono bronzo
+[ ] Russia e Brasile NON sono colorate, hanno solo il punto
+[ ] I 4 marcatori cadono nella posizione geografica corretta
+[ ] I marcatori sono quadrati, non cerchi
+[ ] La riga "NESSUN VOLO PRENOTATO" è presente
+[ ] Leggibile e usabile a 375px di larghezza
+[ ] Nessun border-radius, nessuna ombra, nessuna icona
+[ ] Se il fetch dell'SVG fallisce, schede e contatori restano visibili
+[ ] Nessuna transizione CSS applicata ai path della mappa
