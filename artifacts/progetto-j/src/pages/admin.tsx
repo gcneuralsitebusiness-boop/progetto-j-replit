@@ -173,6 +173,12 @@ function EntryForm({ initialData, previousEntry, onSuccess, onCancel }: { initia
   const { uploadFile, isUploading, progress, error: uploadError } = useUpload({
     onSuccess: (res) => setFormData((d) => ({ ...d, foto: res.objectPath })),
   });
+  const {
+    uploadFile: uploadClipFile,
+    isUploading: isClipUploading,
+    progress: clipProgress,
+    error: clipUploadError,
+  } = useUpload();
 
   const [formData, setFormData] = useState<Partial<EntryInput>>({
     numero: initialData?.numero || 1,
@@ -417,8 +423,49 @@ function EntryForm({ initialData, previousEntry, onSuccess, onCancel }: { initia
     if (!file) return;
     await uploadFile(file);
   };
+  const [clipValidationError, setClipValidationError] = useState<string | null>(null);
+  const [isClipProcessing, setIsClipProcessing] = useState(false);
+  const handleClipFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
+    if (!allowedTypes.has(file.type)) {
+      setClipValidationError("Sono consentite solo immagini JPG, PNG o WebP.");
+      return;
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      setClipValidationError("Immagine troppo grande, massimo 8 MB");
+      return;
+    }
 
-  const isPending = createMutation.isPending || updateMutation.isPending;
+    setClipValidationError(null);
+    const uploaded = await uploadClipFile(file);
+    if (!uploaded) return;
+
+    setIsClipProcessing(true);
+    try {
+      const resizeResponse = await fetch(`${import.meta.env.BASE_URL}api/storage/uploads/resize`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          objectPath: uploaded.objectPath,
+        }),
+      });
+      if (!resizeResponse.ok) {
+        const body = await resizeResponse.json().catch(() => null) as { error?: string } | null;
+        setClipValidationError(body?.error ?? "Impossibile ridimensionare l’immagine.");
+        return;
+      }
+      setFormData((current) => ({ ...current, foto: uploaded.objectPath }));
+    } finally {
+      setIsClipProcessing(false);
+    }
+  };
+
+  const isPending = createMutation.isPending || updateMutation.isPending || isClipUploading || isClipProcessing;
+  const clipNumero = Number(formData.numero);
+  const canOpenClip = Number.isInteger(clipNumero) && clipNumero >= 1 && clipNumero <= 180;
 
   const field = (label: string, key: keyof EntryInput, step?: string) => {
     const err = validationErrors[key as string];
@@ -603,6 +650,69 @@ function EntryForm({ initialData, previousEntry, onSuccess, onCancel }: { initia
           className="bg-[#141414] border border-border p-3 text-white placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary resize-y font-sans leading-relaxed"
         />
       </div>
+
+      <section className="flex flex-col gap-5 border-y border-border py-6">
+        <div>
+          <span className="text-[11px] uppercase tracking-widest text-muted-foreground">Clip</span>
+          <p className="mt-2 max-w-2xl font-sans text-[12px] leading-relaxed text-muted-foreground">
+            La CLIP riutilizza la foto del giorno, la mostra in 4:5 e la ridimensiona sul server a massimo 1600px.
+          </p>
+        </div>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex flex-col gap-3">
+            <label className="text-[11px] uppercase tracking-widest text-muted-foreground" htmlFor="clip-photo-upload">
+              Upload foto del giorno
+            </label>
+            <input
+              id="clip-photo-upload"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={handleClipFileChange}
+              disabled={isClipUploading || isClipProcessing}
+              className="max-w-full bg-[#141414] border border-border p-2.5 text-white focus:outline-none focus:border-primary file:mr-4 file:bg-primary file:text-primary-foreground file:border-0 file:px-3 file:py-1 file:uppercase file:text-[11px] file:tracking-wider"
+            />
+            {isClipUploading && (
+              <div className="h-1 w-full bg-[#262626]">
+                <div className="h-full bg-primary transition-all" style={{ width: `${clipProgress}%` }} />
+              </div>
+            )}
+            {isClipProcessing && (
+              <p className="text-[11px] font-mono uppercase tracking-widest text-muted-foreground" role="status">
+                Ottimizzazione immagine...
+              </p>
+            )}
+            {(clipValidationError || clipUploadError) && (
+              <p className="text-[12px] font-sans text-primary" role="alert">
+                {clipValidationError ?? clipUploadError?.message}
+              </p>
+            )}
+            {photoUrl && (
+              <div className="relative h-52 w-40 overflow-hidden border border-border">
+                <img src={photoUrl} alt="Anteprima foto CLIP" className="h-full w-full object-cover grayscale" />
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, foto: "" })}
+                  className="absolute bottom-2 left-2 bg-background/90 px-2 py-1 text-[11px] uppercase tracking-wider border border-border hover:text-primary transition-colors"
+                >
+                  Rimuovi foto
+                </button>
+              </div>
+            )}
+          </div>
+          <a
+            href={canOpenClip ? `${import.meta.env.BASE_URL.replace(/\/$/, "")}/clip/${clipNumero}` : undefined}
+            target={canOpenClip ? "_blank" : undefined}
+            rel={canOpenClip ? "noopener noreferrer" : undefined}
+            aria-disabled={!canOpenClip}
+            onClick={(event) => {
+              if (!canOpenClip) event.preventDefault();
+            }}
+            className={`inline-flex min-h-10 items-center justify-center border px-4 py-2 text-[11px] font-mono uppercase tracking-widest transition-colors ${canOpenClip ? "border-primary text-primary hover:bg-primary hover:text-primary-foreground" : "cursor-not-allowed border-border text-muted-foreground/50"}`}
+          >
+            Apri clip
+          </a>
+        </div>
+      </section>
 
       {submitError && (
         <p className="text-[13px] font-sans text-primary border border-primary/40 bg-primary/10 px-4 py-3">{submitError}</p>

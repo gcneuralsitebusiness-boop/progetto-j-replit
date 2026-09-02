@@ -26,6 +26,7 @@ const Grazie = lazy(() => import('@/pages/grazie'));
 const Card = lazy(() => import('@/pages/card'));
 const CardArticolo = lazy(() => import('@/pages/card-articolo'));
 const CardReel = lazy(() => import('@/pages/card-reel'));
+const Clip = lazy(() => import('@/pages/clip'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -52,6 +53,7 @@ const queryClient = new QueryClient({
 function ConditionalNavbar() {
   const [location] = useLocation();
   if (location.startsWith('/card/')) return null;
+  if (location.startsWith('/clip/')) return null;
   if (location.startsWith('/admin/articoli/') && location.endsWith('/preview')) return null;
   if (location === '/admin' || location.startsWith('/admin/')) return null;
   return <Navbar />;
@@ -105,14 +107,30 @@ function PageMetadata() {
       "/termini": { title: "Termini — Progetto J", description: "Termini essenziali per consultare e condividere i contenuti di Progetto J." },
       "/grazie": { title: "Grazie — Progetto J", description: "Richiesta ricevuta da Progetto J." },
     };
+    const isClipRoute = location.startsWith("/clip/");
     const current = metadata[location] ?? (location.startsWith("/giorno/") ? {
       title: `Giorno ${location.split("/").pop()} — Progetto J`,
       description: "Un giorno del diario documentale di Progetto J.",
+    } : isClipRoute ? {
+      title: "Clip — Progetto J",
+      description: "Strumento video di Progetto J.",
     } : metadata["/"]);
     document.title = current.title;
     document.querySelector('meta[name="description"]')?.setAttribute("content", current.description);
     document.querySelector('meta[property="og:title"]')?.setAttribute("content", current.title);
     document.querySelector('meta[property="og:description"]')?.setAttribute("content", current.description);
+
+    const robots = document.querySelector('meta[name="robots"]');
+    robots?.setAttribute("content", isClipRoute ? "noindex, nofollow" : "index, follow");
+    const canonical = document.querySelector('link[rel="canonical"]');
+    if (isClipRoute) {
+      canonical?.remove();
+    } else if (!canonical) {
+      const restoredCanonical = document.createElement("link");
+      restoredCanonical.rel = "canonical";
+      restoredCanonical.href = "https://projectj180day.com";
+      document.head.appendChild(restoredCanonical);
+    }
   }, [location]);
   return null;
 }
@@ -127,6 +145,48 @@ function RouteLoading() {
   );
 }
 
+function AppRoutes() {
+  const [location] = useLocation();
+  const isClipRoute = location.startsWith('/clip/');
+  const routes = (
+    <Switch>
+      <Route path="/" component={Home} />
+      <Route path="/journaling" component={Journaling} />
+      <Route path="/statistiche" component={Statistiche} />
+      <Route path="/chi-sono" component={ChiSono} />
+      <Route path="/social" component={Social} />
+      <Route path="/sponsor" component={Sponsor} />
+      <Route path="/viaggio" component={Viaggio} />
+      <Route path="/articoli" component={Articoli} />
+      <Route path="/a/:slug" component={Articolo} />
+      <Route path="/coaching" component={Coaching} />
+      <Route path="/giorno/:id" component={GiornoDetail} />
+      <Route path="/privacy" component={Privacy} />
+      <Route path="/termini" component={Termini} />
+      <Route path="/grazie" component={Grazie} />
+      <Route path="/card/articolo/:slug/story" component={CardArticolo} />
+      <Route path="/card/articolo/:slug" component={CardArticolo} />
+      <Route path="/card/:giorno/reel-minimal" component={CardReel} />
+      <Route path="/card/:giorno/reel" component={CardReel} />
+      <Route path="/card/:giorno" component={Card} />
+      <Route path="/clip/:numero" component={Clip} />
+      <Route path="/admin/articoli/:slug/preview" component={ArticoloPreview} />
+      <Route path="/admin" component={Admin} />
+      <Route path="/p/:slug" component={Pagina} />
+      <Route component={NotFound} />
+    </Switch>
+  );
+
+  if (isClipRoute) {
+    return <Suspense fallback={null}>{routes}</Suspense>;
+  }
+  return (
+    <PageFade>
+      <Suspense fallback={<RouteLoading />}>{routes}</Suspense>
+    </PageFade>
+  );
+}
+
 function App() {
   useEffect(() => {
     document.documentElement.classList.add('dark');
@@ -138,35 +198,7 @@ function App() {
         <ScrollToTop />
         <PageMetadata />
         <ConditionalNavbar />
-        <PageFade>
-          <Suspense fallback={<RouteLoading />}>
-            <Switch>
-              <Route path="/" component={Home} />
-              <Route path="/journaling" component={Journaling} />
-              <Route path="/statistiche" component={Statistiche} />
-              <Route path="/chi-sono" component={ChiSono} />
-              <Route path="/social" component={Social} />
-              <Route path="/sponsor" component={Sponsor} />
-              <Route path="/viaggio" component={Viaggio} />
-              <Route path="/articoli" component={Articoli} />
-              <Route path="/a/:slug" component={Articolo} />
-              <Route path="/coaching" component={Coaching} />
-              <Route path="/giorno/:id" component={GiornoDetail} />
-              <Route path="/privacy" component={Privacy} />
-              <Route path="/termini" component={Termini} />
-              <Route path="/grazie" component={Grazie} />
-              <Route path="/card/articolo/:slug/story" component={CardArticolo} />
-              <Route path="/card/articolo/:slug" component={CardArticolo} />
-              <Route path="/card/:giorno/reel-minimal" component={CardReel} />
-              <Route path="/card/:giorno/reel" component={CardReel} />
-              <Route path="/card/:giorno" component={Card} />
-              <Route path="/admin/articoli/:slug/preview" component={ArticoloPreview} />
-              <Route path="/admin" component={Admin} />
-              <Route path="/p/:slug" component={Pagina} />
-              <Route component={NotFound} />
-            </Switch>
-          </Suspense>
-        </PageFade>
+        <AppRoutes />
       </WouterRouter>
       <Toaster />
     </QueryClientProvider>

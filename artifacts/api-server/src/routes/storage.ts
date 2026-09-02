@@ -8,6 +8,7 @@ import { and, eq, or } from 'drizzle-orm';
 import { db, articoliTable, contenutiTable, giorniTable, sponsorTable } from '@workspace/db';
 
 import {
+  InvalidObjectImageError,
   ObjectNotFoundError,
   ObjectStorageService,
 } from '../lib/objectStorage';
@@ -129,6 +130,47 @@ router.post(
     } catch (error) {
       req.log.error({ err: error }, 'Error generating upload URL');
       res.status(500).json({ error: 'Failed to generate upload URL' });
+    }
+  },
+);
+
+/**
+ * POST /storage/uploads/resize
+ *
+ * The clip uploader first uses the existing presigned upload flow, then asks
+ * the server to normalize the stored image to a maximum 1600px long side.
+ */
+router.post(
+  '/storage/uploads/resize',
+  async (req: Request, res: Response) => {
+    if (!isAdmin(req)) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    const { objectPath } = req.body ?? {};
+    if (
+      typeof objectPath !== 'string'
+      || !/^\/objects\/uploads\/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(objectPath)
+    ) {
+      res.status(400).json({ error: 'Percorso immagine non valido.' });
+      return;
+    }
+
+    try {
+      await objectStorageService.resizeObjectEntityImage(objectPath);
+      res.json({ objectPath });
+    } catch (error) {
+      if (error instanceof InvalidObjectImageError) {
+        res.status(400).json({ error: 'Immagine non valida o troppo grande.' });
+        return;
+      }
+      if (error instanceof ObjectNotFoundError) {
+        res.status(404).json({ error: 'Immagine non trovata.' });
+        return;
+      }
+      req.log.error({ err: error, objectPath }, 'Error resizing uploaded image');
+      res.status(500).json({ error: 'Impossibile ridimensionare l’immagine.' });
     }
   },
 );

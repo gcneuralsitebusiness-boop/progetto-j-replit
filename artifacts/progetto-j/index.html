@@ -20,6 +20,12 @@
     <meta name="twitter:description" content="180 giorni di trasformazione documentata. Dati reali, zero filtri." />
     <meta name="twitter:image" content="https://projectj180day.com/og-image.jpg" />
     <link rel="canonical" href="https://projectj180day.com" />
+    <script>
+      if (window.location.pathname.startsWith("/clip/")) {
+        document.querySelector('meta[name="robots"]')?.setAttribute("content", "noindex, nofollow");
+        document.querySelector('link[rel="canonical"]')?.remove();
+      }
+    </script>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

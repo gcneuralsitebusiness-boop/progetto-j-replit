@@ -41,6 +41,47 @@ router.get("/entries/latest", async (_req, res): Promise<void> => {
   res.json(GetLatestEntriesResponse.parse(ser(rows)));
 });
 
+// GET /giorni/:numero/clip — deliberately narrow public payload for the video clip
+router.get("/giorni/:numero/clip", async (req, res): Promise<void> => {
+  const numero = Number(req.params.numero);
+  if (!Number.isInteger(numero) || numero < 1 || numero > 180) {
+    res.status(404).json({ error: "Giorno non trovato" });
+    return;
+  }
+
+  const [row] = await db
+    .select({
+      numeroGiorno: giorniTable.numero,
+      data: giorniTable.data,
+      sonnoOre: giorniTable.sonno,
+      entrateEur: giorniTable.entrate,
+      usciteEur: giorniTable.uscite,
+      attrito: giorniTable.attrito,
+      fotoClipUrl: giorniTable.foto,
+    })
+    .from(giorniTable)
+    .where(eq(giorniTable.numero, numero))
+    .limit(1);
+
+  if (!row) {
+    res.status(404).json({ error: "Giorno non trovato" });
+    return;
+  }
+
+  res.json({
+    numeroGiorno: row.numeroGiorno,
+    rimasti: Math.max(0, 180 - row.numeroGiorno),
+    data: row.data,
+    sonnoOre: row.sonnoOre ?? null,
+    entrateEur: row.entrateEur ?? null,
+    usciteEur: row.usciteEur ?? null,
+    attrito: row.attrito?.trim() || null,
+    // Internal object paths are resolved to a browser URL by the existing
+    // object-storage client; external URLs remain unchanged.
+    fotoClipUrl: row.fotoClipUrl?.trim() || null,
+  });
+});
+
 // GET /entries/summary — lightweight list for feeds and planning
 router.get("/entries/summary", async (_req, res): Promise<void> => {
   const rows = await db

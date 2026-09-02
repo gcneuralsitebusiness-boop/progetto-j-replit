@@ -1,4 +1,9 @@
 import { randomUUID } from 'crypto';
+import { execFile } from 'child_process';
+import { promisify } from 'util';
+import { mkdtemp, readFile, rm, writeFile } from 'fs/promises';
+import { tmpdir } from 'os';
+import { join } from 'path';
 import { Readable } from 'stream';
 import { File, Storage } from '@google-cloud/storage';
 
@@ -11,6 +16,7 @@ import {
 } from './objectAcl';
 
 const REPLIT_SIDECAR_ENDPOINT = 'http://127.0.0.1:1106';
+const execFileAsync = promisify(execFile);
 
 export const objectStorageClient = new Storage({
   credentials: {
@@ -35,6 +41,14 @@ export class ObjectNotFoundError extends Error {
     super('Object not found');
     this.name = 'ObjectNotFoundError';
     Object.setPrototypeOf(this, ObjectNotFoundError.prototype);
+  }
+}
+
+export class InvalidObjectImageError extends Error {
+  constructor(message = 'Invalid uploaded image') {
+    super(message);
+    this.name = 'InvalidObjectImageError';
+    Object.setPrototypeOf(this, InvalidObjectImageError.prototype);
   }
 }
 
@@ -157,6 +171,99 @@ export class ObjectStorageService {
       throw new ObjectNotFoundError();
     }
     return objectFile;
+  }
+
+  async resizeObjectEntityImage(
+    objectPath: string,
+  ): Promise<void> {
+    if (!/^\/objects\/uploads\/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(objectPath)) {
+      throw new InvalidObjectImageError('Invalid upload object path');
+    }
+
+    const objectFile = await this.getObjectEntityFile(objectPath);
+    const [metadata] = await objectFile.getMetadata();
+    const storedContentType = String(metadata.contentType ?? '')
+      .split(';', 1)[0]
+      .trim()
+      .toLowerCase();
+    const storedSize = Number(metadata.size);
+    const allowedTypes = new Set(['image/jpeg', 'image/png', 'image/webp']);
+    if (
+      !allowedTypes.has(storedContentType)
+      || !Number.isFinite(storedSize)
+      || storedSize <= 0
+      || storedSize > 8 * 1024 * 1024
+    ) {
+      throw new InvalidObjectImageError('Invalid stored image metadata');
+    }
+
+    const [inputBuffer] = await objectFile.download();
+    const workDir = await mkdtemp(join(tmpdir(), 'progetto-j-clip-'));
+    const inputPath = join(workDir, 'input');
+
+    try {
+      await writeFile(inputPath, inputBuffer);
+      const { stdout: identity } = await execFileAsync('magick', [
+        'identify',
+        '-limit',
+        'memory',
+        '128MiB',
+        '-limit',
+        'map',
+        '256MiB',
+        '-format',
+        '%m %w %h',
+        inputPath,
+      ]);
+      const [format, rawWidth, rawHeight] = identity.trim().split(/\s+/);
+      const width = Number(rawWidth);
+      const height = Number(rawHeight);
+      const imageTypes: Record<string, { contentType: string; extension: string }> = {
+        JPEG: { contentType: 'image/jpeg', extension: 'jpg' },
+        PNG: { contentType: 'image/png', extension: 'png' },
+        WEBP: { contentType: 'image/webp', extension: 'webp' },
+      };
+      const verifiedType = imageTypes[format];
+      if (
+        !verifiedType
+        || verifiedType.contentType !== storedContentType
+        || !Number.isInteger(width)
+        || !Number.isInteger(height)
+        || width <= 0
+        || height <= 0
+        || width > 20_000
+        || height > 20_000
+        || width * height > 40_000_000
+      ) {
+        throw new InvalidObjectImageError('Invalid image content');
+      }
+
+      const outputPath = join(workDir, `output.${verifiedType.extension}`);
+      await execFileAsync('magick', [
+        '-limit',
+        'memory',
+        '128MiB',
+        '-limit',
+        'map',
+        '256MiB',
+        inputPath,
+        '-auto-orient',
+        '-resize',
+        '1600x1600>',
+        '-strip',
+        outputPath,
+      ]);
+      const outputBuffer = await readFile(outputPath);
+      await objectFile.save(outputBuffer, {
+        resumable: false,
+        metadata: {
+          contentType: verifiedType.contentType,
+          cacheControl: 'public, max-age=3600',
+        },
+      });
+    } finally {
+      await rm(workDir, { recursive: true, force: true });
+    }
   }
 
   normalizeObjectEntityPath(rawPath: string): string {

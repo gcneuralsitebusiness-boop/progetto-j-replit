@@ -1,0 +1,347 @@
+╔════════════════════════════════════════════════════════════════╗
+║  PROGETTO J — SEZIONE CLIP                                     ║
+║  Pagina animata a schermo intero per registrazione video       ║
+╚════════════════════════════════════════════════════════════════╝
+
+CONTESTO
+React + Vite + TypeScript, Node/Express, Drizzle ORM + PostgreSQL.
+  /artifacts/progetto-j/src/pages/
+  /artifacts/progetto-j/src/components/
+  /artifacts/api-server/src/routes/entries.ts
+  /lib/db/src/schema/giorni.ts
+
+OBIETTIVO
+Pagina pubblica /clip/:numero con un blocco animato dei dati del giorno.
+Viene registrata con la registrazione schermo del telefono e inserita
+all'inizio dei video Instagram.
+
+REGOLA GENERALE
+È un'aggiunta. Non modificare funzionalità esistenti.
+Nessuna colonna rinominata o eliminata. Nessuna migrazione distruttiva.
+
+╔════════════════════════════════════════════════════════════════╗
+║ 1. DATABASE — ispeziona prima di scrivere codice               ║
+╚════════════════════════════════════════════════════════════════╝
+
+Apri /lib/db/src/schema/giorni.ts e riportami quali di questi esistono:
+  numeroGiorno, data, sonnoOre, entrateEur, usciteEur,
+  attrito, fatto, nonFatto, sintesiCard, fotoUrl
+
+Se esiste già un campo immagine riutilizzabile, USALO e dimmi quale.
+Solo se non esiste, aggiungi:
+  fotoClipUrl: varchar('foto_clip_url', { length: 500 })
+Nullable, nessun default, nessun NOT NULL.
+
+Mostrami l'SQL della migrazione PRIMA di applicarla.
+
+╔════════════════════════════════════════════════════════════════╗
+║ 2. API                                                          ║
+╚════════════════════════════════════════════════════════════════╝
+
+GET /api/giorni/:numero/clip — pubblico, sola lettura, nessuna auth.
+
+200:
+{
+  "numeroGiorno": 114,
+  "rimasti": 66,
+  "data": "2026-09-02",
+  "sonnoOre": 5.5,
+  "entrateEur": 0,
+  "usciteEur": 12.40,
+  "attrito": "Guardia troppo bassa per la K1.",
+  "fotoClipUrl": "https://..." | null
+}
+
+- rimasti = 180 - numeroGiorno, mai negativo
+- giorno inesistente → 404 { "error": "Giorno non trovato" }
+- campo vuoto → null, mai stringa vuota
+- non esporre altri campi
+
+╔════════════════════════════════════════════════════════════════╗
+║ 3. PAGINA /clip/:numero — LAYOUT                               ║
+╚════════════════════════════════════════════════════════════════╝
+
+Nuovo file: /artifacts/progetto-j/src/pages/clip.tsx
+Rotta pubblica, React.lazy.
+
+CONTENITORE
+- height 100dvh (NON 100vh), overflow hidden, fondo #0A0A0A
+- nessuna navbar, footer, menu, link, scroll
+- blocco centrato verticalmente, larghezza min(92vw, 440px)
+- position: relative (serve per gli elementi che sfondano)
+- perfetto a 390x844. Niente tagliato, nessuna barra di scorrimento
+
+⚠️ IMPORTANTE: il numero del giorno esce di proposito dal bordo sinistro.
+Non è un bug. Non "correggerlo" con padding o overflow visible sul body.
+Il taglio avviene sul contenitore del blocco, non sulla pagina.
+
+STRUTTURA dall'alto in basso:
+
+┌─ 1. INTESTAZIONE ─────────────────────────────────────────────┐
+  Mono 11px, letterSpacing .24em, #6E6A66, maiuscolo, sinistra:
+    PROGETTO J
+  Sulla stessa riga, allineato a destra, Mono 11px #4E4A46:
+    66 RIMASTI
+  Sotto: linea 1px #1A1A1A a larghezza piena, margine 14px
+└───────────────────────────────────────────────────────────────┘
+
+┌─ 2. BLOCCO FOTO + NUMERO (il pezzo forte) ────────────────────┐
+  Un contenitore relative con overflow: hidden.
+  aspect-ratio 4/5, larghezza piena del blocco.
+
+  FOTO:
+    position absolute, inset 0, object-fit cover, width/height 100%
+    zero raggio, zero bordo
+    filtro: grayscale(100%) contrast(1.08) brightness(0.82)
+    (deve stare sotto il numero senza rubargli leggibilità)
+
+    Se fotoClipUrl è null:
+      fondo #141414, e al centro Mono 11px #3A3634 "NESSUNA FOTO"
+      Il numero resta comunque visibile e leggibile.
+
+  VELO:
+    sopra la foto, un layer con
+    linear-gradient(to top, rgba(10,10,10,.88) 0%,
+                            rgba(10,10,10,.30) 45%,
+                            rgba(10,10,10,.55) 100%)
+    Serve a garantire il contrasto del numero su qualsiasi foto.
+
+  NUMERO GIORNO — fuori squadra:
+    position absolute
+    bottom: -0.14em   (la base delle cifre viene tagliata dal bordo basso)
+    left: -0.10em     (la prima cifra esce dal bordo sinistro)
+    Bebas Neue, font-size clamp(150px, 44vw, 230px)
+    line-height 0.78, letterSpacing -0.045em
+    color #F0EBE3
+    font-variant-numeric: tabular-nums  ← OBBLIGATORIO
+    mix-blend-mode: difference
+    pointer-events: none
+
+    Il numero deve essere GRANDE e TAGLIATO. A dimensione francobollo
+    dentro un reel si deve leggere una massa, non una cifra.
+    Non centrarlo. Non ridurlo per farlo stare dentro.
+
+  Nota tecnica sul blend: mix-blend-mode: difference funziona solo se
+  l'elemento e la foto sono nello stesso stacking context. Non applicare
+  transform o opacity al contenitore padre in modo permanente, altrimenti
+  crei un nuovo contesto e il blend smette di funzionare. Durante
+  l'animazione anima opacity SUL NUMERO, non sul contenitore.
+└───────────────────────────────────────────────────────────────┘
+
+┌─ 3. FASCIA DATI ──────────────────────────────────────────────┐
+  Subito sotto la foto, senza spazio (margin-top 0).
+  Fondo #E8E4DE (avorio), padding 18px 20px.
+  Larghezza piena del blocco.
+
+  Dentro, tre colonne uguali separate da bordo verticale 1px
+  rgba(10,10,10,.14):
+
+      SONNO          ENTRATE         USCITE
+      5,5 h          € 0             € 12,40
+
+  Etichetta: Mono 9px, letterSpacing .22em, rgba(10,10,10,.46), maiuscolo
+  Valore:    Bebas Neue 38px, #0A0A0A, tabular-nums, line-height 1
+  Tutti e tre lo stesso colore. NON verde, NON rosso.
+  Nessun segno + o - davanti ai numeri.
+
+  SOVRASTAMPA:
+    Sopra la fascia avorio, un layer assoluto:
+      background #B81D1D
+      mix-blend-mode: multiply
+      altezza 100%, larghezza 0 → animata
+    Risultato: dove passa il rosso, l'avorio diventa granata scuro e il
+    testo nero resta leggibile. È la stessa sovrastampa del sistema card.
+    Il rosso NON deve coprire per intero: si ferma al 38% della larghezza,
+    lasciando avorio a destra. Il taglio netto tra granata e avorio è
+    l'elemento grafico.
+└───────────────────────────────────────────────────────────────┘
+
+┌─ 4. ATTRITO ──────────────────────────────────────────────────┐
+  margin-top 16px
+  Etichetta Mono 9px letterSpacing .22em #6E6A66: ATTRITO
+  Testo: Inter 15px, line-height 1.45, #8E8A85
+  Massimo 3 righe, troncato con ellissi su confine di parola
+  (-webkit-line-clamp: 3)
+  Se attrito è null: non renderizzare né etichetta né testo,
+  e non lasciare spazio vuoto.
+└───────────────────────────────────────────────────────────────┘
+
+┌─ 5. REGOLO A 180 TACCHE (firma del sistema) ──────────────────┐
+  margin-top 18px, larghezza piena, altezza 22px.
+  180 tacche verticali, distribuite con flex, gap uniforme.
+
+  Ogni tacca: larghezza 1px.
+    - tacca di indice multiplo di 10 → altezza 14px
+    - tutte le altre                 → altezza 7px
+    - tutte allineate in basso
+
+  Colori:
+    - tacche da 1 a numeroGiorno  → #B81D1D
+    - tacche da numeroGiorno+1 a 180 → #262322
+    - la tacca esattamente a numeroGiorno → #F0EBE3, altezza 22px
+      (è il segnalino di oggi, deve staccare)
+
+  Renderizza con 180 <span>, non con SVG, non con canvas.
+  Non aggiungere numeri, etichette o legende sotto il regolo.
+└───────────────────────────────────────────────────────────────┘
+
+┌─ 6. PIEDE ────────────────────────────────────────────────────┐
+  margin-top 14px
+  Mono 10px, letterSpacing .26em, #6E6A66:
+    PROJECTJ180DAY.COM
+└───────────────────────────────────────────────────────────────┘
+
+FORMATO NUMERI — italiano obbligatorio:
+- decimali con virgola: 5,5 non 5.5
+- valuta: €&nbsp;12,40 con spazio non separabile
+- Intl.NumberFormat('it-IT'), mai concatenazioni manuali
+
+╔════════════════════════════════════════════════════════════════╗
+║ 4. ANIMAZIONE                                                  ║
+╚════════════════════════════════════════════════════════════════╝
+
+Parte 400 ms dopo l'arrivo dei dati. Durata totale 1900 ms.
+Poi si ferma e resta ferma. Nessun loop.
+
+  0 ms      intestazione (PROGETTO J + RIMASTI + linea) fade in 200 ms
+  120 ms    foto: opacity 0 → 1 in 500 ms
+            NESSUNO zoom, NESSUNA scala, NESSUNO slide
+  250 ms    numero giorno: opacity 0 → 1 in 200 ms, e in parallelo
+            conta da 0 a 114 in 950 ms con easing easeOutExpo
+            (anima opacity SUL NUMERO, mai sul contenitore, vedi nota blend)
+  700 ms    fascia dati avorio: scaleY 0 → 1 in 280 ms,
+            transform-origin top
+  850 ms    i tre valori contano 0 → finale in 650 ms, easeOutExpo,
+            in parallelo tra loro
+  1150 ms   sovrastampa rossa: larghezza 0 → 38% in 320 ms, easeOutExpo
+  1400 ms   attrito fade in 220 ms
+  1500 ms   regolo: le tacche da 1 a numeroGiorno si colorano in
+            sequenza da sinistra a destra in 380 ms totali.
+            Implementalo con transition-delay proporzionale all'indice,
+            non con 180 timer.
+            La tacca di oggi (#F0EBE3) appare per ultima.
+  1750 ms   piede PROJECTJ180DAY.COM fade in 200 ms
+
+VINCOLI TECNICI — contano più dell'estetica:
+- Anima SOLO opacity, transform e le due eccezioni esplicite
+  (larghezza della sovrastampa, colore delle tacche).
+  Mai height, top, left, margin, padding.
+- requestAnimationFrame per i contatori numerici, MAI setInterval.
+- cancelAnimationFrame nel cleanup dello useEffect.
+- tabular-nums obbligatorio ovunque ci siano cifre che contano:
+  senza, le cifre ballano in larghezza e la clip è inutilizzabile.
+- Nessuna libreria di animazione. Niente Framer Motion, niente GSAP,
+  nessuna nuova dipendenza npm.
+- prefers-reduced-motion attivo → mostra tutto già allo stato finale,
+  senza animare, senza rompere nulla.
+- Se l'animazione del regolo risulta pesante su telefono, riduci la
+  durata, NON il numero di tacche. Le tacche devono essere 180.
+
+╔════════════════════════════════════════════════════════════════╗
+║ 5. RIAVVIO                                                     ║
+╚════════════════════════════════════════════════════════════════╝
+
+Tap in qualsiasi punto della pagina → riavvia l'animazione da capo.
+Incrementa una key di stato che rimonta il componente animato.
+NON ricaricare la pagina. NON rifare la fetch.
+Nessun pulsante, nessuna scritta "tocca per ripetere".
+
+╔════════════════════════════════════════════════════════════════╗
+║ 6. STATI                                                       ║
+╚════════════════════════════════════════════════════════════════╝
+
+Caricamento: #0A0A0A completamente vuoto.
+             Nessuno spinner, nessun testo, nessuno scheletro —
+             finirebbero nella registrazione.
+404:         #0A0A0A, centro, Mono 12px #4E4A46 "GIORNO NON TROVATO"
+Errore rete: #0A0A0A, centro, Mono 12px #4E4A46 "ERRORE"
+Numero non valido (non numerico, <1, >180): come 404
+
+╔════════════════════════════════════════════════════════════════╗
+║ 7. ADMIN                                                       ║
+╚════════════════════════════════════════════════════════════════╝
+
+In fondo al form di modifica del giorno:
+
+  ─────────────────────────────
+  CLIP
+  ─────────────────────────────
+  [ Upload foto del giorno ]
+     anteprima 4:5 se presente
+     "Rimuovi foto" se presente
+
+  [ APRI CLIP ] → /clip/{numeroGiorno} in nuova scheda
+
+Upload:
+- solo image/jpeg, image/png, image/webp
+- massimo 8 MB → oltre: "Immagine troppo grande, massimo 8 MB"
+- ridimensiona lato server a max 1600px sul lato lungo
+- usa lo STESSO storage già in uso nel progetto per le altre immagini,
+  non introdurne uno nuovo. Dimmi quale hai usato.
+
+Nota: la foto viene mostrata in 4:5 e in bianco e nero. Nell'anteprima
+admin mostrala già in 4:5 così J vede la stessa inquadratura.
+
+APRI CLIP disabilitato se numeroGiorno è vuoto.
+
+╔════════════════════════════════════════════════════════════════╗
+║ 8. SEO                                                         ║
+╚════════════════════════════════════════════════════════════════╝
+
+/clip/* non deve finire su Google: è uno strumento, non contenuto.
+- <meta name="robots" content="noindex, nofollow">
+- Disallow: /clip/ in robots.txt
+- fuori dalla sitemap
+- nessun canonical
+
+╔════════════════════════════════════════════════════════════════╗
+║ 9. COSA NON FARE                                               ║
+╚════════════════════════════════════════════════════════════════╝
+
+✗ Modificare pagine, componenti o endpoint esistenti oltre a quanto scritto
+✗ Aggiungere dipendenze npm
+✗ Toccare countdown, currentDay o statistiche
+✗ Rinominare o eliminare colonne
+✗ border-radius, box-shadow, emoji, icone
+✗ Colori fuori dal design system
+✗ Centrare o rimpicciolire il numero del giorno "per farlo stare dentro"
+✗ Ridurre il numero di tacche del regolo sotto 180
+✗ Musica, suoni, effetti
+✗ Pulsanti, link o navigazione dentro /clip
+
+╔════════════════════════════════════════════════════════════════╗
+║ 10. VERIFICA PRIMA DI CONSEGNARE                               ║
+╚════════════════════════════════════════════════════════════════╝
+
+[ ] /clip/114 carica e anima tutta la sequenza
+[ ] /clip/1 e /clip/180 funzionano (a 1 il regolo è quasi vuoto,
+    a 180 quasi pieno — controlla entrambi)
+[ ] /clip/9 e /clip/99: il numero a 1 e 2 cifre resta tagliato a
+    sinistra e non si centra da solo
+[ ] /clip/0, /clip/181, /clip/abc → "GIORNO NON TROVATO"
+[ ] Giorno senza foto: il numero resta leggibile sul fondo #141414
+[ ] Foto molto chiara e foto molto scura: il numero resta leggibile
+    in entrambi i casi (è il motivo del velo a gradiente)
+[ ] mix-blend-mode: difference funziona davvero — se il numero appare
+    bianco piatto sopra la foto, hai creato uno stacking context sbagliato
+[ ] La sovrastampa rossa produce granata scuro, non rosso pieno,
+    e il testo nero resta leggibile
+[ ] Il regolo ha esattamente 180 tacche
+[ ] La tacca di oggi è avorio, più alta, e appare per ultima
+[ ] Attrito vuoto: nessuno spazio bianco, nessun errore
+[ ] Attrito lunghissimo: troncato a 3 righe, layout intatto
+[ ] Le cifre NON ballano in larghezza durante il conteggio
+[ ] Decimali con virgola
+[ ] Nessuno scroll possibile
+[ ] A 390x844 nulla è tagliato tranne il numero, che è voluto
+[ ] Tap riavvia senza ricaricare i dati
+[ ] Nessuno spinner visibile in nessun momento
+[ ] Upload admin funziona e la foto compare nella clip
+[ ] Il resto del sito funziona identico a prima
+[ ] Console pulita, zero errori e warning
+
+Al termine riportami:
+1. Campi DB già esistenti vs aggiunti
+2. Storage usato per la foto
+3. SQL della migrazione applicata
+4. Conferma esplicita che il mix-blend-mode funziona sul numero
