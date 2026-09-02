@@ -22,3 +22,4 @@
 - [Highmaps journey map projection](highmaps-journey-map.md) — the checked-in SVG needs its cropped viewBox and calibrated marker projection kept in sync.
 - [Public article media ACL](public-article-media-acl.md) — published article image fields must be included in the database-backed public object access check.
 - [Incompatible metric scales](incompatible-metric-scales.md) — charts comparing repetitions, seconds, and levels need independent axes or small multiples.
+- [Card export compatibility](card-export-compatibility.md) — keep narrow adapters for legacy reel consumers when replacing the shared daily-card renderer.

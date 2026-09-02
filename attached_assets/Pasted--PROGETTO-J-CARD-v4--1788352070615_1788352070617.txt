@@ -1,0 +1,296 @@
+╔════════════════════════════════════════════════════════════════╗
+║  PROGETTO J — CARD v4                                          ║
+║  Sostituisce il sistema card esistente                         ║
+╚════════════════════════════════════════════════════════════════╝
+
+CONTESTO
+React + Vite + TypeScript. File coinvolti:
+  /artifacts/progetto-j/src/pages/card.tsx
+  /artifacts/progetto-j/src/lib/canvas-card-export.ts
+  /artifacts/progetto-j/src/components/DayCard.tsx (se esiste)
+Endpoint GET /api/giorni/:numero/clip esiste già e restituisce:
+  numeroGiorno, rimasti, data, sonnoOre, entrateEur, usciteEur,
+  attrito, fotoClipUrl
+Usa QUESTO endpoint. Non crearne altri.
+
+OBIETTIVO
+Rifare la card giornaliera da zero. Le varianti attuali
+(fuori-squadra, sovrastampa, campo-dati) vanno ELIMINATE.
+La card nuova è la versione ferma della pagina /clip: stesso oggetto,
+stessa struttura, stessi dati. Chi vede il reel e poi il post deve
+riconoscere la stessa cosa.
+
+Due output:
+  A) anteprima animata nella pagina /card (per registrazione schermo)
+  B) export PNG dello stato finale, 4:5 e 9:16
+
+REGOLA GENERALE
+Non toccare endpoint, schema DB, admin, altre pagine.
+Nessuna dipendenza npm nuova. Nessun html2canvas.
+Zero border-radius, zero ombre, zero icone, zero emoji.
+
+╔════════════════════════════════════════════════════════════════╗
+║ 1. PRINCIPI DI LAYOUT — non negoziabili                        ║
+╚════════════════════════════════════════════════════════════════╝
+
+- Il testo NON sta mai sopra la foto. Unica eccezione: il numero
+  del giorno, in mix-blend-mode difference.
+- La foto è sempre bianco e nero.
+- Nessun testo sotto 22px a 1080 di larghezza.
+- La foto e i dati sono due zone separate con un bordo netto.
+- Il regolo e il dominio devono essere leggibili a francobollo
+  (la card viene vista a 350px nel feed).
+
+╔════════════════════════════════════════════════════════════════╗
+║ 2. TOKEN                                                       ║
+╚════════════════════════════════════════════════════════════════╝
+
+nero #0A0A0A · rosso #B81D1D · avorio #E8E4DE · hero #F0EBE3
+grigio testo #C9C4BD · grigio etichette #9A958F · linea #1A1A1A
+tacca futura #2A2725
+Font: Bebas Neue (numeri, titoli) · Inter (attrito) · JetBrains Mono
+(etichette, dominio). Se non già caricati, caricali come le altre
+pagine. Prima di qualsiasi export: await document.fonts.ready.
+
+╔════════════════════════════════════════════════════════════════╗
+║ 3. FORMATO 4:5 — 1080 × 1350 — STRUTTURA                       ║
+╚════════════════════════════════════════════════════════════════╝
+
+Misure assolute in px sul canvas 1080×1350. Dall'alto:
+
+[A] TESTATA — y 0→132, padding 0 56
+  Sinistra: "J" Bebas 92px #B81D1D, letterSpacing -.03em,
+            poi gap 26px, "PROGETTO J" Mono 24px letterSpacing .28em
+            #F0EBE3 maiuscolo
+  Destra:   "66 RIMASTI" Mono 24px letterSpacing .2em #9A958F
+            maiuscolo tabular-nums
+  Tutto centrato verticalmente nei 132px.
+
+[B] FOTO + NUMERO — y 132→822 (alto 690), larghezza piena
+  Contenitore overflow hidden, isolation isolate.
+  Foto: object-fit cover, object-position center 30%,
+        filter grayscale(1) contrast(1.1) brightness(.8)
+  Velo sopra la foto:
+        linear-gradient(to top, rgba(10,10,10,.92) 0%,
+        rgba(10,10,10,.35) 40%, rgba(10,10,10,.12) 70%,
+        rgba(10,10,10,.45) 100%)
+  Numero: Bebas 620px, line-height .8, letterSpacing -.045em,
+        #F0EBE3, tabular-nums, mix-blend-mode difference,
+        position absolute, left -14px, bottom -56px.
+        Esce dal bordo sinistro e la base viene coperta dalla
+        fascia sotto. È voluto. Non centrarlo, non ridurlo.
+  Se fotoClipUrl è null: fondo #141414, nessun testo, il numero
+        resta.
+  Nota blend: nessun transform/opacity/filter permanente sul
+        contenitore [B]. Anima solo il numero, mai il contenitore.
+
+[C] FASCIA DATI — y 822→1018 (alto 196), fondo #E8E4DE
+  Padding 0 56. Tre colonne uguali, bordo verticale
+  1px rgba(10,10,10,.16) tra le colonne.
+      SONNO          ENTRATE         USCITE
+      5,5 H          € 0             € 12,40
+  Etichetta: Mono 22px letterSpacing .24em rgba(10,10,10,.5)
+             maiuscolo, margin-bottom 10
+  Valore:    Bebas 82px #0A0A0A tabular-nums line-height 1
+  Sovrastampa: rettangolo #B81D1D, mix-blend-mode multiply,
+             left 0, alto 196, largo 34% della card. Sopra le
+             colonne, sotto niente. Il taglio netto rosso/avorio
+             è l'elemento grafico.
+  Formato: Intl.NumberFormat('it-IT'), virgola decimale,
+           €&nbsp; con spazio non separabile, nessun segno +/-,
+           sonno sempre con un decimale e " H".
+
+[D] ATTRITO — y 1046→1190, padding 0 56
+  Inter 36px, weight 400, line-height 1.3, #C9C4BD, minuscolo
+  (NON maiuscolo, NON Bebas). Massimo 3 righe, max-width 26ch.
+  Se supera: riduci font del 4% per volta fino a 28px, poi
+  tronca su confine di parola con un punto.
+  Se attrito è null: zona vuota, altezza mantenuta.
+
+[E] REGOLO — y 1194→1238, padding 0 56
+  180 <span> distribuiti con justify space-between, allineati
+  in basso. Larghezza 2px.
+    multiplo di 10 → alto 26  · altri → alto 14
+    1..N → #B81D1D · N+1..180 → #2A2725
+    tacca N → #F0EBE3, alto 44, largo 4
+  Sono 180, sempre.
+
+[F] PIEDE — y 1246→1298, padding 0 56
+  Sinistra: barra #B81D1D 72×5
+  Destra:   "PROJECTJ180DAY.COM" Mono 26px letterSpacing .3em
+            #F0EBE3
+
+Grana: layer finale, opacity .07, mix-blend-mode screen, rumore
+generato una volta con seed = numeroGiorno (mulberry32).
+
+╔════════════════════════════════════════════════════════════════╗
+║ 4. FORMATO 9:16 — 1080 × 1920                                  ║
+╚════════════════════════════════════════════════════════════════╝
+
+Stessa struttura. Cambiano solo:
+  [A] 0→160
+  [B] 160→1210 (alto 1050), numero Bebas 760px
+  [C] 1210→1430 (alto 220), valori Bebas 96px
+  [D] 1470→1660
+  [E] 1700→1750
+  [F] 1790→1850
+Zona sicura Instagram: niente di importante sopra y 250 e
+sotto y 1680. Testata e piede stanno dentro, va bene così.
+
+╔════════════════════════════════════════════════════════════════╗
+║ 5. VARIANTI — tre, con rotazione automatica                    ║
+╚════════════════════════════════════════════════════════════════╝
+
+"foto"      default quando fotoClipUrl esiste
+"negativo"  quando numeroGiorno % 10 === 0
+"testo"     quando fotoClipUrl è null
+
+NEGATIVO: fondo #E8E4DE, testo #0A0A0A. Niente foto.
+  Numero Bebas 780px #0A0A0A, left -18, top 150, esce a sinistra.
+  Fascia #B81D1D multiply, y 596→772, larghezza piena, passa
+  sopra il numero.
+  Sotto, y 850: frase Bebas 110px line-height .94 #0A0A0A,
+  due righe fisse: "CENTOVENTI GIORNI." / "NESSUNO CANCELLATO."
+  (numero in lettere generato automaticamente, italiano).
+  Nessuna fascia dati. Regolo con tacche future rgba(10,10,10,.18),
+  tacca oggi #0A0A0A. Dominio #0A0A0A. Grana in multiply .09.
+
+TESTO: fondo nero, niente foto.
+  Numero Bebas 760px #F0EBE3, left -30, top 120, con fantasma
+  #B81D1D opacity .22 traslato +9 +6 disegnato prima.
+  Rettangolo #B81D1D, mix-blend-mode screen, opacity .9,
+  left 0, top 700, largo 44%, alto 130, dietro il numero.
+  Attrito in Bebas 104px line-height .96 #F0EBE3, y 760,
+  massimo 3 righe. Nessuna fascia dati. Regolo e piede standard.
+
+Selettore manuale nella UI per forzare qualsiasi variante.
+
+╔════════════════════════════════════════════════════════════════╗
+║ 6. ANIMAZIONE — nell'anteprima di /card                        ║
+╚════════════════════════════════════════════════════════════════╝
+
+L'anteprima è un DOM reale scalato (transform scale), non un
+canvas, così si anima e si registra. Parte 400ms dopo che dati
+E foto sono caricati. Durata 1900ms. Poi ferma. Tap sull'anteprima
+→ riparte (incrementa una key, no refetch).
+
+Variante FOTO:
+  0ms      testata fade in 200
+  120ms    foto opacity 0→1 in 500, nessuno zoom
+  250ms    numero opacity 0→1 in 200 + conta 0→N in 950 easeOutExpo
+  700ms    fascia scaleY 0→1 in 280, origin bottom
+  850ms    tre valori contano 0→finale in 650 easeOutExpo
+  1150ms   sovrastampa scaleX 0→1 in 320 easeOutExpo, origin left
+  1400ms   attrito fade in 220
+  1500ms   tacche 1..N si colorano in sequenza in 380
+           (transition-delay proporzionale all'indice), oggi per ultima
+  1750ms   piede fade in 200
+
+Variante NEGATIVO:
+  0ms      fondo avorio già presente, testata fade in 200
+  150ms    numero conta 0→N in 900 easeOutExpo, opacity 0→1 in 200
+  900ms    fascia rossa scaleX 0→1 in 340, origin left
+  1250ms   frase riga 1 fade in 200, riga 2 a 1400
+  1550ms   regolo in sequenza 380
+  1800ms   piede fade in 200
+
+Variante TESTO:
+  0ms      testata fade in 200
+  150ms    rettangolo rosso scaleX 0→1 in 300, origin left
+  300ms    numero conta 0→N in 900, opacity 0→1 in 200
+  1100ms   attrito: le righe entrano una alla volta, fade 180,
+           ogni 160ms
+  1550ms   regolo in sequenza 380
+  1800ms   piede fade in 200
+
+VINCOLI:
+- Solo opacity, transform, colore tacche. Mai width/height/top/left.
+- requestAnimationFrame per i contatori, cancel nel cleanup.
+- tabular-nums ovunque contino cifre.
+- prefers-reduced-motion → stato finale immediato.
+- Nessuna libreria.
+
+╔════════════════════════════════════════════════════════════════╗
+║ 7. EXPORT PNG                                                  ║
+╚════════════════════════════════════════════════════════════════╝
+
+In canvas-card-export.ts, rendering nativo <canvas> a scala 2
+(2160×2700 e 2160×3840), esporta PNG.
+
+Deve riprodurre ESATTAMENTE lo stato finale del DOM:
+- foto: disegnala, poi applica grayscale via getImageData
+  (luminanza .299 .587 .114), contrasto e luminosità a mano
+- velo: createLinearGradient con gli stessi stop
+- numero in difference: ctx.globalCompositeOperation = 'difference'
+- sovrastampa: 'multiply'
+- rettangolo variante testo: 'screen'
+- letterSpacing: se ctx.letterSpacing non è supportato,
+  disegna carattere per carattere avanzando la x
+- grana: canvas offscreen, seed numeroGiorno, 'screen' .07
+- ripristina 'source-over' dopo ogni blend
+
+Verifica di allineamento OBBLIGATORIA: esporta il PNG, mettilo
+in overlay al 50% sopra il DOM scalato, e conferma che numero,
+fascia e regolo coincidono entro 4px. Se non coincidono, correggi
+il canvas, non il DOM.
+
+Nome file: PJ-114-foto-4x5.png / PJ-114-foto-9x16.png
+
+╔════════════════════════════════════════════════════════════════╗
+║ 8. UI PAGINA /card                                             ║
+╚════════════════════════════════════════════════════════════════╝
+
+Dall'alto:
+- Selettore giorno (numero, default = giorno corrente)
+- Anteprima animata, scalata a larghezza disponibile, tap = replay
+- Sotto, in fila: FEED / STORY (cambia formato anteprima)
+- Sotto: PNG FEED / PNG STORY / COPIA SINTESI
+- Selettore variante: AUTO / FOTO / NEGATIVO / TESTO
+- Riga Mono 22px #9A958F: "Tap sull'anteprima per rivedere
+  l'animazione. Per registrarla: apri a schermo intero." e un
+  pulsante SCHERMO INTERO che apre /clip/:numero.
+
+Stile UI coerente col sito. Nessun raggio, nessuna ombra.
+
+╔════════════════════════════════════════════════════════════════╗
+║ 9. COSA NON FARE                                               ║
+╚════════════════════════════════════════════════════════════════╝
+
+✗ Testo sopra la foto (tranne il numero)
+✗ Foto a colori
+✗ Testo sotto 22px
+✗ Attrito in maiuscolo o in Bebas nella variante foto
+✗ Centrare o ridurre il numero perché esce dal bordo
+✗ Meno di 180 tacche
+✗ Mantenere le vecchie varianti
+✗ Dipendenze npm, html2canvas, librerie di animazione
+✗ border-radius, ombre, icone, emoji, colori fuori sistema
+
+╔════════════════════════════════════════════════════════════════╗
+║ 10. VERIFICA — con screenshot allegati                         ║
+╚════════════════════════════════════════════════════════════════╝
+
+[ ] Variante foto a 4:5 e 9:16: tutte le zone presenti, nulla
+    sovrapposto, nulla tagliato tranne il numero
+[ ] Il blend difference funziona: sulle zone chiare della foto
+    il numero diventa scuro. Screenshot obbligatorio.
+[ ] La sovrastampa produce rosso scuro sull'avorio e il testo
+    nero sotto resta leggibile
+[ ] Negativo a 4:5: numero in lettere corretto per 110, 120, 130
+[ ] Testo a 4:5: attrito lungo va a capo e non sfonda
+[ ] Foto null → variante testo automatica
+[ ] Giorno % 10 → variante negativo automatica
+[ ] Attrito null: layout identico, zona vuota
+[ ] Animazione parte, dura ~1,9s, tap la riavvia senza refetch
+[ ] Cifre non ballano in larghezza durante il conteggio
+[ ] PNG esportato coincide col DOM entro 4px (overlay)
+[ ] PNG a 350px di larghezza: regolo, dominio e fascia leggibili
+[ ] Nessun font di fallback nel PNG
+[ ] Console pulita
+[ ] Resto del sito identico
+
+Al termine riportami:
+1. Screenshot delle tre varianti in 4:5
+2. Screenshot dell'overlay PNG/DOM
+3. Conferma esplicita che difference e multiply funzionano
+   sia nel DOM che nel canvas
