@@ -3,7 +3,7 @@
   <head>
     <!-- deploy-bust: 20260801-v5 -->
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
     <title>Progetto J — 180 Giorni Documentati</title>
     <meta name="description" content="180 giorni di trasformazione documentata. Dati reali, zero filtri. Corpo, mente, business." />
     <meta name="robots" content="index, follow" />
@@ -20,6 +20,10 @@
     <meta name="twitter:description" content="180 giorni di trasformazione documentata. Dati reali, zero filtri." />
     <meta name="twitter:image" content="https://projectj180day.com/og-image.jpg" />
     <link rel="canonical" href="https://projectj180day.com" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="apple-touch-icon" href="/icon-512.png" />
     <script>
       if (window.location.pathname.startsWith("/clip/")) {
         document.querySelector('meta[name="robots"]')?.setAttribute("content", "noindex, nofollow");

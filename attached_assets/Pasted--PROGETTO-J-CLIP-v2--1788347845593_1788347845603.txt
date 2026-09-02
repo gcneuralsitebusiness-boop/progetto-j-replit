@@ -1,0 +1,359 @@
+╔════════════════════════════════════════════════════════════════╗
+║  PROGETTO J — CLIP v2                                          ║
+║  Frame 9:16 a schermo intero per registrazione video           ║
+╚════════════════════════════════════════════════════════════════╝
+
+CONTESTO
+React + Vite + TypeScript, Node/Express, Drizzle ORM + PostgreSQL.
+  /artifacts/progetto-j/src/pages/clip.tsx   ← esiste già, va riscritto
+  /artifacts/api-server/src/routes/entries.ts
+  /lib/db/src/schema/giorni.ts
+
+STATO ATTUALE
+Esiste già /clip/:numero con endpoint GET /api/giorni/:numero/clip e
+upload foto nell'admin. Endpoint e admin FUNZIONANO: non toccarli.
+La pagina invece è sbagliata e va rifatta da zero. Problemi verificati:
+  - il contenuto supera il viewport: intestazione e piede sono fuori schermo
+  - il numero non usa mix-blend-mode: difference (appare piatto)
+  - è impaginata come card centrata, non come schermo 9:16
+  - il testo è troppo piccolo per essere letto dentro un reel
+
+OBIETTIVO
+Riscrivere clip.tsx come FRAME A SCHERMO INTERO. Non è una pagina web
+con un blocco al centro: è uno schermo di telefono che diventa un frame
+video. Tutto quello che c'è occupa lo schermo intero, senza margini.
+
+REGOLA GENERALE
+Non modificare endpoint, schema, admin, né altre pagine.
+Nessuna dipendenza npm nuova.
+
+╔════════════════════════════════════════════════════════════════╗
+║ 1. CONTENITORE — deve stare in un solo schermo, sempre         ║
+╚════════════════════════════════════════════════════════════════╝
+
+Root della pagina:
+  position fixed, inset 0
+  height 100dvh (NON 100vh)
+  width 100vw
+  overflow hidden
+  background #0A0A0A
+  display flex, flex-direction column
+  touch-action none
+  user-select none
+
+Nessuna navbar, footer, menu, link, scroll, margine laterale.
+Il body non deve poter scrollare: applica overflow hidden anche a
+html e body finché questa pagina è montata, e rimuovilo allo smontaggio.
+
+⚠️ VINCOLO ASSOLUTO: la somma delle altezze deve essere 100dvh.
+La foto è l'elemento elastico (flex: 1, min-height 0). Tutto il resto
+ha altezza fissa. Così qualsiasi sia lo schermo, nulla esce.
+Se qualcosa non ci sta, riduci la foto, MAI nascondere il piede.
+
+Struttura verticale, dall'alto:
+
+  [A] INTESTAZIONE       altezza 64px, fissa
+  [B] FOTO + NUMERO      flex: 1
+  [C] FASCIA DATI        altezza 112px, fissa
+  [D] ATTRITO            altezza 118px, fissa
+  [E] REGOLO             altezza 34px, fissa
+  [F] PIEDE              altezza 52px, fissa
+
+Padding laterale globale per i testi: 20px.
+La foto e la fascia dati NON hanno padding: sono a tutta larghezza.
+
+Safe area: aggiungi padding-top: env(safe-area-inset-top) al blocco A
+e padding-bottom: env(safe-area-inset-bottom) al blocco F.
+Metti nell'index.html:
+  <meta name="viewport" content="width=device-width, initial-scale=1,
+        viewport-fit=cover, maximum-scale=1, user-scalable=no">
+
+╔════════════════════════════════════════════════════════════════╗
+║ 2. TIPOGRAFIA — regola dura                                    ║
+╚════════════════════════════════════════════════════════════════╝
+
+Questo frame viene ripreso, compresso da Instagram e guardato su un
+telefono con like, caption e nome sopra. Quindi:
+
+  NIENTE SOTTO 13px. Nessuna eccezione.
+
+Font: Bebas Neue per numeri e titoli, JetBrains Mono per etichette,
+Inter per l'attrito. Se non sono già caricati nel progetto, caricali
+nello stesso modo delle altre pagine, non da un CDN nuovo.
+
+╔════════════════════════════════════════════════════════════════╗
+║ 3. BLOCCHI                                                     ║
+╚════════════════════════════════════════════════════════════════╝
+
+┌─ [A] INTESTAZIONE ────────────────────────────────────────────┐
+  Altezza 64px. Flex row, align center, justify space-between.
+  Fondo #0A0A0A.
+
+  Sinistra: la lettera J
+    Bebas Neue 34px, #B81D1D, line-height 1
+    Subito a destra, gap 12px: Mono 13px, letterSpacing .26em,
+    #E8E4DE, maiuscolo: PROGETTO J
+
+  Destra: Mono 13px, letterSpacing .22em, #8E8A85, tabular-nums:
+    66 RIMASTI
+
+  Sotto, bordo inferiore 1px #1A1A1A.
+└───────────────────────────────────────────────────────────────┘
+
+┌─ [B] FOTO + NUMERO ───────────────────────────────────────────┐
+  flex: 1, min-height 0, position relative, overflow hidden.
+  Larghezza 100vw, senza padding.
+
+  FOTO:
+    position absolute, inset 0, width 100%, height 100%
+    object-fit cover, object-position center 30%
+    filter: grayscale(100%) contrast(1.1) brightness(0.78)
+    zero raggio, zero bordo
+    Se fotoClipUrl è null: fondo #141414, nessun testo.
+    Il numero si vede comunque.
+
+  VELO (sopra la foto, sotto il numero):
+    position absolute, inset 0, pointer-events none
+    background linear-gradient(to top,
+      rgba(10,10,10,.92) 0%,
+      rgba(10,10,10,.35) 40%,
+      rgba(10,10,10,.15) 70%,
+      rgba(10,10,10,.45) 100%)
+
+  NUMERO GIORNO:
+    position absolute
+    left: -0.06em
+    bottom: -0.12em   ← la base delle cifre esce dal fondo del blocco
+                        e viene coperta dalla fascia dati sotto.
+                        Il numero SI SIEDE sulla fascia. Questo è voluto.
+    Bebas Neue, font-size clamp(200px, 62vw, 300px)
+    line-height 0.8, letterSpacing -0.04em
+    color #F0EBE3
+    font-variant-numeric: tabular-nums  ← OBBLIGATORIO
+    mix-blend-mode: difference
+    pointer-events none
+    z-index sopra foto e velo
+
+  ⚠️ BLEND — leggi bene perché la prima volta è fallito:
+    mix-blend-mode: difference funziona SOLO se numero, velo e foto
+    stanno nello stesso stacking context.
+    - Il blocco [B] NON deve avere opacity < 1, transform, filter,
+      will-change o isolation: isolate applicati permanentemente.
+    - Durante l'animazione anima opacity e transform SUL NUMERO
+      stesso, mai sul blocco [B].
+    - La foto ha filter: ok, è un figlio, non il padre.
+    - Se dopo il render il numero appare avorio piatto senza inversione
+      sulle zone chiare della foto, il blend NON sta funzionando.
+      Trova la causa. Non consegnare finché non funziona.
+    Verifica: sulle parti chiare della foto il numero deve diventare
+    scuro. Sulle parti scure resta avorio.
+└───────────────────────────────────────────────────────────────┘
+
+┌─ [C] FASCIA DATI ─────────────────────────────────────────────┐
+  Altezza 112px. Larghezza 100vw. Fondo #E8E4DE.
+  Position relative, overflow hidden.
+  Padding 0 20px.
+
+  Tre colonne uguali, flex, separate da bordo verticale 1px
+  rgba(10,10,10,.16). Ogni colonna centra il contenuto verticalmente.
+
+      SONNO          ENTRATE         USCITE
+      8,0 H          € 30,00         € 20,00
+
+  Etichetta: Mono 13px, letterSpacing .24em, rgba(10,10,10,.5),
+             maiuscolo, margin-bottom 6px
+  Valore:    Bebas Neue 44px, #0A0A0A, tabular-nums, line-height 1
+  Tutti e tre lo stesso colore. NON verde, NON rosso.
+  Nessun segno + o - davanti ai numeri.
+
+  SOVRASTAMPA:
+    position absolute, top 0, left 0, height 100%
+    background #B81D1D
+    mix-blend-mode: multiply
+    width: animata da 0 al 34% (transform: scaleX, origin left)
+    pointer-events none
+    Il taglio netto tra rosso e avorio è l'elemento grafico.
+└───────────────────────────────────────────────────────────────┘
+
+┌─ [D] ATTRITO ─────────────────────────────────────────────────┐
+  Altezza 118px, fissa. Padding 16px 20px 0.
+
+  Etichetta: Mono 13px, letterSpacing .24em, #6E6A66: ATTRITO
+  Testo: Inter 20px, line-height 1.3, #C9C4BD, margin-top 6px
+  Massimo 3 righe, -webkit-line-clamp: 3, ellissi.
+
+  Se attrito è null: il blocco resta alto 118px ma vuoto.
+  NON collassarlo, altrimenti il layout salta tra un giorno e l'altro
+  e il formato perde riconoscibilità.
+└───────────────────────────────────────────────────────────────┘
+
+┌─ [E] REGOLO A 180 TACCHE ─────────────────────────────────────┐
+  Altezza 34px. Padding 0 20px. Flex row, align flex-end,
+  justify space-between.
+
+  180 <span>, larghezza 1px, allineati in basso.
+    indice multiplo di 10 → altezza 16px
+    altri                 → altezza 8px
+
+  Colori:
+    1..numeroGiorno       → #B81D1D
+    numeroGiorno+1..180   → #2A2725
+    tacca = numeroGiorno  → #F0EBE3, altezza 26px, larghezza 2px
+
+  Niente numeri, etichette, legende. Sono 180, non meno.
+└───────────────────────────────────────────────────────────────┘
+
+┌─ [F] PIEDE ───────────────────────────────────────────────────┐
+  Altezza 52px. Padding 0 20px. Flex row, align center,
+  justify space-between. Bordo superiore 1px #1A1A1A.
+
+  Sinistra: barra #B81D1D, 44px × 3px
+  Destra:   Mono 15px, letterSpacing .28em, #E8E4DE:
+            PROJECTJ180DAY.COM
+└───────────────────────────────────────────────────────────────┘
+
+FORMATO NUMERI — italiano obbligatorio:
+- decimali con virgola: 8,0 non 8.0
+- valuta €&nbsp;30,00 con spazio non separabile
+- Intl.NumberFormat('it-IT'), mai concatenazioni manuali
+- sonno: sempre un decimale, unità " H" maiuscola
+
+╔════════════════════════════════════════════════════════════════╗
+║ 4. ANIMAZIONE                                                  ║
+╚════════════════════════════════════════════════════════════════╝
+
+Parte 400 ms dopo l'arrivo dei dati E dopo che la foto ha caricato
+(onLoad). Se la foto non carica entro 3 s, parte comunque.
+Durata totale 1900 ms. Poi ferma. Nessun loop.
+
+  0 ms      [A] intestazione fade in 200 ms
+  120 ms    foto opacity 0 → 1 in 500 ms. Nessuno zoom, scala, slide.
+  250 ms    numero: opacity 0 → 1 in 200 ms + conta 0 → N in 950 ms,
+            easeOutExpo. Opacity SUL NUMERO, non su [B].
+  700 ms    [C] fascia: scaleY 0 → 1 in 280 ms, origin bottom
+  850 ms    tre valori contano 0 → finale in 650 ms, easeOutExpo
+  1150 ms   sovrastampa: scaleX 0 → 1 in 320 ms, easeOutExpo
+            (la larghezza base è 34%, la scala arriva a 1)
+  1400 ms   [D] attrito fade in 220 ms
+  1500 ms   [E] tacche 1..N si colorano in sequenza in 380 ms
+            con transition-delay proporzionale all'indice.
+            Tacca di oggi per ultima.
+  1750 ms   [F] piede fade in 200 ms
+
+VINCOLI:
+- Anima SOLO opacity, transform, e il colore delle tacche.
+  Mai width, height, top, left, margin, padding.
+- requestAnimationFrame per i contatori, MAI setInterval.
+- cancelAnimationFrame nel cleanup.
+- tabular-nums obbligatorio ovunque contino cifre.
+- Nessuna libreria. Nessun npm nuovo.
+- prefers-reduced-motion → tutto allo stato finale, senza animare.
+
+╔════════════════════════════════════════════════════════════════╗
+║ 5. RIAVVIO                                                     ║
+╚════════════════════════════════════════════════════════════════╝
+
+Tap ovunque → riavvia da capo. Incrementa una key che rimonta il
+componente animato. NON ricaricare, NON rifare la fetch.
+Nessun pulsante, nessuna scritta.
+
+╔════════════════════════════════════════════════════════════════╗
+║ 6. STATI                                                       ║
+╚════════════════════════════════════════════════════════════════╝
+
+Caricamento: #0A0A0A vuoto. Nessuno spinner, testo, scheletro.
+404:         #0A0A0A, centro, Mono 14px #4E4A46 "GIORNO NON TROVATO"
+Errore rete: #0A0A0A, centro, Mono 14px #4E4A46 "ERRORE"
+Numero non valido (non numerico, <1, >180): come 404
+
+╔════════════════════════════════════════════════════════════════╗
+║ 7. REGISTRAZIONE SENZA BARRE DEL BROWSER                       ║
+╚════════════════════════════════════════════════════════════════╝
+
+La barra di Safari finisce nella registrazione. Soluzione: la pagina
+deve aprirsi come app a schermo intero.
+
+Aggiungi in /public/manifest.webmanifest:
+{
+  "name": "Progetto J Clip",
+  "short_name": "CLIP",
+  "start_url": "/clip/1",
+  "display": "standalone",
+  "background_color": "#0A0A0A",
+  "theme_color": "#0A0A0A",
+  "icons": [{ "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }]
+}
+
+Crea /public/icon-512.png: quadrato #0A0A0A con una J Bebas Neue
+#B81D1D centrata. Nessun raggio.
+
+In index.html:
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="/icon-512.png">
+
+Il manifest è globale: verifica che non rompa le altre pagine e che
+la home continui ad aprirsi normalmente da Safari.
+
+Aggiungi nell'admin, accanto ad APRI CLIP, una riga di testo Mono 12px
+#6E6A66: "Per registrare senza barre: Safari → Condividi → Aggiungi
+alla schermata Home, poi apri da lì."
+
+╔════════════════════════════════════════════════════════════════╗
+║ 8. SEO                                                         ║
+╚════════════════════════════════════════════════════════════════╝
+
+Confermare che restano attivi:
+- <meta name="robots" content="noindex, nofollow"> su /clip/*
+- Disallow: /clip/ in robots.txt
+- fuori dalla sitemap
+
+╔════════════════════════════════════════════════════════════════╗
+║ 9. COSA NON FARE                                               ║
+╚════════════════════════════════════════════════════════════════╝
+
+✗ Toccare endpoint, schema, admin, altre pagine
+✗ Aggiungere dipendenze npm
+✗ Mettere margini laterali al contenitore o alla foto
+✗ Centrare, rimpicciolire o "sistemare" il numero perché esce
+✗ Usare testo sotto 13px
+✗ Nascondere il piede o il regolo se lo spazio manca — riduci la foto
+✗ Ridurre le tacche sotto 180
+✗ border-radius, box-shadow, emoji, icone, colori fuori sistema
+✗ Musica, suoni, pulsanti, link dentro /clip
+
+╔════════════════════════════════════════════════════════════════╗
+║ 10. VERIFICA — con screenshot                                  ║
+╚════════════════════════════════════════════════════════════════╝
+
+Per ognuno fai uno screenshot a 390x844 e allegalo:
+
+[ ] /clip/114 — tutto visibile: intestazione, foto, fascia, attrito,
+    regolo, piede. Nessuno di questi fuori schermo.
+[ ] /clip/114 con Safari a barre aperte (viewport ~660px): il piede
+    è ancora visibile, la foto si è ristretta
+[ ] /clip/1 — regolo quasi vuoto, tacca 1 avorio
+[ ] /clip/180 — regolo pieno, tacca 180 avorio
+[ ] /clip/9 e /clip/99 — numero tagliato a sinistra, non centrato
+[ ] /clip/0, /clip/181, /clip/abc → "GIORNO NON TROVATO"
+[ ] Giorno senza foto: numero leggibile su #141414
+[ ] Il BLEND funziona: sulle zone chiare della foto il numero diventa
+    scuro. Screenshot obbligatorio con una foto che ha zone chiare.
+[ ] Nessun testo sotto 13px: cerca nel CSS ogni font-size e confermalo
+[ ] Attrito null: blocco [D] vuoto ma alto 118px, layout identico
+[ ] Attrito lunghissimo: 3 righe e ellissi, layout identico
+[ ] Cifre non ballano durante il conteggio
+[ ] Decimali con virgola, valuta con €&nbsp;
+[ ] Nessuno scroll possibile, nemmeno con rubber-band iOS
+[ ] Tap riavvia senza refetch
+[ ] Nessuno spinner in nessun momento
+[ ] Aperta dalla schermata Home: nessuna barra del browser
+[ ] La home del sito si apre ancora normalmente da Safari
+[ ] Il resto del sito identico a prima
+[ ] Console pulita
+
+Al termine riportami:
+1. Conferma esplicita, con screenshot, che il blend funziona
+2. Le altezze reali dei blocchi A-F a 844px e a 660px
+3. Cosa hai aggiunto a index.html

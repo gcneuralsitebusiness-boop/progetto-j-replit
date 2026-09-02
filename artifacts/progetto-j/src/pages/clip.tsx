@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { useParams } from "wouter";
 import { getPhotoUrl } from "@workspace/object-storage-web";
 
@@ -26,7 +26,7 @@ function formatHours(value: number): string {
   return `${new Intl.NumberFormat("it-IT", {
     minimumFractionDigits: 1,
     maximumFractionDigits: 1,
-  }).format(value)} h`;
+  }).format(value)} H`;
 }
 
 const euroFormatter = new Intl.NumberFormat("it-IT", {
@@ -63,7 +63,7 @@ function usePrefersReducedMotion(): boolean {
   return reduced;
 }
 
-function useClipCounters(data: ClipData, reduced: boolean) {
+function useClipCounters(data: ClipData, reduced: boolean, animationStarted: boolean) {
   const [day, setDay] = useState(reduced ? data.numeroGiorno : 0);
   const [sonno, setSonno] = useState(reduced ? (data.sonnoOre ?? 0) : 0);
   const [entrate, setEntrate] = useState(reduced ? (data.entrateEur ?? 0) : 0);
@@ -75,6 +75,14 @@ function useClipCounters(data: ClipData, reduced: boolean) {
       setSonno(data.sonnoOre ?? 0);
       setEntrate(data.entrateEur ?? 0);
       setUscite(data.usciteEur ?? 0);
+      return;
+    }
+
+    if (!animationStarted) {
+      setDay(0);
+      setSonno(0);
+      setEntrate(0);
+      setUscite(0);
       return;
     }
 
@@ -92,12 +100,10 @@ function useClipCounters(data: ClipData, reduced: boolean) {
         const progress = Math.min(1, (now - startedAt) / duration);
         setter(target * easeOutExpo(progress));
         if (progress < 1) {
-          const nextFrame = window.requestAnimationFrame(tick);
-          frames.add(nextFrame);
+          frames.add(window.requestAnimationFrame(tick));
         }
       };
-      const firstFrame = window.requestAnimationFrame(tick);
-      frames.add(firstFrame);
+      frames.add(window.requestAnimationFrame(tick));
     };
 
     dayTimer = window.setTimeout(() => {
@@ -114,30 +120,59 @@ function useClipCounters(data: ClipData, reduced: boolean) {
       window.clearTimeout(metricsTimer);
       frames.forEach((frame) => window.cancelAnimationFrame(frame));
     };
-  }, [data, reduced]);
+  }, [animationStarted, data, reduced]);
 
   return { day, sonno, entrate, uscite };
 }
 
 function ClipAnimation({ data, onReplay }: { data: ClipData; onReplay: () => void }) {
   const reduced = usePrefersReducedMotion();
-  const counters = useClipCounters(data, reduced);
-  const [rulerActive, setRulerActive] = useState(reduced);
   const photoUrl = getPhotoUrl(data.fotoClipUrl);
+  const [photoReady, setPhotoReady] = useState(!photoUrl);
+  const [animationStarted, setAnimationStarted] = useState(reduced || !photoUrl);
+  const [rulerActive, setRulerActive] = useState(reduced);
+  const counters = useClipCounters(data, reduced, animationStarted);
+
+  useEffect(() => {
+    if (reduced || !photoUrl) {
+      setAnimationStarted(true);
+      return;
+    }
+
+    let cancelled = false;
+    let readyTimer = 0;
+    const fallbackTimer = window.setTimeout(() => {
+      if (!cancelled) setAnimationStarted(true);
+    }, 3_000);
+    if (photoReady) {
+      readyTimer = window.setTimeout(() => {
+        if (!cancelled) setAnimationStarted(true);
+      }, 400);
+    }
+    return () => {
+      cancelled = true;
+      window.clearTimeout(readyTimer);
+      window.clearTimeout(fallbackTimer);
+    };
+  }, [photoReady, photoUrl, reduced]);
 
   useEffect(() => {
     if (reduced) {
       setRulerActive(true);
       return;
     }
+    if (!animationStarted) {
+      setRulerActive(false);
+      return;
+    }
     setRulerActive(false);
     const timer = window.setTimeout(() => setRulerActive(true), 1_500);
     return () => window.clearTimeout(timer);
-  }, [reduced, data.numeroGiorno]);
+  }, [animationStarted, reduced]);
 
   return (
     <main
-      className={`clip-viewport${reduced ? " clip-viewport--reduced" : ""}`}
+      className={`clip-frame${animationStarted ? " clip-frame--running" : ""}${reduced ? " clip-frame--reduced" : ""}`}
       onClick={onReplay}
       onKeyDown={(event) => {
         if (event.key === "Enter" || event.key === " ") {
@@ -149,71 +184,76 @@ function ClipAnimation({ data, onReplay }: { data: ClipData; onReplay: () => voi
       tabIndex={0}
       aria-label={`Progetto J, giorno ${data.numeroGiorno}`}
     >
-      <div className={`clip-stage${reduced ? " clip-stage--reduced" : ""}`}>
-        <header className="clip-header">
-          <span>PROGETTO J</span>
-          <span>{data.rimasti} RIMASTI</span>
-        </header>
-
-        <div className="clip-hero">
-          {photoUrl ? (
-            <img className="clip-photo" src={photoUrl} alt="" />
-          ) : (
-            <div className="clip-no-photo">NESSUNA FOTO</div>
-          )}
-          <div className="clip-veil" aria-hidden="true" />
-          <div className="clip-day-number" aria-label={`Giorno ${data.numeroGiorno}`}>
-            {Math.round(counters.day)}
-          </div>
+      <header className="clip-block-a">
+        <div className="clip-brand">
+          <span className="clip-brand-j">J</span>
+          <span className="clip-brand-name">PROGETTO J</span>
         </div>
+        <span className="clip-remaining">{data.rimasti} RIMASTI</span>
+      </header>
 
-        <section className="clip-data-band" aria-label="Dati del giorno">
-          <div className="clip-overprint" aria-hidden="true" />
-          <div className="clip-stat">
-            <span>SONNO</span>
-            <strong>{data.sonnoOre == null ? "—" : formatHours(counters.sonno)}</strong>
-          </div>
-          <div className="clip-stat">
-            <span>ENTRATE</span>
-            <strong>{data.entrateEur == null ? "—" : formatEuro(counters.entrate)}</strong>
-          </div>
-          <div className="clip-stat">
-            <span>USCITE</span>
-            <strong>{data.usciteEur == null ? "—" : formatEuro(counters.uscite)}</strong>
-          </div>
-        </section>
-
-        {data.attrito && (
-          <section className="clip-friction">
-            <span>ATTRITO</span>
-            <p>{data.attrito}</p>
-          </section>
+      <section className="clip-block-b" aria-label={`Foto del giorno ${data.numeroGiorno}`}>
+        {photoUrl && (
+          <img
+            className="clip-photo-v2"
+            src={photoUrl}
+            alt=""
+            onLoad={() => setPhotoReady(true)}
+            onError={() => setPhotoReady(true)}
+          />
         )}
-
-        <div className={`clip-ruler${rulerActive ? " clip-ruler--active" : ""}`} aria-label={`${data.numeroGiorno} giorni completati su ${GOAL_DAYS}`}>
-          {Array.from({ length: GOAL_DAYS }, (_, index) => {
-            const tick = index + 1;
-            const isCurrent = tick === data.numeroGiorno;
-            const isComplete = tick < data.numeroGiorno;
-            const delay = isCurrent
-              ? 380
-              : (Math.max(0, Math.min(data.numeroGiorno - 1, tick - 1)) / Math.max(1, data.numeroGiorno - 1)) * 380;
-            return (
-              <span
-                key={tick}
-                className={`clip-tick${isCurrent ? " clip-tick--current" : ""}`}
-                style={{
-                  height: isCurrent ? 22 : tick % 10 === 0 ? 14 : 7,
-                  "--tick-color": isComplete ? "#B81D1D" : isCurrent ? "#F0EBE3" : "#262322",
-                  transitionDelay: `${delay}ms`,
-                } as React.CSSProperties}
-              />
-            );
-          })}
+        <div className="clip-veil-v2" aria-hidden="true" />
+        <div className="clip-day-number-v2" aria-label={`Giorno ${data.numeroGiorno}`}>
+          {Math.round(counters.day)}
         </div>
+      </section>
 
-        <footer className="clip-footer">PROJECTJ180DAY.COM</footer>
+      <section className="clip-block-c" aria-label="Dati del giorno">
+        <div className="clip-overprint-v2" aria-hidden="true" />
+        <div className="clip-stat-v2">
+          <span>SONNO</span>
+          <strong>{data.sonnoOre == null ? "—" : formatHours(counters.sonno)}</strong>
+        </div>
+        <div className="clip-stat-v2">
+          <span>ENTRATE</span>
+          <strong>{data.entrateEur == null ? "—" : formatEuro(counters.entrate)}</strong>
+        </div>
+        <div className="clip-stat-v2">
+          <span>USCITE</span>
+          <strong>{data.usciteEur == null ? "—" : formatEuro(counters.uscite)}</strong>
+        </div>
+      </section>
+
+      <section className="clip-block-d" aria-label="Attrito">
+        <span>ATTRITO</span>
+        <p>{data.attrito ?? ""}</p>
+      </section>
+
+      <div
+        className={`clip-block-e${rulerActive ? " clip-block-e--active" : ""}`}
+        aria-label={`${data.numeroGiorno} giorni completati su ${GOAL_DAYS}`}
+      >
+        {Array.from({ length: GOAL_DAYS }, (_, index) => {
+          const tick = index + 1;
+          const isCurrent = tick === data.numeroGiorno;
+          const isComplete = tick < data.numeroGiorno;
+          const delay = isCurrent
+            ? 380
+            : (Math.max(0, Math.min(data.numeroGiorno - 1, tick - 1)) / Math.max(1, data.numeroGiorno - 1)) * 380;
+          const tickStyle = {
+            "--tick-color": isComplete ? "#B81D1D" : isCurrent ? "#F0EBE3" : "#2A2725",
+            height: isCurrent ? 26 : tick % 10 === 0 ? 16 : 8,
+            width: isCurrent ? 2 : 1,
+            transitionDelay: `${delay}ms`,
+          } as CSSProperties;
+          return <span key={tick} className="clip-tick-v2" style={tickStyle} />;
+        })}
       </div>
+
+      <footer className="clip-block-f">
+        <span className="clip-footer-bar" aria-hidden="true" />
+        <span>PROJECTJ180DAY.COM</span>
+      </footer>
     </main>
   );
 }
@@ -246,7 +286,6 @@ export default function Clip() {
     }
 
     let cancelled = false;
-    let animationTimer = 0;
     setStatus("loading");
     setData(null);
     fetch(`${CLIP_API_PATH}/${parsedNumero}/clip`)
@@ -257,11 +296,8 @@ export default function Clip() {
       })
       .then((payload) => {
         if (cancelled) return;
-        animationTimer = window.setTimeout(() => {
-          if (cancelled) return;
-          setData(payload);
-          setStatus("ready");
-        }, 400);
+        setData(payload);
+        setStatus("ready");
       })
       .catch((error: unknown) => {
         if (cancelled) return;
@@ -270,7 +306,6 @@ export default function Clip() {
 
     return () => {
       cancelled = true;
-      window.clearTimeout(animationTimer);
     };
   }, [parsedNumero, validNumero]);
 
@@ -285,10 +320,10 @@ export default function Clip() {
   }
 
   if (status === "not-found") {
-    return <main className="clip-state">GIORNO NON TROVATO</main>;
+    return <main className="clip-state-v2">GIORNO NON TROVATO</main>;
   }
   if (status === "error") {
-    return <main className="clip-state">ERRORE</main>;
+    return <main className="clip-state-v2">ERRORE</main>;
   }
-  return <main className="clip-state" aria-hidden="true" />;
+  return <main className="clip-loading-v2" aria-hidden="true" />;
 }

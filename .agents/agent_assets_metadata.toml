@@ -6,6 +6,7 @@ id = "RaxhnXio5q6PJh-q8Z-RX"
 uri = "file://entries-export.txt"
 type = "text"
 title = "Esportazione giornate Progetto J"
+logical_id = "64ded5f3-b6af-47af-bcf2-11d1687a4da0"
 
 [[outputs]]
 id = "f0atXnIwcofPuK0TThcEX"
@@ -13,6 +14,7 @@ uri = "file://reports/progetto-j-design-system.txt"
 type = "text"
 title = "Progetto J — Design System completo"
 description = "Riepilogo testuale completo e copiabile del sistema di design attuale: palette, font, sfondi, media, effetti e layout."
+logical_id = "291f7935-a59e-48d0-b2d1-90ee988670e6"
 
 [[outputs]]
 id = "ARBDQOFKM8-FsRmOHpYBP"
@@ -20,6 +22,7 @@ uri = "file://attached_assets/progetto-j-copy-completo.md"
 type = "text"
 title = "Progetto J — Copy completo del sito"
 description = "Esportazione in Markdown del copy pubblico, dei dati testuali del Journaling giorno per giorno e del testo completo degli articoli. Nessun codice o dato dell’app è stato modificato."
+logical_id = "9ffb4017-4ffc-42d8-8285-3132346fe8d5"
 
 [[outputs]]
 id = "lqSC3GPsUZqT7I9ta4Fxq"
@@ -27,3 +30,116 @@ uri = "file://exports/testo-articoli.md"
 type = "text"
 title = "Testo estratto da tutti gli articoli"
 description = "File Markdown con il testo pulito di 14 articoli, incluse le bozze."
+logical_id = "1e744114-07f2-4225-84d8-f17dd7a42675"
+
+[[outputs]]
+id = "HRYmLWo0qg0iAOMMh7DVO"
+uri = "file://screenshots/clip-v2-day-114-390x844.jpg"
+type = "image"
+title = "CLIP v2 — giorno 114 — 390×844"
+description = "Frame completo con tutti i blocchi A–F visibili."
+logical_id = "f034b568-0f48-4826-87c6-3e168b5d7a26"
+content_hash = "sha256:b8093059da28c7f92afed3ec5889916c1dc7a7d801b1c86017fd1d9f66b2f76c"
+size = 15075
+mtime_ms = 1788348144572
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:f0698a0b-8b04-4823-a6d3-9f45ae32a3bf/f034b568-0f48-4826-87c6-3e168b5d7a26/94772627-d397-4708-9141-f39f4c7a30ca"
+storage_version_token = "1788348167012557"
+content_type = "image/jpeg"
+
+[[outputs]]
+id = "b6UEHUVE-2R8wQijC-Rxl"
+uri = "file://screenshots/clip-v2-day-114-390x660.jpg"
+type = "image"
+title = "CLIP v2 — giorno 114 — 390×660"
+description = "Viewport corto: la foto si riduce e il piede resta visibile."
+logical_id = "5ce96d17-3b95-4364-8162-ef737c420c90"
+content_hash = "sha256:ae0bbf22264e3d5fce9dfbe264ab205d3e5b7521f5f477cd28a07c1a9673864d"
+size = 14511
+mtime_ms = 1788348151572
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:f0698a0b-8b04-4823-a6d3-9f45ae32a3bf/5ce96d17-3b95-4364-8162-ef737c420c90/fea2f640-203e-4c5d-96e7-40d173292d83"
+storage_version_token = "1788348167574751"
+content_type = "image/jpeg"
+
+[[outputs]]
+id = "hI3-zLi2fa7_dA4aDwHwc"
+uri = "file://screenshots/clip-v2-day-9-390x844.jpg"
+type = "image"
+title = "CLIP v2 — giorno 9"
+description = "Foto reale, blend difference, valori italiani e regolo."
+logical_id = "3affdc46-309f-4c26-8d4e-8ab734145ff0"
+content_hash = "sha256:95b9ea8110cfd82c7607a12ccc2c885ba94bbdaa929b06035f897180fc63984f"
+size = 35099
+mtime_ms = 1788348018433
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:f0698a0b-8b04-4823-a6d3-9f45ae32a3bf/3affdc46-309f-4c26-8d4e-8ab734145ff0/f1c36752-bb51-45b5-b938-ad8c2d9f9593"
+storage_version_token = "1788348168150278"
+content_type = "image/jpeg"
+
+[[outputs]]
+id = "aqne6x2z1Mgd3eyC7M1QH"
+uri = "file://screenshots/clip-v2-day-1-390x844.jpg"
+type = "image"
+title = "CLIP v2 — giorno 1"
+description = "Regolo iniziale con la prima tacca corrente."
+logical_id = "a9de475a-957a-4e2d-ba78-7a4330da948a"
+content_hash = "sha256:2cc0c837a45e373076af94316b3c153fe4d95018a1845493bffd53ec0d4178d3"
+size = 30026
+mtime_ms = 1788348036437
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:f0698a0b-8b04-4823-a6d3-9f45ae32a3bf/a9de475a-957a-4e2d-ba78-7a4330da948a/8d3a4f9e-256e-4689-9555-460de37a6df5"
+storage_version_token = "1788348168681275"
+content_type = "image/jpeg"
+
+[[outputs]]
+id = "q5A7W6inPtsEPzFryC9f-"
+uri = "file://screenshots/clip-v2-day-99-390x844.jpg"
+type = "image"
+title = "CLIP v2 — giorno 99"
+description = "Numero a due cifre tagliato a sinistra e blocco foto vuoto."
+logical_id = "d367fd08-f42a-4ac7-9e98-053a213d22fa"
+content_hash = "sha256:ae90665d74b8bd81144188245e135c0ccfc9d93b0ee4e4610f1eacc5f544c6e7"
+size = 15612
+mtime_ms = 1788348043485
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:f0698a0b-8b04-4823-a6d3-9f45ae32a3bf/d367fd08-f42a-4ac7-9e98-053a213d22fa/6fc12c73-7552-4f10-a785-917da59a78d2"
+storage_version_token = "1788348169215819"
+content_type = "image/jpeg"
+
+[[outputs]]
+id = "rK8s1yHYP2FKK3TGYnv3I"
+uri = "file://screenshots/clip-v2-no-photo-390x844.jpg"
+type = "image"
+title = "CLIP v2 — giorno senza foto"
+description = "Numero leggibile sul fondo #141414 senza testo sostitutivo."
+logical_id = "c2ce8618-acd6-4da8-a902-3f294ae512b0"
+content_hash = "sha256:ffaf3459464187f0da7bf7078a3cf4dbe1da88d87fb498fcf17d57a4dab1b2ae"
+size = 15433
+mtime_ms = 1788348050782
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:f0698a0b-8b04-4823-a6d3-9f45ae32a3bf/c2ce8618-acd6-4da8-a902-3f294ae512b0/006929d9-b0c4-4580-8386-8ccf748acddc"
+storage_version_token = "1788348169728088"
+content_type = "image/jpeg"
+
+[[outputs]]
+id = "a6dEmGL8eJdNXWyZbDyWB"
+uri = "file://screenshots/clip-v2-invalid-day.jpg"
+type = "image"
+title = "CLIP v2 — giorno non valido"
+description = "Stato GIORNO NON TROVATO per valori fuori intervallo."
+logical_id = "a6a1f98e-ed8e-4129-bedb-066ebccde8f4"
+content_hash = "sha256:3d73cf2c15ae560471b17944a87d875e356f666a6aeca9a971955e5c9bf37431"
+size = 3671
+mtime_ms = 1788348120360
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:f0698a0b-8b04-4823-a6d3-9f45ae32a3bf/a6a1f98e-ed8e-4129-bedb-066ebccde8f4/d9075204-d374-4368-8937-20eaf9ab20fe"
+storage_version_token = "1788348170227686"
+content_type = "image/jpeg"
+
+[[outputs]]
+id = "GlsH3VSy15ZlgPUTF2FQP"
+uri = "file://screenshots/clip-v2-home-unchanged.jpg"
+type = "image"
+title = "Home mobile invariata"
+description = "Verifica che manifest e viewport non alterino la home."
+logical_id = "dadab579-bf44-4369-9d70-2cf5e91b615f"
+content_hash = "sha256:116f5043f2cbc9ce96cef86faad47272eb15c24e3ed9013afe26c29b42b9ab18"
+size = 17377
+mtime_ms = 1788348113748
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:f0698a0b-8b04-4823-a6d3-9f45ae32a3bf/dadab579-bf44-4369-9d70-2cf5e91b615f/9406452f-62c4-4a9d-bf81-db7feea67b46"
+storage_version_token = "1788348170694056"
+content_type = "image/jpeg"

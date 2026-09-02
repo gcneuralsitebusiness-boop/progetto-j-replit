@@ -699,18 +699,23 @@ function EntryForm({ initialData, previousEntry, onSuccess, onCancel }: { initia
               </div>
             )}
           </div>
-          <a
-            href={canOpenClip ? `${import.meta.env.BASE_URL.replace(/\/$/, "")}/clip/${clipNumero}` : undefined}
-            target={canOpenClip ? "_blank" : undefined}
-            rel={canOpenClip ? "noopener noreferrer" : undefined}
-            aria-disabled={!canOpenClip}
-            onClick={(event) => {
-              if (!canOpenClip) event.preventDefault();
-            }}
-            className={`inline-flex min-h-10 items-center justify-center border px-4 py-2 text-[11px] font-mono uppercase tracking-widest transition-colors ${canOpenClip ? "border-primary text-primary hover:bg-primary hover:text-primary-foreground" : "cursor-not-allowed border-border text-muted-foreground/50"}`}
-          >
-            Apri clip
-          </a>
+          <div className="flex max-w-sm flex-col gap-3">
+            <a
+              href={canOpenClip ? `${import.meta.env.BASE_URL.replace(/\/$/, "")}/clip/${clipNumero}` : undefined}
+              target={canOpenClip ? "_blank" : undefined}
+              rel={canOpenClip ? "noopener noreferrer" : undefined}
+              aria-disabled={!canOpenClip}
+              onClick={(event) => {
+                if (!canOpenClip) event.preventDefault();
+              }}
+              className={`inline-flex min-h-10 items-center justify-center border px-4 py-2 text-[11px] font-mono uppercase tracking-widest transition-colors ${canOpenClip ? "border-primary text-primary hover:bg-primary hover:text-primary-foreground" : "cursor-not-allowed border-border text-muted-foreground/50"}`}
+            >
+              Apri clip
+            </a>
+            <p className="font-mono text-[12px] leading-relaxed text-[#6E6A66]">
+              Per registrare senza barre: Safari → Condividi → Aggiungi alla schermata Home, poi apri da lì.
+            </p>
+          </div>
         </div>
       </section>
 
