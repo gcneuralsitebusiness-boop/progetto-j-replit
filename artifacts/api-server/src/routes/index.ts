@@ -18,6 +18,7 @@ import dashboardRouter from "./dashboard";
 import analyticsRouter from "./analytics";
 import plannerRouter from "./planner";
 import candidatureRouter from "./candidature";
+import obiettiviRouter from "./obiettivi";
 
 const router: IRouter = Router();
 
@@ -40,5 +41,6 @@ router.use(dashboardRouter);
 router.use(analyticsRouter);
 router.use(plannerRouter);
 router.use(candidatureRouter);
+router.use(obiettiviRouter);
 
 export default router;

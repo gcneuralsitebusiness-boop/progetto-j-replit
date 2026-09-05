@@ -12,3 +12,6 @@ export * from "./pageviews";
 export * from "./tasks";
 export * from "./planner-notes";
 export * from "./candidature";
+export * from "./obiettivi";
+export * from "./tappe";
+export * from "./task";

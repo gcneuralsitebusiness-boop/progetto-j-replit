@@ -52,6 +52,7 @@ export function Navbar() {
   const [hasScrolled, setHasScrolled] = useState(false);
   const navigationItems = [
     { href: "/chi-sono", label: "Chi Sono" },
+    { href: "/obiettivi", label: "Obiettivi" },
     { href: "/journaling", label: "Journaling" },
     { href: "/statistiche", label: "Statistiche" },
     { href: "/viaggio", label: "Il Viaggio" },

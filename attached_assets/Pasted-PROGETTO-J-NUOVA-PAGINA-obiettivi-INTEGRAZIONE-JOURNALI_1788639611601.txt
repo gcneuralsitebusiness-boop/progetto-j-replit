@@ -1,0 +1,289 @@
+PROGETTO J — NUOVA PAGINA /obiettivi + INTEGRAZIONE JOURNALING
+
+Repository: gcneuralsitebusiness-boop/progetto-j-replit
+Non toccare nulla al di fuori dei file elencati. Non modificare pagine esistenti se non nei punti indicati.
+
+═══════════════════════════════════════════
+DESIGN SYSTEM (obbligatorio, invariato)
+═══════════════════════════════════════════
+Sfondo #0A0A0A · Rosso #B81D1D · Bronzo #8B6914 · Avorio testo #E8E4DE
+Linee #1A1A1A · Grigio tacche future #2A2725 · Grigio testo #C9C4BD · Grigio etichette #9A958F
+Font: Bebas Neue (titoli), Inter (corpo), JetBrains Mono (etichette e numeri tecnici)
+ZERO border-radius ovunque. ZERO ombre. ZERO emoji. ZERO icone. ZERO gradienti.
+Niente testo sotto 13px.
+
+═══════════════════════════════════════════
+1. SCHEMA DATABASE
+═══════════════════════════════════════════
+Aggiungere in /lib/db/src/schema/ tre tabelle nuove. Non modificare la tabella giorni.
+
+TABELLA obiettivi
+  id            serial primary key
+  ciclo         integer not null default 1
+  posizione     integer not null          -- 1, 2 o 3
+  area          text not null             -- "CORPO", "CONTENUTI", "SOLDI"
+  titolo        text not null             -- max 60 caratteri
+  previsto      integer not null
+  giorno_limite integer not null default 180
+  prova         text                      -- come si verifica
+  stato         text not null default 'attivo'   -- 'attivo' | 'compiuto' | 'fallito'
+  vincolo unico su (ciclo, posizione)
+
+TABELLA tappe
+  id            serial primary key
+  ciclo         integer not null default 1
+  numero        integer not null          -- 1, 2, 3...
+  giorno_inizio integer not null
+  giorno_fine   integer not null
+  chiusa        boolean not null default false
+  nota          text                      -- "cosa è saltato e perché"
+  vincolo unico su (ciclo, numero)
+
+TABELLA task
+  id                serial primary key
+  obiettivo_id      integer not null references obiettivi(id) on delete cascade
+  tappa_id          integer not null references tappe(id) on delete cascade
+  testo             text not null         -- max 80 caratteri
+  giorno_completato integer               -- NULL = da fare
+  saltato           boolean not null default false
+  ordine            integer not null default 0
+
+REGOLA ASSOLUTA: non esiste da nessuna parte un campo "fatto" scrivibile.
+Il conteggio si calcola SEMPRE con: count(task where obiettivo_id = X and giorno_completato is not null).
+Se scrivi un campo fatto persistito, il lavoro è sbagliato.
+
+═══════════════════════════════════════════
+2. ENDPOINT API (/artifacts/api-server/src/routes/)
+═══════════════════════════════════════════
+Nuovo file obiettivi.ts, registrato nel router principale.
+
+GET /api/obiettivi
+  Pubblico. Ritorna i 3 obiettivi del ciclo attivo, ognuno con:
+  - tutti i campi
+  - fatto: conteggio calcolato
+  - tappa_corrente: { numero, giorno_inizio, giorno_fine, task: [...] }
+  - tappe_precedenti: [{ numero, task_fatti, task_totali }]
+  Ogni task include: id, testo, giorno_completato, saltato
+
+GET /api/tappe/corrente
+  Pubblico. La tappa non chiusa con giorno_fine più alto, con tutti i task
+  raggruppati per obiettivo.
+
+POST /api/task/:id/completa      body { giorno: number }
+  Protetto. Imposta giorno_completato = giorno, saltato = false.
+  Se giorno_completato era già valorizzato, lo azzera (comportamento toggle).
+
+POST /api/task                    body { obiettivo_id, tappa_id, testo, giorno_completato? }
+  Protetto. Crea un task. Se giorno_completato è passato, nasce già chiuso.
+
+DELETE /api/task/:id              Protetto.
+
+POST /api/tappe/:id/chiudi        body { nota, nuove_tappe: [{ obiettivo_id, task: [testo] }] }
+  Protetto. Transazione unica:
+   - imposta chiusa = true e nota sulla tappa corrente
+   - marca saltato = true su tutti i suoi task con giorno_completato null
+   - crea la tappa successiva (numero + 1, giorno_inizio = giorno_fine + 1, giorno_fine = +6)
+   - crea i task passati in nuove_tappe collegati alla nuova tappa
+
+GET /api/giorni/:numero/task
+  Pubblico. I task con giorno_completato = numero, con area e titolo dell'obiettivo.
+
+PUT /api/obiettivi/:id            Protetto. Modifica area, titolo, previsto, giorno_limite, prova, stato.
+
+═══════════════════════════════════════════
+3. PAGINA PUBBLICA /obiettivi
+═══════════════════════════════════════════
+Nuovo file /artifacts/progetto-j/src/pages/obiettivi.tsx
+Voce "OBIETTIVI" nel menu di Navbar.tsx, tra CHI SONO e STATISTICHE.
+
+STRUTTURA VERTICALE
+  [1] In alto a sinistra, JetBrains Mono 13px #B81D1D, letter-spacing 0.15em:
+      CICLO 1 · GIORNO {n} / 180
+
+  [2] Blocco centrale, altezza minima 60vh, contenuto centrato verticalmente:
+
+      Sopra i rombi: area vuota di 280px riservata all'apertura del pannello.
+      Non collassarla quando è vuota: se collassa, i rombi saltano all'apertura.
+
+      Linea orizzontale 1px #1A1A1A da margine a margine.
+
+      Sulla linea, 3 rombi equidistanti. Ogni rombo è un quadrato di lato 88px
+      (mobile) / 104px (desktop) ruotato 45°, bordo 2px, centrato sulla linea.
+      Il numero dentro NON è ruotato: Bebas Neue 44px, perfettamente centrato.
+      Realizzare con un wrapper ruotato + contenuto contro-ruotato di -45deg,
+      oppure in SVG. Il numero storto è un errore da correggere.
+
+      RIEMPIMENTO INTERNO: dentro ogni rombo, un riempimento #B81D1D che sale
+      dal basso in proporzione a fatto/previsto, con clip sulla forma del rombo
+      (non un rettangolo che sborda). 7/18 = 39% di altezza.
+
+      STATI DEL BORDO
+        attivo   → bordo #B81D1D, numero #E8E4DE
+        compiuto → riempimento pieno #B81D1D, numero #0A0A0A
+        fallito  → bordo #2A2725, numero #2A2725, più una linea diagonale
+                   1px #2A2725 che attraversa il rombo da angolo ad angolo
+
+      Sotto ogni rombo, 24px di distacco, JetBrains Mono 13px #9A958F:
+      l'area (CORPO / CONTENUTI / SOLDI)
+
+  [3] In basso, JetBrains Mono 13px:
+      PROSSIMA VERIFICA · DOMENICA {data}
+      #9A958F normalmente, #B81D1D se oggi è domenica o se la tappa corrente
+      ha giorno_fine < giorno attuale (verifica scaduta).
+
+ANIMAZIONE DI INGRESSO (una volta, al mount)
+  0–600ms    la linea orizzontale si estende da sinistra a destra (scaleX, origin left)
+  200/350/500ms  ogni rombo traccia il proprio bordo in 300ms (stroke-dashoffset in SVG,
+                 oppure opacity + scale da 0.8 a 1 con easing lineare)
+  al termine di ogni bordo, il numero appare senza fade, secco (opacity 0 → 1 in 0ms)
+  ultimo: i riempimenti interni salgono in 500ms con ease-out
+  Nessun rimbalzo, nessuno spring, nessun blur. Movimento meccanico.
+
+INTERAZIONE — APERTURA
+  Tap su un rombo (tutta l'area del rombo è cliccabile, minimo 88x88px reali):
+    350ms, tutti gli elementi in parallelo:
+      - gli altri due rombi: scale 0.7, bordo → #2A2725, translateX verso i margini
+        (il primo a sinistra, il terzo a destra, di 40px)
+      - il rombo toccato: scale 1.2, resta in posizione orizzontale
+      - la linea resta invariata
+    poi 500ms: il pannello si apre nell'area riservata sopra, con animazione
+      di altezza da 0 alla naturale, contenuto in fade 200ms ritardato di 150ms
+
+CONTENUTO DEL PANNELLO
+  JetBrains Mono 13px #B81D1D:      OBIETTIVO {posizione} · {area}
+  Bebas Neue 40px #E8E4DE:          {titolo}    (fino a 2 righe, line-height 0.95)
+  Linea 1px #1A1A1A a tutta larghezza
+  Bebas Neue 64px:                  {fatto} / {previsto}
+                                    il numero fatto in #B81D1D, la barra "/" e
+                                    previsto in #E8E4DE
+  Linea 1px #1A1A1A
+  JetBrains Mono 13px #9A958F:      TAPPA {numero} · GIORNI {inizio}-{fine}
+
+  Lista task della tappa corrente, Inter 15px, una riga ciascuno:
+    fatto    → quadrato pieno 10px #E8E4DE + testo #E8E4DE + a destra "G.{giorno}"
+               in JetBrains Mono 13px #9A958F, cliccabile, porta a /giorno/{n}
+    da fare  → quadrato vuoto 10px bordo 1px #9A958F + testo #C9C4BD
+    saltato  → quadrato vuoto con diagonale + testo #2A2725
+  Quadrati, mai spunte, mai cerchi, mai icone.
+
+  JetBrains Mono 13px #9A958F:      TAPPE PRECEDENTI
+  Una riga compatta: per ogni tappa chiusa, il numero seguito dai quadratini
+  (pieni = fatti, vuoti = non fatti). Esempio: 1 ■■  2 ■□  3 ■■
+
+  Inter 15px #9A958F, ultima riga:  {prova}
+
+INTERAZIONE — CHIUSURA E CAMBIO
+  Tap sul rombo aperto, o fuori dal pannello → tutto torna allo stato iniziale, 350ms.
+  Tap su un altro rombo mentre uno è aperto → transizione diretta in 400ms:
+  il pannello cambia contenuto in crossfade, i rombi si riposizionano.
+  NON passare dallo stato chiuso: sarebbe un doppio movimento e si vede.
+
+RESPONSIVE
+  Sotto 380px: rombi 72px, distanza tra i centri ridotta, pannello a piena larghezza
+  meno 32px di margine. Il titolo Bebas scende a 32px.
+
+═══════════════════════════════════════════
+4. INTEGRAZIONE NEL FORM JOURNALING (admin)
+═══════════════════════════════════════════
+File /artifacts/progetto-j/src/pages/journaling.tsx
+
+Determinare il giorno del ciclo dal campo numero già presente nel form.
+Determinare se è domenica dalla data reale del giorno.
+
+MODALITÀ A — GIORNO NORMALE (lunedì-sabato)
+  Sopra i campi esistenti (fatto / non fatto / attrito), inserire un blocco:
+
+    JetBrains Mono 13px #9A958F:  QUESTA SETTIMANA · TAPPA {numero}
+
+    Per ogni obiettivo che ha task nella tappa corrente:
+      etichetta area in Mono 13px #9A958F
+      i suoi task in riga, ognuno un pulsante toccabile:
+        - da fare → quadrato vuoto + testo #C9C4BD
+        - fatto oggi → quadrato pieno #B81D1D + testo #E8E4DE
+        - fatto in un altro giorno → quadrato pieno #9A958F + testo #9A958F
+          + "G.{n}" a destra, NON toccabile
+      Tap su un task da fare → POST /api/task/:id/completa con il numero del giorno
+      Tap su un task fatto oggi → stessa chiamata, toggle, torna da fare
+      Feedback immediato ottimistico, rollback se la chiamata fallisce.
+
+    In fondo al blocco, riga "+ TASK VELOCE":
+      campo testo + select dei 3 obiettivi + pulsante AGGIUNGI
+      Crea il task nella tappa corrente già con giorno_completato = giorno corrente.
+
+  Il blocco non blocca nulla: si può salvare il giorno senza toccare task.
+
+MODALITÀ B — DOMENICA, oppure tappa corrente scaduta e non chiusa
+  Sopra tutto il resto, prima ancora dei campi del giorno, un blocco con
+  bordo 1px #B81D1D e padding 24px:
+
+    Bebas Neue 32px #B81D1D:  VERIFICA · TAPPA {numero}
+
+    Riepilogo, una riga per obiettivo, Inter 15px:
+      {AREA}  {task fatti} / {task totali}
+      il numero fatti in #B81D1D se inferiore al totale, #E8E4DE se uguale
+
+    Textarea, Inter 15px, placeholder "Cosa è saltato e perché":
+      salva in tappe.nota. Obbligatoria: senza testo il pulsante resta disattivo.
+
+    JetBrains Mono 13px #9A958F:  PROSSIMA TAPPA · GIORNI {x}-{y}
+    Per ognuno dei 3 obiettivi, un campo dove aggiungere i task della settimana
+    successiva (input + pulsante +, lista dei task inseriti con possibilità di
+    rimuoverli prima di salvare). Massimo 5 per obiettivo.
+
+    Pulsante CHIUDI TAPPA → POST /api/tappe/:id/chiudi
+    Al successo il blocco scompare e appare la modalità A con la nuova tappa.
+
+  Se la verifica è scaduta (tappa non chiusa e giorno corrente > giorno_fine),
+  mostrare questo blocco ogni giorno finché non viene chiusa, con in cima
+  JetBrains Mono 13px #B81D1D: VERIFICA IN RITARDO DI {n} GIORNI
+
+═══════════════════════════════════════════
+5. SEZIONE OBIETTIVI NELL'ADMIN
+═══════════════════════════════════════════
+Nella pagina admin, sopra il form del giorno, sezione ripiegabile "OBIETTIVI".
+Tre colonne (una per rombo), su mobile impilate. Per ognuna:
+  select area · input titolo (contatore 60 caratteri) · input previsto (numero)
+  input giorno_limite · input prova · select stato (attivo/compiuto/fallito)
+  Salva con PUT /api/obiettivi/:id
+
+Il valore "fatto" è mostrato in sola lettura accanto a previsto, calcolato.
+Nessun input lo può modificare.
+
+═══════════════════════════════════════════
+6. BLOCCO NELLA PAGINA PUBBLICA DEL GIORNO
+═══════════════════════════════════════════
+File giorno.tsx, subito sotto il blocco bilancio.
+
+  JetBrains Mono 13px #9A958F:  TAPPE CHIUSE OGGI
+  Da GET /api/giorni/:numero/task:
+    per ogni task, riga Inter 15px: quadrato pieno #E8E4DE + testo + " → " +
+    area in #9A958F
+  Se l'array è vuoto: riga Inter 15px #9A958F "NESSUNA TAPPA CHIUSA".
+  Mostrare sempre, non nascondere mai il caso vuoto.
+
+Sotto, tre rombi in miniatura da 20px con il loro riempimento, allineati
+orizzontalmente, che portano a /obiettivi?rombo={posizione}.
+La pagina obiettivi legge quel parametro e apre già quel rombo, saltando
+l'animazione di ingresso.
+
+═══════════════════════════════════════════
+7. SEED INIZIALE
+═══════════════════════════════════════════
+Creare i 3 obiettivi del ciclo 1 e la tappa corrente vuota, così che le pagine
+non vadano in errore prima del primo inserimento. Valori placeholder,
+modificabili dall'admin.
+
+═══════════════════════════════════════════
+VERIFICA PRIMA DI CONSEGNARE
+═══════════════════════════════════════════
+[ ] I numeri dentro i rombi sono dritti, non ruotati di 45°
+[ ] Il riempimento rosso segue la forma del rombo, non sborda in un rettangolo
+[ ] L'area sopra i rombi è riservata anche da chiusa: i rombi non saltano all'apertura
+[ ] Tap sul rombo 2 mentre il 3 è aperto → transizione diretta, senza passare dal chiuso
+[ ] Toccare un task in journaling aggiorna il riempimento del rombo su /obiettivi
+    senza ricaricare la pagina
+[ ] Nessun campo "fatto" persistito o scrivibile in tutto il codice
+[ ] La domenica journaling mostra il blocco VERIFICA prima dei campi del giorno
+[ ] Chiudere una tappa marca automaticamente saltati i task rimasti aperti
+[ ] Nessun border-radius, nessuna ombra, nessuna icona, nessun testo sotto 13px
+[ ] Tutto leggibile e toccabile a 375px di larghezza

@@ -17,6 +17,8 @@ import { ContattiTab } from "@/components/admin/ContattiTab";
 import { CandidatureTab } from "@/components/admin/CandidatureTab";
 import { IscrittiTab } from "@/components/admin/IscrittiTab";
 import { PlannerTab } from "@/components/admin/PlannerTab";
+import { ObiettiviEditor } from "@/components/admin/ObiettiviEditor";
+import { TappaManager } from "@/components/admin/TappaManager";
 import { DailyTrackingPanel, type TrackingKey } from "@/components/admin/DailyTrackingPanel";
 import { DiaryHtmlEditor } from "@/components/admin/DiaryHtmlEditor";
 import { AdminRetry, AdminStatus } from "@/components/admin/AdminStatus";
@@ -542,6 +544,8 @@ function EntryForm({ initialData, previousEntry, onSuccess, onCancel }: { initia
         )}
       </div>
 
+      <TappaManager numeroGiorno={Number(formData.numero)} dataGiorno={formData.data} />
+
       <DailyTrackingPanel
         formData={formData}
         setFormData={setFormData}
@@ -779,6 +783,7 @@ function DiarioTab({ scrollToEntry }: { scrollToEntry?: number }) {
   }) ?? [];
   return (
     <div className="space-y-12">
+      <ObiettiviEditor />
       <div ref={formRef} className="scroll-mt-28">
         {editingNumero !== null ? (
           editingLoading || !editingEntry ? (

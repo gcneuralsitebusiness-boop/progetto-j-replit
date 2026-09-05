@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactElement } from "react";
 import { useParams, useSearch, Link } from "wouter";
-import { useListEntries, useListArticles } from "@workspace/api-client-react";
-import type { Entry as ApiEntry } from "@workspace/api-client-react";
+import { useListEntries, useListArticles, useListTaskGiorno, useListObiettivi } from "@workspace/api-client-react";
+import type { Entry as ApiEntry, TaskGiorno } from "@workspace/api-client-react";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
 import { ArrowLeft, Share2 } from "lucide-react";
@@ -414,7 +414,7 @@ function LinkedArticles({ entryData }: { entryData: string }) {
 
   return (
     <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-[140px_1fr] gap-x-8 border-t border-iron py-10">
-      <div className="font-sans text-[11px] uppercase tracking-[0.2em] text-muted-foreground md:sticky md:top-24 self-start mb-4 md:mb-0">
+      <div className="font-sans text-[13px] uppercase tracking-[0.2em] text-muted-foreground md:sticky md:top-24 self-start mb-4 md:mb-0">
         ARTICOLI
       </div>
       <div className="flex flex-col gap-4">
@@ -482,6 +482,82 @@ function ShareButton({ entryNumero, entryTesto }: { entryNumero: number; entryTe
 }
 
 // ─── main page ────────────────────────────────────────────────────────────────
+
+function TappeChiuseOggi({ numero }: { numero: number }) {
+  const { data: tasks } = useListTaskGiorno(numero);
+  const { data: obiettivi } = useListObiettivi();
+
+  return (
+    <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-[140px_1fr] gap-x-8 border-t border-iron py-10">
+      <div className="font-sans text-[11px] uppercase tracking-[0.2em] text-muted-foreground md:sticky md:top-24 self-start mb-4 md:mb-0">
+        TAPPE CHIUSE OGGI
+      </div>
+      <div>
+        {tasks && tasks.length > 0 ? (
+          <div className="flex flex-col gap-3">
+            {tasks.map((task) => (
+              <div key={task.id} className="flex items-center gap-3 font-sans text-[15px]">
+                <div className="w-[10px] h-[10px] bg-foreground shrink-0" />
+                <span className="text-foreground">{task.testo}</span>
+                <span className="text-muted-foreground">→</span>
+                <span className="text-muted-foreground uppercase">{task.area}</span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="font-sans text-[15px] text-muted-foreground">
+            NESSUNA TAPPA CHIUSA
+          </div>
+        )}
+
+        <div className="flex gap-4 mt-8">
+          {[1, 2, 3].map((pos) => {
+            const ob = obiettivi?.find((o) => o.posizione === pos);
+            const isCompleted = ob?.stato === "compiuto";
+            const isFailed = ob?.stato === "fallito";
+            const rawPct = ob ? Math.min(100, Math.max(0, (ob.fatto / ob.previsto) * 100)) : 0;
+            const pct = isCompleted ? 100 : isFailed ? 0 : rawPct;
+            const borderColor = isFailed ? "#2A2725" : "#B81D1D";
+
+            return (
+              <Link key={pos} href={`/obiettivi?rombo=${pos}`}>
+                <div
+                  data-testid={`link-mini-diamond-${pos}`}
+                  className="w-[20px] h-[20px] outline-none transition-transform hover:scale-110"
+                  title={ob ? `Obiettivo ${pos}: ${ob.titolo}` : `Obiettivo ${pos}`}
+                >
+                  <svg viewBox="0 0 100 100" className="w-full h-full overflow-visible" style={{ color: borderColor }}>
+                    <polygon points="50,0 100,50 50,100 0,50" fill="none" stroke="currentColor" strokeWidth="4" />
+                    {ob && (
+                      <>
+                        <clipPath id={`mini-clip-${pos}`}>
+                          <polygon points="50,0 100,50 50,100 0,50" />
+                        </clipPath>
+                        {(pct > 0 || isCompleted) && (
+                          <rect
+                            x="0"
+                            y={100 - pct}
+                            width="100"
+                            height={pct}
+                            fill="#B81D1D"
+                            clipPath={`url(#mini-clip-${pos})`}
+                          />
+                        )}
+                        {isFailed && (
+                          <line x1="14.6" y1="14.6" x2="85.4" y2="85.4" stroke="currentColor" strokeWidth="3" />
+                        )}
+                      </>
+                    )}
+                  </svg>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 /** Inner component rendered only when the entry is available, so hooks run unconditionally. */
 function GiornoContent({
@@ -634,6 +710,7 @@ function GiornoContent({
               </div>
             </div>
           )}
+          <TappeChiuseOggi numero={entry.numero} />
           <LinkedArticles entryData={entry.data} />
         </div>
 

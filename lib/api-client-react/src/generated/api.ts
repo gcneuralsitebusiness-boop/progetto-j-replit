@@ -30,8 +30,10 @@ import type {
   Candidatura,
   CandidaturaInput,
   CandidaturaUpdate,
+  ChiudiTappaInput,
   Coaching,
   CoachingUpdate,
+  CompletaTaskInput,
   ContentInput,
   Entry,
   EntryInput,
@@ -40,6 +42,10 @@ import type {
   HealthStatus,
   LoginInput,
   NotFoundResponse,
+  Obiettivo,
+  ObiettivoTask,
+  ObiettivoTaskInput,
+  ObiettivoUpdate,
   PageInput,
   PageItem,
   PageUpdate,
@@ -50,6 +56,8 @@ import type {
   Sponsor,
   SponsorInput,
   SponsorUpdate,
+  TappaCorrente,
+  TaskGiorno,
   UnauthorizedResponse,
   UploadUrlRequest,
   UploadUrlResponse
@@ -2868,6 +2876,542 @@ export const useUpdateCandidatura = <TError = ErrorType<ApiError | UnauthorizedR
       > => {
       return useMutation(getUpdateCandidaturaMutationOptions(options));
     }
+
+export const getListObiettiviUrl = () => {
+
+
+
+
+  return `/api/obiettivi`
+}
+
+export const listObiettivi = async ( options?: RequestInit): Promise<Obiettivo[]> => {
+
+  return customFetch<Obiettivo[]>(getListObiettiviUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListObiettiviQueryKey = () => {
+    return [
+    `/api/obiettivi`
+    ] as const;
+    }
+
+
+export const getListObiettiviQueryOptions = <TData = Awaited<ReturnType<typeof listObiettivi>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listObiettivi>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListObiettiviQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listObiettivi>>> = ({ signal }) => listObiettivi({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listObiettivi>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListObiettiviQueryResult = NonNullable<Awaited<ReturnType<typeof listObiettivi>>>
+export type ListObiettiviQueryError = ErrorType<unknown>
+
+
+
+export function useListObiettivi<TData = Awaited<ReturnType<typeof listObiettivi>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listObiettivi>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListObiettiviQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getUpdateObiettivoUrl = (id: number,) => {
+
+
+
+
+  return `/api/obiettivi/${id}`
+}
+
+export const updateObiettivo = async (id: number,
+    obiettivoUpdate: ObiettivoUpdate, options?: RequestInit): Promise<Obiettivo> => {
+
+  return customFetch<Obiettivo>(getUpdateObiettivoUrl(id),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(obiettivoUpdate)
+  }
+);}
+
+
+
+
+export const getUpdateObiettivoMutationOptions = <TError = ErrorType<UnauthorizedResponse | NotFoundResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateObiettivo>>, TError,{id: number;data: BodyType<ObiettivoUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateObiettivo>>, TError,{id: number;data: BodyType<ObiettivoUpdate>}, TContext> => {
+
+const mutationKey = ['updateObiettivo'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateObiettivo>>, {id: number;data: BodyType<ObiettivoUpdate>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateObiettivo(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateObiettivoMutationResult = NonNullable<Awaited<ReturnType<typeof updateObiettivo>>>
+    export type UpdateObiettivoMutationBody = BodyType<ObiettivoUpdate>
+    export type UpdateObiettivoMutationError = ErrorType<UnauthorizedResponse | NotFoundResponse>
+
+    export const useUpdateObiettivo = <TError = ErrorType<UnauthorizedResponse | NotFoundResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateObiettivo>>, TError,{id: number;data: BodyType<ObiettivoUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateObiettivo>>,
+        TError,
+        {id: number;data: BodyType<ObiettivoUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateObiettivoMutationOptions(options));
+    }
+
+export const getGetTappaCorrenteUrl = () => {
+
+
+
+
+  return `/api/tappe/corrente`
+}
+
+export const getTappaCorrente = async ( options?: RequestInit): Promise<TappaCorrente> => {
+
+  return customFetch<TappaCorrente>(getGetTappaCorrenteUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetTappaCorrenteQueryKey = () => {
+    return [
+    `/api/tappe/corrente`
+    ] as const;
+    }
+
+
+export const getGetTappaCorrenteQueryOptions = <TData = Awaited<ReturnType<typeof getTappaCorrente>>, TError = ErrorType<NotFoundResponse>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getTappaCorrente>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetTappaCorrenteQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getTappaCorrente>>> = ({ signal }) => getTappaCorrente({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getTappaCorrente>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetTappaCorrenteQueryResult = NonNullable<Awaited<ReturnType<typeof getTappaCorrente>>>
+export type GetTappaCorrenteQueryError = ErrorType<NotFoundResponse>
+
+
+
+export function useGetTappaCorrente<TData = Awaited<ReturnType<typeof getTappaCorrente>>, TError = ErrorType<NotFoundResponse>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getTappaCorrente>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetTappaCorrenteQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getChiudiTappaUrl = (id: number,) => {
+
+
+
+
+  return `/api/tappe/${id}/chiudi`
+}
+
+export const chiudiTappa = async (id: number,
+    chiudiTappaInput: ChiudiTappaInput, options?: RequestInit): Promise<TappaCorrente> => {
+
+  return customFetch<TappaCorrente>(getChiudiTappaUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(chiudiTappaInput)
+  }
+);}
+
+
+
+
+export const getChiudiTappaMutationOptions = <TError = ErrorType<UnauthorizedResponse | NotFoundResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof chiudiTappa>>, TError,{id: number;data: BodyType<ChiudiTappaInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof chiudiTappa>>, TError,{id: number;data: BodyType<ChiudiTappaInput>}, TContext> => {
+
+const mutationKey = ['chiudiTappa'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof chiudiTappa>>, {id: number;data: BodyType<ChiudiTappaInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  chiudiTappa(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ChiudiTappaMutationResult = NonNullable<Awaited<ReturnType<typeof chiudiTappa>>>
+    export type ChiudiTappaMutationBody = BodyType<ChiudiTappaInput>
+    export type ChiudiTappaMutationError = ErrorType<UnauthorizedResponse | NotFoundResponse>
+
+    export const useChiudiTappa = <TError = ErrorType<UnauthorizedResponse | NotFoundResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof chiudiTappa>>, TError,{id: number;data: BodyType<ChiudiTappaInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof chiudiTappa>>,
+        TError,
+        {id: number;data: BodyType<ChiudiTappaInput>},
+        TContext
+      > => {
+      return useMutation(getChiudiTappaMutationOptions(options));
+    }
+
+export const getCreateObiettivoTaskUrl = () => {
+
+
+
+
+  return `/api/task`
+}
+
+export const createObiettivoTask = async (obiettivoTaskInput: ObiettivoTaskInput, options?: RequestInit): Promise<ObiettivoTask> => {
+
+  return customFetch<ObiettivoTask>(getCreateObiettivoTaskUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(obiettivoTaskInput)
+  }
+);}
+
+
+
+
+export const getCreateObiettivoTaskMutationOptions = <TError = ErrorType<UnauthorizedResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createObiettivoTask>>, TError,{data: BodyType<ObiettivoTaskInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createObiettivoTask>>, TError,{data: BodyType<ObiettivoTaskInput>}, TContext> => {
+
+const mutationKey = ['createObiettivoTask'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createObiettivoTask>>, {data: BodyType<ObiettivoTaskInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createObiettivoTask(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateObiettivoTaskMutationResult = NonNullable<Awaited<ReturnType<typeof createObiettivoTask>>>
+    export type CreateObiettivoTaskMutationBody = BodyType<ObiettivoTaskInput>
+    export type CreateObiettivoTaskMutationError = ErrorType<UnauthorizedResponse>
+
+    export const useCreateObiettivoTask = <TError = ErrorType<UnauthorizedResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createObiettivoTask>>, TError,{data: BodyType<ObiettivoTaskInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createObiettivoTask>>,
+        TError,
+        {data: BodyType<ObiettivoTaskInput>},
+        TContext
+      > => {
+      return useMutation(getCreateObiettivoTaskMutationOptions(options));
+    }
+
+export const getDeleteObiettivoTaskUrl = (id: number,) => {
+
+
+
+
+  return `/api/task/${id}`
+}
+
+export const deleteObiettivoTask = async (id: number, options?: RequestInit): Promise<void> => {
+
+  return customFetch<void>(getDeleteObiettivoTaskUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getDeleteObiettivoTaskMutationOptions = <TError = ErrorType<UnauthorizedResponse | NotFoundResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteObiettivoTask>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteObiettivoTask>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['deleteObiettivoTask'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteObiettivoTask>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteObiettivoTask(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteObiettivoTaskMutationResult = NonNullable<Awaited<ReturnType<typeof deleteObiettivoTask>>>
+
+    export type DeleteObiettivoTaskMutationError = ErrorType<UnauthorizedResponse | NotFoundResponse>
+
+    export const useDeleteObiettivoTask = <TError = ErrorType<UnauthorizedResponse | NotFoundResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteObiettivoTask>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteObiettivoTask>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getDeleteObiettivoTaskMutationOptions(options));
+    }
+
+export const getCompletaObiettivoTaskUrl = (id: number,) => {
+
+
+
+
+  return `/api/task/${id}/completa`
+}
+
+export const completaObiettivoTask = async (id: number,
+    completaTaskInput: CompletaTaskInput, options?: RequestInit): Promise<ObiettivoTask> => {
+
+  return customFetch<ObiettivoTask>(getCompletaObiettivoTaskUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(completaTaskInput)
+  }
+);}
+
+
+
+
+export const getCompletaObiettivoTaskMutationOptions = <TError = ErrorType<UnauthorizedResponse | NotFoundResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof completaObiettivoTask>>, TError,{id: number;data: BodyType<CompletaTaskInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof completaObiettivoTask>>, TError,{id: number;data: BodyType<CompletaTaskInput>}, TContext> => {
+
+const mutationKey = ['completaObiettivoTask'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof completaObiettivoTask>>, {id: number;data: BodyType<CompletaTaskInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  completaObiettivoTask(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CompletaObiettivoTaskMutationResult = NonNullable<Awaited<ReturnType<typeof completaObiettivoTask>>>
+    export type CompletaObiettivoTaskMutationBody = BodyType<CompletaTaskInput>
+    export type CompletaObiettivoTaskMutationError = ErrorType<UnauthorizedResponse | NotFoundResponse>
+
+    export const useCompletaObiettivoTask = <TError = ErrorType<UnauthorizedResponse | NotFoundResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof completaObiettivoTask>>, TError,{id: number;data: BodyType<CompletaTaskInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof completaObiettivoTask>>,
+        TError,
+        {id: number;data: BodyType<CompletaTaskInput>},
+        TContext
+      > => {
+      return useMutation(getCompletaObiettivoTaskMutationOptions(options));
+    }
+
+export const getListTaskGiornoUrl = (numero: number,) => {
+
+
+
+
+  return `/api/giorni/${numero}/task`
+}
+
+export const listTaskGiorno = async (numero: number, options?: RequestInit): Promise<TaskGiorno[]> => {
+
+  return customFetch<TaskGiorno[]>(getListTaskGiornoUrl(numero),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListTaskGiornoQueryKey = (numero: number,) => {
+    return [
+    `/api/giorni/${numero}/task`
+    ] as const;
+    }
+
+
+export const getListTaskGiornoQueryOptions = <TData = Awaited<ReturnType<typeof listTaskGiorno>>, TError = ErrorType<unknown>>(numero: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listTaskGiorno>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListTaskGiornoQueryKey(numero);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listTaskGiorno>>> = ({ signal }) => listTaskGiorno(numero, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: numero !== null && numero !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listTaskGiorno>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListTaskGiornoQueryResult = NonNullable<Awaited<ReturnType<typeof listTaskGiorno>>>
+export type ListTaskGiornoQueryError = ErrorType<unknown>
+
+
+
+export function useListTaskGiorno<TData = Awaited<ReturnType<typeof listTaskGiorno>>, TError = ErrorType<unknown>>(
+ numero: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listTaskGiorno>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListTaskGiornoQueryOptions(numero,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
 export const getGetCoachingUrl = () => {
 

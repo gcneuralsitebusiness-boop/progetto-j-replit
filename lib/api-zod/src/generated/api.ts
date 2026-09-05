@@ -1377,6 +1377,283 @@ export const UpdateCandidaturaResponse = zod.object({
 })
 
 
+export const listObiettiviResponseOneTitoloMax = 60;
+
+export const listObiettiviResponseTwoTappaCorrenteTwoTaskItemTestoMax = 80;
+
+
+
+export const ListObiettiviResponseItem = zod.object({
+  "id": zod.number(),
+  "ciclo": zod.number(),
+  "posizione": zod.number(),
+  "area": zod.enum(['CORPO', 'CONTENUTI', 'SOLDI']),
+  "titolo": zod.string().max(listObiettiviResponseOneTitoloMax),
+  "previsto": zod.number(),
+  "giornoLimite": zod.number(),
+  "prova": zod.string().nullable(),
+  "stato": zod.enum(['attivo', 'compiuto', 'fallito'])
+}).and(zod.object({
+  "fatto": zod.number(),
+  "tappa_corrente": zod.union([zod.null(),zod.object({
+  "numero": zod.number(),
+  "giorno_inizio": zod.number(),
+  "giorno_fine": zod.number(),
+  "task": zod.array(zod.object({
+  "id": zod.number(),
+  "obiettivoId": zod.number(),
+  "tappaId": zod.number(),
+  "testo": zod.string().max(listObiettiviResponseTwoTappaCorrenteTwoTaskItemTestoMax),
+  "giorno_completato": zod.number().nullable(),
+  "saltato": zod.boolean(),
+  "ordine": zod.number()
+}))
+})]),
+  "tappe_precedenti": zod.array(zod.object({
+  "numero": zod.number(),
+  "task_fatti": zod.number(),
+  "task_totali": zod.number()
+}))
+}))
+export const ListObiettiviResponse = zod.array(ListObiettiviResponseItem)
+
+
+export const UpdateObiettivoParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const updateObiettivoBodyTitoloMax = 60;
+
+
+
+
+
+export const UpdateObiettivoBody = zod.object({
+  "area": zod.enum(['CORPO', 'CONTENUTI', 'SOLDI']),
+  "titolo": zod.string().min(1).max(updateObiettivoBodyTitoloMax),
+  "previsto": zod.number().min(1),
+  "giorno_limite": zod.number().min(1),
+  "prova": zod.string().nullable(),
+  "stato": zod.enum(['attivo', 'compiuto', 'fallito'])
+})
+
+export const updateObiettivoResponseOneTitoloMax = 60;
+
+export const updateObiettivoResponseTwoTappaCorrenteTwoTaskItemTestoMax = 80;
+
+
+
+export const UpdateObiettivoResponse = zod.object({
+  "id": zod.number(),
+  "ciclo": zod.number(),
+  "posizione": zod.number(),
+  "area": zod.enum(['CORPO', 'CONTENUTI', 'SOLDI']),
+  "titolo": zod.string().max(updateObiettivoResponseOneTitoloMax),
+  "previsto": zod.number(),
+  "giornoLimite": zod.number(),
+  "prova": zod.string().nullable(),
+  "stato": zod.enum(['attivo', 'compiuto', 'fallito'])
+}).and(zod.object({
+  "fatto": zod.number(),
+  "tappa_corrente": zod.union([zod.null(),zod.object({
+  "numero": zod.number(),
+  "giorno_inizio": zod.number(),
+  "giorno_fine": zod.number(),
+  "task": zod.array(zod.object({
+  "id": zod.number(),
+  "obiettivoId": zod.number(),
+  "tappaId": zod.number(),
+  "testo": zod.string().max(updateObiettivoResponseTwoTappaCorrenteTwoTaskItemTestoMax),
+  "giorno_completato": zod.number().nullable(),
+  "saltato": zod.boolean(),
+  "ordine": zod.number()
+}))
+})]),
+  "tappe_precedenti": zod.array(zod.object({
+  "numero": zod.number(),
+  "task_fatti": zod.number(),
+  "task_totali": zod.number()
+}))
+}))
+
+
+export const getTappaCorrenteResponseObiettiviItemObiettivoTitoloMax = 60;
+
+export const getTappaCorrenteResponseObiettiviItemTaskItemTestoMax = 80;
+
+
+
+export const GetTappaCorrenteResponse = zod.object({
+  "id": zod.number(),
+  "ciclo": zod.number(),
+  "numero": zod.number(),
+  "giornoInizio": zod.number(),
+  "giornoFine": zod.number(),
+  "chiusa": zod.boolean(),
+  "nota": zod.string().nullable(),
+  "obiettivi": zod.array(zod.object({
+  "obiettivo": zod.object({
+  "id": zod.number(),
+  "ciclo": zod.number(),
+  "posizione": zod.number(),
+  "area": zod.enum(['CORPO', 'CONTENUTI', 'SOLDI']),
+  "titolo": zod.string().max(getTappaCorrenteResponseObiettiviItemObiettivoTitoloMax),
+  "previsto": zod.number(),
+  "giornoLimite": zod.number(),
+  "prova": zod.string().nullable(),
+  "stato": zod.enum(['attivo', 'compiuto', 'fallito'])
+}),
+  "task": zod.array(zod.object({
+  "id": zod.number(),
+  "obiettivoId": zod.number(),
+  "tappaId": zod.number(),
+  "testo": zod.string().max(getTappaCorrenteResponseObiettiviItemTaskItemTestoMax),
+  "giorno_completato": zod.number().nullable(),
+  "saltato": zod.boolean(),
+  "ordine": zod.number()
+}))
+}))
+})
+
+
+export const ChiudiTappaParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+
+export const chiudiTappaBodyNuoveTappeItemTaskItemMax = 80;
+
+export const chiudiTappaBodyNuoveTappeItemTaskMax = 5;
+
+export const chiudiTappaBodyNuoveTappeMax = 3;
+
+
+
+export const ChiudiTappaBody = zod.object({
+  "nota": zod.string().min(1),
+  "nuove_tappe": zod.array(zod.object({
+  "obiettivo_id": zod.number().min(1),
+  "task": zod.array(zod.string().min(1).max(chiudiTappaBodyNuoveTappeItemTaskItemMax)).max(chiudiTappaBodyNuoveTappeItemTaskMax)
+})).max(chiudiTappaBodyNuoveTappeMax)
+})
+
+export const chiudiTappaResponseObiettiviItemObiettivoTitoloMax = 60;
+
+export const chiudiTappaResponseObiettiviItemTaskItemTestoMax = 80;
+
+
+
+export const ChiudiTappaResponse = zod.object({
+  "id": zod.number(),
+  "ciclo": zod.number(),
+  "numero": zod.number(),
+  "giornoInizio": zod.number(),
+  "giornoFine": zod.number(),
+  "chiusa": zod.boolean(),
+  "nota": zod.string().nullable(),
+  "obiettivi": zod.array(zod.object({
+  "obiettivo": zod.object({
+  "id": zod.number(),
+  "ciclo": zod.number(),
+  "posizione": zod.number(),
+  "area": zod.enum(['CORPO', 'CONTENUTI', 'SOLDI']),
+  "titolo": zod.string().max(chiudiTappaResponseObiettiviItemObiettivoTitoloMax),
+  "previsto": zod.number(),
+  "giornoLimite": zod.number(),
+  "prova": zod.string().nullable(),
+  "stato": zod.enum(['attivo', 'compiuto', 'fallito'])
+}),
+  "task": zod.array(zod.object({
+  "id": zod.number(),
+  "obiettivoId": zod.number(),
+  "tappaId": zod.number(),
+  "testo": zod.string().max(chiudiTappaResponseObiettiviItemTaskItemTestoMax),
+  "giorno_completato": zod.number().nullable(),
+  "saltato": zod.boolean(),
+  "ordine": zod.number()
+}))
+}))
+})
+
+
+
+
+export const createObiettivoTaskBodyTestoMax = 80;
+
+
+
+
+export const CreateObiettivoTaskBody = zod.object({
+  "obiettivo_id": zod.number().min(1),
+  "tappa_id": zod.number().min(1),
+  "testo": zod.string().min(1).max(createObiettivoTaskBodyTestoMax),
+  "giorno_completato": zod.number().min(1).optional()
+})
+
+export const createObiettivoTaskResponseTestoMax = 80;
+
+
+
+export const CreateObiettivoTaskResponse = zod.object({
+  "id": zod.number(),
+  "obiettivoId": zod.number(),
+  "tappaId": zod.number(),
+  "testo": zod.string().max(createObiettivoTaskResponseTestoMax),
+  "giorno_completato": zod.number().nullable(),
+  "saltato": zod.boolean(),
+  "ordine": zod.number()
+})
+
+
+export const DeleteObiettivoTaskParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const DeleteObiettivoTaskResponse = zod.void()
+
+
+export const CompletaObiettivoTaskParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+
+
+export const CompletaObiettivoTaskBody = zod.object({
+  "giorno": zod.number().min(1)
+})
+
+export const completaObiettivoTaskResponseTestoMax = 80;
+
+
+
+export const CompletaObiettivoTaskResponse = zod.object({
+  "id": zod.number(),
+  "obiettivoId": zod.number(),
+  "tappaId": zod.number(),
+  "testo": zod.string().max(completaObiettivoTaskResponseTestoMax),
+  "giorno_completato": zod.number().nullable(),
+  "saltato": zod.boolean(),
+  "ordine": zod.number()
+})
+
+
+export const ListTaskGiornoParams = zod.object({
+  "numero": zod.coerce.number()
+})
+
+export const ListTaskGiornoResponseItem = zod.object({
+  "id": zod.number(),
+  "testo": zod.string(),
+  "giorno_completato": zod.number(),
+  "saltato": zod.boolean(),
+  "area": zod.string(),
+  "titolo": zod.string()
+})
+export const ListTaskGiornoResponse = zod.array(ListTaskGiornoResponseItem)
+
+
 /**
  * @summary Get coaching landing content
  */

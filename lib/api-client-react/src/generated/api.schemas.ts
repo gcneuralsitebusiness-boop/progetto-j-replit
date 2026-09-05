@@ -1051,6 +1051,166 @@ export interface CandidaturaUpdate {
   stato: CandidaturaUpdateStato;
 }
 
+export interface ObiettivoTask {
+  id: number;
+  obiettivoId: number;
+  tappaId: number;
+  /** @maxLength 80 */
+  testo: string;
+  /** @nullable */
+  giorno_completato: number | null;
+  saltato: boolean;
+  ordine: number;
+}
+
+export interface ObiettivoTaskInput {
+  /** @minimum 1 */
+  obiettivo_id: number;
+  /** @minimum 1 */
+  tappa_id: number;
+  /**
+     * @minLength 1
+     * @maxLength 80
+     */
+  testo: string;
+  /** @minimum 1 */
+  giorno_completato?: number;
+}
+
+export interface CompletaTaskInput {
+  /** @minimum 1 */
+  giorno: number;
+}
+
+export type ObiettivoBaseArea = typeof ObiettivoBaseArea[keyof typeof ObiettivoBaseArea];
+
+
+export const ObiettivoBaseArea = {
+  CORPO: 'CORPO',
+  CONTENUTI: 'CONTENUTI',
+  SOLDI: 'SOLDI',
+} as const;
+
+export type ObiettivoBaseStato = typeof ObiettivoBaseStato[keyof typeof ObiettivoBaseStato];
+
+
+export const ObiettivoBaseStato = {
+  attivo: 'attivo',
+  compiuto: 'compiuto',
+  fallito: 'fallito',
+} as const;
+
+export interface ObiettivoBase {
+  id: number;
+  ciclo: number;
+  posizione: number;
+  area: ObiettivoBaseArea;
+  /** @maxLength 60 */
+  titolo: string;
+  previsto: number;
+  giornoLimite: number;
+  /** @nullable */
+  prova: string | null;
+  stato: ObiettivoBaseStato;
+}
+
+export interface TappaTaskGroup {
+  obiettivo: ObiettivoBase;
+  task: ObiettivoTask[];
+}
+
+export interface TappaCorrente {
+  id: number;
+  ciclo: number;
+  numero: number;
+  giornoInizio: number;
+  giornoFine: number;
+  chiusa: boolean;
+  /** @nullable */
+  nota: string | null;
+  obiettivi: TappaTaskGroup[];
+}
+
+export interface TappaPrecedente {
+  numero: number;
+  task_fatti: number;
+  task_totali: number;
+}
+
+export type ObiettivoTappaCorrente = {
+  numero: number;
+  giorno_inizio: number;
+  giorno_fine: number;
+  task: ObiettivoTask[];
+} | null;
+
+export type Obiettivo = ObiettivoBase & {
+  readonly fatto: number;
+  tappa_corrente: ObiettivoTappaCorrente;
+  tappe_precedenti: TappaPrecedente[];
+};
+
+export type ObiettivoUpdateArea = typeof ObiettivoUpdateArea[keyof typeof ObiettivoUpdateArea];
+
+
+export const ObiettivoUpdateArea = {
+  CORPO: 'CORPO',
+  CONTENUTI: 'CONTENUTI',
+  SOLDI: 'SOLDI',
+} as const;
+
+export type ObiettivoUpdateStato = typeof ObiettivoUpdateStato[keyof typeof ObiettivoUpdateStato];
+
+
+export const ObiettivoUpdateStato = {
+  attivo: 'attivo',
+  compiuto: 'compiuto',
+  fallito: 'fallito',
+} as const;
+
+export interface ObiettivoUpdate {
+  area: ObiettivoUpdateArea;
+  /**
+     * @minLength 1
+     * @maxLength 60
+     */
+  titolo: string;
+  /** @minimum 1 */
+  previsto: number;
+  /** @minimum 1 */
+  giorno_limite: number;
+  /** @nullable */
+  prova: string | null;
+  stato: ObiettivoUpdateStato;
+}
+
+export interface NuovaTappaTasks {
+  /** @minimum 1 */
+  obiettivo_id: number;
+  /**
+     * @maxItems 5
+     * @items.minLength 1
+     * @items.maxLength 80
+     */
+  task: string[];
+}
+
+export interface ChiudiTappaInput {
+  /** @minLength 1 */
+  nota: string;
+  /** @maxItems 3 */
+  nuove_tappe: NuovaTappaTasks[];
+}
+
+export interface TaskGiorno {
+  id: number;
+  testo: string;
+  giorno_completato: number;
+  saltato: boolean;
+  area: string;
+  titolo: string;
+}
+
 /**
  * Unauthorized
  */

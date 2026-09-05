@@ -872,6 +872,141 @@ paths:
               schema:
                 $ref: "#/components/schemas/ApiError"
 
+  /obiettivi:
+    get:
+      operationId: listObiettivi
+      tags: [obiettivi]
+      responses:
+        "200":
+          description: Active cycle goals
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Obiettivo" }
+  /obiettivi/{id}:
+    put:
+      operationId: updateObiettivo
+      tags: [obiettivi]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ObiettivoUpdate" }
+      responses:
+        "200":
+          description: Updated goal
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Obiettivo" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /tappe/corrente:
+    get:
+      operationId: getTappaCorrente
+      tags: [obiettivi]
+      responses:
+        "200":
+          description: Current stage
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TappaCorrente" }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /tappe/{id}/chiudi:
+    post:
+      operationId: chiudiTappa
+      tags: [obiettivi]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ChiudiTappaInput" }
+      responses:
+        "201":
+          description: Next stage created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TappaCorrente" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /task:
+    post:
+      operationId: createObiettivoTask
+      tags: [obiettivi]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ObiettivoTaskInput" }
+      responses:
+        "201":
+          description: Created task
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ObiettivoTask" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+  /task/{id}:
+    delete:
+      operationId: deleteObiettivoTask
+      tags: [obiettivi]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "204": { description: Deleted }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /task/{id}/completa:
+    post:
+      operationId: completaObiettivoTask
+      tags: [obiettivi]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CompletaTaskInput" }
+      responses:
+        "200":
+          description: Toggled task
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ObiettivoTask" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /giorni/{numero}/task:
+    get:
+      operationId: listTaskGiorno
+      tags: [obiettivi]
+      parameters:
+        - name: numero
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Tasks completed on a day
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/TaskGiorno" }
   /coaching:
     get:
       operationId: getCoaching
@@ -1878,3 +2013,130 @@ components:
         stato:
           type: string
           enum: [nuova, letta, gestita]
+
+    ObiettivoTask:
+      type: object
+      required: [id, obiettivoId, tappaId, testo, giorno_completato, saltato, ordine]
+      properties:
+        id: { type: integer }
+        obiettivoId: { type: integer }
+        tappaId: { type: integer }
+        testo: { type: string, maxLength: 80 }
+        giorno_completato: { type: [integer, "null"] }
+        saltato: { type: boolean }
+        ordine: { type: integer }
+    ObiettivoTaskInput:
+      type: object
+      required: [obiettivo_id, tappa_id, testo]
+      properties:
+        obiettivo_id: { type: integer, minimum: 1 }
+        tappa_id: { type: integer, minimum: 1 }
+        testo: { type: string, minLength: 1, maxLength: 80 }
+        giorno_completato: { type: integer, minimum: 1 }
+    CompletaTaskInput:
+      type: object
+      required: [giorno]
+      properties:
+        giorno: { type: integer, minimum: 1 }
+    TappaTaskGroup:
+      type: object
+      required: [obiettivo, task]
+      properties:
+        obiettivo: { $ref: "#/components/schemas/ObiettivoBase" }
+        task:
+          type: array
+          items: { $ref: "#/components/schemas/ObiettivoTask" }
+    TappaCorrente:
+      type: object
+      required: [id, ciclo, numero, giornoInizio, giornoFine, chiusa, nota, obiettivi]
+      properties:
+        id: { type: integer }
+        ciclo: { type: integer }
+        numero: { type: integer }
+        giornoInizio: { type: integer }
+        giornoFine: { type: integer }
+        chiusa: { type: boolean }
+        nota: { type: [string, "null"] }
+        obiettivi:
+          type: array
+          items: { $ref: "#/components/schemas/TappaTaskGroup" }
+    TappaPrecedente:
+      type: object
+      required: [numero, task_fatti, task_totali]
+      properties:
+        numero: { type: integer }
+        task_fatti: { type: integer }
+        task_totali: { type: integer }
+    ObiettivoBase:
+      type: object
+      required: [id, ciclo, posizione, area, titolo, previsto, giornoLimite, prova, stato]
+      properties:
+        id: { type: integer }
+        ciclo: { type: integer }
+        posizione: { type: integer }
+        area: { type: string, enum: [CORPO, CONTENUTI, SOLDI] }
+        titolo: { type: string, maxLength: 60 }
+        previsto: { type: integer }
+        giornoLimite: { type: integer }
+        prova: { type: [string, "null"] }
+        stato: { type: string, enum: [attivo, compiuto, fallito] }
+    Obiettivo:
+      allOf:
+        - $ref: "#/components/schemas/ObiettivoBase"
+        - type: object
+          required: [fatto, tappa_corrente, tappe_precedenti]
+          properties:
+            fatto: { type: integer, readOnly: true }
+            tappa_corrente:
+              anyOf:
+                - type: "null"
+                - type: object
+                  required: [numero, giorno_inizio, giorno_fine, task]
+                  properties:
+                    numero: { type: integer }
+                    giorno_inizio: { type: integer }
+                    giorno_fine: { type: integer }
+                    task:
+                      type: array
+                      items: { $ref: "#/components/schemas/ObiettivoTask" }
+            tappe_precedenti:
+              type: array
+              items: { $ref: "#/components/schemas/TappaPrecedente" }
+    ObiettivoUpdate:
+      type: object
+      required: [area, titolo, previsto, giorno_limite, prova, stato]
+      properties:
+        area: { type: string, enum: [CORPO, CONTENUTI, SOLDI] }
+        titolo: { type: string, minLength: 1, maxLength: 60 }
+        previsto: { type: integer, minimum: 1 }
+        giorno_limite: { type: integer, minimum: 1 }
+        prova: { type: [string, "null"] }
+        stato: { type: string, enum: [attivo, compiuto, fallito] }
+    NuovaTappaTasks:
+      type: object
+      required: [obiettivo_id, task]
+      properties:
+        obiettivo_id: { type: integer, minimum: 1 }
+        task:
+          type: array
+          maxItems: 5
+          items: { type: string, minLength: 1, maxLength: 80 }
+    ChiudiTappaInput:
+      type: object
+      required: [nota, nuove_tappe]
+      properties:
+        nota: { type: string, minLength: 1 }
+        nuove_tappe:
+          type: array
+          maxItems: 3
+          items: { $ref: "#/components/schemas/NuovaTappaTasks" }
+    TaskGiorno:
+      type: object
+      required: [id, testo, giorno_completato, saltato, area, titolo]
+      properties:
+        id: { type: integer }
+        testo: { type: string }
+        giorno_completato: { type: integer }
+        saltato: { type: boolean }
+        area: { type: string }
+        titolo: { type: string }

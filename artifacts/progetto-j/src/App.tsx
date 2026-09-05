@@ -20,6 +20,7 @@ const Viaggio = lazy(() => import('@/pages/viaggio'));
 const ArticoloPreview = lazy(() => import('@/pages/articolo-preview'));
 const Coaching = lazy(() => import('@/pages/coaching'));
 const GiornoDetail = lazy(() => import('@/pages/giorno'));
+const Obiettivi = lazy(() => import('@/pages/obiettivi'));
 const Privacy = lazy(() => import('@/pages/privacy'));
 const Termini = lazy(() => import('@/pages/termini'));
 const Grazie = lazy(() => import('@/pages/grazie'));
@@ -98,6 +99,7 @@ function PageMetadata() {
       "/": { title: "Progetto J — 180 Giorni Documentati", description: "180 giorni di trasformazione documentata. Dati reali, zero filtri. Corpo, mente, business." },
       "/journaling": { title: "Journaling — Progetto J", description: "Il diario operativo di Progetto J: giorni, dati, allenamento e disciplina." },
       "/statistiche": { title: "Statistiche — Progetto J", description: "I dati aggregati del percorso Progetto J: peso, sonno, allenamento e progressi." },
+      "/obiettivi": { title: "Obiettivi — Progetto J", description: "Obiettivi del ciclo in corso, stato avanzamento e tappe di Progetto J." },
       "/chi-sono": { title: "Chi sono — Progetto J", description: "La storia, il metodo e la persona dietro Progetto J." },
       "/viaggio": { title: "Il viaggio di J — Progetto J", description: "Otto paesi visitati, quattro da prendere. Quattro discipline, quattro posti dove sono nate." },
       "/articoli": { title: "Articoli — Progetto J", description: "Riflessioni, metodo e lezioni raccolte durante il percorso Progetto J." },
@@ -152,6 +154,7 @@ function AppRoutes() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/journaling" component={Journaling} />
+      <Route path="/obiettivi" component={Obiettivi} />
       <Route path="/statistiche" component={Statistiche} />
       <Route path="/chi-sono" component={ChiSono} />
       <Route path="/social" component={Social} />
