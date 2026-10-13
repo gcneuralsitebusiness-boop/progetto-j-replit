@@ -1,11 +1,12 @@
 import { useState, useMemo } from "react";
-import { useGetSiteContent, useListEntrySummaries } from "@workspace/api-client-react";
+import { useGetSiteContent, useListEntrySummaries, getListEntrySummariesQueryKey } from "@workspace/api-client-react";
 import { Area, ComposedChart, LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
 import { Reveal } from "@/components/Reveal";
 import { Cross } from "@/components/Cross";
 import { DayCard } from "@/components/DayCard";
+import { isUnfinishedToday } from "@/lib/current-day";
 import { ProgressRing } from "@/components/ProgressRing";
 import { MilestoneBadge } from "@/components/MilestoneBadge";
 import { AnimatedNumber } from "@/components/AnimatedNumber";
@@ -44,7 +45,12 @@ const axisProps = {
 };
 
 export default function Journaling() {
-  const { data: entries, isLoading: entriesLoading, isError: entriesError } = useListEntrySummaries();
+  const { data: entries, isLoading: entriesLoading, isError: entriesError } = useListEntrySummaries({
+    query: {
+      queryKey: getListEntrySummariesQueryKey(),
+      refetchInterval: (query) => query.state.data?.some((entry) => isUnfinishedToday(entry)) ? 10_000 : false,
+    },
+  });
   const { data: siteContent, isLoading: contentLoading, isError: contentError } = useGetSiteContent();
   const isLoading = entriesLoading || contentLoading;
   const isError = entriesError || contentError;
@@ -172,6 +178,7 @@ export default function Journaling() {
         {/* Current checkpoint: gives the newest update narrative priority. */}
         {latest && (
           <Reveal>
+            {isUnfinishedToday(latest) ? <div className="mb-12"><DayCard entry={latest} featured /></div> : (
             <section className="relative mb-12 min-h-[280px] overflow-hidden border border-iron bg-card">
               <div className="absolute inset-y-0 left-0 w-1 bg-primary" />
               {latest.foto && (
@@ -206,6 +213,7 @@ export default function Journaling() {
                 </Link>
               </div>
             </section>
+            )}
           </Reveal>
         )}
 

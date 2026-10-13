@@ -39,6 +39,7 @@ import type {
   EntryInput,
   EntrySummary,
   EntryUpdate,
+  GetPlannerAnnotationParams,
   HealthStatus,
   LoginInput,
   NotFoundResponse,
@@ -49,6 +50,8 @@ import type {
   PageInput,
   PageItem,
   PageUpdate,
+  PlannerAnnotation,
+  PlannerAnnotationInput,
   SiteContent,
   Social,
   SocialInput,
@@ -3558,5 +3561,147 @@ export const useUpdateCoaching = <TError = ErrorType<UnauthorizedResponse>,
         TContext
       > => {
       return useMutation(getUpdateCoachingMutationOptions(options));
+    }
+
+export const getGetPlannerAnnotationUrl = (params: GetPlannerAnnotationParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/admin/planner/annotation?${stringifiedParams}` : `/api/admin/planner/annotation`
+}
+
+export const getPlannerAnnotation = async (params: GetPlannerAnnotationParams, options?: RequestInit): Promise<PlannerAnnotation> => {
+
+  return customFetch<PlannerAnnotation>(getGetPlannerAnnotationUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetPlannerAnnotationQueryKey = (params?: GetPlannerAnnotationParams,) => {
+    return [
+    `/api/admin/planner/annotation`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetPlannerAnnotationQueryOptions = <TData = Awaited<ReturnType<typeof getPlannerAnnotation>>, TError = ErrorType<void>>(params: GetPlannerAnnotationParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPlannerAnnotation>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPlannerAnnotationQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPlannerAnnotation>>> = ({ signal }) => getPlannerAnnotation(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPlannerAnnotation>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetPlannerAnnotationQueryResult = NonNullable<Awaited<ReturnType<typeof getPlannerAnnotation>>>
+export type GetPlannerAnnotationQueryError = ErrorType<void>
+
+
+
+export function useGetPlannerAnnotation<TData = Awaited<ReturnType<typeof getPlannerAnnotation>>, TError = ErrorType<void>>(
+ params: GetPlannerAnnotationParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPlannerAnnotation>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetPlannerAnnotationQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getSavePlannerAnnotationUrl = () => {
+
+
+
+
+  return `/api/admin/planner/annotation`
+}
+
+export const savePlannerAnnotation = async (plannerAnnotationInput: PlannerAnnotationInput, options?: RequestInit): Promise<PlannerAnnotation> => {
+
+  return customFetch<PlannerAnnotation>(getSavePlannerAnnotationUrl(),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(plannerAnnotationInput)
+  }
+);}
+
+
+
+
+export const getSavePlannerAnnotationMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof savePlannerAnnotation>>, TError,{data: BodyType<PlannerAnnotationInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof savePlannerAnnotation>>, TError,{data: BodyType<PlannerAnnotationInput>}, TContext> => {
+
+const mutationKey = ['savePlannerAnnotation'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof savePlannerAnnotation>>, {data: BodyType<PlannerAnnotationInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  savePlannerAnnotation(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SavePlannerAnnotationMutationResult = NonNullable<Awaited<ReturnType<typeof savePlannerAnnotation>>>
+    export type SavePlannerAnnotationMutationBody = BodyType<PlannerAnnotationInput>
+    export type SavePlannerAnnotationMutationError = ErrorType<void>
+
+    export const useSavePlannerAnnotation = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof savePlannerAnnotation>>, TError,{data: BodyType<PlannerAnnotationInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof savePlannerAnnotation>>,
+        TError,
+        {data: BodyType<PlannerAnnotationInput>},
+        TContext
+      > => {
+      return useMutation(getSavePlannerAnnotationMutationOptions(options));
     }
 

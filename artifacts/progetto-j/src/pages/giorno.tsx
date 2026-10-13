@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactElement } from "react";
 import { useParams, useSearch, Link } from "wouter";
-import { useListEntries, useListArticles, useListTaskGiorno, useListObiettivi } from "@workspace/api-client-react";
+import { useListEntries, getListEntriesQueryKey, useListArticles, useListTaskGiorno, useListObiettivi } from "@workspace/api-client-react";
 import type { Entry as ApiEntry, TaskGiorno } from "@workspace/api-client-react";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
@@ -12,6 +12,8 @@ import { DataErrorState } from "@/components/DataErrorState";
 import { getPhotoUrl } from "@workspace/object-storage-web";
 import { usePageMeta } from "@/hooks/use-page-meta";
 import { containsDiaryHtml, sanitizeDiaryHtml } from "@/lib/diary-html";
+import { isCurrentDayPending } from "@/lib/current-day";
+import { CurrentDayPending } from "@/components/CurrentDayPending";
 
 function padDay(n: number) {
   return n.toString().padStart(3, "0");
@@ -760,9 +762,14 @@ function GiornoContent({
 
 export default function GiornoDetail() {
   const { id } = useParams<{ id: string }>();
-  const { data: entries, isLoading, isError } = useListEntries();
-
   const requestedNumber = Number(id);
+  const { data: entries, isLoading, isError } = useListEntries({
+    query: {
+      queryKey: getListEntriesQueryKey(),
+      refetchInterval: (query) => isCurrentDayPending(query.state.data, requestedNumber) ? 10_000 : false,
+      refetchOnWindowFocus: true,
+    },
+  });
   const entry = entries?.find((e) => e.numero === requestedNumber);
 
   // Compute averages across all entries
@@ -818,6 +825,10 @@ export default function GiornoDetail() {
         <SiteFooter />
       </>
     );
+  }
+
+  if (isCurrentDayPending(entries, requestedNumber)) {
+    return <CurrentDayPending numero={requestedNumber} />;
   }
 
   if (!entry) {

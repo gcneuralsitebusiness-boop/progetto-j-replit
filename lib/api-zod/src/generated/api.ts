@@ -1694,3 +1694,40 @@ export const UpdateCoachingResponse = zod.object({
 })
 
 
+export const getPlannerAnnotationQueryDataRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
+
+
+export const GetPlannerAnnotationQueryParams = zod.object({
+  "data": zod.coerce.string().regex(getPlannerAnnotationQueryDataRegExp)
+})
+
+export const GetPlannerAnnotationResponse = zod.object({
+  "data": zod.string(),
+  "testo": zod.string(),
+  "legacyNotes": zod.array(zod.object({
+  "id": zod.number(),
+  "testo": zod.string()
+}))
+})
+
+
+export const savePlannerAnnotationBodyDataRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
+export const savePlannerAnnotationBodyTestoMax = 100000;
+
+
+
+export const SavePlannerAnnotationBody = zod.object({
+  "data": zod.string().regex(savePlannerAnnotationBodyDataRegExp),
+  "testo": zod.string().max(savePlannerAnnotationBodyTestoMax)
+})
+
+export const SavePlannerAnnotationResponse = zod.object({
+  "data": zod.string(),
+  "testo": zod.string(),
+  "legacyNotes": zod.array(zod.object({
+  "id": zod.number(),
+  "testo": zod.string()
+}))
+})
+
+

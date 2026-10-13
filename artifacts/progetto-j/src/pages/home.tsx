@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useGetLatestEntries, useListEntries, useGetSiteContent } from "@workspace/api-client-react";
+import { useGetLatestEntries, getGetLatestEntriesQueryKey, useListEntries, useGetSiteContent } from "@workspace/api-client-react";
 import { Link } from "wouter";
 import { Reveal } from "@/components/Reveal";
 import { Timeline180 } from "@/components/Timeline180";
@@ -12,9 +12,15 @@ import { AnimatedNumber } from "@/components/AnimatedNumber";
 import { AccessoBlock } from "@/components/AccessoBlock";
 import { ArrowRight, Flame, Dumbbell, Heart, Wallet } from "lucide-react";
 import { getPhotoUrl } from "@workspace/object-storage-web";
+import { isUnfinishedToday } from "@/lib/current-day";
 
 export default function Home() {
-  const { data: latestEntries, isLoading: latestLoading, isError: latestError } = useGetLatestEntries();
+  const { data: latestEntries, isLoading: latestLoading, isError: latestError } = useGetLatestEntries({
+    query: {
+      queryKey: getGetLatestEntriesQueryKey(),
+      refetchInterval: (query) => query.state.data?.some((entry) => isUnfinishedToday(entry)) ? 10_000 : false,
+    },
+  });
   const { data: allEntries, isLoading: allLoading, isError: allError } = useListEntries();
   const { data: siteContent, isLoading: siteContentLoading, isError: siteContentError } = useGetSiteContent();
   const isError = latestError || allError || siteContentError;

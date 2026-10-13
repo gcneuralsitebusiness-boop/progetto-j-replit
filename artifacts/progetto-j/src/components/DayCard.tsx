@@ -7,6 +7,7 @@ import { DataLabel } from "./DataLabel";
 import { MilestoneBadge } from "./MilestoneBadge";
 import type { EntrySummary } from "@workspace/api-client-react";
 import { stripHtml } from "@/lib/strip-html";
+import { isUnfinishedToday } from "@/lib/current-day";
 
 function padDay(n: number): string {
   return n.toString().padStart(3, "0");
@@ -35,6 +36,19 @@ interface DayCardProps {
 }
 
 export function DayCard({ entry, featured = false, hookOnly = false }: DayCardProps) {
+  if (isUnfinishedToday(entry)) {
+    return (
+      <Link href={`/giorno/${entry.numero}`} className="block" data-testid="current-day-pending-card">
+        <article className="flex min-h-[320px] flex-col items-center justify-center gap-6 border border-border bg-card px-6 text-center">
+          <span className="day-progress-ring" aria-hidden="true" />
+          <div>
+            <h3 className="font-serif text-[26px] tracking-wider">GIORNATA IN CORSO</h3>
+            <p className="mt-2 font-mono text-[11px] uppercase tracking-wider text-muted-foreground">Attendi completamento</p>
+          </div>
+        </article>
+      </Link>
+    );
+  }
   // The public day image is the uploaded photo only. Generated social cards
   // may contain diary copy and metrics, but must not replace the image itself.
   const cardImage = entry.foto;

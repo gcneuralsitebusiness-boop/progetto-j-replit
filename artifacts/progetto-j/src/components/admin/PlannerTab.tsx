@@ -1,83 +1,49 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useListEntrySummaries } from "@workspace/api-client-react";
-import type { EntrySummary } from "@workspace/api-client-react";
+import {
+  useGetPlannerAnnotation,
+  useSavePlannerAnnotation,
+  getGetPlannerAnnotationQueryKey,
+} from "@workspace/api-client-react";
+import type { PlannerAnnotation } from "@workspace/api-client-react";
 
-type FixedTask = "DIARIO" | "TRACKING" | "CARD IG" | "CONTENUTO";
-
-const FIXED_TASKS: FixedTask[] = ["DIARIO", "TRACKING", "CARD IG", "CONTENUTO"];
-const WEEKDAYS = ["LUN", "MAR", "MER", "GIO", "VEN", "SAB", "DOM"];
 const BASE = import.meta.env.BASE_URL?.replace(/\/$/, "") ?? "";
 
-type PlannerTask = {
-  testo: FixedTask;
-  stato: "DA FARE" | "FATTO";
-};
-
-type PlannerExtra = {
+type PlannerTaskRow = {
   id: number;
   data: string;
   testo: string;
-};
-
-type PlannerState = {
-  tasks: PlannerTask[];
-  extras: PlannerExtra[];
-  fixedNote: string;
-};
-
-type CustomTask = {
-  id: number;
-  data: string;
-  testo: string;
+  stato: string;
   tipo: string;
-  stato: "DA FARE" | "IN CORSO" | "FATTO";
   priorita: number;
   ordine: number | null;
 };
 
-type TaskTemplate = {
-  id: number;
-  testo: string;
-  tipo: string;
-  priorita: number;
-  ordine: number;
-};
+type View = "todo" | "note";
 
-function localDate(date: Date): string {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+function romeToday(): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Rome",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
 }
 
-function parseDate(value: string): Date {
-  const [year, month, day] = value.split("-").map(Number);
-  return new Date(year, month - 1, day, 12);
+function shiftDate(value: string, amount: number): string {
+  const [y, m, d] = value.split("-").map(Number);
+  const date = new Date(Date.UTC(y, m - 1, d + amount, 12));
+  return date.toISOString().slice(0, 10);
 }
 
-function addDays(date: Date, amount: number): Date {
-  const result = new Date(date);
-  result.setDate(result.getDate() + amount);
-  return result;
-}
-
-function startOfWeek(date: Date): Date {
-  const result = new Date(date);
-  const day = result.getDay();
-  result.setDate(result.getDate() + (day === 0 ? -6 : 1 - day));
-  result.setHours(12, 0, 0, 0);
-  return result;
-}
-
-function dayNumber(entries: EntrySummary[] | undefined, date: string): string {
-  const exactEntry = entries?.find((entry) => entry.data === date);
-  if (exactEntry) return String(exactEntry.numero).padStart(3, "0");
-  const today = localDate(new Date());
-  const todayEntry = entries?.find((entry) => entry.data === today);
-  if (todayEntry) {
-    const offset = Math.round((parseDate(date).getTime() - parseDate(today).getTime()) / 86400000);
-    return String(todayEntry.numero + offset).padStart(3, "0");
-  }
-  const latest = [...(entries ?? [])].sort((a, b) => b.numero - a.numero)[0];
-  return latest ? String(latest.numero).padStart(3, "0") : "—";
+function longDate(value: string): string {
+  const [y, m, d] = value.split("-").map(Number);
+  return new Date(y, m - 1, d, 12).toLocaleDateString("it-IT", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
 }
 
 async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
@@ -91,474 +57,419 @@ async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-function doneTasks(rows: PlannerTask[] | undefined): Set<FixedTask> {
-  return new Set((rows ?? []).filter((row) => row.stato === "FATTO").map((row) => row.testo));
-}
-
-function WeekDots({
-  dates,
-  today,
-  rows,
-  selectedDate,
-  onSelect,
-}: {
-  dates: Date[];
-  today: string;
-  rows: PlannerTask[];
-  selectedDate: string;
-  onSelect: (date: string) => void;
-}) {
-  const grouped = useMemo(() => {
-    const result = new Map<string, Set<string>>();
-    for (const row of rows) {
-      const date = (row as PlannerTask & { data?: string }).data;
-      if (!date || row.stato !== "FATTO") continue;
-      const current = result.get(date) ?? new Set<string>();
-      current.add(row.testo);
-      result.set(date, current);
-    }
-    return result;
-  }, [rows]);
-
-  return (
-    <div className="border-t border-[#262626] pt-6">
-      <div className="mb-4 font-mono text-[10px] tracking-[0.2em] text-[#6E6A65]">SETTIMANA</div>
-      <div className="grid grid-cols-7 gap-2">
-        {dates.map((date, index) => {
-          const key = localDate(date);
-          const completed = grouped.get(key)?.size ?? 0;
-          const future = key > today;
-          const color = future ? "#E8E4DE" : completed === 4 ? "#00FF41" : completed > 0 ? "#187A3A" : "#333";
-          return (
-            <button
-              key={key}
-              type="button"
-              onClick={() => onSelect(key)}
-              className={`flex min-w-0 flex-col items-center gap-2 py-1 ${selectedDate === key ? "text-[#E8E4DE]" : "text-[#6E6A65]"}`}
-              aria-label={`${WEEKDAYS[index]} ${date.getDate()}, ${completed} task completati`}
-            >
-              <span className="font-mono text-[10px]">{WEEKDAYS[index]}</span>
-              <span className="h-3 w-3 border border-[#555]" style={{ backgroundColor: color, borderColor: color }} />
-              <span className="font-mono text-[10px]">{date.getDate()}</span>
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
+const UNSAVED_MSG = "L'annotazione ha modifiche non salvate. Uscire e perderle?";
 
 export function PlannerTab() {
   const queryClient = useQueryClient();
-  const today = localDate(new Date());
-  const weekDates = useMemo(() => {
-    const first = startOfWeek(new Date());
-    return Array.from({ length: 7 }, (_, index) => addDays(first, index));
+  const today = romeToday();
+  const [date, setDate] = useState(today);
+  const [view, setView] = useState<View>("todo");
+
+  // Annotation draft state
+  const [draft, setDraft] = useState("");
+  const [baseline, setBaseline] = useState("");
+  const [saveState, setSaveState] = useState<"idle" | "saved" | "error">("idle");
+  const initializedFor = useRef<string | null>(null);
+  const dirty = initializedFor.current === date && draft !== baseline;
+  const dirtyRef = useRef(dirty);
+  dirtyRef.current = dirty;
+
+  const [newTask, setNewTask] = useState("");
+  const [taskError, setTaskError] = useState<string | null>(null);
+
+  const annotationKey = getGetPlannerAnnotationQueryKey({ data: date });
+  const annotation = useGetPlannerAnnotation({ data: date }, { query: { queryKey: annotationKey } });
+  const saveAnnotation = useSavePlannerAnnotation();
+
+  const tasksQuery = useQuery({
+    queryKey: ["planner-tasks", date],
+    queryFn: () => fetchJson<PlannerTaskRow[]>(`/admin/planner/tasks?data=${date}`),
+  });
+  const tasks = [...(tasksQuery.data ?? [])].sort(
+    (a, b) => (a.ordine ?? Number.MAX_SAFE_INTEGER) - (b.ordine ?? Number.MAX_SAFE_INTEGER) || a.id - b.id,
+  );
+
+  // Init / sync annotation without clobbering dirty input
+  useEffect(() => {
+    const server = annotation.data;
+    if (!server || server.data !== date) return;
+    if (initializedFor.current !== date) {
+      initializedFor.current = date;
+      setDraft(server.testo);
+      setBaseline(server.testo);
+      setSaveState("idle");
+      return;
+    }
+    if (!dirtyRef.current) {
+      setDraft(server.testo);
+      setBaseline(server.testo);
+    }
+  }, [annotation.data, date]);
+
+  useEffect(() => {
+    const handler = (event: BeforeUnloadEvent) => {
+      if (!dirtyRef.current) return;
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    const leave = (event: Event) => {
+      if (dirtyRef.current && !window.confirm(UNSAVED_MSG)) event.preventDefault();
+    };
+    window.addEventListener("admin-before-navigate", leave);
+    return () => {
+      window.removeEventListener("beforeunload", handler);
+      window.removeEventListener("admin-before-navigate", leave);
+    };
   }, []);
-  const weekFrom = localDate(weekDates[0]);
-  const weekTo = localDate(weekDates[6]);
-  const [selectedDate, setSelectedDate] = useState(today);
-  const [extraText, setExtraText] = useState("");
-  const [fixedNote, setFixedNote] = useState("");
-  const [fixedNoteOpen, setFixedNoteOpen] = useState(false);
-  const [customText, setCustomText] = useState("");
-  const [customType, setCustomType] = useState("ALTRO");
-  const [customPriority, setCustomPriority] = useState("2");
-  const [templateText, setTemplateText] = useState("");
-  const [templateType, setTemplateType] = useState("ALTRO");
-  const [templatePriority, setTemplatePriority] = useState("2");
-  const [feedback, setFeedback] = useState<string | null>(null);
-  const noteTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const { data: entries } = useListEntrySummaries();
-  const { data: todayState } = useQuery({
-    queryKey: ["planner-state", today],
-    queryFn: () => fetchJson<PlannerState>(`/admin/planner/state?data=${today}`),
-  });
-  const { data: selectedState } = useQuery({
-    queryKey: ["planner-state", selectedDate],
-    queryFn: () => fetchJson<PlannerState>(`/admin/planner/state?data=${selectedDate}`),
-    enabled: selectedDate !== today,
-  });
-  const activeState = selectedDate === today ? todayState : selectedState;
-  const { data: weekRows = [] } = useQuery({
-    queryKey: ["planner-checklist", weekFrom, weekTo],
-    queryFn: () => fetchJson<(PlannerTask & { data: string })[]>(`/admin/planner/checklist?from=${weekFrom}&to=${weekTo}`),
-  });
-  const { data: customTasks = [], isLoading: customTasksLoading, isError: customTasksError } = useQuery({
-    queryKey: ["planner-tasks", selectedDate],
-    queryFn: () => fetchJson<CustomTask[]>(`/admin/planner/tasks?data=${selectedDate}`),
-  });
-  const { data: templates = [], isLoading: templatesLoading, isError: templatesError } = useQuery({
-    queryKey: ["planner-templates"],
-    queryFn: () => fetchJson<TaskTemplate[]>("/admin/planner/templates"),
-  });
+  function confirmLeave(): boolean {
+    return !dirtyRef.current || window.confirm(UNSAVED_MSG);
+  }
 
-  const [checked, setChecked] = useState<Record<FixedTask, boolean>>({
-    DIARIO: false,
-    TRACKING: false,
-    "CARD IG": false,
-    CONTENUTO: false,
-  });
+  function changeDate(next: string) {
+    if (!next || next === date) return;
+    if (!confirmLeave()) return;
+    initializedFor.current = null;
+    setDraft("");
+    setBaseline("");
+    setSaveState("idle");
+    setTaskError(null);
+    setDate(next);
+  }
 
-  useEffect(() => {
-    if (!activeState) return;
-    const next = doneTasks(activeState.tasks);
-    setChecked({
-      DIARIO: next.has("DIARIO"),
-      TRACKING: next.has("TRACKING"),
-      "CARD IG": next.has("CARD IG"),
-      CONTENUTO: next.has("CONTENUTO"),
-    });
-  }, [activeState]);
+  function changeView(next: View) {
+    if (next === view) return;
+    if (view === "note" && !confirmLeave()) return;
+    if (view === "note") {
+      setDraft(baseline);
+    }
+    setView(next);
+  }
 
-  useEffect(() => {
-    if (todayState) setFixedNote(todayState.fixedNote);
-  }, [todayState]);
-
-  const toggleTask = useMutation({
-    mutationFn: ({ task, done }: { task: FixedTask; done: boolean }) => (
-      fetchJson<PlannerTask>("/admin/planner/checklist", {
-        method: "POST",
-        body: JSON.stringify({ data: selectedDate, task, done }),
-      })
-    ),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["planner"] }),
-  });
-
-  const addExtra = useMutation({
-    mutationFn: (text: string) => fetchJson<PlannerExtra>("/admin/planner/extras", {
-      method: "POST",
-      body: JSON.stringify({ data: selectedDate, testo: text }),
-    }),
-    onSuccess: () => {
-      setExtraText("");
-      queryClient.invalidateQueries({ queryKey: ["planner-state", selectedDate] });
-    },
-  });
-
-  const deleteExtra = useMutation({
-    mutationFn: (id: number) => fetchJson<void>(`/admin/planner/extras/${id}`, { method: "DELETE" }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["planner-state", selectedDate] }),
-    onError: (error) => {
-      setFeedback(error instanceof Error && error.message.includes("404")
-        ? "Questa nota extra non esiste più. Aggiorna la pagina prima di riprovare."
-        : "Non è stato possibile eliminare la nota extra.");
-    },
-  });
-
-  const saveFixedNote = useMutation({
-    mutationFn: (text: string) => fetchJson("/admin/planner/fixed-note", {
-      method: "PUT",
-      body: JSON.stringify({ testo: text }),
-    }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["planner-state", today] }),
-  });
+  async function handleSave() {
+    const targetDate = date;
+    const text = draft;
+    setSaveState("idle");
+    try {
+      const result = await saveAnnotation.mutateAsync({ data: { data: targetDate, testo: text } });
+      queryClient.setQueryData<PlannerAnnotation>(
+        getGetPlannerAnnotationQueryKey({ data: targetDate }),
+        result,
+      );
+      if (initializedFor.current === targetDate) {
+        setBaseline(text);
+        setSaveState("saved");
+      }
+    } catch {
+      if (initializedFor.current === targetDate) setSaveState("error");
+    }
+  }
 
   const createTask = useMutation({
-    mutationFn: () => fetchJson<CustomTask>("/admin/planner/tasks", {
-      method: "POST",
-      body: JSON.stringify({
-        data: selectedDate,
-        testo: customText.trim(),
-        tipo: customType,
-        stato: "DA FARE",
-        priorita: Number(customPriority),
+    mutationFn: ({ data, testo }: { data: string; testo: string }) =>
+      fetchJson<PlannerTaskRow>("/admin/planner/tasks", {
+        method: "POST",
+        body: JSON.stringify({ data, testo, tipo: "ALTRO", stato: "DA FARE", priorita: 2 }),
       }),
-    }),
-    onSuccess: () => {
-      setCustomText("");
-      setFeedback("Task personalizzato creato.");
-      queryClient.invalidateQueries({ queryKey: ["planner-tasks", selectedDate] });
-      queryClient.invalidateQueries({ queryKey: ["planner-checklist"] });
+    onSuccess: (_row, vars) => {
+      if (vars.data === date) setNewTask("");
+      queryClient.invalidateQueries({ queryKey: ["planner-tasks", vars.data] });
     },
-    onError: () => setFeedback("Non è stato possibile creare il task."),
+    onError: () => setTaskError("Non è stato possibile aggiungere la voce."),
   });
-  const updateTask = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: Partial<CustomTask> }) =>
-      fetchJson<CustomTask>(`/admin/planner/tasks/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
-    onSuccess: () => {
-      setFeedback("Task aggiornato.");
-      queryClient.invalidateQueries({ queryKey: ["planner-tasks", selectedDate] });
-    },
-    onError: () => setFeedback("Non è stato possibile aggiornare il task."),
-  });
-  const deleteTask = useMutation({
-    mutationFn: (id: number) => fetchJson<void>(`/admin/planner/tasks/${id}`, { method: "DELETE" }),
-    onSuccess: () => {
-      setFeedback("Task eliminato.");
-      queryClient.invalidateQueries({ queryKey: ["planner-tasks", selectedDate] });
-      queryClient.invalidateQueries({ queryKey: ["planner-checklist"] });
-    },
-    onError: (error) => setFeedback(error instanceof Error && error.message.includes("404")
-      ? "Questo task non esiste più. Aggiorna la lista prima di riprovare."
-      : "Non è stato possibile eliminare il task."),
-  });
-  const reorderTasks = useMutation({
-    mutationFn: (ids: number[]) => fetchJson("/admin/planner/tasks/reorder", { method: "POST", body: JSON.stringify({ ids }) }),
-    onSuccess: () => {
-      setFeedback("Ordine aggiornato.");
-      queryClient.invalidateQueries({ queryKey: ["planner-tasks", selectedDate] });
-    },
-    onError: () => setFeedback("Non è stato possibile riordinare i task."),
-  });
-  const createTemplate = useMutation({
-    mutationFn: () => fetchJson<TaskTemplate>("/admin/planner/templates", {
-      method: "POST",
-      body: JSON.stringify({ testo: templateText.trim(), tipo: templateType, priorita: Number(templatePriority) }),
-    }),
-    onSuccess: () => {
-      setTemplateText("");
-      setFeedback("Template creato.");
-      queryClient.invalidateQueries({ queryKey: ["planner-templates"] });
-    },
-    onError: () => setFeedback("Non è stato possibile creare il template."),
-  });
-  const deleteTemplate = useMutation({
-    mutationFn: (id: number) => fetchJson<void>(`/admin/planner/templates/${id}`, { method: "DELETE" }),
-    onSuccess: () => {
-      setFeedback("Template eliminato.");
-      queryClient.invalidateQueries({ queryKey: ["planner-templates"] });
-    },
-    onError: (error) => setFeedback(error instanceof Error && error.message.includes("404")
-      ? "Questo template non esiste più. Aggiorna la lista prima di riprovare."
-      : "Non è stato possibile eliminare il template."),
-  });
-  const updateTemplate = useMutation({
-    mutationFn: ({ id, testo }: { id: number; testo: string }) =>
-      fetchJson<TaskTemplate>(`/admin/planner/templates/${id}`, {
+
+  const toggleTask = useMutation({
+    mutationFn: ({ id, stato }: { id: number; stato: string; data: string }) =>
+      fetchJson<PlannerTaskRow>(`/admin/planner/tasks/${id}`, {
         method: "PATCH",
-        body: JSON.stringify({ testo }),
+        body: JSON.stringify({ stato }),
       }),
-    onSuccess: () => {
-      setFeedback("Template aggiornato.");
-      queryClient.invalidateQueries({ queryKey: ["planner-templates"] });
+    onMutate: ({ id, stato, data }) => {
+      queryClient.setQueryData<PlannerTaskRow[]>(["planner-tasks", data], (old) =>
+        old?.map((row) => (row.id === id ? { ...row, stato } : row)),
+      );
     },
-    onError: () => setFeedback("Non è stato possibile aggiornare il template."),
-  });
-  const applyRoutine = useMutation({
-    mutationFn: () => fetchJson<{ created: number; skipped: number }>(`/admin/planner/routine?data=${selectedDate}`, { method: "POST" }),
-    onSuccess: (result) => {
-      setFeedback(`Routine applicata: ${result.created} creati, ${result.skipped} già presenti.`);
-      queryClient.invalidateQueries({ queryKey: ["planner-tasks", selectedDate] });
-      queryClient.invalidateQueries({ queryKey: ["planner-checklist"] });
-    },
-    onError: () => setFeedback("Non è stato possibile applicare la routine."),
+    onError: () => setTaskError("Non è stato possibile aggiornare la voce."),
+    onSettled: (_r, _e, vars) => queryClient.invalidateQueries({ queryKey: ["planner-tasks", vars.data] }),
   });
 
-  useEffect(() => {
-    if (!todayState || fixedNote === todayState.fixedNote) return;
-    if (noteTimer.current) clearTimeout(noteTimer.current);
-    noteTimer.current = setTimeout(() => saveFixedNote.mutate(fixedNote), 500);
-    return () => {
-      if (noteTimer.current) clearTimeout(noteTimer.current);
-    };
-  }, [fixedNote, todayState, saveFixedNote]);
+  const deleteTask = useMutation({
+    mutationFn: ({ id }: { id: number; data: string }) =>
+      fetchJson<void>(`/admin/planner/tasks/${id}`, { method: "DELETE" }),
+    onError: () => setTaskError("Non è stato possibile eliminare la voce."),
+    onSettled: (_r, _e, vars) => queryClient.invalidateQueries({ queryKey: ["planner-tasks", vars.data] }),
+  });
 
-  const selectedSummary = checked;
-  const selectedExtras = activeState?.extras ?? [];
-  const activeNumber = dayNumber(entries, selectedDate);
-  const activeLoading = !activeState;
-  const extraLimitReached = selectedExtras.length >= 3;
+  function submitTask() {
+    const testo = newTask.trim();
+    if (!testo || createTask.isPending) return;
+    setTaskError(null);
+    createTask.mutate({ data: date, testo });
+  }
+
+  const legacyNotes = annotation.data?.data === date ? annotation.data.legacyNotes : [];
+  const annotationReady = initializedFor.current === date;
+  const doneCount = tasks.filter((t) => t.stato === "FATTO").length;
 
   return (
-    <section className="space-y-8 bg-[#0A0A0A]">
+    <section className="space-y-8" data-testid="planner-tab">
+      {/* Date header */}
       <div className="border-b border-[#262626] pb-6">
-        <div className="bebas text-[18px] tracking-[0.24em] text-[#6E6A65]">{selectedDate === today ? "OGGI" : "GIORNO SELEZIONATO"} · {selectedDate}</div>
-        <h2 className="bebas mt-1 text-[64px] leading-none tracking-[0.06em] text-[#B81D1D] sm:text-[86px]">GIORNO {activeNumber}</h2>
-      </div>
-
-      <div>
-        <div className="mb-4 font-mono text-[10px] tracking-[0.2em] text-[#6E6A65]">DA FARE OGGI</div>
-        <div className="space-y-2">
-          {FIXED_TASKS.map((task) => {
-            const isDone = checked[task];
-            return (
-              <button
-                key={task}
-                type="button"
-                disabled={activeLoading || toggleTask.isPending}
-                onClick={() => {
-                  const done = !isDone;
-                  setChecked((current) => ({ ...current, [task]: done }));
-                  toggleTask.mutate({ task, done });
-                }}
-                className={`flex min-h-[58px] w-full items-center gap-4 border px-4 text-left transition-colors ${isDone ? "border-[#00FF41] bg-[#00FF41] text-black" : "border-[#333] text-[#E8E4DE] hover:border-[#6E6A65]"}`}
-                aria-pressed={isDone}
-              >
-                <span className={`flex h-7 w-7 shrink-0 items-center justify-center border font-mono text-[18px] ${isDone ? "border-black" : "border-[#333]"}`}>
-                  {isDone ? "×" : ""}
-                </span>
-                <span className={`font-sans text-[18px] ${isDone ? "line-through" : ""}`}>{task}</span>
-              </button>
-            );
-          })}
+        <div className="font-mono text-[10px] tracking-[0.2em] text-[#6E6A65]" data-testid="text-planner-date-label">
+          {date === today ? "OGGI" : "GIORNO SELEZIONATO"}
         </div>
-      </div>
-
-      {feedback && (
-        <p className="border border-[#B81D1D]/50 bg-[#B81D1D]/10 px-4 py-3 font-sans text-[13px] text-[#E8E4DE]" role="status">
-          {feedback}
-        </p>
-      )}
-
-      <div>
-        <div className="mb-3 font-mono text-[10px] tracking-[0.2em] text-[#6E6A65]">ALTRO</div>
-        <div className="flex gap-2">
+        <h2 className="bebas mt-1 text-[40px] leading-none tracking-[0.04em] text-[#E8E4DE] first-letter:uppercase sm:text-[56px]" data-testid="text-planner-date">
+          {longDate(date)}
+        </h2>
+        <div className="mt-5 flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => changeDate(shiftDate(date, -1))}
+            className="h-10 w-10 border border-[#333] font-mono text-[14px] text-[#E8E4DE] transition-colors hover:border-[#B81D1D]"
+            aria-label="Giorno precedente"
+            data-testid="button-planner-prev-day"
+          >
+            ‹
+          </button>
           <input
-            value={extraText}
-            onChange={(event) => setExtraText(event.target.value.slice(0, 180))}
-            onKeyDown={(event) => {
-              if (event.key === "Enter" && extraText.trim() && !extraLimitReached) addExtra.mutate(extraText.trim());
-            }}
-            disabled={extraLimitReached || addExtra.isPending}
-            placeholder={extraLimitReached ? "Massimo 3 note raggiunto" : "Nota rapida per oggi"}
-            className="min-h-12 min-w-0 flex-1 border border-[#333] bg-transparent px-3 font-sans text-[14px] text-[#E8E4DE] outline-none placeholder:text-[#6E6A65] focus:border-[#B81D1D]"
+            type="date"
+            value={date}
+            onChange={(e) => changeDate(e.target.value)}
+            className="h-10 border border-[#333] bg-transparent px-3 font-mono text-[12px] text-[#E8E4DE] outline-none [color-scheme:dark] focus:border-[#B81D1D]"
+            aria-label="Seleziona data"
+            data-testid="input-planner-date"
           />
           <button
             type="button"
-            disabled={!extraText.trim() || extraLimitReached || addExtra.isPending}
-            onClick={() => addExtra.mutate(extraText.trim())}
-            className="w-12 border border-[#B81D1D] font-mono text-[24px] text-[#B81D1D] disabled:opacity-30"
-            aria-label="Aggiungi nota extra"
+            onClick={() => changeDate(shiftDate(date, 1))}
+            className="h-10 w-10 border border-[#333] font-mono text-[14px] text-[#E8E4DE] transition-colors hover:border-[#B81D1D]"
+            aria-label="Giorno successivo"
+            data-testid="button-planner-next-day"
           >
-            +
+            ›
           </button>
-        </div>
-        <div className="mt-3 space-y-2">
-          {selectedExtras.map((note) => (
-            <div key={note.id} className="flex items-center gap-3 border-l-2 border-[#333] pl-3 font-sans text-[14px] text-[#E8E4DE]">
-              <span className="min-w-0 flex-1">{note.testo}</span>
-              <button type="button" onClick={() => deleteExtra.mutate(note.id)} className="font-mono text-[14px] text-[#6E6A65] hover:text-[#B81D1D]" aria-label={`Elimina ${note.testo}`}>×</button>
-            </div>
-          ))}
+          {date !== today && (
+            <button
+              type="button"
+              onClick={() => changeDate(today)}
+              className="h-10 border border-[#B81D1D] px-4 font-mono text-[11px] tracking-[0.16em] text-[#B81D1D] transition-colors hover:bg-[#B81D1D] hover:text-[#E8E4DE]"
+              data-testid="button-planner-today"
+            >
+              OGGI
+            </button>
+          )}
         </div>
       </div>
 
-      <div className="border-t border-[#262626] pt-6">
-        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <div className="font-mono text-[10px] tracking-[0.2em] text-[#6E6A65]">GESTIONE PLANNER</div>
-            <h3 className="bebas mt-1 text-[30px] tracking-[0.08em] text-[#E8E4DE]">TASK PERSONALIZZATI</h3>
-          </div>
+      {/* View switch */}
+      <div className="flex border-b border-[#262626]" role="tablist">
+        {([["todo", "Cose da fare"], ["note", "Annotazione"]] as const).map(([key, label]) => (
           <button
+            key={key}
             type="button"
-            disabled={applyRoutine.isPending || templates.length === 0}
-            onClick={() => {
-              if (window.confirm(`Applicare la routine a ${selectedDate}? I task già presenti non verranno duplicati.`)) {
-                applyRoutine.mutate();
-              }
-            }}
-            className="border border-[#B81D1D] px-4 py-2 font-mono text-[11px] uppercase tracking-wider text-[#B81D1D] disabled:opacity-40"
+            role="tab"
+            aria-selected={view === key}
+            onClick={() => changeView(key)}
+            className={`-mb-px border-b-2 px-4 py-3 font-mono text-[11px] uppercase tracking-[0.18em] transition-colors ${
+              view === key ? "border-[#B81D1D] text-[#E8E4DE]" : "border-transparent text-[#6E6A65] hover:text-[#E8E4DE]"
+            }`}
+            data-testid={`tab-planner-${key}`}
           >
-            Applica routine
+            {label}
+            {key === "note" && dirty && <span className="ml-2 text-[#B81D1D]">•</span>}
           </button>
-        </div>
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <input value={customText} onChange={(event) => setCustomText(event.target.value.slice(0, 500))} placeholder="Nuovo task per il giorno selezionato" className="min-h-11 min-w-0 flex-1 border border-[#333] bg-transparent px-3 font-sans text-[14px] text-[#E8E4DE] outline-none focus:border-[#B81D1D]" />
-          <select value={customType} onChange={(event) => setCustomType(event.target.value)} className="border border-[#333] bg-[#0A0A0A] px-3 font-mono text-[11px] text-[#E8E4DE]">
-            {["ALTRO", "POST", "ARTICOLO", "VIDEO", "SITO"].map((type) => <option key={type}>{type}</option>)}
-          </select>
-          <select value={customPriority} onChange={(event) => setCustomPriority(event.target.value)} className="border border-[#333] bg-[#0A0A0A] px-3 font-mono text-[11px] text-[#E8E4DE]" aria-label="Priorità task">
-            <option value="1">P1</option><option value="2">P2</option><option value="3">P3</option>
-          </select>
-          <button type="button" disabled={!customText.trim() || createTask.isPending} onClick={() => createTask.mutate()} className="border border-[#B81D1D] px-4 font-mono text-[20px] text-[#B81D1D] disabled:opacity-30" aria-label="Crea task">+</button>
-        </div>
-        <div className="mt-4 space-y-2">
-          {customTasksLoading && <p className="font-sans text-[13px] text-[#6E6A65]">Caricamento task...</p>}
-          {customTasksError && <p className="font-sans text-[13px] text-[#B81D1D]" role="alert">Errore nel caricamento dei task.</p>}
-          {customTasks.filter((task) => !FIXED_TASKS.includes(task.testo as FixedTask)).map((task, index, list) => (
-            <div key={task.id} className="flex flex-col gap-2 border-l-2 border-[#333] py-2 pl-3 sm:flex-row sm:items-center">
-              <input defaultValue={task.testo} onBlur={(event) => event.target.value.trim() && event.target.value !== task.testo && updateTask.mutate({ id: task.id, data: { testo: event.target.value.trim() } })} className="min-w-0 flex-1 bg-transparent font-sans text-[14px] text-[#E8E4DE] outline-none" aria-label={`Modifica ${task.testo}`} />
-              <select value={task.stato} onChange={(event) => updateTask.mutate({ id: task.id, data: { stato: event.target.value as CustomTask["stato"] } })} className="border border-[#333] bg-[#0A0A0A] px-2 py-1 font-mono text-[10px] text-[#E8E4DE]" aria-label={`Stato ${task.testo}`}>
-                <option>DA FARE</option><option>IN CORSO</option><option>FATTO</option>
-              </select>
-              <button type="button" disabled={index === 0} onClick={() => { const ids = list.map((item) => item.id); [ids[index - 1], ids[index]] = [ids[index], ids[index - 1]]; reorderTasks.mutate(ids); }} className="font-mono text-[12px] text-[#6E6A65] disabled:opacity-20" aria-label="Sposta task su">↑</button>
-              <button type="button" disabled={index === list.length - 1} onClick={() => { const ids = list.map((item) => item.id); [ids[index], ids[index + 1]] = [ids[index + 1], ids[index]]; reorderTasks.mutate(ids); }} className="font-mono text-[12px] text-[#6E6A65] disabled:opacity-20" aria-label="Sposta task giù">↓</button>
-              <button type="button" onClick={() => window.confirm(`Eliminare il task "${task.testo}"?`) && deleteTask.mutate(task.id)} className="font-mono text-[14px] text-[#6E6A65] hover:text-[#B81D1D]" aria-label={`Elimina ${task.testo}`}>×</button>
-            </div>
-          ))}
-        </div>
+        ))}
       </div>
 
-      <div className="border-t border-[#262626] pt-6">
-        <div className="mb-4">
-          <div className="font-mono text-[10px] tracking-[0.2em] text-[#6E6A65]">ROUTINE RIUTILIZZABILI</div>
-          <h3 className="bebas mt-1 text-[30px] tracking-[0.08em] text-[#E8E4DE]">TEMPLATE</h3>
-        </div>
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <input value={templateText} onChange={(event) => setTemplateText(event.target.value.slice(0, 500))} placeholder="Nuovo template" className="min-h-11 min-w-0 flex-1 border border-[#333] bg-transparent px-3 font-sans text-[14px] text-[#E8E4DE] outline-none focus:border-[#B81D1D]" />
-          <select value={templateType} onChange={(event) => setTemplateType(event.target.value)} className="border border-[#333] bg-[#0A0A0A] px-3 font-mono text-[11px] text-[#E8E4DE]">
-            {["ALTRO", "POST", "ARTICOLO", "VIDEO", "SITO"].map((type) => <option key={type}>{type}</option>)}
-          </select>
-          <select value={templatePriority} onChange={(event) => setTemplatePriority(event.target.value)} className="border border-[#333] bg-[#0A0A0A] px-3 font-mono text-[11px] text-[#E8E4DE]" aria-label="Priorità template">
-            <option value="1">P1</option><option value="2">P2</option><option value="3">P3</option>
-          </select>
-          <button type="button" disabled={!templateText.trim() || createTemplate.isPending} onClick={() => createTemplate.mutate()} className="border border-[#B81D1D] px-4 font-mono text-[20px] text-[#B81D1D] disabled:opacity-30" aria-label="Crea template">+</button>
-        </div>
-        <div className="mt-4 space-y-2">
-          {templatesLoading && <p className="font-sans text-[13px] text-[#6E6A65]">Caricamento template...</p>}
-          {templatesError && <p className="font-sans text-[13px] text-[#B81D1D]" role="alert">Errore nel caricamento dei template.</p>}
-          {templates.map((template) => (
-            <div key={template.id} className="flex flex-col gap-2 border-l-2 border-[#333] py-2 pl-3 sm:flex-row sm:items-center">
-              <input defaultValue={template.testo} onBlur={(event) => event.target.value.trim() && event.target.value !== template.testo && updateTemplate.mutate({ id: template.id, testo: event.target.value.trim() })} className="min-w-0 flex-1 bg-transparent font-sans text-[14px] text-[#E8E4DE] outline-none" aria-label={`Modifica template ${template.testo}`} />
-              <span className="font-mono text-[10px] text-[#6E6A65]">{template.tipo} · P{template.priorita}</span>
-              <button type="button" onClick={() => window.confirm(`Eliminare il template "${template.testo}"?`) && deleteTemplate.mutate(template.id)} className="font-mono text-[14px] text-[#6E6A65] hover:text-[#B81D1D]" aria-label={`Elimina template ${template.testo}`}>×</button>
+      {view === "todo" ? (
+        <div className="space-y-5">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              submitTask();
+            }}
+            className="flex gap-2"
+          >
+            <input
+              value={newTask}
+              onChange={(e) => setNewTask(e.target.value.slice(0, 500))}
+              placeholder="Roba da fare"
+              disabled={createTask.isPending}
+              className="min-h-12 min-w-0 flex-1 border border-[#333] bg-transparent px-3 font-sans text-[15px] text-[#E8E4DE] outline-none placeholder:text-[#6E6A65] focus:border-[#B81D1D] disabled:opacity-60"
+              data-testid="input-planner-new-task"
+            />
+            <button
+              type="submit"
+              disabled={!newTask.trim() || createTask.isPending}
+              className="w-12 border border-[#B81D1D] font-mono text-[22px] text-[#B81D1D] transition-colors hover:bg-[#B81D1D] hover:text-[#E8E4DE] disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-[#B81D1D]"
+              aria-label="Aggiungi"
+              data-testid="button-planner-add-task"
+            >
+              +
+            </button>
+          </form>
+
+          {taskError && (
+            <p className="admin-form-error font-sans text-[13px] text-[#E8E4DE]" role="alert" data-testid="text-planner-task-error">
+              {taskError}
+            </p>
+          )}
+
+          {tasksQuery.isLoading ? (
+            <div className="space-y-2" data-testid="status-planner-tasks-loading">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="h-12 animate-pulse border border-[#1F1F1F] bg-[#121212]" />
+              ))}
             </div>
-          ))}
-          {!templatesLoading && templates.length === 0 && <p className="font-sans text-[13px] text-[#6E6A65]">Nessun template definito.</p>}
-        </div>
-      </div>
-
-      <WeekDots
-        dates={weekDates}
-        today={today}
-        rows={weekRows}
-        selectedDate={selectedDate}
-        onSelect={setSelectedDate}
-      />
-
-      {selectedDate !== today && (
-        <div className="border-t border-[#262626] pt-5">
-          <div className="font-mono text-[10px] tracking-[0.2em] text-[#6E6A65]">
-            RIEPILOGO · {parseDate(selectedDate).toLocaleDateString("it-IT", { weekday: "long", day: "numeric", month: "long" })}
-          </div>
-          <div className="mt-3 space-y-2">
-            {FIXED_TASKS.map((task) => (
-              <div key={task} className={`font-sans text-[15px] ${selectedSummary[task] ? "text-[#00FF41]" : "text-[#6E6A65]"}`}>
-                {selectedSummary[task] ? "✓" : "□"} {task}
+          ) : tasksQuery.isError ? (
+            <div className="flex items-center gap-4 border border-[#333] px-4 py-3" data-testid="status-planner-tasks-error">
+              <span className="flex-1 font-sans text-[13px] text-[#B81D1D]">Errore nel caricamento.</span>
+              <button
+                type="button"
+                onClick={() => tasksQuery.refetch()}
+                className="font-mono text-[11px] tracking-[0.16em] text-[#E8E4DE] underline-offset-4 hover:underline"
+                data-testid="button-planner-tasks-retry"
+              >
+                RIPROVA
+              </button>
+            </div>
+          ) : tasks.length === 0 ? (
+            <p className="border-l-2 border-[#333] pl-4 font-sans text-[14px] text-[#6E6A65]" data-testid="text-planner-tasks-empty">
+              Niente per questo giorno.
+            </p>
+          ) : (
+            <>
+              <ul className="divide-y divide-[#1F1F1F] border-y border-[#1F1F1F]">
+                {tasks.map((task) => {
+                  const done = task.stato === "FATTO";
+                  return (
+                    <li key={task.id} className="group flex items-center gap-4 py-3" data-testid={`row-planner-task-${task.id}`}>
+                      <button
+                        type="button"
+                        role="checkbox"
+                        aria-checked={done}
+                        aria-label={task.testo}
+                        onClick={() => {
+                          setTaskError(null);
+                          toggleTask.mutate({ id: task.id, stato: done ? "DA FARE" : "FATTO", data: date });
+                        }}
+                        className={`flex h-6 w-6 shrink-0 items-center justify-center border transition-colors duration-150 ${
+                          done ? "border-[#B81D1D] bg-[#B81D1D]" : "border-[#555] hover:border-[#E8E4DE]"
+                        }`}
+                        data-testid={`checkbox-planner-task-${task.id}`}
+                      >
+                        {done && (
+                          <svg viewBox="0 0 12 12" className="h-3 w-3" aria-hidden="true">
+                            <path d="M2 6.5 5 9.5 10 3" fill="none" stroke="#E8E4DE" strokeWidth="1.8" />
+                          </svg>
+                        )}
+                      </button>
+                      <span
+                        className={`min-w-0 flex-1 break-words font-sans text-[15px] transition-colors ${
+                          done ? "text-[#6E6A65] line-through decoration-[#B81D1D]" : "text-[#E8E4DE]"
+                        }`}
+                        data-testid={`text-planner-task-${task.id}`}
+                      >
+                        {task.testo}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (window.confirm(`Eliminare "${task.testo}"?`)) deleteTask.mutate({ id: task.id, data: date });
+                        }}
+                        className="font-mono text-[14px] text-[#444] opacity-100 transition-colors hover:text-[#B81D1D] sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
+                        aria-label={`Elimina ${task.testo}`}
+                        data-testid={`button-planner-delete-task-${task.id}`}
+                      >
+                        ×
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+              <div className="font-mono text-[10px] tracking-[0.2em] text-[#6E6A65]" data-testid="text-planner-tasks-count">
+                {doneCount}/{tasks.length}
               </div>
-            ))}
-          </div>
-          {selectedExtras.length > 0 && (
-            <div className="mt-4 font-sans text-[13px] text-[#6E6A65]">
-              Note extra: {selectedExtras.map((note) => note.testo).join(" · ")}
+            </>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {annotation.isError && !annotationReady ? (
+            <div className="flex items-center gap-4 border border-[#333] px-4 py-3" data-testid="status-planner-annotation-error">
+              <span className="flex-1 font-sans text-[13px] text-[#B81D1D]">Errore nel caricamento dell'annotazione.</span>
+              <button
+                type="button"
+                onClick={() => annotation.refetch()}
+                className="font-mono text-[11px] tracking-[0.16em] text-[#E8E4DE] underline-offset-4 hover:underline"
+                data-testid="button-planner-annotation-retry"
+              >
+                RIPROVA
+              </button>
+            </div>
+          ) : !annotationReady ? (
+            <div className="h-72 animate-pulse border border-[#1F1F1F] bg-[#121212]" data-testid="status-planner-annotation-loading" />
+          ) : (
+            <>
+              <textarea
+                value={draft}
+                onChange={(e) => {
+                  setDraft(e.target.value.slice(0, 100000));
+                  if (saveState !== "idle") setSaveState("idle");
+                }}
+                rows={14}
+                placeholder="Annotazioni di oggi"
+                className="w-full resize-y border border-[#262626] bg-[#0D0D0D] p-4 font-sans text-[15px] leading-7 text-[#E8E4DE] outline-none placeholder:text-[#444] focus:border-[#B81D1D]"
+                data-testid="input-planner-annotation"
+              />
+              <div className="flex flex-wrap items-center gap-4">
+                <button
+                  type="button"
+                  onClick={handleSave}
+                  disabled={!dirty || saveAnnotation.isPending}
+                  className="btn-primary disabled:pointer-events-none disabled:opacity-40"
+                  data-testid="button-planner-save-annotation"
+                >
+                  {saveAnnotation.isPending ? "Salvataggio..." : "Salva"}
+                </button>
+                <span
+                  className={`font-mono text-[11px] tracking-[0.14em] ${saveState === "error" ? "text-[#B81D1D]" : "text-[#6E6A65]"}`}
+                  role="status"
+                  data-testid="status-planner-annotation"
+                >
+                  {saveAnnotation.isPending
+                    ? "SALVATAGGIO IN CORSO"
+                    : saveState === "error"
+                      ? "ERRORE: NON SALVATO, IL TESTO È ANCORA QUI"
+                      : dirty
+                        ? "MODIFICHE NON SALVATE"
+                        : saveState === "saved"
+                          ? "SALVATO"
+                          : ""}
+                </span>
+              </div>
+            </>
+          )}
+
+          {legacyNotes.length > 0 && (
+            <div className="border-t border-[#1F1F1F] pt-4" data-testid="section-planner-legacy-notes">
+              <div className="mb-2 font-mono text-[10px] tracking-[0.2em] text-[#555]">NOTE PRECEDENTI</div>
+              <ul className="space-y-1">
+                {legacyNotes.map((note) => (
+                  <li
+                    key={note.id}
+                    className="border-l border-[#333] pl-3 font-sans text-[13px] text-[#6E6A65]"
+                    data-testid={`text-planner-legacy-note-${note.id}`}
+                  >
+                    {note.testo}
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
         </div>
       )}
-
-      <div className="border-t border-[#262626] pt-5">
-        <button
-          type="button"
-          onClick={() => setFixedNoteOpen((open) => !open)}
-          className="flex w-full items-center justify-between text-left"
-          aria-expanded={fixedNoteOpen}
-        >
-          <span className="font-mono text-[10px] tracking-[0.2em] text-[#6E6A65]">NOTE FISSE</span>
-          <span className="font-mono text-[14px] text-[#6E6A65]">{fixedNoteOpen ? "−" : "+"}</span>
-        </button>
-        {fixedNoteOpen && (
-          <textarea
-            value={fixedNote}
-            onChange={(event) => setFixedNote(event.target.value.slice(0, 1000))}
-            rows={10}
-            maxLength={1000}
-            placeholder={"Thailandia: budget 1500€\nPost #3 manca materiale primo boxing\nFixare export card canvas"}
-            className="mt-4 w-full resize-y border-0 border-l-2 border-[#333] bg-transparent p-0 pl-4 font-mono text-[14px] leading-6 text-[#6E6A65] outline-none placeholder:text-[#444]"
-          />
-        )}
-      </div>
     </section>
   );
 }

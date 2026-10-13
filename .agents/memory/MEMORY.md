@@ -15,7 +15,7 @@
 - [Daily tracking fields](daily-tracking-fields.md) — keep new routine text fields separate from legacy numeric exercise counters; automatic blank days must not count as tracking data.
 - [Optional admin input normalization](optional-admin-input-normalization.md) — normalize blank draft/form values to null at the API boundary before Zod and Drizzle.
 - [Daily tracking panel](daily-tracking-panel.md) — quick-status tracking uses nullable fields, automatic A/B day type, and streak activity from training or routine.
-- [Planner single-screen workflow](planner-single-screen.md) — planner is today-first with four fixed checks, max three daily extras, and one persistent fixed-note block.
+- [Simple dated planner](planner-single-screen.md) — user wants only things to do and an annotation by date; no fixed routines or templates; preserve legacy data.
 - [Playwright Chromium on NixOS](playwright-nixos-setup.md) — after `playwright install chromium`, patchelf the binary with `~/.nix-profile/lib` (needs `nix-env -iA nixpkgs.mesa` first) or the browser won't launch.
 - [Mockup sandbox typecheck](mockup-sandbox-typecheck.md) — sandbox-wide typecheck can fail on duplicate React types in bundled UI components; verify isolated previews separately.
 - [Mobile static server safety](mobile-static-server-safety.md) — index built files at startup so request paths select assets by key, never filesystem paths.
@@ -24,3 +24,4 @@
 - [Incompatible metric scales](incompatible-metric-scales.md) — charts comparing repetitions, seconds, and levels need independent axes or small multiples.
 - [Card export compatibility](card-export-compatibility.md) — keep narrow adapters for legacy reel consumers when replacing the shared daily-card renderer.
 - [Drizzle non-TTY rename prompts](drizzle-non-tty-rename-prompts.md) — new tables can trigger rename questions even with `--force`; explicitly choose create in a controlled TTY.
+- [Shared browser test capacity](browser-test-capacity.md) — another workspace tester can block a launch; failed launches are not verification.

@@ -5,6 +5,24 @@
  * API specification for Progetto J — 180-day transformation journal
  * OpenAPI spec version: 0.1.0
  */
+export interface PlannerAnnotationInput {
+  /** @pattern ^\d{4}-\d{2}-\d{2}$ */
+  data: string;
+  /** @maxLength 100000 */
+  testo: string;
+}
+
+export interface PlannerLegacyNote {
+  id: number;
+  testo: string;
+}
+
+export interface PlannerAnnotation {
+  data: string;
+  testo: string;
+  legacyNotes: PlannerLegacyNote[];
+}
+
 export interface HealthStatus {
   status: string;
 }
@@ -1220,4 +1238,11 @@ export type UnauthorizedResponse = ApiError;
  * Not found
  */
 export type NotFoundResponse = ApiError;
+
+export type GetPlannerAnnotationParams = {
+/**
+ * @pattern ^\d{4}-\d{2}-\d{2}$
+ */
+data: string;
+};
 

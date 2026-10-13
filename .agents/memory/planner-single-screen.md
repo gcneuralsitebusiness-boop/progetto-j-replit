@@ -1,10 +1,10 @@
 ---
-name: Planner single-screen workflow
-description: Product rules for the admin planner after the simplified rewrite.
+name: Simple dated planner
+description: User's standing scope for the admin planner: things to do and a dated annotation, without templates.
 ---
 
-The admin planner is intentionally a single-screen checklist, not a general task manager: the four daily items are fixed, daily extras are short and capped at three, and the fixed notes block is global rather than date-bound.
+The user wants “solo un quadrato con scritto roba da fare … e una pagina di annotazione con la data del giorno”. The planner is a simple dated list and an annotation, not a general task manager. No fixed routine checklist, templates, categories, priorities, weekly views or global fixed-note workflow.
 
-**Why:** The planner’s goal is to open, see today’s actions in seconds, check them, and close. Calendar modes, categories, priorities, deadlines, recurring templates, and drag-and-drop add friction and are explicitly out of scope.
+**Why:** The user explicitly described the old planner as obsolete and impractical and asked to remove its unnecessary workflows.
 
-**How to apply:** Keep the four labels and order stable (`DIARIO`, `TRACKING`, `CARD IG`, `CONTENUTO`), autosave checkbox/note changes, scope extras by date, and persist the fixed notes block independently of the selected day.
+**How to apply:** Keep the interface to dated text tasks with square checkboxes and a dated annotation. Do not regenerate routine items. Preserve existing tasks, old notes and template records rather than deleting data when simplifying the interface.

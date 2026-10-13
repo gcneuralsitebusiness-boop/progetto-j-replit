@@ -4,6 +4,7 @@ import { lazy, Suspense, useEffect, useRef, useState, type ReactNode } from 'rea
 import { Toaster } from '@/components/ui/toaster';
 import { Navbar } from '@/components/Navbar';
 import { ScrollToTop } from '@/components/ScrollToTop';
+import { PageChromeProvider, usePageChrome } from '@/lib/page-chrome';
 
 const Home = lazy(() => import('@/pages/home'));
 const Journaling = lazy(() => import('@/pages/journaling'));
@@ -53,6 +54,8 @@ const queryClient = new QueryClient({
 /** The IG card page and admin article preview are clean canvases: no Navbar. */
 function ConditionalNavbar() {
   const [location] = useLocation();
+  const { navigationHidden } = usePageChrome();
+  if (navigationHidden) return null;
   if (location.startsWith('/card/')) return null;
   if (location.startsWith('/clip/')) return null;
   if (location.startsWith('/admin/articoli/') && location.endsWith('/preview')) return null;
@@ -198,10 +201,12 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
+        <PageChromeProvider>
         <ScrollToTop />
         <PageMetadata />
         <ConditionalNavbar />
         <AppRoutes />
+        </PageChromeProvider>
       </WouterRouter>
       <Toaster />
     </QueryClientProvider>

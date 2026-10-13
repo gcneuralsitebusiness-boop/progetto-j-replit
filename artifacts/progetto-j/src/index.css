@@ -4,6 +4,21 @@
 
 @custom-variant dark (&:is(.dark *));
 
+.day-progress-ring {
+  width: 3rem;
+  height: 3rem;
+  border: 2px solid hsl(var(--border));
+  border-top-color: hsl(var(--primary));
+  border-radius: 50%;
+  animation: day-progress-spin 1s linear infinite;
+}
+@keyframes day-progress-spin {
+  to { transform: rotate(360deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .day-progress-ring { animation: none; }
+}
+
 @theme inline {
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));

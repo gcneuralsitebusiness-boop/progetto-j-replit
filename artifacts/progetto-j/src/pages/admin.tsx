@@ -6,17 +6,8 @@ import {
   useListPages, useCreatePage, useUpdatePage, useDeletePage,
   useGetEntriesBulkText, useImportEntriesBulkText,
   getAdminMeQueryKey, getListEntriesQueryKey, getListEntrySummariesQueryKey, getGetLatestEntriesQueryKey, getGetEntryQueryKey,
-  getListPagesQueryKey,
+  getListPagesQueryKey, getGetEntryQueryOptions,
 } from "@workspace/api-client-react";
-import { SocialTab } from "@/components/admin/SocialTab";
-import { SponsorTab } from "@/components/admin/SponsorTab";
-import { ArticoliTab } from "@/components/admin/ArticoliTab";
-import { CoachingTab } from "@/components/admin/CoachingTab";
-import { SitoTab } from "@/components/admin/SitoTab";
-import { ContattiTab } from "@/components/admin/ContattiTab";
-import { CandidatureTab } from "@/components/admin/CandidatureTab";
-import { IscrittiTab } from "@/components/admin/IscrittiTab";
-import { PlannerTab } from "@/components/admin/PlannerTab";
 import { ObiettiviEditor } from "@/components/admin/ObiettiviEditor";
 import { TappaManager } from "@/components/admin/TappaManager";
 import { DailyTrackingPanel, type TrackingKey } from "@/components/admin/DailyTrackingPanel";
@@ -26,11 +17,22 @@ import type { Entry, EntryInput, PageItem } from "@workspace/api-client-react";
 import { useUpload, getPhotoUrl } from "@workspace/object-storage-web";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
-import { persistDailyCardImages } from "@/lib/daily-card-persistence";
+import { assertEntrySaved, buildEntryPayload } from "@/lib/entry-save";
 
 const AnalyticsTab = lazy(() =>
   import("@/components/admin/AnalyticsTab").then((module) => ({ default: module.AnalyticsTab })),
 );
+const SocialTab = lazy(() => import("@/components/admin/SocialTab").then((m) => ({ default: m.SocialTab })));
+const SponsorTab = lazy(() => import("@/components/admin/SponsorTab").then((m) => ({ default: m.SponsorTab })));
+const ArticoliTab = lazy(() => import("@/components/admin/ArticoliTab").then((m) => ({ default: m.ArticoliTab })));
+const CoachingTab = lazy(() => import("@/components/admin/CoachingTab").then((m) => ({ default: m.CoachingTab })));
+const SitoTab = lazy(() => import("@/components/admin/SitoTab").then((m) => ({ default: m.SitoTab })));
+const ContattiTab = lazy(() => import("@/components/admin/ContattiTab").then((m) => ({ default: m.ContattiTab })));
+const CandidatureTab = lazy(() => import("@/components/admin/CandidatureTab").then((m) => ({ default: m.CandidatureTab })));
+const IscrittiTab = lazy(() => import("@/components/admin/IscrittiTab").then((m) => ({ default: m.IscrittiTab })));
+const PlannerTab = lazy(() => import("@/components/admin/PlannerTab").then((m) => ({ default: m.PlannerTab })));
+// Keep card jobs ordered even when the diary tab is temporarily unmounted.
+const dailyCardJobs = new Map<number, Promise<void>>();
 
 // ─── Client-side range validation ─────────────────────────────────────────────
 
@@ -168,7 +170,7 @@ function AdminLoginForm() {
 
 // ─── Entry Form ───────────────────────────────────────────────────────────────
 
-function EntryForm({ initialData, previousEntry, onSuccess, onCancel }: { initialData?: Entry; previousEntry?: Entry; onSuccess: () => void; onCancel?: () => void }) {
+function EntryForm({ initialData, defaultNumero = 1, onSuccess, onCancel }: { initialData?: Entry; defaultNumero?: number; onSuccess: (entry: Entry) => void; onCancel?: () => void }) {
   const queryClient = useQueryClient();
   const createMutation = useCreateEntry();
   const updateMutation = useUpdateEntry();
@@ -183,8 +185,8 @@ function EntryForm({ initialData, previousEntry, onSuccess, onCancel }: { initia
   } = useUpload();
 
   const [formData, setFormData] = useState<Partial<EntryInput>>({
-    numero: initialData?.numero || 1,
-    data: initialData?.data || new Date().toISOString().split("T")[0],
+    numero: initialData?.numero ?? defaultNumero,
+    data: initialData?.data || new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Rome" }).format(new Date()),
     kcal: initialData?.kcal ?? undefined,
     pasti: initialData?.pasti ?? undefined,
     alcol: initialData?.alcol ?? undefined,
@@ -226,9 +228,35 @@ function EntryForm({ initialData, previousEntry, onSuccess, onCancel }: { initia
   const [draftBar, setDraftBar] = useState<{ time: string; data: Partial<EntryInput> } | null>(null);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const savingRef = useRef(false);
+  const [copyYesterdayPending, setCopyYesterdayPending] = useState(false);
+  const draftRequest = useRef<Promise<unknown> | null>(null);
   const [touchedTracking, setTouchedTracking] = useState<Set<TrackingKey>>(new Set());
   const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isMounted = useRef(false);
+  const baseline = useRef<string | null>(null);
+  const serializedForm = JSON.stringify(formData);
+  if (baseline.current === null) baseline.current = serializedForm;
+  const dirtyRef = useRef(false);
+  dirtyRef.current = baseline.current !== serializedForm;
+
+  useEffect(() => {
+    const leave = (event: Event) => {
+      if (savingRef.current || (dirtyRef.current && !window.confirm("Ci sono dati non salvati. Uscire senza salvarli?"))) event.preventDefault();
+    };
+    const unload = (event: BeforeUnloadEvent) => {
+      if (!dirtyRef.current && !savingRef.current) return;
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("admin-before-navigate", leave);
+    window.addEventListener("beforeunload", unload);
+    return () => {
+      window.removeEventListener("admin-before-navigate", leave);
+      window.removeEventListener("beforeunload", unload);
+    };
+  }, []);
 
   const markTouched = useCallback((key: TrackingKey) => {
     setTouchedTracking((current) => new Set(current).add(key));
@@ -242,8 +270,12 @@ function EntryForm({ initialData, previousEntry, onSuccess, onCancel }: { initia
     });
   }, []);
 
-  const copyYesterday = useCallback(() => {
-    if (!previousEntry) return;
+  const copyYesterday = useCallback(async () => {
+    const previousNumero = Number(formData.numero) - 1;
+    if (previousNumero < 1 || copyYesterdayPending) return;
+    setCopyYesterdayPending(true);
+    try {
+    const previousEntry = await queryClient.fetchQuery(getGetEntryQueryOptions(previousNumero));
     setFormData((current) => ({
       ...current,
       kcal: previousEntry.kcal ?? undefined,
@@ -285,7 +317,12 @@ function EntryForm({ initialData, previousEntry, onSuccess, onCancel }: { initia
       "routineSquat", "plank", "collo", "mobilita", "sollevamentoGamba",
       "grapplingVuoto", "energia", "flessioni",
     ]);
-  }, [markManyTouched, previousEntry]);
+    } catch {
+      setSubmitError("Impossibile caricare il giorno precedente. Nessun campo è stato modificato.");
+    } finally {
+      setCopyYesterdayPending(false);
+    }
+  }, [markManyTouched, formData.numero, copyYesterdayPending, queryClient]);
 
   // Load draft when editing an entry
   useEffect(() => {
@@ -303,10 +340,10 @@ function EntryForm({ initialData, previousEntry, onSuccess, onCancel }: { initia
 
   // Autosave to server (editing only), debounced 2 s
   useEffect(() => {
-    if (!initialData || !isMounted.current) return;
+    if (!initialData || !isMounted.current || isSaving) return;
     if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
     autosaveTimer.current = setTimeout(() => {
-      fetch(`${import.meta.env.BASE_URL}api/admin/drafts`, {
+      draftRequest.current = fetch(`${import.meta.env.BASE_URL}api/admin/drafts`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -314,49 +351,26 @@ function EntryForm({ initialData, previousEntry, onSuccess, onCancel }: { initia
       }).catch(() => {});
     }, 2000);
     return () => { if (autosaveTimer.current) clearTimeout(autosaveTimer.current); };
-  }, [formData]);
+  }, [formData, isSaving]);
 
   const deleteDraft = useCallback((numero: number) => {
-    fetch(`${import.meta.env.BASE_URL}api/admin/drafts/${numero}`, { method: "DELETE", credentials: "include" }).catch(() => {});
+    // A pending autosave must finish before deletion, or it can restore a stale draft.
+    void Promise.resolve(draftRequest.current).finally(() =>
+      fetch(`${import.meta.env.BASE_URL}api/admin/drafts/${numero}`, { method: "DELETE", credentials: "include" }).catch(() => {})
+    );
   }, []);
 
   // ─── Submit ────────────────────────────────────────────────────────────────
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (savingRef.current || isUploading || isClipUploading || isClipProcessing || copyYesterdayPending) return;
     setSubmitError(null);
 
     const errors = validateEntry(formData as Record<string, unknown>);
     setValidationErrors(errors);
     if (Object.keys(errors).length > 0) return;
 
-    const optionalKeys: (keyof EntryInput)[] = [
-      "kcal", "pasti", "alcol", "acqua", "acquaAllenamento", "tipoAllenamento", "durata", "intensita",
-      "tipoGiorno", "routineCompletata", "routineForza", "routineFlessioni",
-      "routineTrazioni", "routineSquat", "plank", "collo", "mobilita",
-      "sollevamentoGamba", "grapplingVuoto", "energia", "noteAllenamento",
-      "sonno", "flessioni", "addominali", "round", "km", "peso", "battito",
-      "entrate", "uscite", "testo", "foto", "sintesi", "attrito", "fatto", "nonFatto",
-    ];
-    const hasValue = (value: unknown) => value != null && (typeof value !== "string" || value.trim() !== "");
-    const sameValue = (left: unknown, right: unknown) => (
-      (left == null && right == null)
-      || (typeof left === "string" && left.trim() === "" && right == null)
-      || (typeof right === "string" && right.trim() === "" && left == null)
-      || left === right
-    );
-    const normalizeValue = (value: unknown) => (
-      typeof value === "string" && value.trim() === "" ? null : value
-    );
-    const payload: EntryInput = {
-      numero: Number(formData.numero),
-      data: formData.data as string,
-    };
-    for (const key of optionalKeys) {
-      const value = formData[key];
-      const previousValue = initialData?.[key as keyof Entry];
-      const shouldSend = initialData ? !sameValue(value, previousValue) : hasValue(value);
-      if (shouldSend) (payload as unknown as Record<string, unknown>)[key] = normalizeValue(value);
-    }
+    const payload = buildEntryPayload(formData, initialData);
 
     const invalidate = () => {
       queryClient.invalidateQueries({ queryKey: getListEntriesQueryKey() });
@@ -370,36 +384,25 @@ function EntryForm({ initialData, previousEntry, onSuccess, onCancel }: { initia
       setSubmitError(msg.includes("401") ? "Sessione scaduta. Ricarica la pagina." : `Errore: ${msg}`);
     };
 
-    if (initialData) {
-      updateMutation.mutate({ numero: initialData.numero, data: payload }, {
-        onSuccess: async (savedEntry) => {
-          try {
-            await persistDailyCardImages(savedEntry);
-          } catch (cardError) {
-            setSubmitError(cardError instanceof Error ? cardError.message : "Il giorno è salvato, ma le card non sono state rigenerate.");
-            invalidate();
-            return;
-          }
-          invalidate();
-          deleteDraft(initialData.numero);
-          onSuccess();
-        },
-        onError: handleError,
-      });
-    } else {
-      createMutation.mutate({ data: payload }, {
-        onSuccess: async (savedEntry) => {
-          try {
-            await persistDailyCardImages(savedEntry);
-          } catch (cardError) {
-            setSubmitError(cardError instanceof Error ? cardError.message : "Il giorno è salvato, ma le card non sono state rigenerate.");
-            invalidate();
-            return;
-          }
-          invalidate();
+    savingRef.current = true;
+    setIsSaving(true);
+    if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
+    try {
+      const savedEntry = initialData
+        ? await updateMutation.mutateAsync({ numero: initialData.numero, data: payload })
+        : await createMutation.mutateAsync({ data: payload });
+      assertEntrySaved(payload, savedEntry);
+      baseline.current = null;
+      queryClient.setQueryData(getGetEntryQueryKey(savedEntry.numero), savedEntry);
+      if (initialData && initialData.numero !== savedEntry.numero) {
+        queryClient.removeQueries({ queryKey: getGetEntryQueryKey(initialData.numero), exact: true });
+      }
+      invalidate();
+      deleteDraft(initialData?.numero ?? savedEntry.numero);
+      if (!initialData) {
           setFormData({
-            numero: Number(formData.numero) + 1,
-            data: new Date().toISOString().split("T")[0],
+            numero: savedEntry.numero + 1,
+            data: new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Rome" }).format(new Date()),
             kcal: undefined, pasti: undefined, alcol: undefined, acqua: undefined, acquaAllenamento: undefined,
             tipoAllenamento: undefined, durata: undefined, intensita: undefined,
             tipoGiorno: undefined, routineCompletata: undefined, routineForza: undefined, routineFlessioni: "",
@@ -412,10 +415,13 @@ function EntryForm({ initialData, previousEntry, onSuccess, onCancel }: { initia
             testo: "", foto: "", sintesi: "", attrito: "", fatto: "", nonFatto: "",
           });
           setTouchedTracking(new Set());
-          onSuccess();
-        },
-        onError: handleError,
-      });
+      }
+      onSuccess(savedEntry);
+    } catch (err) {
+      handleError(err);
+    } finally {
+      savingRef.current = false;
+      setIsSaving(false);
     }
   };
 
@@ -465,7 +471,7 @@ function EntryForm({ initialData, previousEntry, onSuccess, onCancel }: { initia
     }
   };
 
-  const isPending = createMutation.isPending || updateMutation.isPending || isClipUploading || isClipProcessing;
+  const isPending = isSaving || createMutation.isPending || updateMutation.isPending || isUploading || isClipUploading || isClipProcessing || copyYesterdayPending;
   const clipNumero = Number(formData.numero);
   const canOpenClip = Number.isInteger(clipNumero) && clipNumero >= 1 && clipNumero <= 180;
 
@@ -517,7 +523,8 @@ function EntryForm({ initialData, previousEntry, onSuccess, onCancel }: { initia
   );
 
   return (
-    <form onSubmit={handleSubmit} className="bg-card border border-border p-6 md:p-8 flex flex-col gap-6">
+    <form onSubmit={handleSubmit} data-testid="diary-entry-form" className="bg-card border border-border p-6 md:p-8">
+      <fieldset disabled={isSaving} className="flex min-w-0 flex-col gap-6">
       {/* Draft restore bar */}
       {draftBar && (
         <div className="flex items-center justify-between gap-4 bg-[#1a1100] border border-primary/40 px-4 py-3">
@@ -553,11 +560,15 @@ function EntryForm({ initialData, previousEntry, onSuccess, onCancel }: { initia
         markTouched={markTouched}
         markManyTouched={markManyTouched}
         onCopyYesterday={copyYesterday}
+        isCopyingYesterday={copyYesterdayPending}
       />
 
       <div className="sticky bottom-0 z-20 -mx-6 border-y border-[#333] bg-[#0A0A0A]/95 px-6 py-3 backdrop-blur md:-mx-8 md:px-8">
-        <button type="submit" disabled={isPending} className="w-full bg-[#B81D1D] text-white font-serif text-[18px] py-4 tracking-wider hover:bg-[#9A1515] transition-colors uppercase disabled:opacity-50">
-          {isPending ? "Salvataggio..." : "Salva Giorno"}
+        {submitError && (
+          <p role="alert" data-testid="diary-save-error" className="mb-3 text-[13px] font-sans text-primary border border-primary/40 bg-primary/10 px-4 py-3">{submitError}</p>
+        )}
+        <button type="submit" data-testid="save-diary-entry" disabled={isPending} className="w-full bg-[#B81D1D] text-white font-serif text-[18px] py-4 tracking-wider hover:bg-[#9A1515] transition-colors uppercase disabled:opacity-50">
+          {isPending ? "Attendi..." : "Salva Giorno"}
         </button>
       </div>
 
@@ -723,10 +734,7 @@ function EntryForm({ initialData, previousEntry, onSuccess, onCancel }: { initia
         </div>
       </section>
 
-      {submitError && (
-        <p className="text-[13px] font-sans text-primary border border-primary/40 bg-primary/10 px-4 py-3">{submitError}</p>
-      )}
-
+      </fieldset>
     </form>
   );
 }
@@ -735,28 +743,54 @@ function EntryForm({ initialData, previousEntry, onSuccess, onCancel }: { initia
 
 function DiarioTab({ scrollToEntry }: { scrollToEntry?: number }) {
   const queryClient = useQueryClient();
-  const { data: summaries } = useListEntrySummaries();
+  const { data: summaries, isLoading: listLoading, isError: listError, refetch: refetchList } = useListEntrySummaries();
   const entries = summaries as Entry[] | undefined;
   const deleteMutation = useDeleteEntry();
   const [editingNumero, setEditingNumero] = useState<number | null>(null);
   const [search, setSearch] = useState("");
   const formRef = useRef<HTMLDivElement>(null);
   const nextNumero = editingNumero ?? ((entries?.reduce((max, entry) => Math.max(max, entry.numero), 0) ?? 0) + 1);
-  const { data: editingEntry, isLoading: editingLoading } = useGetEntry(editingNumero ?? 0, {
+  const { data: editingEntry, isLoading: editingLoading, isError: editingError, refetch: refetchEntry } = useGetEntry(editingNumero ?? 0, {
     query: { queryKey: getGetEntryQueryKey(editingNumero ?? 0), enabled: editingNumero !== null, retry: false },
   });
-  const { data: previousEntry } = useGetEntry(nextNumero - 1, {
-    query: { queryKey: getGetEntryQueryKey(nextNumero - 1), enabled: nextNumero > 1, retry: false },
-  });
+  const [saveNotice, setSaveNotice] = useState<{ entry: Entry; cards: "pending" | "done" | "error" } | null>(null);
+
+  const generateCards = (savedEntry: Entry) => {
+    const previous = dailyCardJobs.get(savedEntry.numero) ?? Promise.resolve();
+    const job = previous.catch(() => {}).then(async () => {
+      try {
+        const { persistDailyCardImages } = await import("@/lib/daily-card-persistence");
+        const paths = await persistDailyCardImages(savedEntry);
+        queryClient.setQueryData<Entry>(getGetEntryQueryKey(savedEntry.numero), (current) =>
+          current ? { ...current, ...paths } : current
+        );
+        void queryClient.invalidateQueries({ queryKey: getListEntrySummariesQueryKey() });
+        void queryClient.invalidateQueries({ queryKey: getListEntriesQueryKey() });
+        setSaveNotice((current) => current?.entry === savedEntry ? { ...current, cards: "done" } : current);
+      } catch {
+        setSaveNotice((current) => current?.entry === savedEntry ? { ...current, cards: "error" } : current);
+      }
+    });
+    dailyCardJobs.set(savedEntry.numero, job);
+    void job.finally(() => {
+      if (dailyCardJobs.get(savedEntry.numero) === job) dailyCardJobs.delete(savedEntry.numero);
+    });
+  };
+
+  const handleSaved = (entry: Entry) => {
+    setEditingNumero(null);
+    setSaveNotice({ entry, cards: entry.testo?.trim() ? "pending" : "done" });
+    if (entry.testo?.trim()) setTimeout(() => generateCards(entry), 0);
+  };
 
   // Support opening a specific entry from OggiTab
   useEffect(() => {
-    if (!scrollToEntry || !entries) return;
-    const target = entries.find((e) => e.numero === scrollToEntry);
-    if (target) startEditing(target.numero);
-  }, [scrollToEntry, entries]);
+    if (!scrollToEntry) return;
+    setEditingNumero(scrollToEntry);
+  }, [scrollToEntry]);
 
   const startEditing = (numero: number) => {
+    if (!window.dispatchEvent(new Event("admin-before-navigate", { cancelable: true }))) return;
     setEditingNumero(numero);
     setTimeout(() => {
       formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -783,16 +817,37 @@ function DiarioTab({ scrollToEntry }: { scrollToEntry?: number }) {
   }) ?? [];
   return (
     <div className="space-y-12">
+      {saveNotice && (
+        <div role="status" data-testid="diary-save-success" className="border border-border bg-card p-4 font-sans text-[13px]">
+          <p className="text-foreground">Giorno {saveNotice.entry.numero} salvato.</p>
+          {saveNotice.cards === "pending" && <p className="mt-1 text-muted-foreground">Generazione delle card in corso. I dati del giorno sono già salvati.</p>}
+          {saveNotice.cards === "error" && (
+            <div className="mt-2 text-muted-foreground">
+              <p>Le card non sono state aggiornate. I dati del giorno restano salvati.</p>
+              <button type="button" className="mt-2 text-primary underline" onClick={() => {
+                setSaveNotice({ ...saveNotice, cards: "pending" });
+                generateCards(saveNotice.entry);
+              }}>Riprova solo le card</button>
+            </div>
+          )}
+        </div>
+      )}
       <ObiettiviEditor />
       <div ref={formRef} className="scroll-mt-28">
         {editingNumero !== null ? (
-          editingLoading || !editingEntry ? (
+          editingError ? (
+            <div><AdminStatus tone="error">Impossibile caricare il giorno. Nessun dato è stato modificato.</AdminStatus><AdminRetry onRetry={() => void refetchEntry()} /></div>
+          ) : editingLoading || !editingEntry ? (
             <div className="bg-card border border-border p-8 text-center text-muted-foreground font-sans animate-pulse">Caricamento giorno...</div>
           ) : (
-            <EntryForm key={editingEntry.id} initialData={editingEntry} previousEntry={previousEntry} onSuccess={() => setEditingNumero(null)} onCancel={() => setEditingNumero(null)} />
+            <EntryForm key={editingEntry.id} initialData={editingEntry} onSuccess={handleSaved} onCancel={() => {
+              if (window.dispatchEvent(new Event("admin-before-navigate", { cancelable: true }))) setEditingNumero(null);
+            }} />
           )
         ) : (
-          <EntryForm key="new" previousEntry={previousEntry} onSuccess={() => {}} />
+          listError ? <div><AdminStatus tone="error">Impossibile caricare i giorni.</AdminStatus><AdminRetry onRetry={() => void refetchList()} /></div>
+            : listLoading ? <AdminStatus>Caricamento giorni...</AdminStatus>
+            : <EntryForm key="new" defaultNumero={nextNumero} onSuccess={handleSaved} />
         )}
       </div>
 
@@ -818,7 +873,7 @@ function DiarioTab({ scrollToEntry }: { scrollToEntry?: number }) {
           >
             <div className="flex items-center gap-6">
               {entry.foto ? (
-                <img src={getPhotoUrl(entry.foto) ?? undefined} alt="" className="w-12 h-12 object-cover border border-border shrink-0" />
+                <img src={getPhotoUrl(entry.foto) ?? undefined} alt="" loading="lazy" decoding="async" className="w-12 h-12 object-cover border border-border shrink-0" />
               ) : (
                 <div className="w-12 h-12 border border-border bg-[#0a0a0a] shrink-0 flex items-center justify-center text-[10px] font-sans text-muted-foreground tabular-nums">
                   {entry.numero}
@@ -860,7 +915,9 @@ function DiarioTab({ scrollToEntry }: { scrollToEntry?: number }) {
               >
                 MINIMAL
               </a>
-              <button onClick={() => startEditing(entry.numero)} className="text-[13px] uppercase tracking-wider font-sans text-foreground hover:text-primary transition-colors">Modifica</button>
+              <button onMouseEnter={() => void queryClient.prefetchQuery(getGetEntryQueryOptions(entry.numero))}
+                onFocus={() => void queryClient.prefetchQuery(getGetEntryQueryOptions(entry.numero))}
+                onClick={() => startEditing(entry.numero)} className="text-[13px] uppercase tracking-wider font-sans text-foreground hover:text-primary transition-colors">Modifica</button>
               <button onClick={() => handleDelete(entry.numero)} disabled={deleteMutation.isPending} className="text-[13px] uppercase tracking-wider font-sans text-destructive hover:text-destructive/80 transition-colors">Elimina</button>
             </div>
           </div>
@@ -894,7 +951,7 @@ interface DashboardData {
 function OggiTab({ onSwitchTab }: { onSwitchTab: (tab: string, scrollToEntry?: number) => void }) {
   const [backupFeedback, setBackupFeedback] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [isRunningBackup, setIsRunningBackup] = useState(false);
-  const { data: dailyEntries } = useListEntries();
+  const { data: dailyEntries } = useListEntrySummaries();
   const {
     data: dashboard,
     isLoading: loading,
@@ -909,6 +966,16 @@ function OggiTab({ onSwitchTab }: { onSwitchTab: (tab: string, scrollToEntry?: n
     },
     staleTime: 30_000,
   });
+  const backupStatus = useQuery<{ backup: DashboardData["backup"] }>({
+    queryKey: ["admin-backup-status"],
+    queryFn: async () => {
+      const response = await fetch(`${import.meta.env.BASE_URL}api/admin/backup/status`, { credentials: "include" });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      return response.json();
+    },
+    staleTime: 60_000,
+  });
+  const latestBackup = backupStatus.data?.backup ?? dashboard?.backup;
 
   if (loading) {
     return <div className="py-20"><AdminStatus>Caricamento area admin...</AdminStatus></div>;
@@ -1040,14 +1107,14 @@ function OggiTab({ onSwitchTab }: { onSwitchTab: (tab: string, scrollToEntry?: n
           <h2 className="text-[22px] font-serif tracking-wider">BACKUP DATI</h2>
           <p className="text-[13px] font-sans text-muted-foreground mt-1">Esporta tutti i dati e conserva automaticamente gli ultimi 30 salvataggi.</p>
         </div>
-        <div className={`border px-4 py-3 font-sans text-[13px] ${dashboard.backup && Date.now() - new Date(dashboard.backup.createdAt).getTime() > 48 * 60 * 60 * 1000 ? "border-primary text-primary" : "border-border text-muted-foreground"}`}>
-          {dashboard.backup ? (
+        <div className={`border px-4 py-3 font-sans text-[13px] ${latestBackup && Date.now() - new Date(latestBackup.createdAt).getTime() > 48 * 60 * 60 * 1000 ? "border-primary text-primary" : "border-border text-muted-foreground"}`}>
+          {backupStatus.isLoading ? <p>Verifica backup in corso...</p> : backupStatus.isError ? <p>Stato backup non disponibile.</p> : latestBackup ? (
             <>
               <div className="uppercase tracking-widest text-[11px]">ULTIMO BACKUP</div>
               <div className="mt-1 font-mono text-foreground">
-                {new Date(dashboard.backup.createdAt).toLocaleString("it-IT")} · {(dashboard.backup.sizeBytes / 1024).toFixed(1)} KB
+                {new Date(latestBackup.createdAt).toLocaleString("it-IT")} · {(latestBackup.sizeBytes / 1024).toFixed(1)} KB
               </div>
-              {Date.now() - new Date(dashboard.backup.createdAt).getTime() > 48 * 60 * 60 * 1000 && (
+              {Date.now() - new Date(latestBackup.createdAt).getTime() > 48 * 60 * 60 * 1000 && (
                 <div className="mt-1 text-primary uppercase tracking-widest text-[11px]">BACKUP PIÙ VECCHIO DI 48 ORE</div>
               )}
             </>
@@ -1066,6 +1133,7 @@ function OggiTab({ onSwitchTab }: { onSwitchTab: (tab: string, scrollToEntry?: n
                 if (!response.ok) throw new Error(body.error ?? `HTTP ${response.status}`);
                 setBackupFeedback({ type: "success", text: `Backup automatico completato · ${(body.sizeBytes / 1024).toFixed(1)} KB.` });
                 await refetch();
+                await backupStatus.refetch();
               })
               .catch((error: Error) => setBackupFeedback({ type: "error", text: `Backup non riuscito: ${error.message}` }))
               .finally(() => setIsRunningBackup(false));
@@ -1459,12 +1527,14 @@ export default function Admin() {
   if (!adminData?.authenticated) return <AdminLoginForm />;
 
   const handleLogout = () => {
+    if (!window.dispatchEvent(new Event("admin-before-navigate", { cancelable: true }))) return;
     logoutMutation.mutate(undefined, {
       onSuccess: () => queryClient.invalidateQueries({ queryKey: getAdminMeQueryKey() }),
     });
   };
 
   const handleSwitchTab = (tab: string, scrollToEntry?: number) => {
+    if (!window.dispatchEvent(new Event("admin-before-navigate", { cancelable: true }))) return;
     setDiarioScrollTo(scrollToEntry);
     setActiveTab(tab as Tab);
   };
@@ -1506,7 +1576,9 @@ export default function Admin() {
           return (
             <button
               key={group.id}
-              onClick={() => setActiveTab(group.tabs[0].id)}
+              onClick={() => {
+                if (group.tabs[0].id !== activeTab && window.dispatchEvent(new Event("admin-before-navigate", { cancelable: true }))) setActiveTab(group.tabs[0].id);
+              }}
               aria-current={isActive ? "page" : undefined}
               className={`min-h-14 px-2 font-serif text-[13px] sm:text-[14px] tracking-[0.1em] uppercase transition-colors focus-visible:z-10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary ${
                 isActive ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
@@ -1521,7 +1593,9 @@ export default function Admin() {
         {(TAB_GROUPS.find((group) => group.id === groupOfTab(activeTab))?.tabs ?? []).map((tab) => (
           <button
             key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
+            onClick={() => {
+              if (tab.id !== activeTab && window.dispatchEvent(new Event("admin-before-navigate", { cancelable: true }))) setActiveTab(tab.id);
+            }}
             role="tab"
             aria-selected={activeTab === tab.id}
             className={`shrink-0 min-h-12 px-4 sm:px-5 py-3 font-serif text-[13px] sm:text-[14px] tracking-[0.1em] uppercase border-b-2 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary ${
@@ -1536,6 +1610,7 @@ export default function Admin() {
       </div>
 
       {/* Tab Content */}
+      <Suspense fallback={<AdminStatus>Caricamento sezione...</AdminStatus>}>
       {activeTab === "oggi" && <OggiTab onSwitchTab={handleSwitchTab} />}
       {activeTab === "diario" && <DiarioTab scrollToEntry={diarioScrollTo} />}
       {activeTab === "sito" && <SitoTab />}
@@ -1559,6 +1634,7 @@ export default function Admin() {
         </Suspense>
       )}
       {activeTab === "planner" && <PlannerTab />}
+      </Suspense>
       </div>
     </main>
   );

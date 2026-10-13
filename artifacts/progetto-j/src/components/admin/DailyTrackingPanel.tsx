@@ -113,6 +113,7 @@ export function DailyTrackingPanel({
   markTouched,
   markManyTouched,
   onCopyYesterday,
+  isCopyingYesterday = false,
 }: {
   formData: FormData;
   setFormData: Dispatch<SetStateAction<FormData>>;
@@ -120,6 +121,7 @@ export function DailyTrackingPanel({
   markTouched: (key: TrackingKey) => void;
   markManyTouched: (keys: TrackingKey[]) => void;
   onCopyYesterday: () => void;
+  isCopyingYesterday?: boolean;
 }) {
   const [status, setStatus] = useState<QuickStatus | null>(() => initialStatus(initialData));
   const [showWeekly, setShowWeekly] = useState(() => isSunday(formData.data));
@@ -193,9 +195,10 @@ export function DailyTrackingPanel({
         <button
           type="button"
           onClick={onCopyYesterday}
+          disabled={isCopyingYesterday}
           className="shrink-0 border border-[#333] bg-[#1A1A1A] px-3 py-2 font-serif text-[10px] tracking-wider text-[#E8E4DE] hover:border-[#B81D1D]"
         >
-          COMPILA COME IERI
+          {isCopyingYesterday ? "CARICAMENTO..." : "COMPILA COME IERI"}
         </button>
       </div>
 

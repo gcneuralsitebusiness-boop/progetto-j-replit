@@ -10,6 +10,7 @@ import {
 } from "@workspace/db/schema";
 import { eq, and, between, sql, asc, desc, isNull } from "drizzle-orm";
 import { z } from "zod";
+import { GetPlannerAnnotationQueryParams, SavePlannerAnnotationBody } from "@workspace/api-zod";
 
 const router: IRouter = Router();
 export const FIXED_PLANNER_TASKS = ["DIARIO", "TRACKING", "CARD IG", "CONTENUTO"] as const;
@@ -17,6 +18,53 @@ export const FIXED_PLANNER_TASKS = ["DIARIO", "TRACKING", "CARD IG", "CONTENUTO"
 function isAdmin(req: any): boolean {
   return !!req.session?.adminAuthenticated;
 }
+
+async function readAnnotation(data: string) {
+  const rows = await db.select().from(plannerNotesTable)
+    .where(eq(plannerNotesTable.data, data)).orderBy(asc(plannerNotesTable.id));
+  return {
+    data,
+    testo: rows.find((row) => row.tipo === "annotation")?.testo ?? "",
+    legacyNotes: rows.filter((row) => row.tipo === "daily").map(({ id, testo }) => ({ id, testo })),
+  };
+}
+
+router.get("/admin/planner/annotation", async (req, res): Promise<void> => {
+  if (!isAdmin(req)) { res.status(401).json({ error: "Non autorizzato" }); return; }
+  const parsed = GetPlannerAnnotationQueryParams.safeParse(req.query);
+  if (!parsed.success) { res.status(400).json({ error: "Data non valida" }); return; }
+  try {
+    res.json(await readAnnotation(parsed.data.data));
+  } catch (err) {
+    req.log.error({ err }, "Failed to read planner annotation");
+    res.status(500).json({ error: "Impossibile caricare l'annotazione" });
+  }
+});
+
+router.put("/admin/planner/annotation", async (req, res): Promise<void> => {
+  if (!isAdmin(req)) { res.status(401).json({ error: "Non autorizzato" }); return; }
+  const parsed = SavePlannerAnnotationBody.safeParse(req.body);
+  if (!parsed.success) { res.status(400).json({ error: "Annotazione non valida" }); return; }
+  try {
+    await db.transaction(async (tx) => {
+      // Serialize first saves per date without changing or migrating the legacy table.
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${"planner_annotation:" + parsed.data.data}))`);
+      const [existing] = await tx.select().from(plannerNotesTable)
+        .where(and(eq(plannerNotesTable.data, parsed.data.data), eq(plannerNotesTable.tipo, "annotation")))
+        .orderBy(asc(plannerNotesTable.id)).limit(1);
+      if (existing) {
+        await tx.update(plannerNotesTable).set({ testo: parsed.data.testo, updatedAt: new Date() })
+          .where(eq(plannerNotesTable.id, existing.id));
+      } else {
+        await tx.insert(plannerNotesTable).values({ ...parsed.data, tipo: "annotation" });
+      }
+    });
+    res.json(await readAnnotation(parsed.data.data));
+  } catch (err) {
+    req.log.error({ err }, "Failed to save planner annotation");
+    res.status(500).json({ error: "Annotazione non salvata. Il testo inserito è ancora disponibile." });
+  }
+});
 
 // ─── Fixed daily checklist ────────────────────────────────────────────────────
 
