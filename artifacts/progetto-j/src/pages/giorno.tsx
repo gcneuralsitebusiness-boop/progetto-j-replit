@@ -4,7 +4,6 @@ import { useListEntries, getListEntriesQueryKey, useListArticles, useListTaskGio
 import type { Entry as ApiEntry, TaskGiorno } from "@workspace/api-client-react";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
-import { ArrowLeft, Share2 } from "lucide-react";
 import { Reveal } from "@/components/Reveal";
 import { Cross } from "@/components/Cross";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -156,7 +155,7 @@ function TrackingRows({ entry, routineStreak }: { entry: GiornoEntry; routineStr
             {entry.intensita != null && cell(String(entry.intensita), "INTENSITÀ")}
             {entry.tipoGiorno && cell(entry.tipoGiorno === "RECUPERO" ? "R" : entry.tipoGiorno, "ROUTINE")}
             {activeDay
-              ? cell(`✓ · ${routineStreak}`, entry.routineCompletata === true ? "STREAK" : "STREAK (ALLENAMENTO)", "acid")
+              ? cell(`${routineStreak}`, entry.routineCompletata === true ? "STREAK" : "STREAK (ALLENAMENTO)", "acid")
               : entry.routineCompletata === false
                 ? cell("RESET", "STREAK", "primary")
                 : null}
@@ -238,7 +237,7 @@ function VsMediaTable({ entry, averages }: { entry: GiornoEntry; averages: VsMet
             <div className="w-[30%] text-right font-serif text-[28px] leading-none text-foreground bebas measured">
               {formatNumber(m.value, m.fraction ?? 0)}
             </div>
-            <div className={`w-[30%] text-right text-[14px] font-sans font-bold ${colorClass}`}>
+            <div className={`w-[30%] text-right text-[14px] font-mono font-bold ${colorClass}`}>
               {arrow} {pctText}%
             </div>
           </div>
@@ -307,7 +306,7 @@ function DiaryText({ text, entryId, entryNumero }: { text: string; entryId: numb
                   }}
                   className="ml-2 inline-flex align-middle text-[10px] uppercase tracking-[0.12em] text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:text-primary"
                 >
-                  <Share2 size={11} />
+                  CONDIVIDI
                 </button>
                 {lineIndex < buffer.length - 1 ? " " : null}
               </span>
@@ -423,7 +422,7 @@ function LinkedArticles({ entryData }: { entryData: string }) {
         {matched.map((article) => (
           <Link
             key={article.id}
-            href={`/a/${article.slug}`}
+            href={`/articoli/${article.slug}`}
             className="group border border-border bg-card px-5 py-4 hover:border-iron transition-colors"
           >
             <div className="flex items-center gap-3 mb-2">
@@ -477,7 +476,7 @@ function ShareButton({ entryNumero, entryTesto }: { entryNumero: number; entryTe
         onClick={handleShare}
         className="border border-border bg-card px-6 py-3 font-serif text-[14px] uppercase tracking-[0.15em] text-muted-foreground hover:text-foreground hover:border-iron transition-colors"
       >
-        {copied ? "LINK COPIATO ✓" : "CONDIVIDI"}
+        {copied ? "LINK COPIATO" : "CONDIVIDI"}
       </button>
     </div>
   );
@@ -632,7 +631,7 @@ function GiornoContent({
             href="/diario"
             className="inline-flex items-center gap-2 text-[11px] font-sans uppercase tracking-[0.2em] text-foreground/70 hover:text-primary transition-colors"
           >
-            <ArrowLeft size={14} /> Diario
+            Diario
           </Link>
         </div>
       </div>
@@ -646,14 +645,14 @@ function GiornoContent({
             <div>
               <span className="page-label">GIORNO</span>
               <h1 className="font-serif text-[clamp(72px,14vw,140px)] leading-[0.8] text-primary bebas tracking-wide">
-                {padDay(entry.numero)}
+                <span className="font-mono">{padDay(entry.numero)}</span>
               </h1>
             </div>
             <div className="text-right pb-2">
               <div className="text-[13px] font-sans uppercase tracking-[0.2em] text-muted-foreground">
                 {format(new Date(entry.data), "EEEE", { locale: it })}
               </div>
-              <div className="font-serif text-[28px] text-foreground bebas tracking-wide">
+              <div className="font-mono text-[28px] text-foreground tracking-wide">
                 {format(new Date(entry.data), "d MMMM yyyy", { locale: it })}
               </div>
             </div>
@@ -726,10 +725,9 @@ function GiornoContent({
               href={`/giorno/${prevEntry.numero}`}
               className="flex min-h-[64px] items-center gap-3 border border-border bg-card px-4 sm:px-5 hover:border-primary transition-colors group"
             >
-              <ArrowLeft size={16} className="shrink-0 text-primary" />
               <div className="min-w-0">
                 <div className="text-[9px] font-sans uppercase tracking-[0.2em] text-muted-foreground">Precedente</div>
-                <div className="font-serif text-[22px] leading-none text-foreground bebas">GG {padDay(prevEntry.numero)}</div>
+                <div className="font-mono text-[22px] leading-none text-foreground">GG {padDay(prevEntry.numero)}</div>
               </div>
             </Link>
           ) : (
@@ -742,9 +740,8 @@ function GiornoContent({
             >
               <div className="min-w-0">
                 <div className="text-[9px] font-sans uppercase tracking-[0.2em] text-muted-foreground">Successivo</div>
-                <div className="font-serif text-[22px] leading-none text-foreground bebas">GG {padDay(nextEntry.numero)}</div>
+                <div className="font-mono text-[22px] leading-none text-foreground">GG {padDay(nextEntry.numero)}</div>
               </div>
-              <ArrowLeft size={16} className="shrink-0 text-primary rotate-180" />
             </Link>
           ) : (
             <div />

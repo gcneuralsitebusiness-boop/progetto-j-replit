@@ -21,7 +21,7 @@ function NavLink({
   const [location] = useLocation();
   const isActive = location === href || (href !== "/" && location.startsWith(href));
   const baseClasses = cn(
-    location === "/diario" || location === "/" ? "text-[13px] font-mono uppercase tracking-[0.2em] transition-colors" : "text-[12px] font-sans uppercase tracking-[0.2em] transition-colors",
+    "text-[13px] font-mono uppercase tracking-[0.2em] transition-colors",
     accent ? "text-[#B81D1D] hover:text-foreground" : isActive ? "nav-active text-foreground" : "text-muted-foreground hover:text-iron"
   );
 
@@ -51,11 +51,10 @@ export function Navbar() {
   const [underline, setUnderline] = useState({ x: 0, width: 0, visible: false });
   const [hasScrolled, setHasScrolled] = useState(false);
   const navigationItems = [
-    { href: "/chi-sono", label: "Chi Sono" },
-    { href: "/obiettivi", label: "Obiettivi" },
     { href: "/diario", label: "Diario" },
-    { href: "/viaggio", label: "Il Viaggio" },
     { href: "/articoli", label: "Articoli" },
+    { href: "/obiettivi", label: "Obiettivi" },
+    { href: "/chi-sono", label: "Chi sono" },
     { href: "/#accesso", label: "Richiedi accesso", accent: true },
   ];
 
@@ -120,11 +119,11 @@ export function Navbar() {
 
   return (
     <>
-      <ScrollProgress />
+      {!/^\/(?:articoli|a)\/[^/]+\/?$/.test(location) && <ScrollProgress />}
       <header
         className="fixed top-0 w-full z-50"
         style={{
-          backgroundColor: hasScrolled ? "#0A0A0A" : "transparent",
+            backgroundColor: hasScrolled || mobileMenuOpen ? "#0A0A0A" : "transparent",
           borderBottom: `1px solid ${hasScrolled ? "rgba(245,240,232,0.12)" : "transparent"}`,
           transition: "background-color 200ms linear, border-color 200ms linear",
         }}
@@ -170,11 +169,7 @@ export function Navbar() {
             aria-expanded={mobileMenuOpen}
             aria-controls="mobile-navigation"
           >
-            {location === "/diario" || location === "/" ? <span className="font-mono text-[13px]" aria-hidden="true">{mobileMenuOpen ? "CHIUDI" : "MENU"}</span> : <span className={`hamburger-icon ${mobileMenuOpen ? "is-open" : ""}`} aria-hidden="true">
-              <span />
-              <span />
-              <span />
-            </span>}
+            <span className="font-mono text-[13px]" aria-hidden="true">{mobileMenuOpen ? "CHIUDI" : "MENU"}</span>
           </button>
         </div>
       </header>
@@ -191,7 +186,7 @@ export function Navbar() {
             height: "100dvh",
             width: "100vw",
             backgroundColor: "#0A0A0A",
-            zIndex: 9999,
+            zIndex: 40,
             display: "flex",
             flexDirection: "column",
             gap: "0.45rem",

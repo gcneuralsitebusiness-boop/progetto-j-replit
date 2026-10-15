@@ -5,22 +5,7 @@ import { Reveal } from "@/components/Reveal";
 import { Cross } from "@/components/Cross";
 import { SiteFooter } from "@/components/SiteFooter";
 import { DataErrorState } from "@/components/DataErrorState";
-import { Instagram, Youtube, Twitter, MessageCircle, Send, Mail, ArrowUpRight } from "lucide-react";
 import { toast } from "sonner";
-
-const ICON_MAP: Record<string, React.ComponentType<{ className?: string; size?: number }>> = {
-  Instagram,
-  Youtube,
-  Twitter,
-  Telegram: MessageCircle,
-  Email: Mail,
-  Default: Send,
-};
-
-function SocialIcon({ name, size = 24 }: { name: string; size?: number }) {
-  const Icon = ICON_MAP[name] || ICON_MAP.Default;
-  return <Icon size={size} className="text-foreground" />;
-}
 
 export default function Social() {
   const [, setLocation] = useLocation();
@@ -95,10 +80,7 @@ export default function Social() {
                 className="group block border border-border bg-card p-5 hover:border-iron transition-colors"
               >
                 <div className="flex items-start justify-between mb-4">
-                  <div className="border border-border p-3">
-                    <SocialIcon name={s.icona} size={22} />
-                  </div>
-                  <ArrowUpRight size={18} className="text-muted-foreground group-hover:text-primary transition-colors" />
+                  <span aria-hidden="true" className="font-mono text-[13px] text-muted-foreground">→</span>
                 </div>
                 <h3 className="font-serif text-[28px] leading-none text-foreground bebas mb-2">{s.nome}</h3>
                 <p className="text-[13px] font-sans text-muted-foreground leading-relaxed">{s.descrizione}</p>
@@ -115,7 +97,6 @@ export default function Social() {
         <div className="border border-border bg-card p-6 sm:p-8">
           <div className="flex items-center gap-3 mb-6">
             <div className="border border-primary p-2">
-              <Mail size={18} className="text-primary" />
             </div>
             <div>
               <span className="text-[11px] font-sans uppercase tracking-[0.2em] text-primary">NETWORKING</span>

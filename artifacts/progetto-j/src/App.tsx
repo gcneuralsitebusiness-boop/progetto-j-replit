@@ -5,6 +5,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { Navbar } from '@/components/Navbar';
 import { ScrollToTop } from '@/components/ScrollToTop';
 import { PageChromeProvider, usePageChrome } from '@/lib/page-chrome';
+import { PublicDesignScope } from '@/components/PublicDesignScope';
 
 const Home = lazy(() => import('@/pages/home'));
 const Diario = lazy(() => import('@/pages/diario'));
@@ -171,6 +172,7 @@ function AppRoutes() {
       <Route path="/sponsor" component={Sponsor} />
       <Route path="/viaggio" component={Viaggio} />
       <Route path="/articoli" component={Articoli} />
+      <Route path="/articoli/:slug" component={Articolo} />
       <Route path="/a/:slug" component={Articolo} />
       <Route path="/coaching" component={Coaching} />
       <Route path="/giorno/:id" component={GiornoDetail} />
@@ -209,6 +211,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
         <PageChromeProvider>
+        <PublicDesignScope />
         <ScrollToTop />
         <PageMetadata />
         <ConditionalNavbar />

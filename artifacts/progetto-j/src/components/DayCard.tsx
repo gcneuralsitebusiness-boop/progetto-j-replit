@@ -1,7 +1,6 @@
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
 import { Link } from "wouter";
-import { ArrowRight } from "lucide-react";
 import { getPhotoUrl } from "@workspace/object-storage-web";
 import { DataLabel } from "./DataLabel";
 import { MilestoneBadge } from "./MilestoneBadge";
@@ -104,9 +103,9 @@ export function DayCard({ entry, featured = false, hookOnly = false }: DayCardPr
           <div className="font-serif text-[64px] sm:text-[80px] md:text-[96px] leading-[0.8] text-primary bebas tracking-wide">
             GIORNO
             <br />
-            {padDay(entry.numero)}
+            <span className="font-mono">{padDay(entry.numero)}</span>
           </div>
-          <div className="text-[11px] sm:text-[12px] font-sans uppercase tracking-[0.2em] text-muted-foreground text-right">
+          <div className="text-[13px] font-mono uppercase tracking-[0.2em] text-muted-foreground text-right">
             {format(new Date(entry.data), "d MMMM yyyy", { locale: it })}
           </div>
         </div>
@@ -141,7 +140,7 @@ export function DayCard({ entry, featured = false, hookOnly = false }: DayCardPr
         )}
 
         <div className="flex items-center gap-1 text-[10px] font-sans uppercase tracking-[0.25em] text-primary group-hover:gap-2 transition-all">
-          Leggi tutto <ArrowRight size={12} />
+          Leggi tutto →
         </div>
       </div>
     </article>

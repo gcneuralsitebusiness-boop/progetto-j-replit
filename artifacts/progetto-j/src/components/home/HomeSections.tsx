@@ -62,7 +62,7 @@ function readingTime(content: string | null | undefined): string {
 export function ArticleCard({ article }: { article: Article }) {
   const src = article.immagine ? getPhotoUrl(article.immagine) ?? article.immagine : null;
   return (
-    <Link href={`/a/${article.slug}`} className="home-article" data-testid={`card-article-${article.id}`}>
+    <Link href={`/articoli/${article.slug}`} className="home-article" data-testid={`card-article-${article.id}`}>
       <div className="cover">
         {src ? <img src={src} alt={article.titolo} loading="lazy" /> : <div className="nophoto home-label">NESSUNA FOTO</div>}
       </div>

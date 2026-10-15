@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 
-export function EmailCapture() {
+const DEFAULT_INTRO = "Quando finisco, mando il documento completo: tutti i dati, il metodo, cosa ha funzionato e cosa no.";
+
+export function EmailCapture({ intro = DEFAULT_INTRO }: { intro?: string } = {}) {
   const [, setLocation] = useLocation();
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
@@ -44,7 +46,7 @@ export function EmailCapture() {
               IL REPORT DEL GIORNO 180
             </h2>
             <p className="mt-5 font-sans text-[15px] leading-[1.7] text-muted-foreground">
-              Quando finisco, mando il documento completo: tutti i dati, il metodo, cosa ha funzionato e cosa no.
+              {intro}
             </p>
             <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-3 sm:flex-row">
               <input

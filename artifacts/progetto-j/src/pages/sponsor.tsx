@@ -3,7 +3,6 @@ import { Reveal } from "@/components/Reveal";
 import { Cross } from "@/components/Cross";
 import { SiteFooter } from "@/components/SiteFooter";
 import { DataErrorState } from "@/components/DataErrorState";
-import { ArrowUpRight, Mail } from "lucide-react";
 
 const LEVEL_STYLES: Record<string, string> = {
   Bronze: "border-[hsl(var(--bronze))] text-[hsl(var(--bronze))]",
@@ -63,7 +62,7 @@ export default function Sponsor() {
               >
                 <div className="flex items-start justify-between mb-4">
                   <span className="text-[10px] font-sans uppercase tracking-[0.2em] border px-2 py-0.5">{s.livello}</span>
-                  {s.url && <ArrowUpRight size={18} className="text-muted-foreground group-hover:text-primary transition-colors" />}
+                  {s.url && <span aria-hidden="true" className="font-mono text-[13px] text-muted-foreground">→</span>}
                 </div>
                 {s.logo && (
                   <div className="h-16 mb-4 flex items-center justify-center bg-[#0a0a0a] border border-border/50">
@@ -82,7 +81,6 @@ export default function Sponsor() {
         <div className="border border-border bg-card p-6 sm:p-8">
           <div className="flex items-center gap-3 mb-4">
             <div className="border border-primary p-2">
-              <Mail size={18} className="text-primary" />
             </div>
             <div>
               <span className="text-[11px] font-sans uppercase tracking-[0.2em] text-primary">DIVENTA SPONSOR</span>
