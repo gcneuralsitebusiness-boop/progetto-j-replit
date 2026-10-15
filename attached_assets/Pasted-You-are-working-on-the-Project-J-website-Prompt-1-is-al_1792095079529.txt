@@ -1,0 +1,49 @@
+You are working on the Project J website. Prompt 1 is already done (/entries/light exists). Create ONE page /diario that replaces /statistiche and /journaling. Reuse the existing charts and the calendar heatmap: move them, do not rewrite them from scratch.
+
+DESIGN RULES (strict)
+Background #0A0A0A, text #E8E4DE, red #B81D1D, lines #1A1A1A, grey #C9C4BD, money color var(--money) #8B6914. Fonts: Bebas Neue for titles, Inter for text, JetBrains Mono for every number and label. Zero border-radius, zero shadows, zero emoji, zero icons. No text below 13px. Arrows and signs are text characters (▲ ▼ →), not icons.
+
+PAGE STRUCTURE (top to bottom)
+1. Header: label "DIARIO PUBBLICO", title "GIORNO N / 180" (N = highest numero), one line: "Ogni giorno, tutti i numeri. Anche quelli brutti."
+2. Sticky section bar under the navbar (horizontal scroll on mobile): TOTALI · SETTIMANA · CORPO · SOLDI · RECUPERO · FORZA · RECORD · CALENDARIO · GIORNI. Each item scrolls to its section; the active one is highlighted in red.
+3. TOTALI — grid of 8 big numbers in JetBrains Mono, animated with the existing AnimatedNumber:
+   giorni documentati (count of entries), allenamenti (entries with durata > 0 or tipoAllenamento not empty and not rest), ore di allenamento (sum of durata, convert from minutes if durata is in minutes — check the admin form to know the unit), km, flessioni, addominali, round, kcal.
+   Flessioni total = for each entry use "flessioni" if not null, otherwise the number parsed from routineFlessioni with the existing parseReps; never count both for the same day. Addominali = sum of "addominali".
+4. SETTIMANA — "Questa settimana vs la precedente". Weeks are Monday–Sunday in Europe/Rome time. Compare: allenamenti, minuti totali, intensità media, sonno medio, peso medio, entrate, uscite. Each row: label, last week value, this week value, delta in % with ▲ or ▼. Color rule: better = red, worse = grey. "Better" means: more for allenamenti/minuti/intensità/sonno/entrate, less for peso/uscite. If a week has no data for a metric show "—".
+5. CORPO — the existing weight chart.
+6. SOLDI — new section, color var(--money):
+   - Monthly bar chart of entrate and uscite (from the entrate/uscite fields), plus a line for the monthly balance (entrate − uscite).
+   - A block "OBIETTIVO: 1.000 € AL MESE FINO A GENNAIO" showing for the current month: balance so far vs 1000, a horizontal bar filled to the percentage, and "GIORNI A GENNAIO: X" counting down to 2027-01-31.
+   - Totals: entrate totali, uscite totali, saldo.
+7. RECUPERO — existing sleep and heart rate charts.
+8. FORZA — existing strength charts, plus the weekly load chart.
+9. RECORD — a board of personal records computed from data: most flessioni in a day, most addominali in a day, longest training, most km in a day, longest streak, best sleep, lowest weight. Each record shows the value and "GIORNO N" as a link to /giorno/N.
+10. CORRELAZIONI — two automatic sentences, only shown if each group has at least 8 days of data:
+    "Quando dormo meno di 6 ore, l'intensità media è X. Quando dormo 6 ore o più, è Y."
+    "Nei giorni con ATTRITO mi alleno in media X minuti. Negli altri Y."
+11. CALENDARIO — the existing heatmap.
+12. GIORNI — the existing day list with three filter chips: TUTTI · CON ATTRITO · ALLENAMENTO, and a search box that filters by day number or by words in sintesi/attrito. On mobile show the 20 most recent and a button "MOSTRA ALTRI 20".
+
+The period selector (7G / 30G / 90G / TUTTO) stays and applies to CORPO, SOLDI charts, RECUPERO, FORZA. It does not apply to TOTALI, RECORD, CALENDARIO.
+
+ROUTING AND NAV
+- /statistiche and /journaling redirect to /diario (keep any hash).
+- Navbar: replace "Statistiche" and "Journaling" with one item "Diario".
+- Update every internal link that pointed to /statistiche or /journaling.
+- Page title: "Diario — Project J". canonical https://projectj180day.com/diario.
+
+DO NOT
+- Delete the old page files until /diario works; then remove them from the router.
+- Show invented values: if data is missing, show "—" or hide the block.
+
+FINAL CHECKLIST
+[ ] /diario loads with all sections in order
+[ ] Totals for flessioni do not double count
+[ ] Week comparison uses Monday–Sunday Europe/Rome
+[ ] SOLDI section uses var(--money), not acid green
+[ ] Records link to the right /giorno/N
+[ ] Correlations hidden when fewer than 8 days per group
+[ ] /statistiche and /journaling redirect to /diario
+[ ] No icons, no text under 13px in the new page
+[ ] Mobile 375px: no horizontal page scroll, sticky bar works
+[ ] Typecheck and build pass
