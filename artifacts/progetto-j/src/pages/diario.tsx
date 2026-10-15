@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
-import { useListLightEntries, getListLightEntriesQueryKey } from "@workspace/api-client-react";
+import { useDiaryMetrics } from "@/hooks/use-diary-metrics";
 import { AnimatedNumber } from "@/components/AnimatedNumber";
 import { SiteFooter } from "@/components/SiteFooter";
 import { usePageMeta } from "@/hooks/use-page-meta";
 import {
   correlations, displayValue, januaryDays, monthlyMoney, moneyTotals, periodEntries,
-  personalRecords, romeDate, totalsFor, weeklyComparisons, weeklyLoad,
+  personalRecords, totalsFor, weeklyLoad,
 } from "@/lib/diario-analytics";
 import {
   CalendarHeatmap, ChartTitle, ForceCharts, MoneyChart, PulseChart, SleepChart, WeeklyLoadChart, WeightChart,
@@ -71,12 +71,9 @@ export default function Diario() {
     url: "https://projectj180day.com/diario",
   });
 
-  const { data, isLoading, isError, refetch, isFetching } = useListLightEntries({ query: { queryKey: getListLightEntriesQueryKey() } });
+  const { entries: all, weekly, today, isLoading, isError, refetch, isFetching } = useDiaryMetrics();
   const [period, setPeriod] = useState<number>(30);
   const [active, setActive] = useState<string>("totali");
-
-  const today = romeDate();
-  const all = useMemo(() => [...(data ?? [])].sort((a, b) => a.data.localeCompare(b.data)), [data]);
 
   const model = useMemo(() => {
     const scoped = periodEntries(all, period, today);
@@ -85,7 +82,7 @@ export default function Diario() {
       maxDay: all.reduce((m, e) => Math.max(m, e.numero), 0),
       scoped,
       totals: totalsFor(all),
-      weeks: weeklyComparisons(all, today),
+      weeks: weekly,
       money: monthlyMoney(scoped),
       moneyAll: moneyTotals(all),
       monthMoney: moneyTotals(all.filter((e) => e.data.startsWith(currentMonth))),
@@ -94,7 +91,7 @@ export default function Diario() {
       load: weeklyLoad(scoped),
       january: januaryDays(today),
     };
-  }, [all, period, today]);
+  }, [all, period, today, weekly]);
 
   // Active section tracking.
   useEffect(() => {
@@ -174,13 +171,14 @@ export default function Diario() {
                   <div key={t.key} className="border-b border-r d-line p-4 md:p-6" data-testid={`total-${t.key}`}>
                     <div className="d-mono text-[clamp(30px,6vw,56px)] leading-none">
                       {t.value == null ? "—" : (
-                        <AnimatedNumber value={t.value} formatter={(n) => `${n.toLocaleString("it-IT", { minimumFractionDigits: t.decimals, maximumFractionDigits: t.decimals })}${"suffix" in t && typeof t.suffix === "string" ? t.suffix : ""}`} />
+                        <AnimatedNumber animate={false} value={t.value} formatter={(n) => `${n.toLocaleString("it-IT", { minimumFractionDigits: t.decimals, maximumFractionDigits: t.decimals })}${"suffix" in t && typeof t.suffix === "string" ? t.suffix : ""}`} />
                       )}
                     </div>
                     <div className="d-label mt-3">{t.label}</div>
                   </div>
                 ))}
               </div>
+              <p className="mt-4 text-[14px] d-muted">Allenamenti e ore usano solo durata e tipo registrati. Le attività storiche prive di questi campi non permettono di ricostruire il numero completo degli allenamenti.</p>
             </Section>
 
             {/* SETTIMANA */}

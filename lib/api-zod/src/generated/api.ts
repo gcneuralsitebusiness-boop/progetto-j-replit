@@ -1153,6 +1153,15 @@ export const DeleteSponsorResponse = zod.void()
 /**
  * @summary List public articles
  */
+export const listArticlesQueryLimitMax = 100;
+
+
+
+export const ListArticlesQueryParams = zod.object({
+  "limit": zod.coerce.number().min(1).max(listArticlesQueryLimitMax).optional(),
+  "publishedOnly": zod.coerce.boolean().optional()
+})
+
 export const listArticlesResponseCardTitoloMax = 60;
 
 export const listArticlesResponseCardSottotitoloMax = 24;

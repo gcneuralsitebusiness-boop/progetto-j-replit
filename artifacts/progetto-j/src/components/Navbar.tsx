@@ -21,7 +21,7 @@ function NavLink({
   const [location] = useLocation();
   const isActive = location === href || (href !== "/" && location.startsWith(href));
   const baseClasses = cn(
-    location === "/diario" ? "text-[13px] font-mono uppercase tracking-[0.2em] transition-colors" : "text-[12px] font-sans uppercase tracking-[0.2em] transition-colors",
+    location === "/diario" || location === "/" ? "text-[13px] font-mono uppercase tracking-[0.2em] transition-colors" : "text-[12px] font-sans uppercase tracking-[0.2em] transition-colors",
     accent ? "text-[#B81D1D] hover:text-foreground" : isActive ? "nav-active text-foreground" : "text-muted-foreground hover:text-iron"
   );
 
@@ -133,7 +133,7 @@ export function Navbar() {
           <Link
             href="/"
             className="font-serif text-[32px] text-primary leading-none bebas tracking-wide"
-            style={{ position: "relative", zIndex: 10000, ...(location === "/diario" ? { fontFamily: '"Bebas Neue", sans-serif' } : {}) }}
+            style={{ position: "relative", zIndex: 10000, ...(location === "/diario" || location === "/" ? { fontFamily: '"Bebas Neue", sans-serif' } : {}) }}
           >
             J
           </Link>
@@ -170,7 +170,7 @@ export function Navbar() {
             aria-expanded={mobileMenuOpen}
             aria-controls="mobile-navigation"
           >
-            {location === "/diario" ? <span className="font-mono text-[13px]" aria-hidden="true">{mobileMenuOpen ? "CHIUDI" : "MENU"}</span> : <span className={`hamburger-icon ${mobileMenuOpen ? "is-open" : ""}`} aria-hidden="true">
+            {location === "/diario" || location === "/" ? <span className="font-mono text-[13px]" aria-hidden="true">{mobileMenuOpen ? "CHIUDI" : "MENU"}</span> : <span className={`hamburger-icon ${mobileMenuOpen ? "is-open" : ""}`} aria-hidden="true">
               <span />
               <span />
               <span />

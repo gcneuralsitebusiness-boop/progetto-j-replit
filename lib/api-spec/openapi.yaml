@@ -712,6 +712,15 @@ paths:
       operationId: listArticles
       tags: [articles]
       summary: List public articles
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema: { type: integer, minimum: 1, maximum: 100 }
+        - name: publishedOnly
+          in: query
+          required: false
+          schema: { type: boolean }
       responses:
         "200":
           description: List of articles

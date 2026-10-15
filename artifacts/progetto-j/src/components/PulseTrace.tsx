@@ -1,7 +1,7 @@
 import type { Entry } from "@workspace/api-client-react";
 
 interface PulseTraceProps {
-  entries: Entry[];
+  entries: Array<Pick<Entry, "numero" | "battito">>;
   variant: "hero" | "divider";
 }
 

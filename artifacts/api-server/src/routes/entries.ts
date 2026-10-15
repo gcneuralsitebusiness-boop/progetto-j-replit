@@ -67,7 +67,7 @@ router.get("/entries/light", async (_req, res): Promise<void> => {
     attrito: giorniTable.attrito,
     foto: giorniTable.foto,
   }).from(giorniTable).orderBy(desc(giorniTable.data));
-  res.setHeader("Cache-Control", "public, max-age=60");
+  res.setHeader("Cache-Control", "no-cache, must-revalidate");
   res.json(ListLightEntriesResponse.parse(ser(rows)));
 });
 

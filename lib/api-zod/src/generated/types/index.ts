@@ -41,6 +41,7 @@ export * from './entryUpdateTipoAllenamento';
 export * from './entryUpdateTipoGiorno';
 export * from './getPlannerAnnotationParams';
 export * from './healthStatus';
+export * from './listArticlesParams';
 export * from './loginInput';
 export * from './notFoundResponse';
 export * from './nuovaTappaTasks';

@@ -5,7 +5,7 @@ import {
   useListEntries, useListEntrySummaries, useGetEntry, useCreateEntry, useUpdateEntry, useDeleteEntry,
   useListPages, useCreatePage, useUpdatePage, useDeletePage,
   useGetEntriesBulkText, useImportEntriesBulkText,
-  getAdminMeQueryKey, getListEntriesQueryKey, getListEntrySummariesQueryKey, getGetLatestEntriesQueryKey, getGetEntryQueryKey,
+  getAdminMeQueryKey, getListEntriesQueryKey, getListLightEntriesQueryKey, getListEntrySummariesQueryKey, getGetLatestEntriesQueryKey, getGetEntryQueryKey,
   getListPagesQueryKey, getGetEntryQueryOptions,
 } from "@workspace/api-client-react";
 import { ObiettiviEditor } from "@/components/admin/ObiettiviEditor";
@@ -373,6 +373,7 @@ function EntryForm({ initialData, defaultNumero = 1, onSuccess, onCancel }: { in
     const payload = buildEntryPayload(formData, initialData);
 
     const invalidate = () => {
+      queryClient.invalidateQueries({ queryKey: getListLightEntriesQueryKey() });
       queryClient.invalidateQueries({ queryKey: getListEntriesQueryKey() });
       queryClient.invalidateQueries({ queryKey: getListEntrySummariesQueryKey() });
       queryClient.invalidateQueries({ queryKey: getGetLatestEntriesQueryKey() });
@@ -765,6 +766,7 @@ function DiarioTab({ scrollToEntry }: { scrollToEntry?: number }) {
           current ? { ...current, ...paths } : current
         );
         void queryClient.invalidateQueries({ queryKey: getListEntrySummariesQueryKey() });
+        void queryClient.invalidateQueries({ queryKey: getListLightEntriesQueryKey() });
         void queryClient.invalidateQueries({ queryKey: getListEntriesQueryKey() });
         setSaveNotice((current) => current?.entry === savedEntry ? { ...current, cards: "done" } : current);
       } catch {
@@ -801,6 +803,7 @@ function DiarioTab({ scrollToEntry }: { scrollToEntry?: number }) {
     if (window.confirm(`Eliminare il giorno ${numero}?`)) {
       deleteMutation.mutate({ numero }, {
         onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: getListLightEntriesQueryKey() });
           queryClient.invalidateQueries({ queryKey: getListEntriesQueryKey() });
           queryClient.invalidateQueries({ queryKey: getListEntrySummariesQueryKey() });
           queryClient.invalidateQueries({ queryKey: getGetLatestEntriesQueryKey() });
@@ -1186,6 +1189,8 @@ function BulkEditTab() {
       {
         onSuccess: (res) => {
           setResult(res);
+          queryClient.invalidateQueries({ queryKey: getListLightEntriesQueryKey() });
+          queryClient.invalidateQueries({ queryKey: getListEntrySummariesQueryKey() });
           queryClient.invalidateQueries({ queryKey: getListEntriesQueryKey() });
           queryClient.invalidateQueries({ queryKey: getGetLatestEntriesQueryKey() });
           queryClient.invalidateQueries({ queryKey: ["entriesBulkText"] });

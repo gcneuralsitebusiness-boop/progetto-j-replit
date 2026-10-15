@@ -1300,6 +1300,15 @@ export type UnauthorizedResponse = ApiError;
  */
 export type NotFoundResponse = ApiError;
 
+export type ListArticlesParams = {
+/**
+ * @minimum 1
+ * @maximum 100
+ */
+limit?: number;
+publishedOnly?: boolean;
+};
+
 export type GetPlannerAnnotationParams = {
 /**
  * @pattern ^\d{4}-\d{2}-\d{2}$

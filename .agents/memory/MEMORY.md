@@ -26,3 +26,4 @@
 - [Drizzle non-TTY rename prompts](drizzle-non-tty-rename-prompts.md) — new tables can trigger rename questions even with `--force`; explicitly choose create in a controlled TTY.
 - [Shared browser test capacity](browser-test-capacity.md) — another workspace tester can block a launch; failed launches are not verification.
 - [Public diary missing metrics](public-diary-metrics.md) — unknown is not zero; do not invent intensity, financial balances, or percentage baselines.
+- [Public diary freshness](public-diary-freshness.md) — invalidate every projection after edits; query invalidation alone does not bypass HTTP caching.
