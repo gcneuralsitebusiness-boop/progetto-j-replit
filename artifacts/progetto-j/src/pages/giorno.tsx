@@ -629,10 +629,10 @@ function GiornoContent({
         {/* Back button */}
         <div className="absolute top-20 left-0 right-0 max-w-5xl mx-auto px-5 sm:px-6">
           <Link
-            href="/journaling"
+            href="/diario"
             className="inline-flex items-center gap-2 text-[11px] font-sans uppercase tracking-[0.2em] text-foreground/70 hover:text-primary transition-colors"
           >
-            <ArrowLeft size={14} /> Journaling
+            <ArrowLeft size={14} /> Diario
           </Link>
         </div>
       </div>
@@ -836,7 +836,7 @@ export default function GiornoDetail() {
       <>
         <div className="min-h-screen pt-24 flex flex-col items-center justify-center gap-6">
           <span className="text-[11px] font-sans uppercase tracking-[0.3em] text-muted-foreground">Giornata non trovata</span>
-          <Link href="/journaling" className="btn-primary text-[12px]">Torna al Journaling</Link>
+          <Link href="/diario" className="btn-primary text-[12px]">Torna al Diario</Link>
         </div>
         <SiteFooter />
       </>

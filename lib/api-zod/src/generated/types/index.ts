@@ -30,6 +30,7 @@ export * from './entryInput';
 export * from './entryInputSollevamentoGamba';
 export * from './entryInputTipoAllenamento';
 export * from './entryInputTipoGiorno';
+export * from './entryLight';
 export * from './entrySollevamentoGamba';
 export * from './entrySummary';
 export * from './entryTipoAllenamento';

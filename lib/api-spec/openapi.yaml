@@ -82,6 +82,21 @@ paths:
               schema:
                 $ref: "#/components/schemas/ApiError"
 
+  /entries/light:
+    get:
+      operationId: listLightEntries
+      tags: [entries]
+      summary: Public journal metrics without diary bodies or generated card media
+      responses:
+        "200":
+          description: Lightweight entries sorted by date descending
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EntryLight"
+
   /entries/latest:
     get:
       operationId: getLatestEntries
@@ -1276,6 +1291,42 @@ components:
           description: Persisted story card PNG object path
         createdAt:
           type: string
+
+    EntryLight:
+      type: object
+      required: [id, numero, data, hasDiario]
+      properties:
+        id: { type: integer }
+        numero: { type: integer }
+        data: { type: string }
+        hasDiario: { type: boolean }
+        alcol: { type: [boolean, "null"] }
+        collo: { type: [boolean, "null"] }
+        mobilita: { type: [boolean, "null"] }
+        grapplingVuoto: { type: [boolean, "null"] }
+        kcal: { type: [number, "null"] }
+        sonno: { type: [number, "null"] }
+        flessioni: { type: [number, "null"] }
+        addominali: { type: [number, "null"] }
+        round: { type: [number, "null"] }
+        km: { type: [number, "null"] }
+        peso: { type: [number, "null"] }
+        battito: { type: [number, "null"] }
+        entrate: { type: [number, "null"] }
+        uscite: { type: [number, "null"] }
+        durata: { type: [number, "null"] }
+        intensita: { type: [number, "null"] }
+        tipoAllenamento: { type: [string, "null"] }
+        routineCompletata: { type: [boolean, "null"] }
+        routineForza: { type: [boolean, "null"] }
+        routineFlessioni: { type: [string, "null"] }
+        routineTrazioni: { type: [string, "null"] }
+        routineSquat: { type: [string, "null"] }
+        plank: { type: [number, "null"] }
+        sollevamentoGamba: { type: [string, "null"] }
+        sintesi: { type: [string, "null"] }
+        attrito: { type: [string, "null"] }
+        foto: { type: [string, "null"] }
 
     EntrySummary:
       type: object

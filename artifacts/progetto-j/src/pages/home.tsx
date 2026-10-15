@@ -119,7 +119,7 @@ export default function Home() {
               <p className="mt-5 max-w-sm text-center font-sans text-[13px] uppercase tracking-[0.2em] text-muted-foreground sm:text-[14px]">
                 NON È MOTIVAZIONE. SONO NUMERI. 180 GIORNI, TUTTI PUBBLICI.
               </p>
-              <Link href="/journaling" className="btn-primary mt-8">
+              <Link href="/diario" className="btn-primary mt-8">
                  {currentDay > 0 ? "COSA È SUCCESSO OGGI →" : ctaTesto}
                  {currentDay === 0 && <ArrowRight size={16} />}
               </Link>
@@ -229,7 +229,7 @@ export default function Home() {
                 ULTIMI GIORNI
               </h3>
               <Link
-                href="/journaling"
+                href="/diario"
                 className="hidden sm:inline-flex items-center gap-1 text-[11px] font-sans uppercase tracking-[0.2em] text-primary hover:text-foreground transition-colors"
               >
                 Vedi tutti <ArrowRight size={14} />
@@ -261,7 +261,7 @@ export default function Home() {
 
           <div className="mt-10 flex justify-center sm:hidden">
             <Link
-              href="/journaling"
+              href="/diario"
               className="btn-ghost !px-5 !py-2 !text-[11px]"
             >
               Vedi tutti <ArrowRight size={14} />

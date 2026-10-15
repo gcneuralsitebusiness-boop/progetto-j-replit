@@ -25,3 +25,4 @@
 - [Card export compatibility](card-export-compatibility.md) — keep narrow adapters for legacy reel consumers when replacing the shared daily-card renderer.
 - [Drizzle non-TTY rename prompts](drizzle-non-tty-rename-prompts.md) — new tables can trigger rename questions even with `--force`; explicitly choose create in a controlled TTY.
 - [Shared browser test capacity](browser-test-capacity.md) — another workspace tester can block a launch; failed launches are not verification.
+- [Public diary missing metrics](public-diary-metrics.md) — unknown is not zero; do not invent intensity, financial balances, or percentage baselines.

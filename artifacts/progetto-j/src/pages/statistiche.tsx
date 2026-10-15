@@ -27,6 +27,7 @@ import { TerminalBackdrop } from "@/components/TerminalBackdrop";
 import { Grid180 } from "@/components/Grid180";
 import { SiteFooter } from "@/components/SiteFooter";
 import { useReveal } from "@/lib/use-reveal";
+import { parseReps } from "@/lib/diario-analytics";
 
 const COLORS = { red: "#B81D1D", copper: "#B87333", acid: "#00FF41", ink: "#E8E4DE", gray: "#6E6A65" };
 const tooltipStyle = {
@@ -90,14 +91,6 @@ function routineStats(entries: Entry[]) {
     if (index === sorted.length - 1) current = run;
   }
   return { current, record };
-}
-
-function parseReps(value: string | null | undefined): number | null {
-  if (!value?.trim()) return null;
-  const sets = [...value.matchAll(/(\d+)\s*[x×]\s*(\d+)/gi)];
-  if (sets.length) return sets.reduce((sum, match) => sum + Number(match[1]) * Number(match[2]), 0);
-  const simple = Number(value.replace(/[^\d]/g, ""));
-  return Number.isFinite(simple) && simple > 0 ? simple : null;
 }
 
 function liftLevel(value: Entry["sollevamentoGamba"]): number | null {

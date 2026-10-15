@@ -278,6 +278,45 @@ export const CreateEntryResponse = zod.object({
 
 
 /**
+ * @summary Public journal metrics without diary bodies or generated card media
+ */
+export const ListLightEntriesResponseItem = zod.object({
+  "id": zod.number(),
+  "numero": zod.number(),
+  "data": zod.string(),
+  "hasDiario": zod.boolean(),
+  "alcol": zod.boolean().nullish(),
+  "collo": zod.boolean().nullish(),
+  "mobilita": zod.boolean().nullish(),
+  "grapplingVuoto": zod.boolean().nullish(),
+  "kcal": zod.number().nullish(),
+  "sonno": zod.number().nullish(),
+  "flessioni": zod.number().nullish(),
+  "addominali": zod.number().nullish(),
+  "round": zod.number().nullish(),
+  "km": zod.number().nullish(),
+  "peso": zod.number().nullish(),
+  "battito": zod.number().nullish(),
+  "entrate": zod.number().nullish(),
+  "uscite": zod.number().nullish(),
+  "durata": zod.number().nullish(),
+  "intensita": zod.number().nullish(),
+  "tipoAllenamento": zod.string().nullish(),
+  "routineCompletata": zod.boolean().nullish(),
+  "routineForza": zod.boolean().nullish(),
+  "routineFlessioni": zod.string().nullish(),
+  "routineTrazioni": zod.string().nullish(),
+  "routineSquat": zod.string().nullish(),
+  "plank": zod.number().nullish(),
+  "sollevamentoGamba": zod.string().nullish(),
+  "sintesi": zod.string().nullish(),
+  "attrito": zod.string().nullish(),
+  "foto": zod.string().nullish()
+})
+export const ListLightEntriesResponse = zod.array(ListLightEntriesResponseItem)
+
+
+/**
  * Returns the 3 most recent entries for the home page
  * @summary Get 3 most recent journal entries
  */

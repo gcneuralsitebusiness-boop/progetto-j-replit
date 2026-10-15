@@ -37,6 +37,7 @@ import type {
   ContentInput,
   Entry,
   EntryInput,
+  EntryLight,
   EntrySummary,
   EntryUpdate,
   GetPlannerAnnotationParams,
@@ -318,6 +319,83 @@ export const useCreateEntry = <TError = ErrorType<ApiError>,
       > => {
       return useMutation(getCreateEntryMutationOptions(options));
     }
+
+export const getListLightEntriesUrl = () => {
+
+
+
+
+  return `/api/entries/light`
+}
+
+/**
+ * @summary Public journal metrics without diary bodies or generated card media
+ */
+export const listLightEntries = async ( options?: RequestInit): Promise<EntryLight[]> => {
+
+  return customFetch<EntryLight[]>(getListLightEntriesUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListLightEntriesQueryKey = () => {
+    return [
+    `/api/entries/light`
+    ] as const;
+    }
+
+
+export const getListLightEntriesQueryOptions = <TData = Awaited<ReturnType<typeof listLightEntries>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listLightEntries>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListLightEntriesQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listLightEntries>>> = ({ signal }) => listLightEntries({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listLightEntries>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListLightEntriesQueryResult = NonNullable<Awaited<ReturnType<typeof listLightEntries>>>
+export type ListLightEntriesQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Public journal metrics without diary bodies or generated card media
+ */
+
+export function useListLightEntries<TData = Awaited<ReturnType<typeof listLightEntries>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listLightEntries>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListLightEntriesQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
 export const getGetLatestEntriesUrl = () => {
 

@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, sql } from "drizzle-orm";
 import { db, giorniTable } from "@workspace/db";
 import { ensureTodayEntry } from "../lib/ensureToday";
 import {
@@ -11,6 +11,7 @@ import {
   GetLatestEntriesResponse,
   CreateEntryResponse,
   UpdateEntryResponse,
+  ListLightEntriesResponse,
 } from "@workspace/api-zod";
 
 const router: IRouter = Router();
@@ -29,6 +30,45 @@ router.get("/entries", async (_req, res): Promise<void> => {
     .from(giorniTable)
     .orderBy(desc(giorniTable.data));
   res.json(ListEntriesResponse.parse(ser(rows)));
+});
+
+// A strict projection: never ship diary bodies, private notes or generated cards.
+router.get("/entries/light", async (_req, res): Promise<void> => {
+  const rows = await db.select({
+    id: giorniTable.id,
+    numero: giorniTable.numero,
+    data: giorniTable.data,
+    hasDiario: sql<boolean>`coalesce(length(trim(${giorniTable.testo})) > 0, false)`,
+    alcol: giorniTable.alcol,
+    collo: giorniTable.collo,
+    mobilita: giorniTable.mobilita,
+    grapplingVuoto: giorniTable.grapplingVuoto,
+    kcal: giorniTable.kcal,
+    sonno: giorniTable.sonno,
+    flessioni: giorniTable.flessioni,
+    addominali: giorniTable.addominali,
+    round: giorniTable.round,
+    km: giorniTable.km,
+    peso: giorniTable.peso,
+    battito: giorniTable.battito,
+    entrate: giorniTable.entrate,
+    uscite: giorniTable.uscite,
+    durata: giorniTable.durata,
+    intensita: giorniTable.intensita,
+    tipoAllenamento: giorniTable.tipoAllenamento,
+    routineCompletata: giorniTable.routineCompletata,
+    routineForza: giorniTable.routineForza,
+    routineFlessioni: giorniTable.routineFlessioni,
+    routineTrazioni: giorniTable.routineTrazioni,
+    routineSquat: giorniTable.routineSquat,
+    plank: giorniTable.plank,
+    sollevamentoGamba: giorniTable.sollevamentoGamba,
+    sintesi: giorniTable.sintesi,
+    attrito: giorniTable.attrito,
+    foto: giorniTable.foto,
+  }).from(giorniTable).orderBy(desc(giorniTable.data));
+  res.setHeader("Cache-Control", "public, max-age=60");
+  res.json(ListLightEntriesResponse.parse(ser(rows)));
 });
 
 // GET /entries/latest — 3 most recent entries

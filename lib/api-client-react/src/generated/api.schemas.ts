@@ -256,6 +256,67 @@ export interface Entry {
   createdAt?: string;
 }
 
+export interface EntryLight {
+  id: number;
+  numero: number;
+  data: string;
+  hasDiario: boolean;
+  /** @nullable */
+  alcol?: boolean | null;
+  /** @nullable */
+  collo?: boolean | null;
+  /** @nullable */
+  mobilita?: boolean | null;
+  /** @nullable */
+  grapplingVuoto?: boolean | null;
+  /** @nullable */
+  kcal?: number | null;
+  /** @nullable */
+  sonno?: number | null;
+  /** @nullable */
+  flessioni?: number | null;
+  /** @nullable */
+  addominali?: number | null;
+  /** @nullable */
+  round?: number | null;
+  /** @nullable */
+  km?: number | null;
+  /** @nullable */
+  peso?: number | null;
+  /** @nullable */
+  battito?: number | null;
+  /** @nullable */
+  entrate?: number | null;
+  /** @nullable */
+  uscite?: number | null;
+  /** @nullable */
+  durata?: number | null;
+  /** @nullable */
+  intensita?: number | null;
+  /** @nullable */
+  tipoAllenamento?: string | null;
+  /** @nullable */
+  routineCompletata?: boolean | null;
+  /** @nullable */
+  routineForza?: boolean | null;
+  /** @nullable */
+  routineFlessioni?: string | null;
+  /** @nullable */
+  routineTrazioni?: string | null;
+  /** @nullable */
+  routineSquat?: string | null;
+  /** @nullable */
+  plank?: number | null;
+  /** @nullable */
+  sollevamentoGamba?: string | null;
+  /** @nullable */
+  sintesi?: string | null;
+  /** @nullable */
+  attrito?: string | null;
+  /** @nullable */
+  foto?: string | null;
+}
+
 export interface EntrySummary {
   id: number;
   numero: number;
