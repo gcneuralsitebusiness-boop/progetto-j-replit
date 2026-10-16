@@ -1,0 +1,31 @@
+You are working on the Project J website. Prompts 1–4 are done. Build "J IN TEMPO REALE": a live status of what J is doing now. RULE: never show invented biometric numbers. Activity comes from J's real schedule; biometrics show "SENSORE IN ATTESA" until a real watch is connected.
+
+DATA
+1. New table "stato_live": id, override (text, nullable), overrideFino (timestamp, nullable), aggiornato (timestamp).
+2. New table "programma": giorno (0–6, Monday=0), inizio (HH:MM), fine (HH:MM), attivita (enum: SONNO, LAVORO, ALLENAMENTO, LIBERO). Seed Monday–Friday: 00:00–06:00 SONNO, 06:00–07:00 LIBERO, 07:00–17:00 LAVORO, 17:00–19:00 LIBERO, 19:00–20:30 ALLENAMENTO, 20:30–23:00 LIBERO, 23:00–24:00 SONNO. Seed Saturday and Sunday: 00:00–08:00 SONNO, 08:00–23:00 LIBERO, 23:00–24:00 SONNO.
+3. Endpoint GET /live returns: attivita (override if active, otherwise from programma at the current Europe/Rome time), da (start time of current block), prossima (next activity and its start), sensore: "offline". Cache-Control: max-age=30.
+
+ADMIN
+In /admin add a "LIVE" panel: four big buttons SONNO / LAVORO / ALLENAMENTO / LIBERO that set an override for 3 hours, a button "TORNA AL PROGRAMMA" that clears it, and a simple editor for the programma table.
+
+PAGE /live
+- Label "J IN TEMPO REALE", current Europe/Rome time in JetBrains Mono updating every second.
+- Huge Bebas word with the activity: "IN QUOTA" for LAVORO, "SUL RING" for ALLENAMENTO, "DORME" for SONNO, "FUORI SERVIZIO" for LIBERO. Under it "DALLE HH:MM" and "PROSSIMO: X ALLE HH:MM".
+- A 24-hour horizontal timeline of today: blocks colored by activity (LAVORO grey #C9C4BD, ALLENAMENTO red #B81D1D, SONNO #1A1A1A with a 1px border, LIBERO transparent), a thin vertical ivory line at the current time.
+- BIOMETRIA block: three rows BATTITO, OSSIGENO, STRESS. Each row shows a FLAT line drawn with the PulseTrace style and the text "SENSORE IN ATTESA" in JetBrains Mono grey. No numbers.
+- One line at the bottom: "Quando arriva l'orologio, questa linea si accende con i dati veri."
+- Polls /live every 60 seconds.
+
+HOME
+Add a small strip under the hero: "ORA: IN QUOTA · DALLE 07:00" (same wording), linking to /live. Add "Live" to the navbar after Diario.
+
+DESIGN RULES: same as always. Zero radius, shadows, emoji, icons; no text under 13px; numbers in JetBrains Mono.
+
+FINAL CHECKLIST
+[ ] /live shows the right activity for the current Europe/Rome time
+[ ] Admin override works and expires after 3 hours
+[ ] "Torna al programma" clears the override
+[ ] Biometric rows show no numbers, only flat lines and "SENSORE IN ATTESA"
+[ ] Home strip shows the same activity as /live
+[ ] Weekend schedule differs from weekdays
+[ ] Typecheck and build pass
