@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "wouter";
 import {
   Area, Bar, BarChart, CartesianGrid, ComposedChart, Line, LineChart,
@@ -7,7 +7,7 @@ import {
 import { format, isAfter, parseISO } from "date-fns";
 import { it } from "date-fns/locale";
 import type { EntryLight } from "@workspace/api-client-react";
-import { hasRoutineActivity, isTraining, parseReps, pushupCount } from "@/lib/diario-analytics";
+import { entriesByDate, hasRoutineActivity, isTraining, parseReps, pushupCount } from "@/lib/diario-analytics";
 import { useReveal } from "@/lib/use-reveal";
 
 export const COLORS = { red: "#B81D1D", ink: "#E8E4DE", grey: "#C9C4BD", line: "#1A1A1A", money: "#8B6914", dim: "#6E6A65" };
@@ -276,14 +276,16 @@ export function WeeklyLoadChart({ weeks }: { weeks: Array<{ label: string; load:
 
 /* ── CALENDARIO ────────────────────────────────────── */
 export function CalendarHeatmap({ entries, today }: { entries: EntryLight[]; today: string }) {
-  const startMonth = new Date("2026-05-01T00:00:00");
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const sorted = [...entries].sort((a, b) => a.data.localeCompare(b.data));
+  const startMonth = parseISO(`${(sorted[0]?.data ?? today).slice(0, 7)}-01`);
   const todayDate = parseISO(today);
   const lastDate = sorted.length ? parseISO(sorted[sorted.length - 1].data) : todayDate;
   const endDate = isAfter(lastDate, todayDate) ? lastDate : todayDate;
   const months: Date[] = [];
   for (let c = new Date(startMonth); !isAfter(c, endDate); c.setMonth(c.getMonth() + 1)) months.push(new Date(c));
-  const byDate = new Map(entries.map((e) => [e.data, e]));
+  const byDate = entriesByDate(entries);
+  const selected = selectedDate ? byDate.get(selectedDate) ?? [] : [];
   return (
     <div>
       <div className="flex gap-8 overflow-x-auto pb-3">
@@ -291,25 +293,41 @@ export function CalendarHeatmap({ entries, today }: { entries: EntryLight[]; tod
           const monthKey = format(month, "yyyy-MM");
           const days = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
           return (
-            <div key={monthKey} className="min-w-[200px]">
+            <div key={monthKey} className="min-w-[332px]">
               <h3 className="d-title mb-3 text-[20px] uppercase tracking-wider d-muted">{format(month, "MMMM", { locale: it })} <span className="d-mono">{format(month, "yyyy")}</span></h3>
               <div className="grid grid-cols-7 gap-1">
+                {["L", "M", "M", "G", "V", "S", "D"].map((label, index) => <span key={`weekday-${index}`} aria-hidden="true" className="text-center text-[12px] d-muted">{label}</span>)}
+                {Array.from({ length: (month.getDay() + 6) % 7 }, (_, index) => <span key={`offset-${index}`} aria-hidden="true" />)}
                 {Array.from({ length: days }, (_, i) => {
                   const date = `${monthKey}-${String(i + 1).padStart(2, "0")}`;
-                  const entry = byDate.get(date);
-                  const training = entry ? isTraining(entry) : false;
-                  const routine = entry ? hasRoutineActivity(entry) : false;
+                  const group = byDate.get(date) ?? [];
+                  const entry = group[0];
+                  const available = group.filter((e) => e.data !== today || e.hasDiario);
+                  const training = available.some(isTraining);
+                  const routine = available.some(hasRoutineActivity);
                   const bg = routine && training ? COLORS.red : routine || training ? "rgba(184,29,29,0.45)" : entry ? "#2A2A2A" : "transparent";
-                  const title = entry ? [`Giorno ${entry.numero}`, training ? entry.tipoAllenamento || "Allenamento" : null, routine ? "Routine" : null, entry.alcol === true ? "Alcol" : null].filter(Boolean).join(" · ") : date;
-                  const style = { background: entry?.alcol === true ? "repeating-linear-gradient(45deg, #B81D1D 0 3px, #0A0A0A 3px 5px)" : bg, border: entry ? "none" : `1px solid ${COLORS.line}` };
+                  const title = entry ? [date, group.map((e) => `Giorno ${e.numero}`).join(", "), !available.length ? "Giornata in corso" : null, training ? "Allenamento" : null, routine ? "Routine" : null].filter(Boolean).join(" · ") : date;
+                  const style = { background: available.some((e) => e.alcol === true) ? "repeating-linear-gradient(45deg, #B81D1D 0 3px, #0A0A0A 3px 5px)" : bg, border: entry ? "none" : `1px solid ${COLORS.line}` };
+                  if (group.length > 1) {
+                    return <button key={date} type="button" title={title} aria-label={`${title}. Apri le ${group.length} giornate`} aria-expanded={selectedDate === date} aria-controls="calendar-date-entries" onClick={() => setSelectedDate(selectedDate === date ? null : date)} className="h-11 w-11 d-mono text-[13px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#E8E4DE]" style={style}>{group.length}</button>;
+                  }
                   return entry
-                    ? <Link key={date} href={`/giorno/${entry.numero}`} title={title} aria-label={title} className="block h-6 w-6 hover:outline hover:outline-1 hover:outline-[#E8E4DE]" style={style} />
-                    : <span key={date} title={title} className="block h-6 w-6" style={style} />;
+                    ? <Link key={date} href={`/giorno/${entry.numero}`} title={title} aria-label={title} className="flex h-11 w-11 items-center justify-center text-[12px] hover:outline hover:outline-1 hover:outline-[#E8E4DE]" style={style}>{i + 1}</Link>
+                    : <span key={date} title={title} className="flex h-11 w-11 items-center justify-center text-[12px] d-muted" style={style}>{i + 1}</span>;
                 })}
               </div>
             </div>
           );
         })}
+      </div>
+      <div id="calendar-date-entries" aria-live="polite">
+        {selectedDate && selected.length > 0 && <div className="mt-5 border d-line p-4">
+          <p className="d-label mb-3">{format(parseISO(selectedDate), "d MMMM yyyy", { locale: it })} · {selected.length} giornate registrate</p>
+          <div className="flex flex-wrap gap-3">
+            {selected.map((entry) => <Link key={entry.id} href={`/giorno/${entry.numero}`} className="d-btn inline-flex items-center">GIORNO {entry.numero}</Link>)}
+          </div>
+          <p className="d-muted mt-3 text-[13px]">Le registrazioni condividono la data originale. Nessuna giornata è stata sostituita.</p>
+        </div>}
       </div>
       <div className="mt-4 flex flex-wrap gap-5 d-label">
         <span className="flex items-center gap-2"><span className="inline-block h-[13px] w-[13px]" style={{ background: COLORS.red }} />ALLENAMENTO + ROUTINE</span>

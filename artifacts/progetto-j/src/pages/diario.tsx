@@ -6,7 +6,7 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { usePageMeta } from "@/hooks/use-page-meta";
 import {
   correlations, displayValue, januaryDays, monthlyMoney, moneyTotals, periodEntries,
-  personalRecords, totalsFor, weeklyLoad,
+  personalRecords, totalsFor, weeklyLoad, diaryCoverage, recordedEntries,
 } from "@/lib/diario-analytics";
 import {
   CalendarHeatmap, ChartTitle, ForceCharts, MoneyChart, PulseChart, SleepChart, WeeklyLoadChart, WeightChart,
@@ -48,7 +48,8 @@ function Section({ id, title, kicker, children, money = false }: { id: string; t
 }
 
 function scrollToId(id: string, smooth = true) {
-  document.getElementById(id)?.scrollIntoView({ behavior: smooth ? "smooth" : "auto", block: "start" });
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  document.getElementById(id)?.scrollIntoView({ behavior: smooth && !reducedMotion ? "smooth" : "auto", block: "start" });
 }
 
 function Skeleton() {
@@ -76,18 +77,20 @@ export default function Diario() {
   const [active, setActive] = useState<string>("totali");
 
   const model = useMemo(() => {
-    const scoped = periodEntries(all, period, today);
+    const recorded = recordedEntries(all, today);
+    const scoped = periodEntries(recorded, period, today);
     const currentMonth = today.slice(0, 7);
     return {
       maxDay: all.reduce((m, e) => Math.max(m, e.numero), 0),
       scoped,
-      totals: totalsFor(all),
+      totals: totalsFor(recorded),
+      coverage: diaryCoverage(all, today),
       weeks: weekly,
       money: monthlyMoney(scoped),
-      moneyAll: moneyTotals(all),
-      monthMoney: moneyTotals(all.filter((e) => e.data.startsWith(currentMonth))),
-      records: personalRecords(all),
-      corr: correlations(all),
+      moneyAll: moneyTotals(recorded),
+      monthMoney: moneyTotals(recorded.filter((e) => e.data.startsWith(currentMonth))),
+      records: personalRecords(recorded),
+      corr: correlations(recorded),
       load: weeklyLoad(scoped),
       january: januaryDays(today),
     };
@@ -151,6 +154,10 @@ export default function Diario() {
               GIORNO <span className="d-mono">{model.maxDay || "—"}</span><span className="d-mono d-muted whitespace-nowrap"> / 180</span>
             </h1>
             <p className="mt-5 max-w-xl text-[17px] leading-relaxed">Ogni giorno, tutti i numeri. Anche quelli brutti.</p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <a href="#giorni" className="d-btn inline-flex items-center" onClick={(e) => onNav(e, "giorni")}>LEGGI LE GIORNATE</a>
+              <a href="#calendario" className="d-btn inline-flex items-center" onClick={(e) => onNav(e, "calendario")}>ESPLORA IL CALENDARIO</a>
+            </div>
           </header>
 
           <nav className="d-nav" aria-label="Sezioni del diario">
@@ -166,6 +173,15 @@ export default function Diario() {
           <main className="mx-auto max-w-6xl px-5">
             {/* TOTALI */}
             <Section id="totali" title="TOTALI" kicker="TUTTO IL PERCORSO">
+              <div className="mb-6 border-l-2 border-[#B81D1D] bg-[#121010] p-4 text-[14px] leading-relaxed" data-testid="diary-data-coverage">
+                <p className="d-mono">Numeri registrati, non una ricostruzione del racconto.</p>
+                <p className="d-muted mt-2">
+                  Durata disponibile per {model.coverage.duration} su {model.coverage.records} giornate.
+                  {" "}I valori mancanti non sono zero: ore e allenamenti possono essere parziali.
+                  {" "}I km comprendono tutte le attività registrate, anche camminate e giornate miste: non sono i soli km di corsa.
+                </p>
+                {model.coverage.pending > 0 && <p className="d-muted mt-2">La giornata in corso è esclusa dai riepiloghi finché il diario non è completato.</p>}
+              </div>
               <div className="grid grid-cols-2 border-l border-t d-line md:grid-cols-4">
                 {model.totals.map((t) => (
                   <div key={t.key} className="border-b border-r d-line p-4 md:p-6" data-testid={`total-${t.key}`}>
@@ -175,6 +191,10 @@ export default function Diario() {
                       )}
                     </div>
                     <div className="d-label mt-3">{t.label}</div>
+                    {t.key === "giorni" && <p className="mt-2 text-[12px] d-muted">{model.coverage.dates} date distinte · giornata in corso esclusa</p>}
+                    {t.key === "allenamenti" && <p className="mt-2 text-[12px] d-muted">Tipo o durata presenti in {model.coverage.training}/{model.coverage.records} giornate. Non conta le singole sessioni.</p>}
+                    {t.key === "ore" && <p className="mt-2 text-[12px] d-muted">Durata presente in {model.coverage.duration}/{model.coverage.records} giornate.</p>}
+                    {t.key === "km" && <p className="mt-2 text-[12px] d-muted">Distanza presente in {model.coverage.distance}/{model.coverage.records} giornate. Tutte le attività.</p>}
                   </div>
                 ))}
               </div>

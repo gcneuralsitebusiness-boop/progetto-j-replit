@@ -36,9 +36,40 @@ export function isTraining(entry: DiaryEntry): boolean {
   return (finite(entry.durata) && entry.durata > 0) || Boolean(type && !rest.includes(type));
 }
 
+export function isRecordedRest(entry: DiaryEntry): boolean {
+  return !isTraining(entry) && (finite(entry.durata) || Boolean(entry.tipoAllenamento?.trim()));
+}
+
 export function hasRoutineActivity(entry: DiaryEntry): boolean {
   return [entry.routineCompletata, entry.routineForza, entry.collo, entry.mobilita, entry.grapplingVuoto]
     .some((value) => value === true);
+}
+
+/** Keep today's unpublished measurements out of public summaries. */
+export function recordedEntries(entries: DiaryEntry[], today = romeDate()): DiaryEntry[] {
+  return entries.filter((entry) => entry.data !== today || entry.hasDiario);
+}
+
+export function entriesByDate(entries: DiaryEntry[]): Map<string, DiaryEntry[]> {
+  const dates = new Map<string, DiaryEntry[]>();
+  for (const entry of [...entries].sort((a, b) => a.numero - b.numero)) {
+    const group = dates.get(entry.data) ?? [];
+    group.push(entry);
+    dates.set(entry.data, group);
+  }
+  return dates;
+}
+
+export function diaryCoverage(entries: DiaryEntry[], today = romeDate()) {
+  const recorded = recordedEntries(entries, today);
+  return {
+    records: recorded.length,
+    dates: entriesByDate(recorded).size,
+    pending: entries.length - recorded.length,
+    training: recorded.filter((entry) => finite(entry.durata) || Boolean(entry.tipoAllenamento?.trim())).length,
+    duration: recorded.filter((entry) => finite(entry.durata)).length,
+    distance: recorded.filter((entry) => finite(entry.km)).length,
+  };
 }
 
 export function periodEntries(entries: DiaryEntry[], period: number, today = romeDate()): DiaryEntry[] {
@@ -65,10 +96,10 @@ function sessions(entries: DiaryEntry[]): number | null {
 export function totalsFor(entries: DiaryEntry[]) {
   const minutes = sum(entries, (entry) => entry.durata);
   return [
-    { key: "giorni", label: "Giorni documentati", value: entries.length, decimals: 0 },
-    { key: "allenamenti", label: "Allenamenti", value: sessions(entries), decimals: 0 },
-    { key: "ore", label: "Ore di allenamento", value: minutes == null ? null : minutes / 60, decimals: 1 },
-    { key: "km", label: "Km", value: sum(entries, (entry) => entry.km), decimals: 1 },
+    { key: "giorni", label: "Giornate registrate", value: entries.length, decimals: 0 },
+    { key: "allenamenti", label: "Giorni con allenamento", value: sessions(entries), decimals: 0 },
+    { key: "ore", label: "Ore registrate", value: minutes == null ? null : minutes / 60, decimals: 1 },
+    { key: "km", label: "Km complessivi", value: sum(entries, (entry) => entry.km), decimals: 1 },
     { key: "flessioni", label: "Flessioni", value: sum(entries, pushupCount), decimals: 0 },
     { key: "addominali", label: "Addominali", value: sum(entries, (entry) => entry.addominali), decimals: 0 },
     { key: "round", label: "Round", value: sum(entries, (entry) => entry.round), decimals: 0 },

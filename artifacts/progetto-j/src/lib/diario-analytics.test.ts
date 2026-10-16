@@ -1,6 +1,19 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import type { EntryLight } from "@workspace/api-client-react";
+import { diaryCoverage, entriesByDate, recordedEntries, isRecordedRest } from "./diario-analytics";
+
+test("coverage preserves real zeros and excludes today's unfinished measurements", () => {
+  const entries = [
+    row(1, "2026-10-01", { durata: 0, km: 0 }),
+    row(2, "2026-10-01", { durata: 60 }),
+    row(3, "2026-10-02"),
+    row(4, "2026-10-16", { durata: 300, km: 50, hasDiario: false }),
+  ];
+  assert.deepEqual(diaryCoverage(entries, "2026-10-16"), { records: 3, dates: 2, pending: 1, training: 2, duration: 2, distance: 1 });
+  assert.equal(totalsFor(recordedEntries(entries, "2026-10-16")).find((m) => m.key === "ore")?.value, 1);
+  assert.deepEqual(entriesByDate(entries).get("2026-10-01")?.map((e) => e.numero), [1, 2]);
+});
 import {
   correlations, januaryDays, isTraining, mondayOf, moneyTotals, monthlyMoney, periodEntries,
   personalRecords, romeDate, totalsFor, weeklyComparisons, weeklyLoad,
@@ -26,6 +39,9 @@ test("training sessions respect actual minutes or a non-rest type; missing is no
   assert.equal(isTraining(row(3, "2026-10-03", { durata: 45 })), true);
   assert.equal(isTraining(row(4, "2026-10-04", { tipoAllenamento: " rest " })), false);
   assert.equal(totalsFor([row(5, "2026-10-05")]).find((x) => x.key === "allenamenti")?.value, null);
+  assert.equal(isRecordedRest(row(6, "2026-10-06")), false);
+  assert.equal(isRecordedRest(row(7, "2026-10-07", { durata: 0 })), true);
+  assert.equal(isRecordedRest(row(8, "2026-10-08", { tipoAllenamento: "RIPOSO" })), true);
 });
 
 test("weeks use Monday–Sunday based on Rome calendar, including the UTC Sunday boundary", () => {

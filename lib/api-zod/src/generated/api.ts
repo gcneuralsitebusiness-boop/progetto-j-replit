@@ -567,6 +567,10 @@ export const UpdateEntryParams = zod.object({
   "numero": zod.coerce.number()
 })
 
+export const UpdateEntryHeader = zod.object({
+  "If-Match": zod.string().optional().describe('Update only if the current entry has this revision; otherwise return 412 without changing data')
+})
+
 export const updateEntryBodyDataRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
 export const updateEntryBodyPastiMax = 6;
 

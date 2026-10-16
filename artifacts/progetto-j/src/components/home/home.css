@@ -14,7 +14,7 @@
 .home-root *, .home-root *::before, .home-root *::after { border-radius: 0 !important; box-shadow: none !important; }
 /* No icons on home, except the data-visual pulse trace. */
 .home-root svg:not(.home-pulse svg):not(.home-pulse *) { display: none !important; }
-.home-root .day-progress-ring { display: inline-block; border-radius: 50% !important; }
+.home-root .day-progress-ring, .home-root .home-circle { display: inline-block; border-radius: 50% !important; }
 /* Legacy small fonts -> 13px minimum; legacy serif -> Bebas. */
 .home-root [class*="text-[9px]"], .home-root [class*="text-[10px]"], .home-root [class*="text-[11px]"], .home-root [class*="text-[12px]"],
 .home-root .text-xs { font-size: 13px !important; }
@@ -82,3 +82,16 @@
 @keyframes home-pulse { 50% { opacity: .45; } }
 .home-error { border: 1px solid var(--h-iron); padding: 20px; display: flex; flex-wrap: wrap; gap: 16px; align-items: center; justify-content: space-between; }
 @media (prefers-reduced-motion: reduce) { .home-skel { animation: none; } }
+
+.home-orient-intro { font-size: 17px; line-height: 1.55; color: var(--h-gray); max-width: 38rem; margin-bottom: 20px; }
+.home-paths { display: grid; gap: 1px; background: var(--h-iron); border: 1px solid var(--h-iron); }
+@media (min-width: 768px) { .home-paths { grid-template-columns: repeat(3, 1fr); } }
+.home-path { display: flex; flex-direction: column; gap: 6px; min-height: 120px; padding: 20px; background: var(--h-bg); transition: background-color .2s; }
+.home-path strong { font-family: "Bebas Neue", sans-serif; font-weight: 400; font-size: 30px; line-height: 1; color: var(--h-ivory); }
+.home-path span:last-child { font-size: 15px; color: var(--h-gray); }
+.home-path:hover { background: #121212; } .home-path:hover strong { color: var(--h-red); }
+.home-path:focus-visible { outline: 2px solid var(--h-ivory); outline-offset: -2px; }
+.home-pending { display: inline-flex; align-items: center; gap: 8px; margin-left: 14px; }
+.home-circle { width: 10px; height: 10px; border: 2px solid var(--h-gray); border-radius: 50% !important; }
+@media (max-width: 639px) { .home-head { flex-direction: column; align-items: flex-start; } .home-link { min-height: 44px; display: inline-flex; align-items: center; } .home-ctas .home-btn { flex: 1 1 100%; } }
+@media (prefers-reduced-motion: reduce) { .home-btn, .home-path, .home-article { transition: none; } }

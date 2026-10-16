@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { getListLightEntriesQueryKey, useListLightEntries } from "@workspace/api-client-react";
-import { romeDate, weeklyComparisons } from "@/lib/diario-analytics";
+import { recordedEntries, romeDate, weeklyComparisons } from "@/lib/diario-analytics";
 
 /** One shared, fresh source for the home and public diary; never loads full diary bodies. */
 export function useDiaryMetrics() {
@@ -17,16 +17,18 @@ export function useDiaryMetrics() {
   });
   const today = romeDate();
   const entries = useMemo(() => [...(query.data ?? [])].sort((a, b) => a.numero - b.numero), [query.data]);
-  const weekly = useMemo(() => weeklyComparisons(entries, today), [entries, today]);
-  const weights = useMemo(() => entries.filter((entry) => entry.peso != null), [entries]);
+  const recorded = useMemo(() => recordedEntries(entries, today), [entries, today]);
+  const weekly = useMemo(() => weeklyComparisons(recorded, today), [recorded, today]);
+  const weights = useMemo(() => recorded.filter((entry) => entry.peso != null), [recorded]);
   return {
     ...query,
     entries,
+    recorded,
     today,
     weekly,
     maxDay: entries.length ? entries[entries.length - 1].numero : 0,
     firstWeight: weights[0]?.peso ?? null,
     currentWeight: weights[weights.length - 1]?.peso ?? null,
-    latestFriction: [...entries].reverse().find((entry) => Boolean(entry.attrito?.trim())),
+    latestFriction: [...recorded].reverse().find((entry) => Boolean(entry.attrito?.trim())),
   };
 }

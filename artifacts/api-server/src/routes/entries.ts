@@ -2,6 +2,7 @@ import { Router, type IRouter } from "express";
 import { desc, eq, sql } from "drizzle-orm";
 import { db, giorniTable } from "@workspace/db";
 import { ensureTodayEntry } from "../lib/ensureToday";
+import { entryRevision, matchesRevision } from "../lib/entry-revision";
 import {
   CreateEntryBody,
   UpdateEntryBody,
@@ -171,6 +172,8 @@ router.get("/entries/:numero", async (req, res): Promise<void> => {
     res.status(404).json({ error: "Entry not found" });
     return;
   }
+  res.setHeader("ETag", entryRevision(row));
+  res.setHeader("Cache-Control", "no-store");
   res.json(ser(row));
 });
 
@@ -370,20 +373,36 @@ router.patch("/entries/:numero", async (req, res): Promise<void> => {
     return;
   }
 
-  const [row] = await db
-    .update(giorniTable)
-    .set({
-      ...body.data,
-      tipoGiorno: automaticDayType(params.data.numero),
+  const changes = { ...body.data, tipoGiorno: automaticDayType(params.data.numero) };
+  const condition = req.get("If-Match");
+  // Lock and compare in the same transaction: a second editor cannot slip a
+  // change between the revision check and the update.
+  const result = condition
+    ? await db.transaction(async (tx) => {
+      const [current] = await tx.select().from(giorniTable)
+        .where(eq(giorniTable.numero, params.data.numero)).for("update");
+      if (!current) return { row: null, status: 404 };
+      if (!matchesRevision(condition, current)) return { row: null, status: 412 };
+      const [saved] = await tx.update(giorniTable).set(changes)
+        .where(eq(giorniTable.numero, params.data.numero)).returning();
+      return { row: saved, status: 200 };
     })
-    .where(eq(giorniTable.numero, params.data.numero))
-    .returning();
+    : { row: (await db.update(giorniTable).set(changes)
+      .where(eq(giorniTable.numero, params.data.numero)).returning())[0], status: 200 };
+
+  if (result.status === 412) {
+    res.status(412).json({ error: "La giornata è cambiata dopo la verifica. Rileggi gli originali prima di correggerla." });
+    return;
+  }
+  const row = result.row;
 
   if (!row) {
     res.status(404).json({ error: "Entry not found" });
     return;
   }
 
+  res.setHeader("ETag", entryRevision(row));
+  res.setHeader("Cache-Control", "no-store");
   res.json(UpdateEntryResponse.parse(ser(row)));
 });
 

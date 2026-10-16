@@ -29,8 +29,9 @@ export default function Home() {
   const articles = useListArticles({ limit: 3, publishedOnly: true });
 
   const { maxDay, firstWeight, currentWeight, latestFriction, weekly, entries } = metrics;
-  const pulse = entries.filter((e) => e.battito != null);
-  const featured = latest.data ? [...latest.data].sort((a, b) => b.numero - a.numero)[0] : undefined;
+  const pulse = metrics.recorded.filter((e) => e.battito != null);
+  const featured = latest.data ? [...latest.data].filter((entry) => Boolean(entry.testo?.trim())).sort((a, b) => b.numero - a.numero)[0] : undefined;
+  const pendingToday = latest.data?.some((entry) => isUnfinishedToday(entry)) ?? false;
   const lightReady = !metrics.isLoading && !metrics.isError;
 
   return (
@@ -42,6 +43,7 @@ export default function Home() {
             <div className="home-pulse" aria-hidden="true"><PulseTrace entries={pulse} variant="hero" /></div>
           )}
           <div className="home-wrap relative z-10">
+            <p className="home-label mb-5">PROGETTO J · UN DIARIO DI 180 GIORNI</p>
             {metrics.isLoading ? (
               <div aria-busy="true">
                 <div className="home-skel" style={{ height: 16, width: 160 }} />
@@ -74,6 +76,19 @@ export default function Home() {
           </div>
         </section>
 
+        {/* ORIENTAMENTO */}
+        <section className="home-section home-wrap" aria-labelledby="home-orient-title">
+          <div className="home-head">
+            <div><span className="home-label">COME LEGGERE</span><h2 id="home-orient-title" className="home-h2">PROGETTO J</h2></div>
+          </div>
+          <p className="home-orient-intro">Un diario pubblico di 180 giorni: recupero, lavoro e allenamento, con testi e misure registrate giorno per giorno.</p>
+          <ol className="home-paths">
+            <li><Link href="/diario" className="home-path" data-testid="link-path-diario"><span className="home-label">01</span><strong>TUTTI I GIORNI</strong><span>Cerca per data, disciplina o parole.</span></Link></li>
+            <li><Link href={featured ? `/giorno/${featured.numero}` : "/diario"} className="home-path" data-testid="link-path-ultimo"><span className="home-label">02</span><strong>ULTIMO GIORNO CHIUSO</strong><span>{featured ? `Giorno ${featured.numero}` : "Il più recente completato."}</span></Link></li>
+            <li><Link href="/giorno/1" className="home-path" data-testid="link-path-inizio"><span className="home-label">03</span><strong>DALL'INIZIO</strong><span>Giorno 1, il punto di partenza.</span></Link></li>
+          </ol>
+        </section>
+
         {/* 2. ULTIMO ATTRITO */}
         {lightReady && latestFriction && <FrictionQuote entry={latestFriction} />}
 
@@ -91,7 +106,7 @@ export default function Home() {
         {/* 4. ULTIMO GIORNO */}
         <section className="home-section home-wrap">
           <div className="home-head">
-            <div><span className="home-label">ULTIMO GIORNO</span>{featured && <h2 className="home-h2">GIORNO <span className="home-mono">{String(featured.numero).padStart(3, "0")}</span></h2>}</div>
+            <div><span className="home-label">ULTIMO GIORNO</span>{pendingToday && <span className="home-label home-pending" data-testid="text-today-pending"><span className="home-circle" aria-hidden="true" /> OGGI IN CORSO</span>}{featured && <h2 className="home-h2">GIORNO <span className="home-mono">{String(featured.numero).padStart(3, "0")}</span></h2>}</div>
             {featured && <Link href={`/giorno/${featured.numero}`} className="home-link" data-testid="link-featured-day">APRI →</Link>}
           </div>
           <div data-testid="card-featured-day">

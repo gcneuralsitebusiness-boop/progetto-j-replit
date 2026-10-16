@@ -18,6 +18,7 @@ import { useUpload, getPhotoUrl } from "@workspace/object-storage-web";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
 import { assertEntrySaved, buildEntryPayload } from "@/lib/entry-save";
+import { DiaryMetricReview } from "@/components/admin/DiaryMetricReview";
 
 const AnalyticsTab = lazy(() =>
   import("@/components/admin/AnalyticsTab").then((module) => ({ default: module.AnalyticsTab })),
@@ -836,6 +837,7 @@ function DiarioTab({ scrollToEntry }: { scrollToEntry?: number }) {
         </div>
       )}
       <ObiettiviEditor />
+      <DiaryMetricReview />
       <div ref={formRef} className="scroll-mt-28">
         {editingNumero !== null ? (
           editingError ? (
