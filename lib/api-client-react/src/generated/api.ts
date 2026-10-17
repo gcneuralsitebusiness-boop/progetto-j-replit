@@ -43,6 +43,10 @@ import type {
   GetPlannerAnnotationParams,
   HealthStatus,
   ListArticlesParams,
+  LiveOverrideRequest,
+  LiveProgramRequest,
+  LiveScheduleItem,
+  LiveStatus,
   LoginInput,
   NotFoundResponse,
   Obiettivo,
@@ -172,6 +176,370 @@ export function useHealthCheck<TData = Awaited<ReturnType<typeof healthCheck>>, 
 
 
 
+
+export const getGetLiveUrl = () => {
+
+
+
+
+  return `/api/live`
+}
+
+/**
+ * @summary Stato corrente, programma e sensore
+ */
+export const getLive = async ( options?: RequestInit): Promise<LiveStatus> => {
+
+  return customFetch<LiveStatus>(getGetLiveUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetLiveQueryKey = () => {
+    return [
+    `/api/live`
+    ] as const;
+    }
+
+
+export const getGetLiveQueryOptions = <TData = Awaited<ReturnType<typeof getLive>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getLive>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetLiveQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getLive>>> = ({ signal }) => getLive({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getLive>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetLiveQueryResult = NonNullable<Awaited<ReturnType<typeof getLive>>>
+export type GetLiveQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Stato corrente, programma e sensore
+ */
+
+export function useGetLive<TData = Awaited<ReturnType<typeof getLive>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getLive>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetLiveQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetLiveScheduleUrl = () => {
+
+
+
+
+  return `/api/admin/live/programma`
+}
+
+/**
+ * @summary Programma settimanale (solo admin)
+ */
+export const getLiveSchedule = async ( options?: RequestInit): Promise<LiveScheduleItem[]> => {
+
+  return customFetch<LiveScheduleItem[]>(getGetLiveScheduleUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetLiveScheduleQueryKey = () => {
+    return [
+    `/api/admin/live/programma`
+    ] as const;
+    }
+
+
+export const getGetLiveScheduleQueryOptions = <TData = Awaited<ReturnType<typeof getLiveSchedule>>, TError = ErrorType<UnauthorizedResponse>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getLiveSchedule>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetLiveScheduleQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getLiveSchedule>>> = ({ signal }) => getLiveSchedule({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getLiveSchedule>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetLiveScheduleQueryResult = NonNullable<Awaited<ReturnType<typeof getLiveSchedule>>>
+export type GetLiveScheduleQueryError = ErrorType<UnauthorizedResponse>
+
+
+/**
+ * @summary Programma settimanale (solo admin)
+ */
+
+export function useGetLiveSchedule<TData = Awaited<ReturnType<typeof getLiveSchedule>>, TError = ErrorType<UnauthorizedResponse>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getLiveSchedule>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetLiveScheduleQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getSaveLiveScheduleUrl = () => {
+
+
+
+
+  return `/api/admin/live/programma`
+}
+
+/**
+ * @summary Salva il programma settimanale (solo admin)
+ */
+export const saveLiveSchedule = async (liveProgramRequest: LiveProgramRequest, options?: RequestInit): Promise<LiveScheduleItem[]> => {
+
+  return customFetch<LiveScheduleItem[]>(getSaveLiveScheduleUrl(),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(liveProgramRequest)
+  }
+);}
+
+
+
+
+export const getSaveLiveScheduleMutationOptions = <TError = ErrorType<void | UnauthorizedResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof saveLiveSchedule>>, TError,{data: BodyType<LiveProgramRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof saveLiveSchedule>>, TError,{data: BodyType<LiveProgramRequest>}, TContext> => {
+
+const mutationKey = ['saveLiveSchedule'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof saveLiveSchedule>>, {data: BodyType<LiveProgramRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  saveLiveSchedule(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SaveLiveScheduleMutationResult = NonNullable<Awaited<ReturnType<typeof saveLiveSchedule>>>
+    export type SaveLiveScheduleMutationBody = BodyType<LiveProgramRequest>
+    export type SaveLiveScheduleMutationError = ErrorType<void | UnauthorizedResponse>
+
+    /**
+ * @summary Salva il programma settimanale (solo admin)
+ */
+export const useSaveLiveSchedule = <TError = ErrorType<void | UnauthorizedResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof saveLiveSchedule>>, TError,{data: BodyType<LiveProgramRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof saveLiveSchedule>>,
+        TError,
+        {data: BodyType<LiveProgramRequest>},
+        TContext
+      > => {
+      return useMutation(getSaveLiveScheduleMutationOptions(options));
+    }
+
+export const getSetLiveOverrideUrl = () => {
+
+
+
+
+  return `/api/admin/live/override`
+}
+
+/**
+ * @summary Imposta un override per tre ore (solo admin)
+ */
+export const setLiveOverride = async (liveOverrideRequest: LiveOverrideRequest, options?: RequestInit): Promise<void> => {
+
+  return customFetch<void>(getSetLiveOverrideUrl(),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(liveOverrideRequest)
+  }
+);}
+
+
+
+
+export const getSetLiveOverrideMutationOptions = <TError = ErrorType<UnauthorizedResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setLiveOverride>>, TError,{data: BodyType<LiveOverrideRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof setLiveOverride>>, TError,{data: BodyType<LiveOverrideRequest>}, TContext> => {
+
+const mutationKey = ['setLiveOverride'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof setLiveOverride>>, {data: BodyType<LiveOverrideRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  setLiveOverride(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SetLiveOverrideMutationResult = NonNullable<Awaited<ReturnType<typeof setLiveOverride>>>
+    export type SetLiveOverrideMutationBody = BodyType<LiveOverrideRequest>
+    export type SetLiveOverrideMutationError = ErrorType<UnauthorizedResponse>
+
+    /**
+ * @summary Imposta un override per tre ore (solo admin)
+ */
+export const useSetLiveOverride = <TError = ErrorType<UnauthorizedResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setLiveOverride>>, TError,{data: BodyType<LiveOverrideRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof setLiveOverride>>,
+        TError,
+        {data: BodyType<LiveOverrideRequest>},
+        TContext
+      > => {
+      return useMutation(getSetLiveOverrideMutationOptions(options));
+    }
+
+export const getClearLiveOverrideUrl = () => {
+
+
+
+
+  return `/api/admin/live/override`
+}
+
+/**
+ * @summary Torna al programma settimanale (solo admin)
+ */
+export const clearLiveOverride = async ( options?: RequestInit): Promise<void> => {
+
+  return customFetch<void>(getClearLiveOverrideUrl(),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getClearLiveOverrideMutationOptions = <TError = ErrorType<UnauthorizedResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof clearLiveOverride>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof clearLiveOverride>>, TError,void, TContext> => {
+
+const mutationKey = ['clearLiveOverride'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof clearLiveOverride>>, void> = () => {
+
+
+          return  clearLiveOverride(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ClearLiveOverrideMutationResult = NonNullable<Awaited<ReturnType<typeof clearLiveOverride>>>
+
+    export type ClearLiveOverrideMutationError = ErrorType<UnauthorizedResponse>
+
+    /**
+ * @summary Torna al programma settimanale (solo admin)
+ */
+export const useClearLiveOverride = <TError = ErrorType<UnauthorizedResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof clearLiveOverride>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof clearLiveOverride>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getClearLiveOverrideMutationOptions(options));
+    }
 
 export const getListEntriesUrl = () => {
 

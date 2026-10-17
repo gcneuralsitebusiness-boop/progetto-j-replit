@@ -1,4 +1,6 @@
 User-agent: *
 Allow: /
 Disallow: /clip/
+Disallow: /card/
+Disallow: /admin/
 Sitemap: https://projectj180day.com/api/sitemap.xml

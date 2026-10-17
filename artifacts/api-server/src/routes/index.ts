@@ -19,6 +19,7 @@ import analyticsRouter from "./analytics";
 import plannerRouter from "./planner";
 import candidatureRouter from "./candidature";
 import obiettiviRouter from "./obiettivi";
+import liveRouter from "./live";
 
 const router: IRouter = Router();
 
@@ -42,5 +43,6 @@ router.use(analyticsRouter);
 router.use(plannerRouter);
 router.use(candidatureRouter);
 router.use(obiettiviRouter);
+router.use(liveRouter);
 
 export default router;

@@ -21,7 +21,11 @@ const router: IRouter = Router();
 const ser = <T>(v: T): T => JSON.parse(JSON.stringify(v)) as T;
 
 // GET /entries — all entries sorted by date descending
-router.get("/entries", async (_req, res): Promise<void> => {
+router.get("/entries", async (req, res): Promise<void> => {
+  if (!req.session?.adminAuthenticated) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
   void ensureTodayEntry().catch((err) => {
     _req.log.error({ err }, "Failed to ensure today's entry");
   });
@@ -35,6 +39,9 @@ router.get("/entries", async (_req, res): Promise<void> => {
 
 // A strict projection: never ship diary bodies, private notes or generated cards.
 router.get("/entries/light", async (_req, res): Promise<void> => {
+  void ensureTodayEntry().catch((err) => {
+    _req.log.error({ err }, "Failed to ensure today's entry");
+  });
   const rows = await db.select({
     id: giorniTable.id,
     numero: giorniTable.numero,
@@ -68,16 +75,19 @@ router.get("/entries/light", async (_req, res): Promise<void> => {
     attrito: giorniTable.attrito,
     foto: giorniTable.foto,
   }).from(giorniTable).orderBy(desc(giorniTable.data));
-  res.setHeader("Cache-Control", "no-cache, must-revalidate");
+  res.setHeader("Cache-Control", "public, max-age=60, stale-while-revalidate=30");
   res.json(ListLightEntriesResponse.parse(ser(rows)));
 });
 
 // GET /entries/latest — 3 most recent entries
 router.get("/entries/latest", async (_req, res): Promise<void> => {
+  void ensureTodayEntry().catch((err) => {
+    _req.log.error({ err }, "Failed to ensure today's entry");
+  });
   const rows = await db
     .select()
     .from(giorniTable)
-    .orderBy(desc(giorniTable.data))
+    .orderBy(desc(giorniTable.data), desc(giorniTable.numero))
     .limit(3);
   res.json(GetLatestEntriesResponse.parse(ser(rows)));
 });
@@ -125,6 +135,10 @@ router.get("/giorni/:numero/clip", async (req, res): Promise<void> => {
 
 // GET /entries/summary — lightweight list for feeds and planning
 router.get("/entries/summary", async (_req, res): Promise<void> => {
+  if (!_req.session?.adminAuthenticated) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
   const rows = await db
     .select({
       id: giorniTable.id,
@@ -153,6 +167,7 @@ router.get("/entries/summary", async (_req, res): Promise<void> => {
     })
     .from(giorniTable)
     .orderBy(desc(giorniTable.data));
+  res.setHeader("Cache-Control", "private, no-store");
   res.json(ser(rows));
 });
 

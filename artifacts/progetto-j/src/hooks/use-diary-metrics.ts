@@ -7,10 +7,10 @@ export function useDiaryMetrics() {
   const query = useListLightEntries({
     query: {
       queryKey: getListLightEntriesQueryKey(),
-      staleTime: 0,
-      refetchOnMount: "always",
+      staleTime: 60_000,
+      refetchOnMount: true,
       refetchOnWindowFocus: true,
-      refetchInterval: 30_000,
+      refetchInterval: (query) => query.state.data?.some((entry) => entry.data === today && !entry.hasDiario) ? 10_000 : 60_000,
       refetchIntervalInBackground: false,
     },
     request: { cache: "no-store" },

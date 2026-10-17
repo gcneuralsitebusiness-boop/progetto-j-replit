@@ -75,6 +75,8 @@
   --font-sans: var(--app-font-sans);
   --font-serif: var(--app-font-serif);
   --font-mono: var(--app-font-mono);
+  --season: #3FA34D;
+  --money: #8B6914;
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -140,7 +142,7 @@
   --chart-5: 0 0% 25%;
 
   --app-font-sans: 'Inter', sans-serif;
-  --app-font-serif: "Anton", "Bebas Neue", sans-serif;
+  --app-font-serif: "Bebas Neue", sans-serif;
   --app-font-mono: "JetBrains Mono", monospace;
   --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);

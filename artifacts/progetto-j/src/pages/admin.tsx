@@ -10,6 +10,7 @@ import {
 } from "@workspace/api-client-react";
 import { ObiettiviEditor } from "@/components/admin/ObiettiviEditor";
 import { TappaManager } from "@/components/admin/TappaManager";
+import { LiveTab } from "@/components/admin/LiveTab";
 import { DailyTrackingPanel, type TrackingKey } from "@/components/admin/DailyTrackingPanel";
 import { DiaryHtmlEditor } from "@/components/admin/DiaryHtmlEditor";
 import { AdminRetry, AdminStatus } from "@/components/admin/AdminStatus";
@@ -1450,7 +1451,7 @@ function PagineTab() {
 
 // ─── Main Admin ───────────────────────────────────────────────────────────────
 
-type Tab = "oggi" | "diario" | "sito" | "pagine" | "bulk" | "social" | "sponsor" | "articoli" | "coaching" | "contatti" | "candidature" | "iscritti" | "analytics" | "planner";
+type Tab = "oggi" | "diario" | "planner" | "live" | "sito" | "pagine" | "bulk" | "social" | "sponsor" | "articoli" | "coaching" | "contatti" | "candidature" | "iscritti" | "analytics";
 
 type TabGroup = { id: string; label: string; tabs: { id: Tab; label: string }[] };
 
@@ -1463,6 +1464,7 @@ const TAB_GROUPS: TabGroup[] = [
       { id: "oggi", label: "Oggi" },
       { id: "diario", label: "Diario" },
       { id: "planner", label: "Planner" },
+      { id: "live", label: "Live" },
     ],
   },
   {
@@ -1641,6 +1643,7 @@ export default function Admin() {
         </Suspense>
       )}
       {activeTab === "planner" && <PlannerTab />}
+      {activeTab === "live" && <LiveTab />}
       </Suspense>
       </div>
     </main>

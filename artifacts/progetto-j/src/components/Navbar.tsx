@@ -52,9 +52,11 @@ export function Navbar() {
   const [hasScrolled, setHasScrolled] = useState(false);
   const navigationItems = [
     { href: "/diario", label: "Diario" },
+    { href: "/live", label: "Live" },
     { href: "/articoli", label: "Articoli" },
     { href: "/obiettivi", label: "Obiettivi" },
     { href: "/chi-sono", label: "Chi sono" },
+    { href: "/viaggio", label: "Il viaggio" },
     { href: "/#accesso", label: "Richiedi accesso", accent: true },
   ];
 

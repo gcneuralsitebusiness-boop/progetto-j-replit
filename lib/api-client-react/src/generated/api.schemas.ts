@@ -5,6 +5,90 @@
  * API specification for Progetto J — 180-day transformation journal
  * OpenAPI spec version: 0.1.0
  */
+export type LiveScheduleInputAttivita = typeof LiveScheduleInputAttivita[keyof typeof LiveScheduleInputAttivita];
+
+
+export const LiveScheduleInputAttivita = {
+  SONNO: 'SONNO',
+  LAVORO: 'LAVORO',
+  ALLENAMENTO: 'ALLENAMENTO',
+  LIBERO: 'LIBERO',
+} as const;
+
+export interface LiveScheduleInput {
+  /**
+     * @minimum 0
+     * @maximum 6
+     */
+  giorno: number;
+  /** @pattern ^(?:[01][0-9]|2[0-3]):[0-5][0-9]$ */
+  inizio: string;
+  /** @pattern ^(?:(?:[01][0-9]|2[0-3]):[0-5][0-9]|24:00)$ */
+  fine: string;
+  attivita: LiveScheduleInputAttivita;
+}
+
+export interface LiveProgramRequest {
+  programma: LiveScheduleInput[];
+}
+
+export type LiveOverrideRequestAttivita = typeof LiveOverrideRequestAttivita[keyof typeof LiveOverrideRequestAttivita];
+
+
+export const LiveOverrideRequestAttivita = {
+  SONNO: 'SONNO',
+  LAVORO: 'LAVORO',
+  ALLENAMENTO: 'ALLENAMENTO',
+  LIBERO: 'LIBERO',
+} as const;
+
+export interface LiveOverrideRequest {
+  attivita: LiveOverrideRequestAttivita;
+}
+
+export type LiveScheduleItem = LiveScheduleInput & {
+  id: number;
+};
+
+export type LiveStatusAttivita = typeof LiveStatusAttivita[keyof typeof LiveStatusAttivita];
+
+
+export const LiveStatusAttivita = {
+  SONNO: 'SONNO',
+  LAVORO: 'LAVORO',
+  ALLENAMENTO: 'ALLENAMENTO',
+  LIBERO: 'LIBERO',
+} as const;
+
+export type LiveStatusProssima = {
+  attivita: string;
+  nome: string;
+  inizio: string;
+} | null;
+
+export type LiveStatusSensore = typeof LiveStatusSensore[keyof typeof LiveStatusSensore];
+
+
+export const LiveStatusSensore = {
+  offline: 'offline',
+} as const;
+
+export interface LiveStatus {
+  attivita: LiveStatusAttivita;
+  nome: string;
+  da: string;
+  prossima?: LiveStatusProssima;
+  sensore: LiveStatusSensore;
+  ora: string;
+  /**
+     * @minimum 0
+     * @maximum 6
+     */
+  giorno: number;
+  programma: LiveScheduleItem[];
+  overrideFino: null | string;
+}
+
 export interface PlannerAnnotationInput {
   /** @pattern ^\d{4}-\d{2}-\d{2}$ */
   data: string;

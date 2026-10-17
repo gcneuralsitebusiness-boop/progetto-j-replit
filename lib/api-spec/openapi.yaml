@@ -37,6 +37,85 @@ paths:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
 
+  /live:
+    get:
+      operationId: getLive
+      tags: [live]
+      summary: Stato corrente, programma e sensore
+      responses:
+        "200":
+          description: Attività corrente e programma giornaliero
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LiveStatus"
+
+  /admin/live/programma:
+    get:
+      operationId: getLiveSchedule
+      tags: [live]
+      summary: Programma settimanale (solo admin)
+      responses:
+        "200":
+          description: Intervalli settimanali
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LiveScheduleItem"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    put:
+      operationId: saveLiveSchedule
+      tags: [live]
+      summary: Salva il programma settimanale (solo admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LiveProgramRequest"
+      responses:
+        "200":
+          description: Programma salvato
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LiveScheduleItem"
+        "400":
+          description: Programma non valido
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /admin/live/override:
+    put:
+      operationId: setLiveOverride
+      tags: [live]
+      summary: Imposta un override per tre ore (solo admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LiveOverrideRequest"
+      responses:
+        "200":
+          description: Override attivo
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    delete:
+      operationId: clearLiveOverride
+      tags: [live]
+      summary: Torna al programma settimanale (solo admin)
+      responses:
+        "200":
+          description: Override cancellato
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
   /entries:
     get:
       operationId: listEntries
@@ -1133,6 +1212,61 @@ components:
             $ref: "#/components/schemas/ApiError"
 
   schemas:
+    LiveProgramRequest:
+      type: object
+      required: [programma]
+      properties:
+        programma:
+          type: array
+          items:
+            $ref: "#/components/schemas/LiveScheduleInput"
+    LiveOverrideRequest:
+      type: object
+      required: [attivita]
+      properties:
+        attivita: { type: string, enum: [SONNO, LAVORO, ALLENAMENTO, LIBERO] }
+    LiveScheduleInput:
+      type: object
+      required: [giorno, inizio, fine, attivita]
+      properties:
+        giorno: { type: integer, minimum: 0, maximum: 6 }
+        inizio: { type: string, pattern: '^(?:[01][0-9]|2[0-3]):[0-5][0-9]$' }
+        fine: { type: string, pattern: '^(?:(?:[01][0-9]|2[0-3]):[0-5][0-9]|24:00)$' }
+        attivita: { type: string, enum: [SONNO, LAVORO, ALLENAMENTO, LIBERO] }
+    LiveScheduleItem:
+      allOf:
+        - $ref: "#/components/schemas/LiveScheduleInput"
+        - type: object
+          required: [id]
+          properties:
+            id: { type: integer }
+    LiveStatus:
+      type: object
+      required: [attivita, nome, da, sensore, ora, giorno, programma, overrideFino]
+      properties:
+        attivita: { type: string, enum: [SONNO, LAVORO, ALLENAMENTO, LIBERO] }
+        nome: { type: string }
+        da: { type: string }
+        prossima:
+          anyOf:
+            - type: "null"
+            - type: object
+              required: [attivita, nome, inizio]
+              properties:
+                attivita: { type: string }
+                nome: { type: string }
+                inizio: { type: string }
+        sensore: { type: string, enum: [offline] }
+        ora: { type: string }
+        giorno: { type: integer, minimum: 0, maximum: 6 }
+        programma:
+          type: array
+          items: { $ref: "#/components/schemas/LiveScheduleItem" }
+        overrideFino:
+          anyOf:
+            - type: "null"
+            - type: string
+              format: date-time
     PlannerAnnotationInput:
       type: object
       required: [data, testo]

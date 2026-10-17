@@ -18,6 +18,117 @@ export const HealthCheckResponse = zod.object({
 
 
 /**
+ * @summary Stato corrente, programma e sensore
+ */
+export const getLiveResponseGiornoMin = 0;
+export const getLiveResponseGiornoMax = 6;
+
+export const getLiveResponseProgrammaItemOneGiornoMin = 0;
+export const getLiveResponseProgrammaItemOneGiornoMax = 6;
+
+export const getLiveResponseProgrammaItemOneInizioRegExp = new RegExp('^(?:[01][0-9]|2[0-3]):[0-5][0-9]$');
+export const getLiveResponseProgrammaItemOneFineRegExp = new RegExp('^(?:(?:[01][0-9]|2[0-3]):[0-5][0-9]|24:00)$');
+
+
+export const GetLiveResponse = zod.object({
+  "attivita": zod.enum(['SONNO', 'LAVORO', 'ALLENAMENTO', 'LIBERO']),
+  "nome": zod.string(),
+  "da": zod.string(),
+  "prossima": zod.union([zod.null(),zod.object({
+  "attivita": zod.string(),
+  "nome": zod.string(),
+  "inizio": zod.string()
+})]).optional(),
+  "sensore": zod.enum(['offline']),
+  "ora": zod.string(),
+  "giorno": zod.number().min(getLiveResponseGiornoMin).max(getLiveResponseGiornoMax),
+  "programma": zod.array(zod.object({
+  "giorno": zod.number().min(getLiveResponseProgrammaItemOneGiornoMin).max(getLiveResponseProgrammaItemOneGiornoMax),
+  "inizio": zod.string().regex(getLiveResponseProgrammaItemOneInizioRegExp),
+  "fine": zod.string().regex(getLiveResponseProgrammaItemOneFineRegExp),
+  "attivita": zod.enum(['SONNO', 'LAVORO', 'ALLENAMENTO', 'LIBERO'])
+}).and(zod.object({
+  "id": zod.number()
+}))),
+  "overrideFino": zod.union([zod.null(),zod.coerce.date()])
+})
+
+
+/**
+ * @summary Programma settimanale (solo admin)
+ */
+export const getLiveScheduleResponseOneGiornoMin = 0;
+export const getLiveScheduleResponseOneGiornoMax = 6;
+
+export const getLiveScheduleResponseOneInizioRegExp = new RegExp('^(?:[01][0-9]|2[0-3]):[0-5][0-9]$');
+export const getLiveScheduleResponseOneFineRegExp = new RegExp('^(?:(?:[01][0-9]|2[0-3]):[0-5][0-9]|24:00)$');
+
+
+export const GetLiveScheduleResponseItem = zod.object({
+  "giorno": zod.number().min(getLiveScheduleResponseOneGiornoMin).max(getLiveScheduleResponseOneGiornoMax),
+  "inizio": zod.string().regex(getLiveScheduleResponseOneInizioRegExp),
+  "fine": zod.string().regex(getLiveScheduleResponseOneFineRegExp),
+  "attivita": zod.enum(['SONNO', 'LAVORO', 'ALLENAMENTO', 'LIBERO'])
+}).and(zod.object({
+  "id": zod.number()
+}))
+export const GetLiveScheduleResponse = zod.array(GetLiveScheduleResponseItem)
+
+
+/**
+ * @summary Salva il programma settimanale (solo admin)
+ */
+export const saveLiveScheduleBodyProgrammaItemGiornoMin = 0;
+export const saveLiveScheduleBodyProgrammaItemGiornoMax = 6;
+
+export const saveLiveScheduleBodyProgrammaItemInizioRegExp = new RegExp('^(?:[01][0-9]|2[0-3]):[0-5][0-9]$');
+export const saveLiveScheduleBodyProgrammaItemFineRegExp = new RegExp('^(?:(?:[01][0-9]|2[0-3]):[0-5][0-9]|24:00)$');
+
+
+export const SaveLiveScheduleBody = zod.object({
+  "programma": zod.array(zod.object({
+  "giorno": zod.number().min(saveLiveScheduleBodyProgrammaItemGiornoMin).max(saveLiveScheduleBodyProgrammaItemGiornoMax),
+  "inizio": zod.string().regex(saveLiveScheduleBodyProgrammaItemInizioRegExp),
+  "fine": zod.string().regex(saveLiveScheduleBodyProgrammaItemFineRegExp),
+  "attivita": zod.enum(['SONNO', 'LAVORO', 'ALLENAMENTO', 'LIBERO'])
+}))
+})
+
+export const saveLiveScheduleResponseOneGiornoMin = 0;
+export const saveLiveScheduleResponseOneGiornoMax = 6;
+
+export const saveLiveScheduleResponseOneInizioRegExp = new RegExp('^(?:[01][0-9]|2[0-3]):[0-5][0-9]$');
+export const saveLiveScheduleResponseOneFineRegExp = new RegExp('^(?:(?:[01][0-9]|2[0-3]):[0-5][0-9]|24:00)$');
+
+
+export const SaveLiveScheduleResponseItem = zod.object({
+  "giorno": zod.number().min(saveLiveScheduleResponseOneGiornoMin).max(saveLiveScheduleResponseOneGiornoMax),
+  "inizio": zod.string().regex(saveLiveScheduleResponseOneInizioRegExp),
+  "fine": zod.string().regex(saveLiveScheduleResponseOneFineRegExp),
+  "attivita": zod.enum(['SONNO', 'LAVORO', 'ALLENAMENTO', 'LIBERO'])
+}).and(zod.object({
+  "id": zod.number()
+}))
+export const SaveLiveScheduleResponse = zod.array(SaveLiveScheduleResponseItem)
+
+
+/**
+ * @summary Imposta un override per tre ore (solo admin)
+ */
+export const SetLiveOverrideBody = zod.object({
+  "attivita": zod.enum(['SONNO', 'LAVORO', 'ALLENAMENTO', 'LIBERO'])
+})
+
+export const SetLiveOverrideResponse = zod.unknown()
+
+
+/**
+ * @summary Torna al programma settimanale (solo admin)
+ */
+export const ClearLiveOverrideResponse = zod.unknown()
+
+
+/**
  * Returns all entries sorted by date descending
  * @summary List all journal entries
  */

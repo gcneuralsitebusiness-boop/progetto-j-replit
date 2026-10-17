@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import { format, parseISO } from "date-fns";
 import { it } from "date-fns/locale";
 import type { EntryLight } from "@workspace/api-client-react";
+import { getPhotoUrl } from "@workspace/object-storage-web";
 import { isRecordedRest, isTraining } from "@/lib/diario-analytics";
 
 type Filter = "tutti" | "attrito" | "allenamento" | "riposo";
@@ -160,7 +161,27 @@ export function DayList({ entries, today }: { entries: EntryLight[]; today: stri
                 ) : (
                   <>
                     <div className="min-w-0">
-                      <p className="text-[15px] leading-relaxed">{e.sintesi?.trim() || <span className="d-muted">—</span>}</p>
+                      <div className="flex items-start gap-4">
+                        {e.foto && (
+                          <Link href={`/giorno/${e.numero}`} className="block w-20 shrink-0 overflow-hidden border d-line" aria-label={`Apri la foto del giorno ${e.numero}`}>
+                            <img src={getPhotoUrl(e.foto) ?? undefined} alt={`Giorno ${e.numero}`} loading="lazy" decoding="async" className="aspect-square w-full object-cover grayscale" />
+                          </Link>
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[15px] leading-relaxed">{e.sintesi?.trim() || <span className="d-muted">Apri la giornata per leggere il diario completo.</span>}</p>
+                          <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 d-label d-muted" aria-label={`Dati del giorno ${e.numero}`}>
+                            {e.km != null && <span>{e.km.toLocaleString("it-IT")} KM</span>}
+                            {e.durata != null && <span>{e.durata} MIN</span>}
+                            {e.sonno != null && <span>{e.sonno} H SONNO</span>}
+                            {e.peso != null && <span>{e.peso.toLocaleString("it-IT")} KG</span>}
+                            {e.kcal != null && <span>{e.kcal.toLocaleString("it-IT")} KCAL</span>}
+                            {e.round != null && <span>{e.round} ROUND</span>}
+                          </div>
+                          <Link href={`/giorno/${e.numero}`} className="d-link mt-3 inline-flex min-h-11 items-center d-label" data-testid={`link-leggi-giorno-${e.numero}`}>
+                            LEGGI GIORNO {e.numero} →
+                          </Link>
+                        </div>
+                      </div>
                       {e.attrito?.trim() && (
                         <p className="mt-2 text-[14px] leading-relaxed d-muted"><span className="d-label d-red mr-2">ATTRITO</span>{e.attrito}</p>
                       )}

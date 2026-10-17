@@ -6,6 +6,7 @@ import { Navbar } from '@/components/Navbar';
 import { ScrollToTop } from '@/components/ScrollToTop';
 import { PageChromeProvider, usePageChrome } from '@/lib/page-chrome';
 import { PublicDesignScope } from '@/components/PublicDesignScope';
+import { useAdminMe } from "@workspace/api-client-react";
 
 const Home = lazy(() => import('@/pages/home'));
 const Diario = lazy(() => import('@/pages/diario'));
@@ -13,13 +14,11 @@ const ChiSono = lazy(() => import('@/pages/chi-sono'));
 const Admin = lazy(() => import('@/pages/admin'));
 const NotFound = lazy(() => import('@/pages/not-found'));
 const Pagina = lazy(() => import('@/pages/Pagina'));
-const Social = lazy(() => import('@/pages/social'));
-const Sponsor = lazy(() => import('@/pages/sponsor'));
 const Articoli = lazy(() => import('@/pages/articoli'));
 const Articolo = lazy(() => import('@/pages/articolo'));
 const Viaggio = lazy(() => import('@/pages/viaggio'));
 const ArticoloPreview = lazy(() => import('@/pages/articolo-preview'));
-const Coaching = lazy(() => import('@/pages/coaching'));
+const Live = lazy(() => import('@/pages/live'));
 const GiornoDetail = lazy(() => import('@/pages/giorno'));
 const Obiettivi = lazy(() => import('@/pages/obiettivi'));
 const Privacy = lazy(() => import('@/pages/privacy'));
@@ -99,10 +98,11 @@ function PageMetadata() {
   const [location] = useLocation();
   useEffect(() => {
     const metadata: Record<string, { title: string; description: string }> = {
-      "/": { title: "Progetto J — 180 Giorni Documentati", description: "180 giorni di trasformazione documentata. Dati reali, zero filtri. Corpo, mente, business." },
+      "/": { title: "Project J — 180 Giorni Documentati", description: "180 giorni di trasformazione documentata. Dati reali, zero filtri. Corpo, mente, business." },
       "/diario": { title: "Diario — Project J", description: "Ogni giorno, tutti i numeri. Anche quelli brutti." },
-      "/obiettivi": { title: "Obiettivi — Progetto J", description: "Obiettivi del ciclo in corso, stato avanzamento e tappe di Progetto J." },
-      "/chi-sono": { title: "Chi sono — Progetto J", description: "La storia, il metodo e la persona dietro Progetto J." },
+      "/live": { title: "J in tempo reale — Project J", description: "Stato e programma giornaliero di J, aggiornati secondo l'ora di Roma." },
+      "/obiettivi": { title: "Obiettivi — Project J", description: "Obiettivi del ciclo in corso, stato avanzamento e tappe di Project J." },
+      "/chi-sono": { title: "Chi sono — Project J", description: "La storia, il metodo e la persona dietro Project J." },
       "/viaggio": { title: "Il viaggio di J — Progetto J", description: "Otto paesi visitati, quattro da prendere. Quattro discipline, quattro posti dove sono nate." },
       "/articoli": { title: "Articoli — Progetto J", description: "Riflessioni, metodo e lezioni raccolte durante il percorso Progetto J." },
       "/coaching": { title: "Coaching — Progetto J", description: "Un protocollo di 12 settimane basato su allenamento, nutrizione, sonno e dati." },
@@ -113,8 +113,8 @@ function PageMetadata() {
     };
     const isClipRoute = location.startsWith("/clip/");
     const current = metadata[location] ?? (location.startsWith("/giorno/") ? {
-      title: `Giorno ${location.split("/").pop()} — Progetto J`,
-      description: "Un giorno del diario documentale di Progetto J.",
+      title: `Giorno ${location.split("/").pop()} — Project J`,
+      description: "Un giorno del diario documentale di Project J.",
     } : isClipRoute ? {
       title: "Clip — Progetto J",
       description: "Strumento video di Progetto J.",
@@ -125,9 +125,10 @@ function PageMetadata() {
     document.querySelector('meta[property="og:description"]')?.setAttribute("content", current.description);
 
     const robots = document.querySelector('meta[name="robots"]');
-    robots?.setAttribute("content", isClipRoute ? "noindex, nofollow" : "index, follow");
+    const internal = location === "/admin" || location.startsWith("/admin/") || location.startsWith("/card/") || isClipRoute;
+    robots?.setAttribute("content", internal ? "noindex, nofollow" : "index, follow");
     const canonical = document.querySelector('link[rel="canonical"]');
-    if (isClipRoute) {
+    if (internal) {
       canonical?.remove();
     } else if (!canonical) {
       const restoredCanonical = document.createElement("link");
@@ -137,6 +138,21 @@ function PageMetadata() {
     }
   }, [location]);
   return null;
+}
+
+function RedirectToHome() {
+  const [, navigate] = useLocation();
+  useEffect(() => { navigate("/", { replace: true }); }, [navigate]);
+  return null;
+}
+
+function AdminOnlyPage({ children }: { children: ReactNode }) {
+  const [, navigate] = useLocation();
+  const { data, isLoading, isError } = useAdminMe({ query: { retry: false } });
+  useEffect(() => {
+    if (!isLoading && (isError || !data?.authenticated)) navigate("/admin", { replace: true });
+  }, [data?.authenticated, isError, isLoading, navigate]);
+  return isLoading || isError || !data?.authenticated ? null : <>{children}</>;
 }
 
 function RouteLoading() {
@@ -168,23 +184,24 @@ function AppRoutes() {
       <Route path="/obiettivi" component={Obiettivi} />
       <Route path="/statistiche" component={LegacyDiaryRedirect} />
       <Route path="/chi-sono" component={ChiSono} />
-      <Route path="/social" component={Social} />
-      <Route path="/sponsor" component={Sponsor} />
+      <Route path="/social" component={RedirectToHome} />
+      <Route path="/sponsor" component={RedirectToHome} />
       <Route path="/viaggio" component={Viaggio} />
+      <Route path="/live" component={Live} />
       <Route path="/articoli" component={Articoli} />
       <Route path="/articoli/:slug" component={Articolo} />
       <Route path="/a/:slug" component={Articolo} />
-      <Route path="/coaching" component={Coaching} />
+      <Route path="/coaching" component={RedirectToHome} />
       <Route path="/giorno/:id" component={GiornoDetail} />
       <Route path="/privacy" component={Privacy} />
       <Route path="/termini" component={Termini} />
       <Route path="/grazie" component={Grazie} />
-      <Route path="/card/articolo/:slug/story" component={CardArticolo} />
-      <Route path="/card/articolo/:slug" component={CardArticolo} />
-      <Route path="/card/:giorno/reel-minimal" component={CardReel} />
-      <Route path="/card/:giorno/reel" component={CardReel} />
-      <Route path="/card/:giorno" component={Card} />
-      <Route path="/clip/:numero" component={Clip} />
+      <Route path="/card/articolo/:slug/story" component={() => <AdminOnlyPage><CardArticolo /></AdminOnlyPage>} />
+      <Route path="/card/articolo/:slug" component={() => <AdminOnlyPage><CardArticolo /></AdminOnlyPage>} />
+      <Route path="/card/:giorno/reel-minimal" component={() => <AdminOnlyPage><CardReel /></AdminOnlyPage>} />
+      <Route path="/card/:giorno/reel" component={() => <AdminOnlyPage><CardReel /></AdminOnlyPage>} />
+      <Route path="/card/:giorno" component={() => <AdminOnlyPage><Card /></AdminOnlyPage>} />
+      <Route path="/clip/:numero" component={() => <AdminOnlyPage><Clip /></AdminOnlyPage>} />
       <Route path="/admin/articoli/:slug/preview" component={ArticoloPreview} />
       <Route path="/admin" component={Admin} />
       <Route path="/p/:slug" component={Pagina} />

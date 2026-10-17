@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useGetLatestEntries, getGetLatestEntriesQueryKey, useListEntries, useGetSiteContent } from "@workspace/api-client-react";
+import { useGetLatestEntries, getGetLatestEntriesQueryKey, useGetLive, useGetSiteContent } from "@workspace/api-client-react";
 import { Link } from "wouter";
 import { Reveal } from "@/components/Reveal";
 import { Timeline180 } from "@/components/Timeline180";
@@ -13,6 +13,19 @@ import { AccessoBlock } from "@/components/AccessoBlock";
 import { ArrowRight, Flame, Dumbbell, Heart, Wallet } from "lucide-react";
 import { getPhotoUrl } from "@workspace/object-storage-web";
 import { isUnfinishedToday } from "@/lib/current-day";
+import { useDiaryMetrics } from "@/hooks/use-diary-metrics";
+
+function LiveStrip() {
+  const { data } = useGetLive({ query: { refetchInterval: 60_000, retry: false } });
+  return (
+    <div className="border-y border-border">
+      <Link href="/live" className="mx-auto flex min-h-14 max-w-5xl items-center justify-between gap-4 px-5 sm:px-6 text-[13px] font-mono uppercase tracking-[0.12em] text-muted-foreground hover:text-foreground">
+        <span>ORA · {data?.nome ?? "STATO IN AGGIORNAMENTO"}</span>
+        <span className="text-primary">DALLE {data?.da ?? "—"} → LIVE</span>
+      </Link>
+    </div>
+  );
+}
 
 export default function Home() {
   const { data: latestEntries, isLoading: latestLoading, isError: latestError } = useGetLatestEntries({
@@ -21,7 +34,7 @@ export default function Home() {
       refetchInterval: (query) => query.state.data?.some((entry) => isUnfinishedToday(entry)) ? 10_000 : false,
     },
   });
-  const { data: allEntries, isLoading: allLoading, isError: allError } = useListEntries();
+  const { entries: allEntries, isLoading: allLoading, isError: allError } = useDiaryMetrics();
   const { data: siteContent, isLoading: siteContentLoading, isError: siteContentError } = useGetSiteContent();
   const isError = latestError || allError || siteContentError;
   const isLoading = latestLoading || allLoading || siteContentLoading;
@@ -46,7 +59,7 @@ export default function Home() {
   const sortedEntries = allEntries ? [...allEntries].sort((a, b) => a.numero - b.numero) : [];
   const firstEntry = sortedEntries[0];
   const lastEntry = sortedEntries[sortedEntries.length - 1];
-  const latestDay = lastEntry;
+  const latestDay = latestEntries?.find((entry) => entry.numero === lastEntry?.numero) ?? latestEntries?.[0];
   const weightEntries = sortedEntries.filter((entry) => entry.peso != null);
   const firstWeight = weightEntries[0]?.peso ?? null;
   const currentWeight = weightEntries[weightEntries.length - 1]?.peso ?? null;
@@ -129,6 +142,8 @@ export default function Home() {
             </div>
           </Reveal>
         </section>
+
+        <LiveStrip />
 
         {/* Live ticker */}
         {totalDays > 0 && (

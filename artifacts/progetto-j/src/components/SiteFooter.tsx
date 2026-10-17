@@ -19,6 +19,8 @@ export function SiteFooter({ hideEmailCapture = false }: { hideEmailCapture?: bo
           <nav className="flex flex-wrap items-center justify-center gap-5 sm:gap-8 text-[13px] font-mono uppercase tracking-[0.2em] text-muted-foreground">
             <Link href="/chi-sono" className="hover:text-primary transition-colors">Chi Sono</Link>
             <Link href="/diario" className="hover:text-primary transition-colors">Diario</Link>
+            <Link href="/live" className="hover:text-primary transition-colors">Live</Link>
+            <Link href="/viaggio" className="hover:text-primary transition-colors">Il viaggio</Link>
             <Link href="/articoli" className="hover:text-primary transition-colors">Articoli</Link>
             <Link href="/privacy" className="hover:text-primary transition-colors">Privacy</Link>
             <Link href="/termini" className="hover:text-primary transition-colors">Termini</Link>

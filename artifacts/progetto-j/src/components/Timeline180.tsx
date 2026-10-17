@@ -1,7 +1,7 @@
-import type { Entry } from "@workspace/api-client-react";
+import type { EntryLight } from "@workspace/api-client-react";
 import { Link } from "wouter";
 
-export function Timeline180({ entries }: { entries: Entry[] }) {
+export function Timeline180({ entries }: { entries: EntryLight[] }) {
   const completedDays = new Set(entries.map((e) => e.numero));
   const currentDay = entries.length > 0 ? Math.max(...entries.map((e) => e.numero)) : 0;
   const total = 180;
