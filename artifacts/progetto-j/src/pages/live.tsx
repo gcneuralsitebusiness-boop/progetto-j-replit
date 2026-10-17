@@ -201,7 +201,7 @@ export default function LivePage() {
         <section className="live-sensor" aria-labelledby="sensor-heading">
           <div className="live-sensor-intro">
             <div><p className="live-kicker">TELEMETRIA</p><h2 id="sensor-heading">Niente da<br /><em>nascondere.</em></h2></div>
-            <div className="live-sensor-status"><span className="live-offline-dot" /> SENSORE OFFLINE</div>
+            <div className="live-sensor-status"><span className="live-offline-dot" /> SENSORE IN ATTESA</div>
           </div>
           <div className="live-traces">
             <QuietTrace label="Battito" index={0} />

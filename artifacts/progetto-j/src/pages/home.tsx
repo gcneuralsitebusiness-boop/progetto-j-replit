@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useGetLatestEntries, getGetLatestEntriesQueryKey, useGetLive, useGetSiteContent } from "@workspace/api-client-react";
+import { useGetLatestEntries, getGetLatestEntriesQueryKey, getGetLiveQueryKey, useGetLive, useGetSiteContent } from "@workspace/api-client-react";
 import { Link } from "wouter";
 import { Reveal } from "@/components/Reveal";
 import { Timeline180 } from "@/components/Timeline180";
@@ -14,14 +14,15 @@ import { ArrowRight, Flame, Dumbbell, Heart, Wallet } from "lucide-react";
 import { getPhotoUrl } from "@workspace/object-storage-web";
 import { isUnfinishedToday } from "@/lib/current-day";
 import { useDiaryMetrics } from "@/hooks/use-diary-metrics";
+import "./home.css";
 
 function LiveStrip() {
-  const { data } = useGetLive({ query: { refetchInterval: 60_000, retry: false } });
+  const { data } = useGetLive({ query: { queryKey: getGetLiveQueryKey(), refetchInterval: 60_000, retry: false } });
   return (
     <div className="border-y border-border">
-      <Link href="/live" className="mx-auto flex min-h-14 max-w-5xl items-center justify-between gap-4 px-5 sm:px-6 text-[13px] font-mono uppercase tracking-[0.12em] text-muted-foreground hover:text-foreground">
-        <span>ORA · {data?.nome ?? "STATO IN AGGIORNAMENTO"}</span>
-        <span className="text-primary">DALLE {data?.da ?? "—"} → LIVE</span>
+      <Link href="/live" className="mx-auto flex min-h-14 max-w-5xl items-center justify-between gap-3 px-5 sm:px-6 text-[12px] font-mono uppercase tracking-[0.1em] text-muted-foreground hover:text-foreground">
+        <span className="whitespace-nowrap">ORA · {data?.nome ?? "STATO IN AGGIORNAMENTO"}</span>
+        <span className="whitespace-nowrap text-primary">DALLE {data?.da ?? "—"} → LIVE</span>
       </Link>
     </div>
   );

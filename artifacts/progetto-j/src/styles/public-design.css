@@ -41,6 +41,17 @@ html[data-public-site] :is(
   font-size: 13px !important;
 }
 
+/* Live page has its own stylesheet, so floor its custom type scale here too. */
+html[data-public-site] .live-page :is(
+  .live-kicker, .live-label, .live-zone, .live-public-mark, .live-section-note,
+  .live-current-meta, .live-override-note, .live-time-scale, .live-segment span,
+  .live-schedule-index, .live-activity-tag, .live-sensor-status,
+  .live-trace-label, .live-trace-label span, .live-sensor-foot, .live-footer,
+  .live-next > span:last-child, .live-outline-button, .live-schedule-row
+) {
+  font-size: 13px !important;
+}
+
 html[data-public-site] :is(label, time, .page-label, .accesso-label, .hero-data-item) {
   font-family: "JetBrains Mono", monospace;
 }

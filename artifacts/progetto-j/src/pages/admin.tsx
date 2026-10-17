@@ -2,7 +2,7 @@ import { lazy, Suspense, useState, useRef, useEffect, useCallback } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   useAdminMe, useAdminLogin, useAdminLogout,
-  useListEntries, useListEntrySummaries, useGetEntry, useCreateEntry, useUpdateEntry, useDeleteEntry,
+  useListEntrySummaries, useListLightEntries, useGetEntry, useCreateEntry, useUpdateEntry, useDeleteEntry,
   useListPages, useCreatePage, useUpdatePage, useDeletePage,
   useGetEntriesBulkText, useImportEntriesBulkText,
   getAdminMeQueryKey, getListEntriesQueryKey, getListLightEntriesQueryKey, getListEntrySummariesQueryKey, getGetLatestEntriesQueryKey, getGetEntryQueryKey,
@@ -14,7 +14,7 @@ import { LiveTab } from "@/components/admin/LiveTab";
 import { DailyTrackingPanel, type TrackingKey } from "@/components/admin/DailyTrackingPanel";
 import { DiaryHtmlEditor } from "@/components/admin/DiaryHtmlEditor";
 import { AdminRetry, AdminStatus } from "@/components/admin/AdminStatus";
-import type { Entry, EntryInput, PageItem } from "@workspace/api-client-react";
+import type { Entry, EntryInput, EntryLight, PageItem } from "@workspace/api-client-react";
 import { useUpload, getPhotoUrl } from "@workspace/object-storage-web";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
@@ -746,11 +746,16 @@ function EntryForm({ initialData, defaultNumero = 1, onSuccess, onCancel }: { in
 
 function DiarioTab({ scrollToEntry }: { scrollToEntry?: number }) {
   const queryClient = useQueryClient();
-  const { data: summaries, isLoading: listLoading, isError: listError, refetch: refetchList } = useListEntrySummaries();
-  const entries = summaries as Entry[] | undefined;
-  const deleteMutation = useDeleteEntry();
   const [editingNumero, setEditingNumero] = useState<number | null>(null);
   const [search, setSearch] = useState("");
+  const { data: entries, isLoading: listLoading, isError: listError, refetch: refetchList } = useListLightEntries({
+    request: { cache: "no-store" },
+  });
+  const needsNarrativeSearch = Boolean(search.trim() && !/^\d+$/.test(search.trim()));
+  const { data: searchSummaries, isLoading: searchLoading } = useListEntrySummaries({
+    query: { queryKey: getListEntrySummariesQueryKey(), enabled: needsNarrativeSearch },
+  });
+  const deleteMutation = useDeleteEntry();
   const formRef = useRef<HTMLDivElement>(null);
   const nextNumero = editingNumero ?? ((entries?.reduce((max, entry) => Math.max(max, entry.numero), 0) ?? 0) + 1);
   const { data: editingEntry, isLoading: editingLoading, isError: editingError, refetch: refetchEntry } = useGetEntry(editingNumero ?? 0, {
@@ -784,6 +789,11 @@ function DiarioTab({ scrollToEntry }: { scrollToEntry?: number }) {
   const handleSaved = (entry: Entry) => {
     setEditingNumero(null);
     setSaveNotice({ entry, cards: entry.testo?.trim() ? "pending" : "done" });
+    void queryClient.invalidateQueries({ queryKey: getListLightEntriesQueryKey() });
+    void queryClient.invalidateQueries({ queryKey: getListEntriesQueryKey() });
+    void queryClient.invalidateQueries({ queryKey: getListEntrySummariesQueryKey() });
+    void queryClient.invalidateQueries({ queryKey: getGetLatestEntriesQueryKey() });
+    void queryClient.invalidateQueries({ queryKey: getGetEntryQueryKey(entry.numero) });
     if (entry.testo?.trim()) setTimeout(() => generateCards(entry), 0);
   };
 
@@ -815,11 +825,19 @@ function DiarioTab({ scrollToEntry }: { scrollToEntry?: number }) {
   };
 
   // Client-side search filter
-  const filteredEntries = entries?.filter((e) => {
+  type DiaryListItem = Pick<EntryLight, "id" | "numero" | "data" | "foto" | "kcal" | "peso" | "sintesi"> & { testo?: string | null };
+  const displayedEntries: DiaryListItem[] = needsNarrativeSearch && searchSummaries
+    ? searchSummaries
+    : entries ?? [];
+  const filteredEntries = displayedEntries.filter((e) => {
     if (!search.trim()) return true;
     const q = search.trim().toLowerCase();
-    return String(e.numero).includes(q) || (e.testo ?? "").toLowerCase().includes(q);
-  }) ?? [];
+    const diaryText = "testo" in e ? e.testo ?? "" : "";
+    return String(e.numero).includes(q)
+      || diaryText.toLowerCase().includes(q)
+      || (e.sintesi ?? "").toLowerCase().includes(q);
+  });
+  const searching = needsNarrativeSearch;
   return (
     <div className="space-y-12">
       {saveNotice && (
@@ -852,7 +870,7 @@ function DiarioTab({ scrollToEntry }: { scrollToEntry?: number }) {
           )
         ) : (
           listError ? <div><AdminStatus tone="error">Impossibile caricare i giorni.</AdminStatus><AdminRetry onRetry={() => void refetchList()} /></div>
-            : listLoading ? <AdminStatus>Caricamento giorni...</AdminStatus>
+            : listLoading || (searching && searchLoading) ? <AdminStatus>Caricamento giorni...</AdminStatus>
             : <EntryForm key="new" defaultNumero={nextNumero} onSuccess={handleSaved} />
         )}
       </div>
@@ -957,7 +975,6 @@ interface DashboardData {
 function OggiTab({ onSwitchTab }: { onSwitchTab: (tab: string, scrollToEntry?: number) => void }) {
   const [backupFeedback, setBackupFeedback] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [isRunningBackup, setIsRunningBackup] = useState(false);
-  const { data: dailyEntries } = useListEntrySummaries();
   const {
     data: dashboard,
     isLoading: loading,
@@ -971,6 +988,14 @@ function OggiTab({ onSwitchTab }: { onSwitchTab: (tab: string, scrollToEntry?: n
       return response.json() as Promise<DashboardData>;
     },
     staleTime: 30_000,
+  });
+  const todayEntryNumero = dashboard?.todayEntry?.numero ?? 0;
+  const { data: todayCard } = useGetEntry(todayEntryNumero, {
+    query: {
+      queryKey: getGetEntryQueryKey(todayEntryNumero),
+      enabled: todayEntryNumero > 0,
+      retry: false,
+    },
   });
   const backupStatus = useQuery<{ backup: DashboardData["backup"] }>({
     queryKey: ["admin-backup-status"],
@@ -992,7 +1017,6 @@ function OggiTab({ onSwitchTab }: { onSwitchTab: (tab: string, scrollToEntry?: n
   }
 
   const todayLabel = new Date(dashboard.todayDate + "T12:00:00").toLocaleDateString("it-IT", { weekday: "long", day: "numeric", month: "long" }).toUpperCase();
-  const todayCard = dailyEntries?.find((entry) => entry.numero === dashboard.todayEntry?.numero);
   const todayCardImage = todayCard?.foto ? (getPhotoUrl(todayCard.foto) ?? todayCard.foto) : null;
 
   return (

@@ -7,7 +7,8 @@ export function PublicDesignScope() {
   const [location] = useLocation();
   useLayoutEffect(() => {
     const root = document.documentElement;
-    root.toggleAttribute("data-public-site", !/^\/admin(?:\/|$)/.test(location));
+    const isHome = location === "/";
+    root.toggleAttribute("data-public-site", !isHome && !/^\/admin(?:\/|$)/.test(location));
     return () => root.removeAttribute("data-public-site");
   }, [location]);
   return null;

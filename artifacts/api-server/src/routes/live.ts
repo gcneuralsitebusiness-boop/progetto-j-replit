@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { and, asc, eq } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 import { db, liveStateTable, programmaTable } from "@workspace/db";
 
 const router: IRouter = Router();
@@ -33,34 +33,30 @@ function minutes(time: string) { const [h, m] = time.split(":").map(Number); ret
 function isActivity(value: unknown): value is Activity { return activities.includes(value as Activity); }
 function isClock(value: unknown): value is string { return typeof value === "string" && /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(value); }
 
-async function ensureDefaults() {
-  await db.insert(liveStateTable).values({ id: 1 }).onConflictDoNothing();
-  const existing = await db.select({ id: programmaTable.id }).from(programmaTable).limit(1);
-  if (existing.length) return;
-  await db.insert(programmaTable).values(weekdays.flatMap((day, giorno) => day.map(([inizio, fine, attivita]) => ({
-    giorno, inizio, fine, attivita,
-  }))));
-}
+const defaultProgram = weekdays
+  .flatMap((day, giorno) => day.map(([inizio, fine, attivita]) => ({ giorno, inizio, fine, attivita })))
+  .map((item, index) => ({ ...item, id: -(index + 1) }));
 const adminOnly = (req: { session?: { adminAuthenticated?: boolean } }, res: { status(code: number): { json(value: unknown): void } }) => {
   if (req.session?.adminAuthenticated) return false;
   res.status(401).json({ error: "Unauthorized" });
   return true;
 };
-const daySchedule = async (day: number) => db.select().from(programmaTable).where(eq(programmaTable.giorno, day)).orderBy(asc(programmaTable.inizio));
 const getState = async () => (await db.select().from(liveStateTable).where(eq(liveStateTable.id, 1)).limit(1))[0];
 
 router.get("/live", async (_req, res): Promise<void> => {
-  await ensureDefaults();
   const now = new Date();
   const local = romeClock(now);
   const state = await getState();
-  const today = await daySchedule(local.weekday);
+  const storedProgram = await db.select().from(programmaTable).orderBy(asc(programmaTable.giorno), asc(programmaTable.inizio));
+  const program = storedProgram.length ? storedProgram : defaultProgram;
+  const today = program.filter((block) => block.giorno === local.weekday).sort((a, b) => minutes(a.inizio) - minutes(b.inizio));
   const current = today.find((block) => minutes(block.inizio) <= local.minute && minutes(block.fine) > local.minute);
   const nextSameDay = today.find((block) => minutes(block.inizio) > local.minute);
-  const tomorrow = nextSameDay ? null : await daySchedule((local.weekday + 1) % 7);
+  const tomorrow = nextSameDay ? null : program.filter((block) => block.giorno === (local.weekday + 1) % 7).sort((a, b) => minutes(a.inizio) - minutes(b.inizio));
   const next = nextSameDay ?? tomorrow?.[0];
   const hasOverride = Boolean(state?.override && isActivity(state.override) && state.overrideFino && state.overrideFino > now);
   const actual = hasOverride ? state!.override as Activity : current?.attivita as Activity ?? "LIBERO";
+  res.setHeader("Cache-Control", "public, max-age=30, stale-while-revalidate=15");
   res.json({
     attivita: actual,
     nome: activityName[actual],
@@ -76,13 +72,14 @@ router.get("/live", async (_req, res): Promise<void> => {
 
 router.get("/admin/live/programma", async (req, res): Promise<void> => {
   if (adminOnly(req, res)) return;
-  await ensureDefaults();
-  res.json(await db.select().from(programmaTable).orderBy(asc(programmaTable.giorno), asc(programmaTable.inizio)));
+  const storedProgram = await db.select().from(programmaTable).orderBy(asc(programmaTable.giorno), asc(programmaTable.inizio));
+  res.setHeader("Cache-Control", "private, no-store");
+  res.json(storedProgram.length ? storedProgram : defaultProgram.map((item, index) => ({ ...item, id: -(index + 1) })));
 });
 router.put("/admin/live/programma", async (req, res): Promise<void> => {
   if (adminOnly(req, res)) return;
   const schedule = req.body?.programma;
-  if (!Array.isArray(schedule) || schedule.length < 17 || schedule.length > 60) {
+  if (!Array.isArray(schedule) || schedule.length < 7 || schedule.length > 60) {
     res.status(400).json({ error: "Il programma deve coprire tutti i giorni della settimana." }); return;
   }
   const valid = schedule.every((s: any) => Number.isInteger(s.giorno) && s.giorno >= 0 && s.giorno <= 6 && isClock(s.inizio) &&
@@ -95,7 +92,6 @@ router.put("/admin/live/programma", async (req, res): Promise<void> => {
       res.status(400).json({ error: `Il programma del giorno ${day} deve coprire le 24 ore senza intervalli o sovrapposizioni.` }); return;
     }
   }
-  await ensureDefaults();
   const saved = await db.transaction(async (tx) => {
     await tx.delete(programmaTable);
     return tx.insert(programmaTable).values(schedule.map((s: any) => ({ giorno: s.giorno, inizio: s.inizio, fine: s.fine, attivita: s.attivita }))).returning();
@@ -105,7 +101,6 @@ router.put("/admin/live/programma", async (req, res): Promise<void> => {
 router.put("/admin/live/override", async (req, res): Promise<void> => {
   if (adminOnly(req, res)) return;
   if (!isActivity(req.body?.attivita)) { res.status(400).json({ error: "Attività non valida." }); return; }
-  await ensureDefaults();
   const now = new Date();
   const [state] = await db.insert(liveStateTable).values({ id: 1, override: req.body.attivita, overrideFino: new Date(now.getTime() + 3 * 60 * 60_000), aggiornato: now })
     .onConflictDoUpdate({ target: liveStateTable.id, set: { override: req.body.attivita, overrideFino: new Date(now.getTime() + 3 * 60 * 60_000), aggiornato: now } }).returning();
@@ -113,7 +108,6 @@ router.put("/admin/live/override", async (req, res): Promise<void> => {
 });
 router.delete("/admin/live/override", async (req, res): Promise<void> => {
   if (adminOnly(req, res)) return;
-  await ensureDefaults();
   const [state] = await db.update(liveStateTable).set({ override: null, overrideFino: null, aggiornato: new Date() }).where(eq(liveStateTable.id, 1)).returning();
   res.json(state);
 });

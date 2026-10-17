@@ -27,7 +27,7 @@ router.get("/entries", async (req, res): Promise<void> => {
     return;
   }
   void ensureTodayEntry().catch((err) => {
-    _req.log.error({ err }, "Failed to ensure today's entry");
+    req.log.error({ err }, "Failed to ensure today's entry");
   });
 
   const rows = await db

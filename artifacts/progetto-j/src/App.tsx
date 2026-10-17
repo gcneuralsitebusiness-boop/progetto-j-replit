@@ -6,7 +6,7 @@ import { Navbar } from '@/components/Navbar';
 import { ScrollToTop } from '@/components/ScrollToTop';
 import { PageChromeProvider, usePageChrome } from '@/lib/page-chrome';
 import { PublicDesignScope } from '@/components/PublicDesignScope';
-import { useAdminMe } from "@workspace/api-client-react";
+import { getAdminMeQueryKey, useAdminMe } from "@workspace/api-client-react";
 
 const Home = lazy(() => import('@/pages/home'));
 const Diario = lazy(() => import('@/pages/diario'));
@@ -98,12 +98,12 @@ function PageMetadata() {
   const [location] = useLocation();
   useEffect(() => {
     const metadata: Record<string, { title: string; description: string }> = {
-      "/": { title: "Project J — 180 Giorni Documentati", description: "180 giorni di trasformazione documentata. Dati reali, zero filtri. Corpo, mente, business." },
-      "/diario": { title: "Diario — Project J", description: "Ogni giorno, tutti i numeri. Anche quelli brutti." },
-      "/live": { title: "J in tempo reale — Project J", description: "Stato e programma giornaliero di J, aggiornati secondo l'ora di Roma." },
-      "/obiettivi": { title: "Obiettivi — Project J", description: "Obiettivi del ciclo in corso, stato avanzamento e tappe di Project J." },
-      "/chi-sono": { title: "Chi sono — Project J", description: "La storia, il metodo e la persona dietro Project J." },
-      "/viaggio": { title: "Il viaggio di J — Progetto J", description: "Otto paesi visitati, quattro da prendere. Quattro discipline, quattro posti dove sono nate." },
+      "/": { title: "Progetto J — 180 Giorni Documentati", description: "180 giorni di trasformazione documentata. Dati reali, zero filtri. Corpo, mente, business." },
+      "/diario": { title: "Diario — Progetto J", description: "Ogni giorno, tutti i numeri. Anche quelli brutti." },
+      "/live": { title: "J in tempo reale — Progetto J", description: "Stato e programma giornaliero di J, aggiornati secondo l'ora di Roma." },
+      "/obiettivi": { title: "Obiettivi — Progetto J", description: "Obiettivi del ciclo in corso, stato avanzamento e tappe di Progetto J." },
+      "/chi-sono": { title: "Chi sono — Progetto J", description: "La storia, il metodo e la persona dietro Progetto J." },
+      "/viaggio": { title: "Il viaggio — Progetto J", description: "Le tappe e il percorso completo di Progetto J." },
       "/articoli": { title: "Articoli — Progetto J", description: "Riflessioni, metodo e lezioni raccolte durante il percorso Progetto J." },
       "/coaching": { title: "Coaching — Progetto J", description: "Un protocollo di 12 settimane basato su allenamento, nutrizione, sonno e dati." },
       "/social": { title: "Social — Progetto J", description: "Segui Progetto J sui canali social e contatta il progetto." },
@@ -112,6 +112,7 @@ function PageMetadata() {
       "/grazie": { title: "Grazie — Progetto J", description: "Richiesta ricevuta da Progetto J." },
     };
     const isClipRoute = location.startsWith("/clip/");
+    const canonicalUrl = new URL(location, "https://projectj180day.com").href;
     const current = metadata[location] ?? (location.startsWith("/giorno/") ? {
       title: `Giorno ${location.split("/").pop()} — Project J`,
       description: "Un giorno del diario documentale di Project J.",
@@ -123,18 +124,21 @@ function PageMetadata() {
     document.querySelector('meta[name="description"]')?.setAttribute("content", current.description);
     document.querySelector('meta[property="og:title"]')?.setAttribute("content", current.title);
     document.querySelector('meta[property="og:description"]')?.setAttribute("content", current.description);
+    document.querySelector('meta[property="og:url"]')?.setAttribute("content", canonicalUrl);
 
     const robots = document.querySelector('meta[name="robots"]');
     const internal = location === "/admin" || location.startsWith("/admin/") || location.startsWith("/card/") || isClipRoute;
     robots?.setAttribute("content", internal ? "noindex, nofollow" : "index, follow");
-    const canonical = document.querySelector('link[rel="canonical"]');
+    const canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
     if (internal) {
       canonical?.remove();
     } else if (!canonical) {
       const restoredCanonical = document.createElement("link");
       restoredCanonical.rel = "canonical";
-      restoredCanonical.href = "https://projectj180day.com";
+      restoredCanonical.href = canonicalUrl;
       document.head.appendChild(restoredCanonical);
+    } else if (!internal) {
+      canonical.href = canonicalUrl;
     }
   }, [location]);
   return null;
@@ -148,7 +152,7 @@ function RedirectToHome() {
 
 function AdminOnlyPage({ children }: { children: ReactNode }) {
   const [, navigate] = useLocation();
-  const { data, isLoading, isError } = useAdminMe({ query: { retry: false } });
+  const { data, isLoading, isError } = useAdminMe({ query: { queryKey: getAdminMeQueryKey(), retry: false } });
   useEffect(() => {
     if (!isLoading && (isError || !data?.authenticated)) navigate("/admin", { replace: true });
   }, [data?.authenticated, isError, isLoading, navigate]);

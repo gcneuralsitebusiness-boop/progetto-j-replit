@@ -1,11 +1,12 @@
-type Day = { numero: number; data: string; testo?: string | null };
+type Day = { numero: number; data: string; testo?: string | null; hasDiario?: boolean };
 
 export function romeToday(): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Rome" }).format(new Date());
 }
 
 export function isUnfinishedToday(entry: Day, today = romeToday()): boolean {
-  return entry.data === today && !entry.testo?.trim();
+  const hasDiary = entry.hasDiario ?? Boolean(entry.testo?.trim());
+  return entry.data === today && !hasDiary;
 }
 
 /** Also handles the first request after midnight, while the idempotent creator runs. */

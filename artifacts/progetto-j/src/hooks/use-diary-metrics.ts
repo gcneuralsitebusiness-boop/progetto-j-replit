@@ -4,6 +4,7 @@ import { recordedEntries, romeDate, weeklyComparisons } from "@/lib/diario-analy
 
 /** One shared, fresh source for the home and public diary; never loads full diary bodies. */
 export function useDiaryMetrics() {
+  const today = romeDate();
   const query = useListLightEntries({
     query: {
       queryKey: getListLightEntriesQueryKey(),
@@ -15,7 +16,6 @@ export function useDiaryMetrics() {
     },
     request: { cache: "no-store" },
   });
-  const today = romeDate();
   const entries = useMemo(() => [...(query.data ?? [])].sort((a, b) => a.numero - b.numero), [query.data]);
   const recorded = useMemo(() => recordedEntries(entries, today), [entries, today]);
   const weekly = useMemo(() => weeklyComparisons(recorded, today), [recorded, today]);

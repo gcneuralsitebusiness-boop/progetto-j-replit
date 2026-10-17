@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactElement } from "react";
 import { useParams, useSearch, Link } from "wouter";
-import { useListEntries, getListEntriesQueryKey, useListArticles, useListTaskGiorno, useListObiettivi } from "@workspace/api-client-react";
-import type { Entry as ApiEntry, TaskGiorno } from "@workspace/api-client-react";
+import { useListLightEntries, getListLightEntriesQueryKey, useGetEntry, getGetEntryQueryKey, useListArticles, useListTaskGiorno, useListObiettivi } from "@workspace/api-client-react";
+import type { Entry as ApiEntry, EntryLight, TaskGiorno } from "@workspace/api-client-react";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
 import { Reveal } from "@/components/Reveal";
@@ -569,8 +569,8 @@ function GiornoContent({
   routineStreak,
 }: {
   entry: GiornoEntry;
-  prevEntry: GiornoEntry | null;
-  nextEntry: GiornoEntry | null;
+  prevEntry: Pick<EntryLight, "numero"> | null;
+  nextEntry: Pick<EntryLight, "numero"> | null;
   averages: VsMetric[];
   routineStreak: number;
 }) {
@@ -760,14 +760,25 @@ function GiornoContent({
 export default function GiornoDetail() {
   const { id } = useParams<{ id: string }>();
   const requestedNumber = Number(id);
-  const { data: entries, isLoading, isError } = useListEntries({
+  const { data: entries, isLoading: entriesLoading, isError: entriesError } = useListLightEntries({
     query: {
-      queryKey: getListEntriesQueryKey(),
+      queryKey: getListLightEntriesQueryKey(),
       refetchInterval: (query) => isCurrentDayPending(query.state.data, requestedNumber) ? 10_000 : false,
       refetchOnWindowFocus: true,
     },
+    request: { cache: "no-store" },
   });
-  const entry = entries?.find((e) => e.numero === requestedNumber);
+  const { data: entry, isLoading: entryLoading, isError: entryError } = useGetEntry(requestedNumber, {
+    query: {
+      queryKey: getGetEntryQueryKey(requestedNumber),
+      enabled: Number.isInteger(requestedNumber) && requestedNumber > 0 && requestedNumber <= 180,
+      refetchInterval: () => isCurrentDayPending(entries, requestedNumber) ? 10_000 : false,
+      refetchOnWindowFocus: true,
+    },
+    request: { cache: "no-store" },
+  });
+  const isLoading = entriesLoading || entryLoading;
+  const isError = entriesError || entryError;
 
   // Compute averages across all entries
   const avg = (arr: (number | null | undefined)[]): number => {
@@ -815,6 +826,10 @@ export default function GiornoDetail() {
     );
   }
 
+  if (isCurrentDayPending(entries, requestedNumber)) {
+    return <CurrentDayPending numero={requestedNumber} />;
+  }
+
   if (isError) {
     return (
       <>
@@ -822,10 +837,6 @@ export default function GiornoDetail() {
         <SiteFooter />
       </>
     );
-  }
-
-  if (isCurrentDayPending(entries, requestedNumber)) {
-    return <CurrentDayPending numero={requestedNumber} />;
   }
 
   if (!entry) {
