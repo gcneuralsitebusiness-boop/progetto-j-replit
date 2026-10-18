@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Route, Switch, Router as WouterRouter, useLocation } from 'wouter';
+import { Redirect, Route, Switch, Router as WouterRouter, useLocation } from 'wouter';
 import { lazy, Suspense, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Toaster } from '@/components/ui/toaster';
 import { Navbar } from '@/components/Navbar';
@@ -7,8 +7,7 @@ import { ScrollToTop } from '@/components/ScrollToTop';
 import { PageChromeProvider, usePageChrome } from '@/lib/page-chrome';
 
 const Home = lazy(() => import('@/pages/home'));
-const Journaling = lazy(() => import('@/pages/journaling'));
-const Statistiche = lazy(() => import('@/pages/statistiche'));
+const Diario = lazy(() => import('@/pages/diario'));
 const ChiSono = lazy(() => import('@/pages/chi-sono'));
 const Admin = lazy(() => import('@/pages/admin'));
 const NotFound = lazy(() => import('@/pages/not-found'));
@@ -100,8 +99,8 @@ function PageMetadata() {
   useEffect(() => {
     const metadata: Record<string, { title: string; description: string }> = {
       "/": { title: "Progetto J — 180 Giorni Documentati", description: "180 giorni di trasformazione documentata. Dati reali, zero filtri. Corpo, mente, business." },
-      "/journaling": { title: "Journaling — Progetto J", description: "Il diario operativo di Progetto J: giorni, dati, allenamento e disciplina." },
-      "/statistiche": { title: "Statistiche — Progetto J", description: "I dati aggregati del percorso Progetto J: peso, sonno, allenamento e progressi." },
+      "/journaling": { title: "Diario — Progetto J", description: "Tutte le giornate di Progetto J: testi, foto e dati del percorso, dalla più recente." },
+      "/statistiche": { title: "Diario — Progetto J", description: "Tutte le giornate del diario di Progetto J." },
       "/obiettivi": { title: "Obiettivi — Progetto J", description: "Obiettivi del ciclo in corso, stato avanzamento e tappe di Progetto J." },
       "/chi-sono": { title: "Chi sono — Progetto J", description: "La storia, il metodo e la persona dietro Progetto J." },
       "/viaggio": { title: "Il viaggio di J — Progetto J", description: "Otto paesi visitati, quattro da prendere. Quattro discipline, quattro posti dove sono nate." },
@@ -156,9 +155,9 @@ function AppRoutes() {
   const routes = (
     <Switch>
       <Route path="/" component={Home} />
-      <Route path="/journaling" component={Journaling} />
+      <Route path="/journaling" component={Diario} />
       <Route path="/obiettivi" component={Obiettivi} />
-      <Route path="/statistiche" component={Statistiche} />
+      <Route path="/statistiche"><Redirect to="/journaling" replace /></Route>
       <Route path="/chi-sono" component={ChiSono} />
       <Route path="/social" component={Social} />
       <Route path="/sponsor" component={Sponsor} />

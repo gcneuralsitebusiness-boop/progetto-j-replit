@@ -53,8 +53,7 @@ export function Navbar() {
   const navigationItems = [
     { href: "/chi-sono", label: "Chi Sono" },
     { href: "/obiettivi", label: "Obiettivi" },
-    { href: "/journaling", label: "Journaling" },
-    { href: "/statistiche", label: "Statistiche" },
+    { href: "/journaling", label: "Diario" },
     { href: "/viaggio", label: "Il Viaggio" },
     { href: "/articoli", label: "Articoli" },
     { href: "/#accesso", label: "Richiedi accesso", accent: true },
