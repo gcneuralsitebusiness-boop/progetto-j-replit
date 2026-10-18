@@ -1,4 +1,5 @@
 import { Link } from "wouter";
+import { ArrowLeft } from "lucide-react";
 import { SiteFooter } from "@/components/SiteFooter";
 
 export default function Termini() {
@@ -7,7 +8,7 @@ export default function Termini() {
       <main className="min-h-screen px-5 pb-20 pt-28 sm:px-6">
         <article className="mx-auto max-w-3xl">
           <Link href="/" className="mb-10 inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-muted-foreground hover:text-primary">
-            Torna alla home
+            <ArrowLeft size={14} /> Torna alla home
           </Link>
           <span className="page-label">INFORMAZIONI LEGALI</span>
           <h1 className="mt-3 font-serif text-[clamp(56px,12vw,112px)] leading-[0.85] tracking-wide text-foreground bebas">

@@ -19,9 +19,9 @@ function NavLink({
   accent?: boolean;
 }) {
   const [location] = useLocation();
-  const isActive = !href.includes("#") && !external && (location === href || (href !== "/" && location.startsWith(href + "/")));
+  const isActive = location === href || (href !== "/" && location.startsWith(href));
   const baseClasses = cn(
-    "text-[13px] font-mono uppercase tracking-[0.2em] transition-colors",
+    "text-[12px] font-sans uppercase tracking-[0.2em] transition-colors",
     accent ? "text-[#B81D1D] hover:text-foreground" : isActive ? "nav-active text-foreground" : "text-muted-foreground hover:text-iron"
   );
 
@@ -33,10 +33,10 @@ function NavLink({
     );
   }
   if (href.includes("#")) {
-    return <a ref={itemRef} href={href} className={cn(baseClasses, "inline-flex min-h-11 items-center")} onClick={onClick}>{children}</a>;
+    return <a ref={itemRef} href={href} className={baseClasses} onClick={onClick}>{children}</a>;
   }
   return (
-    <Link href={href} ref={itemRef} className={cn(baseClasses, "inline-flex min-h-11 items-center")} aria-current={isActive ? "page" : undefined} onClick={onClick}>
+    <Link href={href} ref={itemRef} className={baseClasses} onClick={onClick}>
       {children}
     </Link>
   );
@@ -51,17 +51,17 @@ export function Navbar() {
   const [underline, setUnderline] = useState({ x: 0, width: 0, visible: false });
   const [hasScrolled, setHasScrolled] = useState(false);
   const navigationItems = [
-    { href: "/diario", label: "Diario" },
-    { href: "/live", label: "Live" },
-    { href: "/articoli", label: "Articoli" },
+    { href: "/chi-sono", label: "Chi Sono" },
     { href: "/obiettivi", label: "Obiettivi" },
-    { href: "/chi-sono", label: "Chi sono" },
-    { href: "/viaggio", label: "Il viaggio" },
+    { href: "/journaling", label: "Journaling" },
+    { href: "/statistiche", label: "Statistiche" },
+    { href: "/viaggio", label: "Il Viaggio" },
+    { href: "/articoli", label: "Articoli" },
     { href: "/#accesso", label: "Richiedi accesso", accent: true },
   ];
 
   const updateUnderline = () => {
-    const active = navigationItems.find((item) => !item.href.includes("#") && (location === item.href || location.startsWith(item.href + "/")));
+    const active = navigationItems.find((item) => location === item.href || location.startsWith(item.href));
     const element = active ? navRefs.current[active.href] : null;
     setUnderline({
       x: element?.offsetLeft ?? 0,
@@ -95,49 +95,37 @@ export function Navbar() {
   }, []);
 
   useEffect(() => {
-    if (!mobileMenuOpen) return;
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = previous; };
+    if (mobileMenuOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
   }, [mobileMenuOpen]);
 
   const closeMenu = () => setMobileMenuOpen(false);
-  // Close on route change.
-  useEffect(() => { setMobileMenuOpen(false); }, [location]);
-  // Close when resizing to desktop layout.
-  useEffect(() => {
-    const mq = window.matchMedia("(min-width: 1024px)");
-    const on = () => { if (mq.matches) setMobileMenuOpen(false); };
-    mq.addEventListener("change", on);
-    return () => mq.removeEventListener("change", on);
-  }, []);
   useEffect(() => {
     if (!mobileMenuOpen) return;
     menuRef.current?.querySelector<HTMLElement>("a, button")?.focus();
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") { closeMenu(); return; }
-      if (event.key !== "Tab" || !menuRef.current) return;
-      const focusables = [menuButtonRef.current, ...Array.from(menuRef.current.querySelectorAll<HTMLElement>("a[href], button"))].filter(Boolean) as HTMLElement[];
-      const first = focusables[0];
-      const last = focusables[focusables.length - 1];
-      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
-      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+      if (event.key === "Escape") closeMenu();
     };
     window.addEventListener("keydown", onKeyDown);
-    const button = menuButtonRef.current;
     return () => {
       window.removeEventListener("keydown", onKeyDown);
-      if (button && button.offsetParent !== null) button.focus();
+      menuButtonRef.current?.focus();
     };
   }, [mobileMenuOpen]);
 
   return (
     <>
-      {!/^\/(?:articoli|a)\/[^/]+\/?$/.test(location) && <ScrollProgress />}
+      <ScrollProgress />
       <header
         className="fixed top-0 w-full z-50"
         style={{
-            backgroundColor: hasScrolled || mobileMenuOpen ? "#0A0A0A" : "transparent",
+          backgroundColor: hasScrolled ? "#0A0A0A" : "transparent",
           borderBottom: `1px solid ${hasScrolled ? "rgba(245,240,232,0.12)" : "transparent"}`,
           transition: "background-color 200ms linear, border-color 200ms linear",
         }}
@@ -145,14 +133,13 @@ export function Navbar() {
         <div className="max-w-5xl mx-auto px-5 sm:px-6 h-16 flex items-center justify-between">
           <Link
             href="/"
-            aria-label="Progetto J, home"
             className="font-serif text-[32px] text-primary leading-none bebas tracking-wide"
-            style={{ position: "relative", zIndex: 10000, ...(location === "/diario" || location === "/" ? { fontFamily: '"Bebas Neue", sans-serif' } : {}) }}
+            style={{ position: "relative", zIndex: 10000 }}
           >
             J
           </Link>
 
-          <nav aria-label="Principale" className="relative hidden lg:flex items-center gap-6 xl:gap-8">
+          <nav className="relative hidden lg:flex items-center gap-6 xl:gap-8">
             {navigationItems.map((item) => (
               <NavLink key={item.href} href={item.href} accent={item.accent} itemRef={(element) => { navRefs.current[item.href] = element; }}>
                 {item.label}
@@ -170,7 +157,6 @@ export function Navbar() {
                 transform: `translateX(${underline.x}px) scaleX(${underline.visible ? 1 : 0})`,
                 transformOrigin: "left center",
                 transition: "transform var(--dur-base) var(--ease-out)",
-                ...(typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? { transition: "none" } : {}),
                 pointerEvents: "none",
               }}
             />
@@ -185,7 +171,11 @@ export function Navbar() {
             aria-expanded={mobileMenuOpen}
             aria-controls="mobile-navigation"
           >
-            <span className="font-mono text-[13px]" aria-hidden="true">{mobileMenuOpen ? "CHIUDI" : "MENU"}</span>
+            <span className={`hamburger-icon ${mobileMenuOpen ? "is-open" : ""}`} aria-hidden="true">
+              <span />
+              <span />
+              <span />
+            </span>
           </button>
         </div>
       </header>
@@ -196,15 +186,13 @@ export function Navbar() {
           id="mobile-navigation"
           className="lg:hidden menu-slide"
           aria-label="Menu di navigazione"
-          aria-modal="true"
-          role="dialog"
           style={{
             position: "fixed",
             inset: 0,
             height: "100dvh",
             width: "100vw",
             backgroundColor: "#0A0A0A",
-            zIndex: 40,
+            zIndex: 9999,
             display: "flex",
             flexDirection: "column",
             gap: "0.45rem",

@@ -130,7 +130,7 @@ function Diamond({
              transitionDelay: skipAnimation ? "0ms" : "300ms"
           }}
         >
-          <span className="font-mono text-[44px] leading-none transition-colors duration-[350ms]" style={{ color: textColor }}>
+          <span className="font-serif text-[44px] leading-none transition-colors duration-[350ms] bebas" style={{ color: textColor }}>
             {obiettivo.posizione}
           </span>
         </div>
@@ -162,7 +162,7 @@ function GoalPanel({ obiettivo }: { obiettivo: Obiettivo }) {
         {obiettivo.titolo}
       </h2>
       <div className="h-px w-full bg-[#1A1A1A] mb-6" />
-      <div className="font-mono text-[64px] leading-none mb-6">
+      <div className="font-serif text-[64px] leading-none mb-6 bebas">
         <span className="text-[#B81D1D]">{obiettivo.fatto}</span>
         <span className="text-[#E8E4DE]"> / {obiettivo.previsto}</span>
       </div>

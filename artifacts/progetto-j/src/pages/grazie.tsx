@@ -1,4 +1,5 @@
 import { Link } from "wouter";
+import { ArrowLeft, Check } from "lucide-react";
 import { SiteFooter } from "@/components/SiteFooter";
 
 export default function Grazie() {
@@ -13,6 +14,9 @@ export default function Grazie() {
         <div className="mx-auto flex min-h-[60vh] max-w-5xl flex-col justify-center">
           <span className="page-label">RICEVUTO</span>
           <div className="mt-5 flex items-start gap-5">
+            <div className="mt-2 border border-primary p-3 text-primary">
+              <Check size={24} />
+            </div>
             <h1 className="font-serif text-[clamp(56px,13vw,128px)] leading-[0.82] tracking-wide text-foreground bebas">
               GRAZIE
             </h1>
@@ -23,7 +27,7 @@ export default function Grazie() {
               : "Il tuo messaggio è arrivato. Ti risponderemo appena possibile."}
           </p>
           <Link href="/" className="btn-primary mt-8 w-fit">
-            Torna alla home
+            <ArrowLeft size={16} /> Torna alla home
           </Link>
         </div>
       </main>

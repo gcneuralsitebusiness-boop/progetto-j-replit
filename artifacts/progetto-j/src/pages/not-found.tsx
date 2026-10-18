@@ -1,4 +1,5 @@
 import { Link } from "wouter";
+import { ArrowLeft, AlertCircle } from "lucide-react";
 import { SiteFooter } from "@/components/SiteFooter";
 
 export default function NotFound() {
@@ -8,6 +9,7 @@ export default function NotFound() {
         <div className="mx-auto flex min-h-[60vh] max-w-5xl flex-col justify-center">
           <span className="page-label">ERRORE 404</span>
           <div className="mt-5 flex items-start gap-4">
+            <AlertCircle className="mt-2 shrink-0 text-primary" size={28} />
             <h1 className="font-serif text-[clamp(64px,16vw,160px)] leading-[0.8] tracking-wide text-foreground bebas">
               PAGINA<br />NON TROVATA
             </h1>
@@ -16,7 +18,7 @@ export default function NotFound() {
             Questo percorso non esiste o non è più disponibile. Torna al diario e continua da lì.
           </p>
           <Link href="/" className="btn-primary mt-8 w-fit">
-            Torna alla home
+            <ArrowLeft size={16} /> Torna alla home
           </Link>
         </div>
       </main>

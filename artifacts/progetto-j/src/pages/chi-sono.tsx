@@ -2,11 +2,10 @@ import { Fragment } from "react";
 import { useGetSiteContent } from "@workspace/api-client-react";
 import { getPhotoUrl } from "@workspace/object-storage-web";
 import { Reveal } from "@/components/Reveal";
+import { Cross } from "@/components/Cross";
 import { AccessoBlock } from "@/components/AccessoBlock";
 import { SiteFooter } from "@/components/SiteFooter";
 import { DataErrorState } from "@/components/DataErrorState";
-import { ChiJourneyMap } from "@/components/chi/ChiJourneyMap";
-import "@/styles/editorial.css";
 
 const DEFAULTS = {
   chi_sono_il_progetto:
@@ -18,61 +17,72 @@ const DEFAULTS = {
 };
 
 const STORY_PARAGRAPHS = [
-  "Mi chiamo J, ho 21 anni, vivo vicino a Bologna.",
-  "Pesavo 130 chili ed ero dipendente.",
+  "Mi chiamo J, ho 21 anni, vivo a Bologna.",
+  "Due anni fa pesavo 130 chili ed ero dipendente.",
+  "Nessuno mi ha salvato. Nessun programma, nessuna clinica.",
   "Ho smesso e sono entrato in una palestra.",
   "Il primo giorno ho vomitato dopo sei minuti.",
   "Sono tornato il giorno dopo.",
-  "Oggi lavoro in quota: antenne, tralicci, tratte radio in tutto il nord Italia.",
-  "La sera mi alleno. K1, MMA, BJJ.",
-  "Sono cristiano ortodosso. Firmo ogni giorno IC XC NIKA.",
-];
-
-const PUBLIC_REASON =
-  "Avere gente che guarda è il motivo per non essere pigro. Mi serve lo sguardo addosso, non il giudizio. Voglio dimostrare che i social possono migliorare le persone invece di far perdere tempo.";
-
-const SEASONS = [
-  { id: 1, label: "STAGIONE 1", title: "180 GIORNI PER CAMBIARE VITA", body: "Togliere quello che mi stava uccidendo.", accent: "#B81D1D", tag: null },
-  { id: 2, label: "STAGIONE 2", title: "180 GIORNI PER MIGLIORARLA", body: "Corpo, soldi, testa. Ogni settimana deve battere la precedente.", accent: "var(--season, #3FA34D)", tag: "IN ARRIVO" },
 ];
 
 function HeroBlock({ path }: { path: string | null | undefined }) {
   const url = getPhotoUrl(path ?? null);
+
   return (
-    <div className="relative left-1/2 mb-16 w-screen -translate-x-1/2 overflow-hidden" style={{ height: "clamp(420px, 65vh, 640px)" }}>
+    <div
+      className="relative left-1/2 mb-16 w-screen -translate-x-1/2 overflow-hidden"
+      style={{ height: "clamp(420px, 65vh, 640px)" }}
+    >
       {url ? (
-        <img src={url} alt="J" className="absolute inset-0 h-full w-full object-cover object-top grayscale" />
+        <img
+          src={url}
+          alt="J"
+          className="absolute inset-0 h-full w-full object-cover object-top grayscale-[15%]"
+        />
       ) : (
-        <div className="absolute inset-0 crosshatch opacity-30" />
+        <svg
+          className="absolute inset-0 h-full w-full"
+          xmlns="http://www.w3.org/2000/svg"
+          aria-hidden="true"
+        >
+          <defs>
+            <pattern id="xhatch" width="12" height="12" patternUnits="userSpaceOnUse">
+              <path d="M0 12 L12 0 M-2 2 L2 -2 M10 14 L14 10" stroke="#2a2a2a" strokeWidth="1" />
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="#0a0a0a" />
+          <rect width="100%" height="100%" fill="url(#xhatch)" />
+        </svg>
       )}
+
       <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-[#0A0A0A]/50 to-transparent" />
+
       <div className="absolute bottom-0 left-0 right-0 mx-auto max-w-4xl px-5 pb-10 sm:px-6">
-        <span className="pj-mono text-[13px] uppercase tracking-[0.2em] text-[#C9C4BD]">DOSSIER</span>
-        <h1 className="mt-3 font-serif bebas uppercase text-[clamp(72px,16vw,140px)] leading-[0.82] text-[#E8E4DE]">
+        <span className="page-label">DOSSIER</span>
+        <h1 className="mt-3 font-serif text-[clamp(72px,16vw,140px)] leading-[0.82] tracking-wide text-foreground bebas uppercase">
           CHI<br />SONO
         </h1>
-        <p className="mt-4 pj-mono text-[13px] uppercase tracking-[0.2em] text-[#C9C4BD]">Bologna · 21 anni · IC XC NIKA</p>
+        <p className="mt-4 font-sans text-[13px] uppercase tracking-[0.2em] text-muted-foreground">
+          Bologna · 21 anni · Giorno in corso
+        </p>
       </div>
     </div>
   );
 }
 
-function SectionShell({ index, title, children, testId }: { index: number; title: string; children: React.ReactNode; testId?: string }) {
-  return (
-    <section className="grid grid-cols-1 gap-x-10 border-t border-[#1A1A1A] py-12 md:grid-cols-[160px_1fr]" data-testid={testId}>
-      <div className="self-start mb-6 md:sticky md:top-24 md:mb-0">
-        <div className="select-none pj-mono text-[clamp(40px,7vw,64px)] leading-none text-[#2A2A2A]">{String(index).padStart(2, "0")}</div>
-        <h2 className="mt-3 font-serif bebas text-[28px] leading-none text-[#E8E4DE]">{title}</h2>
-      </div>
-      <div className="min-w-0">{children}</div>
-    </section>
-  );
-}
-
-const bodyCls = "font-sans text-[17px] leading-[1.75] text-[#E8E4DE]/85";
-
 export default function ChiSono() {
   const { data: content, isLoading, isError } = useGetSiteContent();
+
+  const progetto = content?.chi_sono_il_progetto ?? DEFAULTS.chi_sono_il_progetto;
+  const motivazione = content?.chi_sono_la_motivazione ?? DEFAULTS.chi_sono_la_motivazione;
+  const promessa = content?.chi_sono_la_promessa ?? DEFAULTS.chi_sono_la_promessa;
+
+  const sections = [
+    { key: "LA STORIA", body: STORY_PARAGRAPHS.join("\n\n") },
+    { key: "IL PROGETTO", body: progetto },
+    { key: "LA MOTIVAZIONE", body: motivazione },
+    { key: "LA PROMESSA", body: promessa },
+  ];
 
   if (isError) {
     return (
@@ -86,79 +96,77 @@ export default function ChiSono() {
   if (isLoading) {
     return (
       <>
-        <div className="min-h-[100dvh] pt-28 max-w-4xl mx-auto px-5 animate-pulse" aria-label="Caricamento">
-          <div className="h-[50vh] bg-[#111]" />
-          <div className="mt-12 space-y-4">{[0, 1, 2, 3].map((i) => <div key={i} className="h-4 bg-[#141414]" style={{ width: `${88 - i * 9}%` }} />)}</div>
+        <div className="min-h-screen pt-24 flex items-center justify-center">
+          <span className="text-muted-foreground font-sans uppercase tracking-widest text-[12px] animate-pulse">Caricamento...</span>
         </div>
         <SiteFooter />
       </>
     );
   }
 
-  const editable = [
-    { key: "IL PROGETTO", body: content?.chi_sono_il_progetto ?? DEFAULTS.chi_sono_il_progetto },
-    { key: "LA MOTIVAZIONE", body: content?.chi_sono_la_motivazione ?? DEFAULTS.chi_sono_la_motivazione },
-    { key: "LA PROMESSA", body: content?.chi_sono_la_promessa ?? DEFAULTS.chi_sono_la_promessa },
-  ];
-
   return (
-    <div className="min-h-[100dvh] pt-28 pb-20 max-w-4xl mx-auto px-5 sm:px-6 overflow-x-hidden">
+    <div className="min-h-screen pt-28 pb-20 max-w-4xl mx-auto px-5 sm:px-6">
       <HeroBlock path={content?.chi_sono_foto} />
 
-      <Reveal>
-        <SectionShell index={1} title="LA STORIA" testId="section-chi-story">
-          <div className={`space-y-5 ${bodyCls}`}>
-            {STORY_PARAGRAPHS.map((p, i) => <p key={p} data-testid={`text-story-${i}`}>{p}</p>)}
-          </div>
-        </SectionShell>
-      </Reveal>
-
-      <Reveal>
-        <SectionShell index={2} title="PERCHÉ È PUBBLICO" testId="section-chi-public-reason">
-          <p className="font-serif bebas text-[clamp(30px,5vw,44px)] leading-[1] text-[#E8E4DE] border-l-[3px] border-[#B81D1D] pl-6">
-            {PUBLIC_REASON}
-          </p>
-        </SectionShell>
-      </Reveal>
-
-      <Reveal>
-        <SectionShell index={3} title="LE STAGIONI" testId="section-chi-seasons">
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            {SEASONS.map((s) => (
-              <div key={s.id} className="pj-season" style={{ ["--accent" as string]: s.accent }} data-testid={`card-season-${s.id}`}>
-                <div className="flex items-center justify-between gap-3">
-                  <span className="pj-mono text-[13px] uppercase tracking-[0.2em]" style={{ color: s.accent }}>{s.label}</span>
-                  {s.tag && <span className="pj-mono text-[13px] uppercase tracking-[0.18em] border px-2 py-0.5" style={{ color: s.accent, borderColor: s.accent }}>{s.tag}</span>}
+      <div className="grid grid-cols-1 gap-0 max-w-4xl mx-auto">
+        {sections.map((section, i) => (
+          <Fragment key={section.key}>
+            <Reveal delay={i * 80}>
+              <section className="grid grid-cols-1 gap-x-10 border-t border-iron py-12 md:grid-cols-[160px_1fr]">
+                <div className="self-start mb-6 md:sticky md:top-24 md:mb-0">
+                  <div className="select-none font-serif text-[clamp(56px,9vw,88px)] leading-none text-iron/20 bebas">
+                    {String(i + 1).padStart(2, "0")}
+                  </div>
+                  <h2 className="mt-2 font-sans text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
+                    {section.key}
+                  </h2>
                 </div>
-                <h3 className="mt-5 font-serif bebas text-[clamp(32px,4.5vw,40px)] leading-[0.95] text-[#E8E4DE]">{s.title}</h3>
-                <p className="mt-4 font-sans text-[16px] leading-[1.6] text-[#E8E4DE]/80">{s.body}</p>
+                <div>
+                  {i === 0 ? (
+                    <div className="space-y-5 font-sans text-[16px] leading-[1.85] text-foreground/85 sm:text-[17px]">
+                      {STORY_PARAGRAPHS.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
+                    </div>
+                  ) : (
+                    <p className="whitespace-pre-wrap font-sans text-[16px] leading-[1.85] text-foreground/85 sm:text-[17px]">
+                      {section.body}
+                    </p>
+                  )}
+                </div>
+              </section>
+            </Reveal>
+
+            {i === 0 && (
+              <div className="my-4 border-l-4 border-primary py-4 pl-6">
+                <p className="max-w-2xl font-serif text-[clamp(22px,4vw,32px)] leading-[1.2] tracking-wide text-foreground bebas uppercase">
+                  "Se inciampo, lo vedete. I dati sono reali perché la trasformazione è reale."
+                </p>
               </div>
-            ))}
+            )}
+
+            {i === 2 && (
+              <div className="my-4 border-l-4 border-primary py-4 pl-6">
+                <p className="max-w-2xl font-serif text-[clamp(22px,4vw,32px)] leading-[1.2] tracking-wide text-foreground bebas uppercase">
+                  "La fede ortodossa è il centro. Il resto è la struttura che la fede regge."
+                </p>
+              </div>
+            )}
+          </Fragment>
+        ))}
+
+        <Reveal delay={400}>
+          <div className="mt-6 border-t-2 border-primary pb-16 pt-10 text-center">
+            <Cross className="mx-auto mb-6" />
+            <span className="block font-serif text-[clamp(48px,10vw,88px)] leading-none tracking-wide text-primary bebas">
+              IC XC NIKA
+            </span>
+            <p className="mt-4 font-sans text-[12px] uppercase tracking-[0.25em] text-muted-foreground">
+              Cristo vince · sempre
+            </p>
           </div>
-        </SectionShell>
-      </Reveal>
-
-      {editable.map((section, i) => (
-        <Fragment key={section.key}>
-          <Reveal>
-            <SectionShell index={i + 4} title={section.key}>
-              <p className={`whitespace-pre-wrap ${bodyCls}`}>{section.body}</p>
-            </SectionShell>
-          </Reveal>
-        </Fragment>
-      ))}
-
-      <div className="border-t-2 border-[#B81D1D] py-12 text-center">
-        <span className="block font-serif bebas text-[clamp(48px,10vw,88px)] leading-none text-[#B81D1D]">IC XC NIKA</span>
-        <p className="mt-4 pj-mono text-[13px] uppercase tracking-[0.25em] text-[#C9C4BD]">Cristo vince · sempre</p>
+        </Reveal>
       </div>
-
-      <div className="mt-4">
+      <div className="mt-10">
         <AccessoBlock />
-      </div>
-
-      <div className="mt-16">
-        <ChiJourneyMap />
       </div>
       <SiteFooter />
     </div>

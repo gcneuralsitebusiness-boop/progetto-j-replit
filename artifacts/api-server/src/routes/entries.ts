@@ -1,8 +1,7 @@
 import { Router, type IRouter } from "express";
-import { desc, eq, sql } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { db, giorniTable } from "@workspace/db";
 import { ensureTodayEntry } from "../lib/ensureToday";
-import { entryRevision, matchesRevision } from "../lib/entry-revision";
 import {
   CreateEntryBody,
   UpdateEntryBody,
@@ -12,7 +11,6 @@ import {
   GetLatestEntriesResponse,
   CreateEntryResponse,
   UpdateEntryResponse,
-  ListLightEntriesResponse,
 } from "@workspace/api-zod";
 
 const router: IRouter = Router();
@@ -21,13 +19,9 @@ const router: IRouter = Router();
 const ser = <T>(v: T): T => JSON.parse(JSON.stringify(v)) as T;
 
 // GET /entries — all entries sorted by date descending
-router.get("/entries", async (req, res): Promise<void> => {
-  if (!req.session?.adminAuthenticated) {
-    res.status(401).json({ error: "Unauthorized" });
-    return;
-  }
+router.get("/entries", async (_req, res): Promise<void> => {
   void ensureTodayEntry().catch((err) => {
-    req.log.error({ err }, "Failed to ensure today's entry");
+    _req.log.error({ err }, "Failed to ensure today's entry");
   });
 
   const rows = await db
@@ -37,57 +31,12 @@ router.get("/entries", async (req, res): Promise<void> => {
   res.json(ListEntriesResponse.parse(ser(rows)));
 });
 
-// A strict projection: never ship diary bodies, private notes or generated cards.
-router.get("/entries/light", async (_req, res): Promise<void> => {
-  void ensureTodayEntry().catch((err) => {
-    _req.log.error({ err }, "Failed to ensure today's entry");
-  });
-  const rows = await db.select({
-    id: giorniTable.id,
-    numero: giorniTable.numero,
-    data: giorniTable.data,
-    hasDiario: sql<boolean>`coalesce(length(trim(${giorniTable.testo})) > 0, false)`,
-    alcol: giorniTable.alcol,
-    collo: giorniTable.collo,
-    mobilita: giorniTable.mobilita,
-    grapplingVuoto: giorniTable.grapplingVuoto,
-    kcal: giorniTable.kcal,
-    sonno: giorniTable.sonno,
-    flessioni: giorniTable.flessioni,
-    addominali: giorniTable.addominali,
-    round: giorniTable.round,
-    km: giorniTable.km,
-    peso: giorniTable.peso,
-    battito: giorniTable.battito,
-    entrate: giorniTable.entrate,
-    uscite: giorniTable.uscite,
-    durata: giorniTable.durata,
-    intensita: giorniTable.intensita,
-    tipoAllenamento: giorniTable.tipoAllenamento,
-    routineCompletata: giorniTable.routineCompletata,
-    routineForza: giorniTable.routineForza,
-    routineFlessioni: giorniTable.routineFlessioni,
-    routineTrazioni: giorniTable.routineTrazioni,
-    routineSquat: giorniTable.routineSquat,
-    plank: giorniTable.plank,
-    sollevamentoGamba: giorniTable.sollevamentoGamba,
-    sintesi: giorniTable.sintesi,
-    attrito: giorniTable.attrito,
-    foto: giorniTable.foto,
-  }).from(giorniTable).orderBy(desc(giorniTable.data));
-  res.setHeader("Cache-Control", "public, max-age=60, stale-while-revalidate=30");
-  res.json(ListLightEntriesResponse.parse(ser(rows)));
-});
-
 // GET /entries/latest — 3 most recent entries
 router.get("/entries/latest", async (_req, res): Promise<void> => {
-  void ensureTodayEntry().catch((err) => {
-    _req.log.error({ err }, "Failed to ensure today's entry");
-  });
   const rows = await db
     .select()
     .from(giorniTable)
-    .orderBy(desc(giorniTable.data), desc(giorniTable.numero))
+    .orderBy(desc(giorniTable.data))
     .limit(3);
   res.json(GetLatestEntriesResponse.parse(ser(rows)));
 });
@@ -135,10 +84,6 @@ router.get("/giorni/:numero/clip", async (req, res): Promise<void> => {
 
 // GET /entries/summary — lightweight list for feeds and planning
 router.get("/entries/summary", async (_req, res): Promise<void> => {
-  if (!_req.session?.adminAuthenticated) {
-    res.status(401).json({ error: "Unauthorized" });
-    return;
-  }
   const rows = await db
     .select({
       id: giorniTable.id,
@@ -167,7 +112,6 @@ router.get("/entries/summary", async (_req, res): Promise<void> => {
     })
     .from(giorniTable)
     .orderBy(desc(giorniTable.data));
-  res.setHeader("Cache-Control", "private, no-store");
   res.json(ser(rows));
 });
 
@@ -187,8 +131,6 @@ router.get("/entries/:numero", async (req, res): Promise<void> => {
     res.status(404).json({ error: "Entry not found" });
     return;
   }
-  res.setHeader("ETag", entryRevision(row));
-  res.setHeader("Cache-Control", "no-store");
   res.json(ser(row));
 });
 
@@ -388,36 +330,20 @@ router.patch("/entries/:numero", async (req, res): Promise<void> => {
     return;
   }
 
-  const changes = { ...body.data, tipoGiorno: automaticDayType(params.data.numero) };
-  const condition = req.get("If-Match");
-  // Lock and compare in the same transaction: a second editor cannot slip a
-  // change between the revision check and the update.
-  const result = condition
-    ? await db.transaction(async (tx) => {
-      const [current] = await tx.select().from(giorniTable)
-        .where(eq(giorniTable.numero, params.data.numero)).for("update");
-      if (!current) return { row: null, status: 404 };
-      if (!matchesRevision(condition, current)) return { row: null, status: 412 };
-      const [saved] = await tx.update(giorniTable).set(changes)
-        .where(eq(giorniTable.numero, params.data.numero)).returning();
-      return { row: saved, status: 200 };
+  const [row] = await db
+    .update(giorniTable)
+    .set({
+      ...body.data,
+      tipoGiorno: automaticDayType(params.data.numero),
     })
-    : { row: (await db.update(giorniTable).set(changes)
-      .where(eq(giorniTable.numero, params.data.numero)).returning())[0], status: 200 };
-
-  if (result.status === 412) {
-    res.status(412).json({ error: "La giornata è cambiata dopo la verifica. Rileggi gli originali prima di correggerla." });
-    return;
-  }
-  const row = result.row;
+    .where(eq(giorniTable.numero, params.data.numero))
+    .returning();
 
   if (!row) {
     res.status(404).json({ error: "Entry not found" });
     return;
   }
 
-  res.setHeader("ETag", entryRevision(row));
-  res.setHeader("Cache-Control", "no-store");
   res.json(UpdateEntryResponse.parse(ser(row)));
 });
 

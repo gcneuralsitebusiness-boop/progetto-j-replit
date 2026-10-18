@@ -29,21 +29,12 @@ export function validateCardFields(body: Record<string, unknown>): string | null
 }
 
 router.get("/articles", async (req, res): Promise<void> => {
-  const rawLimit = req.query.limit;
-  if (rawLimit !== undefined && (typeof rawLimit !== "string" || !/^\d+$/.test(rawLimit) || Number(rawLimit) < 1 || Number(rawLimit) > 100)) {
-    res.status(400).json({ error: "Il limite deve essere un intero tra 1 e 100." });
-    return;
-  }
-  if (req.query.publishedOnly !== undefined && req.query.publishedOnly !== "true" && req.query.publishedOnly !== "false") {
-    res.status(400).json({ error: "publishedOnly deve essere true o false." });
-    return;
-  }
   // Newest first everywhere: public archive, admin list and related-article navigation
   // all consume this endpoint. Keep the id as a deterministic tie-breaker.
-  const query = db.select().from(articoliTable).orderBy(desc(articoliTable.data), desc(articoliTable.id)).$dynamic();
-  if (!req.session?.adminAuthenticated || req.query.publishedOnly === "true") query.where(eq(articoliTable.pubblicato, true));
-  if (rawLimit !== undefined) query.limit(Number(rawLimit));
-  const rows = await query;
+  const query = db.select().from(articoliTable).orderBy(desc(articoliTable.data), desc(articoliTable.id));
+  const rows = await (req.session?.adminAuthenticated
+    ? query
+    : query.where(eq(articoliTable.pubblicato, true)));
   res.json(rows);
 });
 

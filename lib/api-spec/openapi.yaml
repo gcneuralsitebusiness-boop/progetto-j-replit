@@ -37,85 +37,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
 
-  /live:
-    get:
-      operationId: getLive
-      tags: [live]
-      summary: Stato corrente, programma e sensore
-      responses:
-        "200":
-          description: Attività corrente e programma giornaliero
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/LiveStatus"
-
-  /admin/live/programma:
-    get:
-      operationId: getLiveSchedule
-      tags: [live]
-      summary: Programma settimanale (solo admin)
-      responses:
-        "200":
-          description: Intervalli settimanali
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/LiveScheduleItem"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-    put:
-      operationId: saveLiveSchedule
-      tags: [live]
-      summary: Salva il programma settimanale (solo admin)
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/LiveProgramRequest"
-      responses:
-        "200":
-          description: Programma salvato
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/LiveScheduleItem"
-        "400":
-          description: Programma non valido
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-
-  /admin/live/override:
-    put:
-      operationId: setLiveOverride
-      tags: [live]
-      summary: Imposta un override per tre ore (solo admin)
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/LiveOverrideRequest"
-      responses:
-        "200":
-          description: Override attivo
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-    delete:
-      operationId: clearLiveOverride
-      tags: [live]
-      summary: Torna al programma settimanale (solo admin)
-      responses:
-        "200":
-          description: Override cancellato
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-
   /entries:
     get:
       operationId: listEntries
@@ -160,21 +81,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ApiError"
-
-  /entries/light:
-    get:
-      operationId: listLightEntries
-      tags: [entries]
-      summary: Public journal metrics without diary bodies or generated card media
-      responses:
-        "200":
-          description: Lightweight entries sorted by date descending
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/EntryLight"
 
   /entries/latest:
     get:
@@ -272,11 +178,6 @@ paths:
       responses:
         "200":
           description: Complete journal entry
-          headers:
-            ETag:
-              description: Strong revision identifier for conditional updates
-              schema:
-                type: string
           content:
             application/json:
               schema:
@@ -288,12 +189,6 @@ paths:
       tags: [entries]
       summary: Update a journal entry (admin only)
       parameters:
-        - name: If-Match
-          in: header
-          required: false
-          description: Update only if the current entry has this revision; otherwise return 412 without changing data
-          schema:
-            type: string
         - name: numero
           in: path
           required: true
@@ -306,12 +201,6 @@ paths:
             schema:
               $ref: "#/components/schemas/EntryUpdate"
       responses:
-        "412":
-          description: Entry changed since it was reviewed; no changes applied
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ApiError"
         "200":
           description: Updated entry
           content:
@@ -808,15 +697,6 @@ paths:
       operationId: listArticles
       tags: [articles]
       summary: List public articles
-      parameters:
-        - name: limit
-          in: query
-          required: false
-          schema: { type: integer, minimum: 1, maximum: 100 }
-        - name: publishedOnly
-          in: query
-          required: false
-          schema: { type: boolean }
       responses:
         "200":
           description: List of articles
@@ -1212,61 +1092,6 @@ components:
             $ref: "#/components/schemas/ApiError"
 
   schemas:
-    LiveProgramRequest:
-      type: object
-      required: [programma]
-      properties:
-        programma:
-          type: array
-          items:
-            $ref: "#/components/schemas/LiveScheduleInput"
-    LiveOverrideRequest:
-      type: object
-      required: [attivita]
-      properties:
-        attivita: { type: string, enum: [SONNO, LAVORO, ALLENAMENTO, LIBERO] }
-    LiveScheduleInput:
-      type: object
-      required: [giorno, inizio, fine, attivita]
-      properties:
-        giorno: { type: integer, minimum: 0, maximum: 6 }
-        inizio: { type: string, pattern: '^(?:[01][0-9]|2[0-3]):[0-5][0-9]$' }
-        fine: { type: string, pattern: '^(?:(?:[01][0-9]|2[0-3]):[0-5][0-9]|24:00)$' }
-        attivita: { type: string, enum: [SONNO, LAVORO, ALLENAMENTO, LIBERO] }
-    LiveScheduleItem:
-      allOf:
-        - $ref: "#/components/schemas/LiveScheduleInput"
-        - type: object
-          required: [id]
-          properties:
-            id: { type: integer }
-    LiveStatus:
-      type: object
-      required: [attivita, nome, da, sensore, ora, giorno, programma, overrideFino]
-      properties:
-        attivita: { type: string, enum: [SONNO, LAVORO, ALLENAMENTO, LIBERO] }
-        nome: { type: string }
-        da: { type: string }
-        prossima:
-          anyOf:
-            - type: "null"
-            - type: object
-              required: [attivita, nome, inizio]
-              properties:
-                attivita: { type: string }
-                nome: { type: string }
-                inizio: { type: string }
-        sensore: { type: string, enum: [offline] }
-        ora: { type: string }
-        giorno: { type: integer, minimum: 0, maximum: 6 }
-        programma:
-          type: array
-          items: { $ref: "#/components/schemas/LiveScheduleItem" }
-        overrideFino:
-          anyOf:
-            - type: "null"
-            - type: string
-              format: date-time
     PlannerAnnotationInput:
       type: object
       required: [data, testo]
@@ -1451,42 +1276,6 @@ components:
           description: Persisted story card PNG object path
         createdAt:
           type: string
-
-    EntryLight:
-      type: object
-      required: [id, numero, data, hasDiario]
-      properties:
-        id: { type: integer }
-        numero: { type: integer }
-        data: { type: string }
-        hasDiario: { type: boolean }
-        alcol: { type: [boolean, "null"] }
-        collo: { type: [boolean, "null"] }
-        mobilita: { type: [boolean, "null"] }
-        grapplingVuoto: { type: [boolean, "null"] }
-        kcal: { type: [number, "null"] }
-        sonno: { type: [number, "null"] }
-        flessioni: { type: [number, "null"] }
-        addominali: { type: [number, "null"] }
-        round: { type: [number, "null"] }
-        km: { type: [number, "null"] }
-        peso: { type: [number, "null"] }
-        battito: { type: [number, "null"] }
-        entrate: { type: [number, "null"] }
-        uscite: { type: [number, "null"] }
-        durata: { type: [number, "null"] }
-        intensita: { type: [number, "null"] }
-        tipoAllenamento: { type: [string, "null"] }
-        routineCompletata: { type: [boolean, "null"] }
-        routineForza: { type: [boolean, "null"] }
-        routineFlessioni: { type: [string, "null"] }
-        routineTrazioni: { type: [string, "null"] }
-        routineSquat: { type: [string, "null"] }
-        plank: { type: [number, "null"] }
-        sollevamentoGamba: { type: [string, "null"] }
-        sintesi: { type: [string, "null"] }
-        attrito: { type: [string, "null"] }
-        foto: { type: [string, "null"] }
 
     EntrySummary:
       type: object

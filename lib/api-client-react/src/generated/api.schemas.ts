@@ -5,90 +5,6 @@
  * API specification for Progetto J — 180-day transformation journal
  * OpenAPI spec version: 0.1.0
  */
-export type LiveScheduleInputAttivita = typeof LiveScheduleInputAttivita[keyof typeof LiveScheduleInputAttivita];
-
-
-export const LiveScheduleInputAttivita = {
-  SONNO: 'SONNO',
-  LAVORO: 'LAVORO',
-  ALLENAMENTO: 'ALLENAMENTO',
-  LIBERO: 'LIBERO',
-} as const;
-
-export interface LiveScheduleInput {
-  /**
-     * @minimum 0
-     * @maximum 6
-     */
-  giorno: number;
-  /** @pattern ^(?:[01][0-9]|2[0-3]):[0-5][0-9]$ */
-  inizio: string;
-  /** @pattern ^(?:(?:[01][0-9]|2[0-3]):[0-5][0-9]|24:00)$ */
-  fine: string;
-  attivita: LiveScheduleInputAttivita;
-}
-
-export interface LiveProgramRequest {
-  programma: LiveScheduleInput[];
-}
-
-export type LiveOverrideRequestAttivita = typeof LiveOverrideRequestAttivita[keyof typeof LiveOverrideRequestAttivita];
-
-
-export const LiveOverrideRequestAttivita = {
-  SONNO: 'SONNO',
-  LAVORO: 'LAVORO',
-  ALLENAMENTO: 'ALLENAMENTO',
-  LIBERO: 'LIBERO',
-} as const;
-
-export interface LiveOverrideRequest {
-  attivita: LiveOverrideRequestAttivita;
-}
-
-export type LiveScheduleItem = LiveScheduleInput & {
-  id: number;
-};
-
-export type LiveStatusAttivita = typeof LiveStatusAttivita[keyof typeof LiveStatusAttivita];
-
-
-export const LiveStatusAttivita = {
-  SONNO: 'SONNO',
-  LAVORO: 'LAVORO',
-  ALLENAMENTO: 'ALLENAMENTO',
-  LIBERO: 'LIBERO',
-} as const;
-
-export type LiveStatusProssima = {
-  attivita: string;
-  nome: string;
-  inizio: string;
-} | null;
-
-export type LiveStatusSensore = typeof LiveStatusSensore[keyof typeof LiveStatusSensore];
-
-
-export const LiveStatusSensore = {
-  offline: 'offline',
-} as const;
-
-export interface LiveStatus {
-  attivita: LiveStatusAttivita;
-  nome: string;
-  da: string;
-  prossima?: LiveStatusProssima;
-  sensore: LiveStatusSensore;
-  ora: string;
-  /**
-     * @minimum 0
-     * @maximum 6
-     */
-  giorno: number;
-  programma: LiveScheduleItem[];
-  overrideFino: null | string;
-}
-
 export interface PlannerAnnotationInput {
   /** @pattern ^\d{4}-\d{2}-\d{2}$ */
   data: string;
@@ -338,67 +254,6 @@ export interface Entry {
      */
   cardStory?: string | null;
   createdAt?: string;
-}
-
-export interface EntryLight {
-  id: number;
-  numero: number;
-  data: string;
-  hasDiario: boolean;
-  /** @nullable */
-  alcol?: boolean | null;
-  /** @nullable */
-  collo?: boolean | null;
-  /** @nullable */
-  mobilita?: boolean | null;
-  /** @nullable */
-  grapplingVuoto?: boolean | null;
-  /** @nullable */
-  kcal?: number | null;
-  /** @nullable */
-  sonno?: number | null;
-  /** @nullable */
-  flessioni?: number | null;
-  /** @nullable */
-  addominali?: number | null;
-  /** @nullable */
-  round?: number | null;
-  /** @nullable */
-  km?: number | null;
-  /** @nullable */
-  peso?: number | null;
-  /** @nullable */
-  battito?: number | null;
-  /** @nullable */
-  entrate?: number | null;
-  /** @nullable */
-  uscite?: number | null;
-  /** @nullable */
-  durata?: number | null;
-  /** @nullable */
-  intensita?: number | null;
-  /** @nullable */
-  tipoAllenamento?: string | null;
-  /** @nullable */
-  routineCompletata?: boolean | null;
-  /** @nullable */
-  routineForza?: boolean | null;
-  /** @nullable */
-  routineFlessioni?: string | null;
-  /** @nullable */
-  routineTrazioni?: string | null;
-  /** @nullable */
-  routineSquat?: string | null;
-  /** @nullable */
-  plank?: number | null;
-  /** @nullable */
-  sollevamentoGamba?: string | null;
-  /** @nullable */
-  sintesi?: string | null;
-  /** @nullable */
-  attrito?: string | null;
-  /** @nullable */
-  foto?: string | null;
 }
 
 export interface EntrySummary {
@@ -1383,15 +1238,6 @@ export type UnauthorizedResponse = ApiError;
  * Not found
  */
 export type NotFoundResponse = ApiError;
-
-export type ListArticlesParams = {
-/**
- * @minimum 1
- * @maximum 100
- */
-limit?: number;
-publishedOnly?: boolean;
-};
 
 export type GetPlannerAnnotationParams = {
 /**

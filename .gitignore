@@ -48,5 +48,3 @@ Thumbs.db
 .cache/
 .local/
 project.zip
-/backups/
-/generated-artifacts/

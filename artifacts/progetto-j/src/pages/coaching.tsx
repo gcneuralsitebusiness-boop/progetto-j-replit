@@ -3,6 +3,7 @@ import { Reveal } from "@/components/Reveal";
 import { Cross } from "@/components/Cross";
 import { SiteFooter } from "@/components/SiteFooter";
 import { DataErrorState } from "@/components/DataErrorState";
+import { Users, Mail, Target, TrendingDown, Dumbbell, ArrowRight } from "lucide-react";
 
 export default function Coaching() {
   const { data: coaching, isLoading: coachingLoading, isError: coachingError } = useGetCoaching();
@@ -63,13 +64,16 @@ export default function Coaching() {
       {/* Pillars */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-16">
         {[
-          { label: siteContent?.coaching_pillar_1_label || "ALLENAMENTO", text: siteContent?.coaching_pillar_1_testo || "Protocolli costruiti sul corpo, non sul marketing." },
-          { label: siteContent?.coaching_pillar_2_label || "TRACKING", text: siteContent?.coaching_pillar_2_testo || "Come misurare e leggere i tuoi dati." },
-          { label: siteContent?.coaching_pillar_3_label || "DATI", text: siteContent?.coaching_pillar_3_testo || "Peso, sonno, km, calorie. Misuriamo tutto." },
-          { label: siteContent?.coaching_pillar_4_label || "ACCOUNTABILITY", text: siteContent?.coaching_pillar_4_testo || "Report settimanali e obiettivi chiari." },
+          { icon: Dumbbell, label: siteContent?.coaching_pillar_1_label || "ALLENAMENTO", text: siteContent?.coaching_pillar_1_testo || "Protocolli costruiti sul corpo, non sul marketing." },
+          { icon: TrendingDown, label: siteContent?.coaching_pillar_2_label || "TRACKING", text: siteContent?.coaching_pillar_2_testo || "Come misurare e leggere i tuoi dati." },
+          { icon: Target, label: siteContent?.coaching_pillar_3_label || "DATI", text: siteContent?.coaching_pillar_3_testo || "Peso, sonno, km, calorie. Misuriamo tutto." },
+          { icon: Users, label: siteContent?.coaching_pillar_4_label || "ACCOUNTABILITY", text: siteContent?.coaching_pillar_4_testo || "Report settimanali e obiettivi chiari." },
         ].map((p, i) => (
           <Reveal key={p.label} delay={i * 80}>
             <div className="border border-border bg-card p-5 h-full">
+              <div className="border border-primary p-2 w-fit mb-4">
+                <p.icon size={20} className="text-primary" />
+              </div>
               <h3 className="font-serif text-[24px] leading-none text-foreground bebas mb-2">{p.label}</h3>
               <p className="text-[13px] font-sans text-muted-foreground leading-relaxed">{p.text}</p>
             </div>
@@ -85,6 +89,9 @@ export default function Coaching() {
           <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 -translate-y-1/2 translate-x-1/2 rotate-45" />
           <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
             <div className="flex items-center gap-4">
+              <div className="border border-primary p-3 sm:p-4">
+                <Users size={28} className="text-primary" />
+              </div>
               <div>
                 <span className="text-[11px] font-sans uppercase tracking-[0.2em] text-primary">COMMUNITY</span>
                 <p className="text-[16px] sm:text-[18px] font-sans text-foreground leading-relaxed max-w-md">
@@ -96,7 +103,7 @@ export default function Coaching() {
               href={content.communityUrl}
               className="inline-flex items-center gap-2 border border-primary text-primary font-sans text-[13px] uppercase tracking-[0.2em] px-6 py-3 hover:bg-primary hover:text-primary-foreground transition-colors shrink-0"
             >
-              Entra →
+              Entra <ArrowRight size={16} />
             </a>
           </div>
         </div>
@@ -106,6 +113,7 @@ export default function Coaching() {
       <Reveal>
         <div className="mt-12 border border-border bg-card p-6 sm:p-8 text-center">
           <div className="inline-flex items-center gap-2 mb-4 text-primary">
+            <Mail size={18} />
             <span className="text-[11px] font-sans uppercase tracking-[0.2em]">INFO</span>
           </div>
           <p className="text-[14px] font-sans text-muted-foreground mb-4">

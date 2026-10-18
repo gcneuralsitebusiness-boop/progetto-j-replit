@@ -4,7 +4,7 @@ import { db, giorniTable } from "@workspace/db";
 
 const router = Router();
 const baseUrl = "https://portfolio-showcase-gcneuralsitebus.replit.app";
-const staticRoutes = ["/", "/diario", "/chi-sono", "/coaching", "/social", "/sponsor"];
+const staticRoutes = ["/", "/journaling", "/chi-sono", "/coaching", "/social", "/sponsor"];
 
 router.get("/sitemap.xml", async (_req, res): Promise<void> => {
   const entries = await db.select().from(giorniTable).orderBy(asc(giorniTable.numero));
@@ -12,7 +12,7 @@ router.get("/sitemap.xml", async (_req, res): Promise<void> => {
     ...staticRoutes.map((route) => `
   <url>
     <loc>${baseUrl}${route}</loc>
-    <changefreq>${route === "/" || route === "/diario" ? "daily" : "monthly"}</changefreq>
+    <changefreq>${route === "/" || route === "/journaling" ? "daily" : "monthly"}</changefreq>
   </url>`),
     ...entries.map((entry) => `
   <url>

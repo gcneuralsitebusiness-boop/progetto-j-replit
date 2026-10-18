@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState, type ReactElement } from "react";
 import { useParams, useSearch, Link } from "wouter";
-import { useListLightEntries, getListLightEntriesQueryKey, useGetEntry, getGetEntryQueryKey, useListArticles, useListTaskGiorno, useListObiettivi } from "@workspace/api-client-react";
-import type { Entry as ApiEntry, EntryLight, TaskGiorno } from "@workspace/api-client-react";
+import { useListEntries, getListEntriesQueryKey, useListArticles, useListTaskGiorno, useListObiettivi } from "@workspace/api-client-react";
+import type { Entry as ApiEntry, TaskGiorno } from "@workspace/api-client-react";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
+import { ArrowLeft, Share2 } from "lucide-react";
 import { Reveal } from "@/components/Reveal";
 import { Cross } from "@/components/Cross";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -155,7 +156,7 @@ function TrackingRows({ entry, routineStreak }: { entry: GiornoEntry; routineStr
             {entry.intensita != null && cell(String(entry.intensita), "INTENSITÀ")}
             {entry.tipoGiorno && cell(entry.tipoGiorno === "RECUPERO" ? "R" : entry.tipoGiorno, "ROUTINE")}
             {activeDay
-              ? cell(`${routineStreak}`, entry.routineCompletata === true ? "STREAK" : "STREAK (ALLENAMENTO)", "acid")
+              ? cell(`✓ · ${routineStreak}`, entry.routineCompletata === true ? "STREAK" : "STREAK (ALLENAMENTO)", "acid")
               : entry.routineCompletata === false
                 ? cell("RESET", "STREAK", "primary")
                 : null}
@@ -237,7 +238,7 @@ function VsMediaTable({ entry, averages }: { entry: GiornoEntry; averages: VsMet
             <div className="w-[30%] text-right font-serif text-[28px] leading-none text-foreground bebas measured">
               {formatNumber(m.value, m.fraction ?? 0)}
             </div>
-            <div className={`w-[30%] text-right text-[14px] font-mono font-bold ${colorClass}`}>
+            <div className={`w-[30%] text-right text-[14px] font-sans font-bold ${colorClass}`}>
               {arrow} {pctText}%
             </div>
           </div>
@@ -306,7 +307,7 @@ function DiaryText({ text, entryId, entryNumero }: { text: string; entryId: numb
                   }}
                   className="ml-2 inline-flex align-middle text-[10px] uppercase tracking-[0.12em] text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:text-primary"
                 >
-                  CONDIVIDI
+                  <Share2 size={11} />
                 </button>
                 {lineIndex < buffer.length - 1 ? " " : null}
               </span>
@@ -422,7 +423,7 @@ function LinkedArticles({ entryData }: { entryData: string }) {
         {matched.map((article) => (
           <Link
             key={article.id}
-            href={`/articoli/${article.slug}`}
+            href={`/a/${article.slug}`}
             className="group border border-border bg-card px-5 py-4 hover:border-iron transition-colors"
           >
             <div className="flex items-center gap-3 mb-2">
@@ -476,7 +477,7 @@ function ShareButton({ entryNumero, entryTesto }: { entryNumero: number; entryTe
         onClick={handleShare}
         className="border border-border bg-card px-6 py-3 font-serif text-[14px] uppercase tracking-[0.15em] text-muted-foreground hover:text-foreground hover:border-iron transition-colors"
       >
-        {copied ? "LINK COPIATO" : "CONDIVIDI"}
+        {copied ? "LINK COPIATO ✓" : "CONDIVIDI"}
       </button>
     </div>
   );
@@ -569,8 +570,8 @@ function GiornoContent({
   routineStreak,
 }: {
   entry: GiornoEntry;
-  prevEntry: Pick<EntryLight, "numero"> | null;
-  nextEntry: Pick<EntryLight, "numero"> | null;
+  prevEntry: GiornoEntry | null;
+  nextEntry: GiornoEntry | null;
   averages: VsMetric[];
   routineStreak: number;
 }) {
@@ -628,10 +629,10 @@ function GiornoContent({
         {/* Back button */}
         <div className="absolute top-20 left-0 right-0 max-w-5xl mx-auto px-5 sm:px-6">
           <Link
-            href="/diario"
+            href="/journaling"
             className="inline-flex items-center gap-2 text-[11px] font-sans uppercase tracking-[0.2em] text-foreground/70 hover:text-primary transition-colors"
           >
-            Diario
+            <ArrowLeft size={14} /> Journaling
           </Link>
         </div>
       </div>
@@ -645,14 +646,14 @@ function GiornoContent({
             <div>
               <span className="page-label">GIORNO</span>
               <h1 className="font-serif text-[clamp(72px,14vw,140px)] leading-[0.8] text-primary bebas tracking-wide">
-                <span className="font-mono">{padDay(entry.numero)}</span>
+                {padDay(entry.numero)}
               </h1>
             </div>
             <div className="text-right pb-2">
               <div className="text-[13px] font-sans uppercase tracking-[0.2em] text-muted-foreground">
                 {format(new Date(entry.data), "EEEE", { locale: it })}
               </div>
-              <div className="font-mono text-[28px] text-foreground tracking-wide">
+              <div className="font-serif text-[28px] text-foreground bebas tracking-wide">
                 {format(new Date(entry.data), "d MMMM yyyy", { locale: it })}
               </div>
             </div>
@@ -725,9 +726,10 @@ function GiornoContent({
               href={`/giorno/${prevEntry.numero}`}
               className="flex min-h-[64px] items-center gap-3 border border-border bg-card px-4 sm:px-5 hover:border-primary transition-colors group"
             >
+              <ArrowLeft size={16} className="shrink-0 text-primary" />
               <div className="min-w-0">
                 <div className="text-[9px] font-sans uppercase tracking-[0.2em] text-muted-foreground">Precedente</div>
-                <div className="font-mono text-[22px] leading-none text-foreground">GG {padDay(prevEntry.numero)}</div>
+                <div className="font-serif text-[22px] leading-none text-foreground bebas">GG {padDay(prevEntry.numero)}</div>
               </div>
             </Link>
           ) : (
@@ -740,8 +742,9 @@ function GiornoContent({
             >
               <div className="min-w-0">
                 <div className="text-[9px] font-sans uppercase tracking-[0.2em] text-muted-foreground">Successivo</div>
-                <div className="font-mono text-[22px] leading-none text-foreground">GG {padDay(nextEntry.numero)}</div>
+                <div className="font-serif text-[22px] leading-none text-foreground bebas">GG {padDay(nextEntry.numero)}</div>
               </div>
+              <ArrowLeft size={16} className="shrink-0 text-primary rotate-180" />
             </Link>
           ) : (
             <div />
@@ -760,25 +763,14 @@ function GiornoContent({
 export default function GiornoDetail() {
   const { id } = useParams<{ id: string }>();
   const requestedNumber = Number(id);
-  const { data: entries, isLoading: entriesLoading, isError: entriesError } = useListLightEntries({
+  const { data: entries, isLoading, isError } = useListEntries({
     query: {
-      queryKey: getListLightEntriesQueryKey(),
+      queryKey: getListEntriesQueryKey(),
       refetchInterval: (query) => isCurrentDayPending(query.state.data, requestedNumber) ? 10_000 : false,
       refetchOnWindowFocus: true,
     },
-    request: { cache: "no-store" },
   });
-  const { data: entry, isLoading: entryLoading, isError: entryError } = useGetEntry(requestedNumber, {
-    query: {
-      queryKey: getGetEntryQueryKey(requestedNumber),
-      enabled: Number.isInteger(requestedNumber) && requestedNumber > 0 && requestedNumber <= 180,
-      refetchInterval: () => isCurrentDayPending(entries, requestedNumber) ? 10_000 : false,
-      refetchOnWindowFocus: true,
-    },
-    request: { cache: "no-store" },
-  });
-  const isLoading = entriesLoading || entryLoading;
-  const isError = entriesError || entryError;
+  const entry = entries?.find((e) => e.numero === requestedNumber);
 
   // Compute averages across all entries
   const avg = (arr: (number | null | undefined)[]): number => {
@@ -826,10 +818,6 @@ export default function GiornoDetail() {
     );
   }
 
-  if (isCurrentDayPending(entries, requestedNumber)) {
-    return <CurrentDayPending numero={requestedNumber} />;
-  }
-
   if (isError) {
     return (
       <>
@@ -839,12 +827,16 @@ export default function GiornoDetail() {
     );
   }
 
+  if (isCurrentDayPending(entries, requestedNumber)) {
+    return <CurrentDayPending numero={requestedNumber} />;
+  }
+
   if (!entry) {
     return (
       <>
         <div className="min-h-screen pt-24 flex flex-col items-center justify-center gap-6">
           <span className="text-[11px] font-sans uppercase tracking-[0.3em] text-muted-foreground">Giornata non trovata</span>
-          <Link href="/diario" className="btn-primary text-[12px]">Torna al Diario</Link>
+          <Link href="/journaling" className="btn-primary text-[12px]">Torna al Journaling</Link>
         </div>
         <SiteFooter />
       </>

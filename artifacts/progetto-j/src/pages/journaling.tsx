@@ -12,6 +12,7 @@ import { MilestoneBadge } from "@/components/MilestoneBadge";
 import { AnimatedNumber } from "@/components/AnimatedNumber";
 import { SiteFooter } from "@/components/SiteFooter";
 import { DataErrorState } from "@/components/DataErrorState";
+import { ArrowRight } from "lucide-react";
 import { Link } from "wouter";
 import { getPhotoUrl } from "@workspace/object-storage-web";
 import { stripHtml } from "@/lib/strip-html";
@@ -208,7 +209,7 @@ export default function Journaling() {
                   )}
                 </div>
                 <Link href={`/giorno/${latest.numero}`} className="btn-primary shrink-0">
-                  Apri il giorno →
+                  Apri il giorno <ArrowRight size={15} />
                 </Link>
               </div>
             </section>

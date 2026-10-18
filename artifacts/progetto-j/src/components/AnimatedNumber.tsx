@@ -9,7 +9,6 @@ interface Props {
   decimals?: number;
   suffix?: string;
   prefix?: string;
-  animate?: boolean;
 }
 
 function cubicBezierEase(progress: number) {
@@ -25,13 +24,13 @@ function cubicBezierEase(progress: number) {
   return yFor(t);
 }
 
-export function AnimatedNumber({ value, className = "", formatter, duration = 800, decimals = 0, suffix = "", prefix = "", animate = true }: Props) {
+export function AnimatedNumber({ value, className = "", formatter, duration = 800, decimals = 0, suffix = "", prefix = "" }: Props) {
   const { ref, isVisible } = useReveal<HTMLSpanElement>();
   const [displayed, setDisplayed] = useState(0);
   const raf = useRef<number>(0);
 
   useEffect(() => {
-    if (!animate || !isVisible) return;
+    if (!isVisible) return;
     if (value === 0) { setDisplayed(0); return; }
     const t0 = performance.now();
     const tick = (now: number) => {
@@ -43,9 +42,9 @@ export function AnimatedNumber({ value, className = "", formatter, duration = 80
     };
     raf.current = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf.current);
-  }, [animate, isVisible, value, duration]);
+  }, [isVisible, value, duration]);
 
   const fmt = formatter ?? ((n: number) => `${prefix}${n.toLocaleString("it-IT", { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}${suffix}`);
 
-  return <span ref={ref} className={`measured tabular ${className}`}>{!animate ? fmt(value) : isVisible ? fmt(displayed) : fmt(0)}</span>;
+  return <span ref={ref} className={`measured tabular ${className}`}>{isVisible ? fmt(displayed) : fmt(0)}</span>;
 }
