@@ -7,7 +7,8 @@ import { ScrollToTop } from '@/components/ScrollToTop';
 import { PageChromeProvider, usePageChrome } from '@/lib/page-chrome';
 
 const Home = lazy(() => import('@/pages/home'));
-const Diario = lazy(() => import('@/pages/diario'));
+const Journaling = lazy(() => import('@/pages/diario'));
+const Diario = lazy(() => import('@/pages/statistiche'));
 const ChiSono = lazy(() => import('@/pages/chi-sono'));
 const Admin = lazy(() => import('@/pages/admin'));
 const NotFound = lazy(() => import('@/pages/not-found'));
@@ -99,8 +100,9 @@ function PageMetadata() {
   useEffect(() => {
     const metadata: Record<string, { title: string; description: string }> = {
       "/": { title: "Progetto J — 180 Giorni Documentati", description: "180 giorni di trasformazione documentata. Dati reali, zero filtri. Corpo, mente, business." },
-      "/journaling": { title: "Diario — Progetto J", description: "Tutte le giornate di Progetto J: testi, foto e dati del percorso, dalla più recente." },
-      "/statistiche": { title: "Diario — Progetto J", description: "Tutte le giornate del diario di Progetto J." },
+      "/journaling": { title: "Journaling — Progetto J", description: "Tutte le giornate di Progetto J: testi, foto e dati del percorso, dalla più recente." },
+      "/diario": { title: "Diario — Progetto J", description: "Le statistiche del percorso Progetto J: allenamento, corpo, recupero e progressi." },
+      "/statistiche": { title: "Diario — Progetto J", description: "Le statistiche e i progressi del percorso Progetto J." },
       "/obiettivi": { title: "Obiettivi — Progetto J", description: "Obiettivi del ciclo in corso, stato avanzamento e tappe di Progetto J." },
       "/chi-sono": { title: "Chi sono — Progetto J", description: "La storia, il metodo e la persona dietro Progetto J." },
       "/viaggio": { title: "Il viaggio di J — Progetto J", description: "Otto paesi visitati, quattro da prendere. Quattro discipline, quattro posti dove sono nate." },
@@ -155,9 +157,10 @@ function AppRoutes() {
   const routes = (
     <Switch>
       <Route path="/" component={Home} />
-      <Route path="/journaling" component={Diario} />
+      <Route path="/journaling" component={Journaling} />
+      <Route path="/diario" component={Diario} />
       <Route path="/obiettivi" component={Obiettivi} />
-      <Route path="/statistiche"><Redirect to="/journaling" replace /></Route>
+      <Route path="/statistiche"><Redirect to="/diario" replace /></Route>
       <Route path="/chi-sono" component={ChiSono} />
       <Route path="/social" component={Social} />
       <Route path="/sponsor" component={Sponsor} />

@@ -368,7 +368,7 @@ const PERIODS = [
   { id: 0, label: "TUTTO" },
 ] as const;
 
-export default function Statistiche() {
+export default function Diario() {
   const { data: entries, isLoading, isError } = useListEntries();
   const [period, setPeriod] = useState<number>(30);
 
@@ -504,7 +504,7 @@ export default function Statistiche() {
           <TerminalBackdrop intensity="medium" glow />
           <div className="relative z-10">
           <span className="page-label">DATI DEL PERCORSO</span>
-          <h1 className="mt-2 font-serif text-[clamp(56px,12vw,112px)] leading-[0.85] tracking-wide text-foreground bebas">STATISTICHE</h1>
+          <h1 className="mt-2 font-serif text-[clamp(56px,12vw,112px)] leading-[0.85] tracking-wide text-foreground bebas">DIARIO</h1>
           <p className="mt-5 max-w-xl font-sans text-[15px] leading-relaxed text-muted-foreground">Nessun dato arrotondato. Nessun giorno nascosto.</p>
           <div className="mt-6 inline-flex border border-border">
             {PERIODS.map((option) => (

@@ -26,4 +26,4 @@
 - [Drizzle non-TTY rename prompts](drizzle-non-tty-rename-prompts.md) — new tables can trigger rename questions even with `--force`; explicitly choose create in a controlled TTY.
 - [Shared browser test capacity](browser-test-capacity.md) — another workspace tester can block a launch; failed launches are not verification.
 - [API runtime consistency](api-runtime-consistency.md) — frontend hot reload can coexist with an outdated API process; verify runtime access policies after API updates.
-- [Public diary priority](public-diary-priority.md) — the user wants the diary instead of statistics, with saved days directly visible.
+- [Diario and Journaling roles](public-diary-priority.md) — Diario contains statistics; Journaling shows all days; remove Obiettivi from navigation, not its saved data.

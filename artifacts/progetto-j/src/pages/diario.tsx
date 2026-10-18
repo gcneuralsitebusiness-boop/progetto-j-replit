@@ -9,8 +9,8 @@ import { isUnfinishedToday } from "@/lib/current-day";
 
 const PAGE_SIZE = 12;
 
-/** The diary opens directly on the saved days, rather than aggregate statistics. */
-export default function Diario() {
+/** Journaling opens directly on the saved days, separate from Diario statistics. */
+export default function Journaling() {
   const { data: entries, isLoading, isError } = useListEntrySummaries({
     query: {
       queryKey: getListEntrySummariesQueryKey(),
@@ -48,7 +48,7 @@ export default function Diario() {
       <header className="mb-8">
         <span className="page-label">DIARIO OPERATIVO</span>
         <h1 className="font-serif text-[clamp(56px,12vw,112px)] leading-[0.85] tracking-wide bebas text-foreground mt-2">
-          DIARIO
+          JOURNALING
         </h1>
         {siteContent?.journaling_intro && (
           <p className="mt-6 max-w-2xl whitespace-pre-wrap text-[15px] leading-relaxed text-foreground/80">
