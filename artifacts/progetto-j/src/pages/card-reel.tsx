@@ -1,6 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRoute, Link } from "wouter";
-import { useGetEntry, useAdminMe, useUpdateEntry, getGetEntryQueryKey, getListEntriesQueryKey } from "@workspace/api-client-react";
+import {
+  useGetEntry,
+  useListEntrySummaries,
+  useAdminMe,
+  useUpdateEntry,
+  getGetEntryQueryKey,
+  getListEntrySummariesQueryKey,
+  getListEntriesQueryKey,
+} from "@workspace/api-client-react";
 import type { Entry } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { downloadMinimalCanvasCard } from "@/lib/canvas-card-export";
@@ -418,6 +426,17 @@ export default function CardReel() {
       refetchOnWindowFocus: true,
     },
   });
+  const { data: daySummaries, isLoading: daysLoading } = useListEntrySummaries({
+    query: {
+      queryKey: getListEntrySummariesQueryKey(),
+      staleTime: 30_000,
+    },
+  });
+  const nextDay = entry && daySummaries
+    ? [...daySummaries]
+      .sort((a, b) => a.numero - b.numero)
+      .find((candidate) => candidate.numero > entry.numero)
+    : undefined;
   const { data: auth } = useAdminMe();
   const queryClient = useQueryClient();
   const cardRef = useRef<HTMLDivElement>(null);
@@ -538,6 +557,20 @@ export default function CardReel() {
         >
           {downloading ? "Generazione..." : minimal ? "Scarica minimal" : "Scarica copertina reel"}
         </button>
+        {!minimal && nextDay && (
+          <Link
+            href={`/card/${nextDay.numero}/reel`}
+            aria-label={`Vai alla prossima giornata disponibile, giorno ${nextDay.numero}`}
+            className="border border-primary px-6 py-2.5 font-serif text-[16px] uppercase tracking-wider text-foreground transition-colors hover:bg-primary hover:text-primary-foreground"
+          >
+            Vai alla prossima giornata
+          </Link>
+        )}
+        {!minimal && !daysLoading && daySummaries && !nextDay && (
+          <span className="text-[11px] font-sans uppercase tracking-wider text-muted-foreground">
+            Ultima giornata disponibile
+          </span>
+        )}
       </div>
       {downloadError && <p className="text-[12px] font-sans text-primary">{downloadError}</p>}
 
