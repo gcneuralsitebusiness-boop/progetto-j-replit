@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRoute, Link } from "wouter";
-import { useListEntries, useAdminMe, useUpdateEntry, getListEntriesQueryKey } from "@workspace/api-client-react";
+import { useGetEntry, useAdminMe, useUpdateEntry, getGetEntryQueryKey, getListEntriesQueryKey } from "@workspace/api-client-react";
 import type { Entry } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { downloadMinimalCanvasCard, downloadReelCanvasCard } from "@/lib/canvas-card-export";
+import { downloadMinimalCanvasCard } from "@/lib/canvas-card-export";
+import { toPngWithEmbeddedAssets } from "@/lib/export-image";
 import { stripHtml } from "@/lib/strip-html";
 import { getPhotoUrl } from "@workspace/object-storage-web";
 import CardCustomizer, {
@@ -408,10 +409,17 @@ export default function CardReel() {
   const minimal = Boolean(matchMinimal);
   const giorno = (minimal ? minimalParams?.giorno : reelParams?.giorno) ?? "";
   const requested = Number(giorno);
-  const { data: entries, isLoading, isError } = useListEntries();
+  const { data: entry, isLoading, isError } = useGetEntry(requested, {
+    query: {
+      queryKey: getGetEntryQueryKey(requested),
+      enabled: Number.isInteger(requested) && requested >= 1 && requested <= GOAL_DAY,
+      staleTime: 0,
+      refetchOnMount: "always",
+      refetchOnWindowFocus: true,
+    },
+  });
   const { data: auth } = useAdminMe();
   const queryClient = useQueryClient();
-  const entry = entries?.find((item) => item.numero === requested);
   const cardRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(0.35);
@@ -420,17 +428,19 @@ export default function CardReel() {
   const [minimalBlur, setMinimalBlur] = useState(20);
   const [minimalOverlay, setMinimalOverlay] = useState(55);
   const [custom, setCustom] = useState<CardCustomization>(customizationFromRecord(null));
+  const [customDirty, setCustomDirty] = useState(false);
   const [initializedFor, setInitializedFor] = useState<number | null>(null);
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const updateMutation = useUpdateEntry();
 
   useEffect(() => {
-    if (entry && initializedFor !== entry.numero) {
+    if (entry && (initializedFor !== entry.numero || !customDirty)) {
       setCustom(customizationFromRecord(entry));
       setInitializedFor(entry.numero);
+      setCustomDirty(false);
     }
-  }, [entry, initializedFor]);
+  }, [entry, initializedFor, customDirty]);
 
   useEffect(() => {
     const compute = () => {
@@ -443,7 +453,7 @@ export default function CardReel() {
   }, []);
 
   const handleDownload = async () => {
-    if (!cardRef.current || !entry) return;
+    if (!cardRef.current || !entry || downloading || initializedFor !== entry.numero) return;
     setDownloading(true);
     setDownloadError(null);
     try {
@@ -461,18 +471,21 @@ export default function CardReel() {
           dayNumber: entry.numero,
         });
       } else {
-        const stats: Array<{ value: string; label: string }> = [];
-        if (entry.peso != null) stats.push({ value: formatNumber(entry.peso, 1), label: "KG" });
-        if (entry.battito != null) stats.push({ value: formatNumber(entry.battito), label: "BPM" });
-        if (entry.sonno != null) stats.push({ value: formatNumber(entry.sonno, 1), label: "H SONNO" });
-        await downloadReelCanvasCard({
-          filename: `progettoj-giorno-${String(requested).padStart(3, "0")}-reel.png`,
-          photoUrl,
-          overlay: (custom.cardOverlay ?? 55) / 100,
-          dayNumber: entry.numero,
-          summary: custom.cardTitolo ?? summary(entry.testo, entry.sintesi),
-          stats: custom.cardMostraParole !== false ? stats : [],
+        // Export the actual preview, not the unrelated daily-card canvas.
+        // Guides are siblings of this element and deliberately stay out of the PNG.
+        const png = await toPngWithEmbeddedAssets(cardRef.current, {
+          width: CARD_W,
+          height: CARD_H,
+          pixelRatio: 1,
+          backgroundColor: BLACK,
+          style: { transform: "none" },
         });
+        const link = document.createElement("a");
+        link.download = `progettoj-giorno-${String(entry.numero).padStart(3, "0")}-reel.png`;
+        link.href = png;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
       }
     } catch {
       setDownloadError("Errore durante la generazione del PNG. Verifica l'immagine e riprova.");
@@ -487,7 +500,10 @@ export default function CardReel() {
     updateMutation.mutate(
       { numero: entry.numero, data: { ...custom } },
       {
-        onSuccess: () => {
+        onSuccess: (savedEntry) => {
+          queryClient.setQueryData(getGetEntryQueryKey(entry.numero), savedEntry);
+          setCustom(customizationFromRecord(savedEntry));
+          setCustomDirty(false);
           setSaved(true);
           queryClient.invalidateQueries({ queryKey: getListEntriesQueryKey() });
         },
@@ -517,7 +533,7 @@ export default function CardReel() {
         </span>
         <button
           onClick={handleDownload}
-          disabled={downloading}
+          disabled={downloading || initializedFor !== entry.numero}
           className="bg-primary text-primary-foreground font-serif text-[16px] px-6 py-2.5 tracking-wider uppercase hover:bg-primary/90 transition-colors disabled:opacity-50"
         >
           {downloading ? "Generazione..." : minimal ? "Scarica minimal" : "Scarica copertina reel"}
@@ -553,7 +569,7 @@ export default function CardReel() {
       {!minimal && auth?.authenticated && (
         <CardCustomizer
           value={custom}
-          onChange={(patch) => { setCustom((current) => ({ ...current, ...patch })); setSaved(false); }}
+          onChange={(patch) => { setCustom((current) => ({ ...current, ...patch })); setCustomDirty(true); setSaved(false); }}
           onSave={handleSaveCustom}
           saving={updateMutation.isPending}
           saved={saved}
