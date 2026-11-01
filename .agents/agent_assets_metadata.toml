@@ -143,3 +143,31 @@ mtime_ms = 1788348113748
 storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:f0698a0b-8b04-4823-a6d3-9f45ae32a3bf/dadab579-bf44-4369-9d70-2cf5e91b615f/9406452f-62c4-4a9d-bf81-db7feea67b46"
 storage_version_token = "1788348170694056"
 content_type = "image/jpeg"
+
+[[outputs]]
+id = "9iu3211Ez4f28nMFjU7ZD"
+uri = "file://generated-artifacts/diario-foto-giornate-parte-1-di-2.zip"
+type = "unspecified"
+title = "Foto del reel — parte 1 di 2"
+description = "ZIP con 85 foto originali, file indice con il numero del giorno e lista delle giornate senza foto."
+logical_id = "d5713972-1c98-418f-a4b2-b7668df423d5"
+content_hash = "sha256:11af92ee1cfd3400d7dcb24cc146fffbe3b6f82148dbcafe51180139227f9610"
+size = 68977604
+mtime_ms = 1793523704722
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:f0698a0b-8b04-4823-a6d3-9f45ae32a3bf/d5713972-1c98-418f-a4b2-b7668df423d5/c6623c7c-039a-4c15-963b-6a88d3b18d1b"
+storage_version_token = "1793523720551205"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "PryS-HsgwoVP8Uut8WgOj"
+uri = "file://generated-artifacts/diario-foto-giornate-parte-2-di-2.zip"
+type = "unspecified"
+title = "Foto del reel — parte 2 di 2"
+description = "ZIP con 72 foto originali, file indice con il numero del giorno e lista delle giornate senza foto."
+logical_id = "bbfb18d8-beb6-4a57-911c-ac4f13550ef9"
+content_hash = "sha256:af9c166667e24135432d54ff737d390bf8ede475b5e71347af3ac3aaa2a101de"
+size = 69543987
+mtime_ms = 1793523706138
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:f0698a0b-8b04-4823-a6d3-9f45ae32a3bf/bbfb18d8-beb6-4a57-911c-ac4f13550ef9/add9c3b8-9539-4089-b48f-7c5cb46e7503"
+storage_version_token = "1793523722332553"
+content_type = "application/octet-stream"
