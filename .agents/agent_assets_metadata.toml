@@ -171,3 +171,17 @@ mtime_ms = 1793523706138
 storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:f0698a0b-8b04-4823-a6d3-9f45ae32a3bf/bbfb18d8-beb6-4a57-911c-ac4f13550ef9/add9c3b8-9539-4089-b48f-7c5cb46e7503"
 storage_version_token = "1793523722332553"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "_hsOm4SpVPf5V3OmOQsp6"
+uri = "file://generated-artifacts/giorno-166-copertina-reel.png"
+type = "image"
+title = "Copertina reel scaricata — giorno 166"
+description = "PNG generato con la foto e i dati pubblicati della giornata 166; 1080×1920."
+logical_id = "54bb64cf-84fb-41f9-b355-dffd9505167a"
+content_hash = "sha256:5c303605eee0ccbaca2ae5be21b3e86c3c59d0cb225c286eb9683468447c5789"
+size = 2094925
+mtime_ms = 1793526221526
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:f0698a0b-8b04-4823-a6d3-9f45ae32a3bf/54bb64cf-84fb-41f9-b355-dffd9505167a/86930faf-339c-496e-baed-0176683ae919"
+storage_version_token = "1793526318682626"
+content_type = "image/png"
