@@ -255,3 +255,31 @@ mtime_ms = 1793529590150
 storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:f0698a0b-8b04-4823-a6d3-9f45ae32a3bf/08d056ce-f82a-412e-a15f-6fedbf82134f/2ab783f0-a13b-4c9e-b9a1-16cc2739a8b1"
 storage_version_token = "1793529610971602"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "LKpH492HJjPpyYa9TcQpB"
+uri = "file://generated-artifacts/articoli-progettoj-completi.html"
+type = "html"
+title = "Archivio completo degli articoli Progetto J"
+description = "Tutti i 58 articoli di produzione, con indice, metadati e testi formattati; include la bozza."
+logical_id = "4c6eeaf6-9fc5-48a8-923d-fcd92253f5cd"
+content_hash = "sha256:f1f33eca8db1cabb6793f3f74e690f54e00d9b32735860ecef3362c3c261a0f3"
+size = 181932
+mtime_ms = 1793724198779
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:f0698a0b-8b04-4823-a6d3-9f45ae32a3bf/4c6eeaf6-9fc5-48a8-923d-fcd92253f5cd/d363a787-10e8-405c-9da7-a018e7545d76"
+storage_version_token = "1793724206777100"
+content_type = "text/html"
+
+[[outputs]]
+id = "FM2mYRbv3Bopf2MMdOGuI"
+uri = "file://generated-artifacts/articoli-progettoj-completi.txt"
+type = "text"
+title = "Articoli Progetto J in testo semplice"
+description = "Esportazione copiabile dei 58 articoli, inclusa la bozza."
+logical_id = "947612eb-7cf3-42d2-bb7d-a0be764ae8db"
+content_hash = "sha256:2bbbf475904a91a3095f0c854f0ef80e1515d37dbb23b2f5b91a9277d9a3bdd6"
+size = 154068
+mtime_ms = 1793724199199
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:f0698a0b-8b04-4823-a6d3-9f45ae32a3bf/947612eb-7cf3-42d2-bb7d-a0be764ae8db/832f2e9b-f481-42ae-8146-5108883e9da2"
+storage_version_token = "1793724207446894"
+content_type = "text/plain"
