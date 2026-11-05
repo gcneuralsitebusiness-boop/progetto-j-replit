@@ -13,6 +13,7 @@ import { AccessoBlock } from "@/components/AccessoBlock";
 import { ArrowRight, Flame, Dumbbell, Heart, Wallet } from "lucide-react";
 import { getPhotoUrl } from "@workspace/object-storage-web";
 import { isUnfinishedToday } from "@/lib/current-day";
+import { FASE1_DATA } from "@/data/fase1";
 
 export default function Home() {
   const { data: latestEntries, isLoading: latestLoading, isError: latestError } = useGetLatestEntries({
@@ -109,6 +110,12 @@ export default function Home() {
                   duration={1600}
                 />
               </div>
+              <Link
+                href={FASE1_DATA.route}
+                className="mt-8 inline-flex max-w-full items-center justify-center border border-[#E8E4DE] bg-transparent px-8 py-4 text-center font-mono text-[13px] uppercase tracking-[0.15em] text-[#E8E4DE] transition-colors hover:bg-[#E8E4DE] hover:text-[#0A0A0A] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#E8E4DE]"
+              >
+                {FASE1_DATA.homeButton}
+              </Link>
               {firstWeight != null && currentWeight != null && (
                 <div className="measured mt-7 text-[16px] uppercase tracking-[0.12em] sm:text-[18px]">
                   <span className="text-muted-foreground line-through">{firstWeight.toFixed(1)} KG</span>

@@ -5,8 +5,10 @@ import { Toaster } from '@/components/ui/toaster';
 import { Navbar } from '@/components/Navbar';
 import { ScrollToTop } from '@/components/ScrollToTop';
 import { PageChromeProvider, usePageChrome } from '@/lib/page-chrome';
+import { FASE1_DATA } from '@/data/fase1';
 
 const Home = lazy(() => import('@/pages/home'));
+const Fase1 = lazy(() => import('@/pages/fase-1'));
 const Journaling = lazy(() => import('@/pages/diario'));
 const Diario = lazy(() => import('@/pages/statistiche'));
 const ChiSono = lazy(() => import('@/pages/chi-sono'));
@@ -99,6 +101,7 @@ function PageMetadata() {
   const [location] = useLocation();
   useEffect(() => {
     const metadata: Record<string, { title: string; description: string }> = {
+      [FASE1_DATA.route]: FASE1_DATA.metadata,
       "/": { title: "Progetto J — 180 Giorni Documentati", description: "180 giorni di trasformazione documentata. Dati reali, zero filtri. Corpo, mente, business." },
       "/journaling": { title: "Journaling — Progetto J", description: "Tutte le giornate di Progetto J: testi, foto e dati del percorso, dalla più recente." },
       "/diario": { title: "Diario — Progetto J", description: "Le statistiche del percorso Progetto J: allenamento, corpo, recupero e progressi." },
@@ -129,6 +132,17 @@ function PageMetadata() {
     const robots = document.querySelector('meta[name="robots"]');
     robots?.setAttribute("content", isClipRoute ? "noindex, nofollow" : "index, follow");
     const canonical = document.querySelector('link[rel="canonical"]');
+    if (location === FASE1_DATA.route) {
+      const previousHref = canonical?.getAttribute("href");
+      const phaseCanonical = canonical ?? document.createElement("link");
+      phaseCanonical.setAttribute("rel", "canonical");
+      phaseCanonical.setAttribute("href", FASE1_DATA.metadata.canonical);
+      if (!canonical) document.head.appendChild(phaseCanonical);
+      return () => {
+        if (previousHref != null) phaseCanonical.setAttribute("href", previousHref);
+        else phaseCanonical.remove();
+      };
+    }
     if (isClipRoute) {
       canonical?.remove();
     } else if (!canonical) {
@@ -137,6 +151,7 @@ function PageMetadata() {
       restoredCanonical.href = "https://projectj180day.com";
       document.head.appendChild(restoredCanonical);
     }
+    return undefined;
   }, [location]);
   return null;
 }
@@ -157,6 +172,7 @@ function AppRoutes() {
   const routes = (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path={FASE1_DATA.route} component={Fase1} />
       <Route path="/journaling" component={Journaling} />
       <Route path="/diario" component={Diario} />
       <Route path="/obiettivi" component={Obiettivi} />
