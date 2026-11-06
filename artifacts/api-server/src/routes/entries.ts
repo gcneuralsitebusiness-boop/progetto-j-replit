@@ -21,6 +21,11 @@ router.use(["/entries", "/giorni", "/bulk/entries"], (req, res, next) => {
     return;
   }
   res.locals.fase = fase;
+  if (req.method === "GET") {
+    void ensureTodayEntry().catch((err) => {
+      req.log.error({ err }, "Failed to ensure today's entry");
+    });
+  }
   next();
 });
 const dayIdentity = (fase: number, numero: number) =>
@@ -31,10 +36,6 @@ const ser = <T>(v: T): T => JSON.parse(JSON.stringify(v)) as T;
 
 // GET /entries — all entries sorted by date descending
 router.get("/entries", async (_req, res): Promise<void> => {
-  if (res.locals.fase === 1) void ensureTodayEntry().catch((err) => {
-    _req.log.error({ err }, "Failed to ensure today's entry");
-  });
-
   const rows = await db
     .select()
     .from(giorniTable)

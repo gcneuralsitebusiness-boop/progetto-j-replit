@@ -1,21 +1,11 @@
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, gte, sql } from "drizzle-orm";
 import { db, giorniTable } from "@workspace/db";
+import { SEASON_2_START_DATE } from "@workspace/api-zod/seasons";
 import { logger } from "./logger";
+import { getRomeCalendarDate, planDaysToCreate } from "./ensureTodayPlan";
 
-const MAX_BACKFILL_DAYS = 30;
-
-function addDays(date: string, days: number): string {
-  const [year, month, day] = date.split("-").map(Number);
-  const result = new Date(Date.UTC(year, month - 1, day + days));
-  return result.toISOString().slice(0, 10);
-}
-
-export async function ensureTodayEntry() {
-  const now = new Date();
-  const today = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Europe/Rome",
-  }).format(now);
-
+export async function ensureTodayEntry(now = new Date()) {
+  const today = getRomeCalendarDate(now);
   const [{ maxData, maxNumero }] = await db
     .select({
       maxData: sql<string | null>`MAX(${giorniTable.data})`,
@@ -23,38 +13,36 @@ export async function ensureTodayEntry() {
     })
     .from(giorniTable).where(eq(giorniTable.fase, 1));
 
-  const lastDate = maxData ?? today;
-  const gap = Math.max(
-    0,
-    Math.floor(
-      (Date.parse(`${today}T00:00:00Z`) - Date.parse(`${lastDate}T00:00:00Z`)) /
-        86_400_000,
-    ),
+  const [{ maxData: season2MaxData }] = await db
+    .select({ maxData: sql<string | null>`MAX(${giorniTable.data})` })
+    .from(giorniTable)
+    .where(and(eq(giorniTable.fase, 2), gte(giorniTable.data, SEASON_2_START_DATE)));
+
+  const plannedDays = planDaysToCreate(
+    today,
+    { maxData, maxNumero: Number(maxNumero) },
+    { maxData: season2MaxData },
   );
-  const daysToCreate = Math.min(gap, MAX_BACKFILL_DAYS);
-  if (daysToCreate === 0) return null;
+  if (plannedDays.length === 0) return null;
 
   let lastCreated: typeof giorniTable.$inferSelect | null = null;
-  for (let offset = 1; offset <= daysToCreate; offset++) {
-    const date = addDays(lastDate, offset);
+  for (const planned of plannedDays) {
     const [existing] = await db
       .select()
       .from(giorniTable)
-      .where(and(eq(giorniTable.fase, 1), eq(giorniTable.data, date)))
+      .where(and(eq(giorniTable.fase, planned.fase), eq(giorniTable.numero, planned.numero)))
       .limit(1);
     if (existing) continue;
 
-    const numero = Number(maxNumero) + offset;
-    if (numero > 180) break;
     const [row] = await db
       .insert(giorniTable)
-      .values({ numero, fase: 1, data: date })
+      .values(planned)
       .onConflictDoNothing()
       .returning();
 
     if (row) {
       lastCreated = row;
-      logger.info(`Created day ${numero} for ${date}`);
+      logger.info({ fase: row.fase, numero: row.numero, date: row.data }, "Created diary day");
     }
   }
 

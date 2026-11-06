@@ -1,3 +1,5 @@
+export { SEASON_2_START_DATE } from "@workspace/api-zod/seasons";
+
 export type Fase = 1 | 2;
 export const seasonParams = (fase: number) => fase === 2 ? { fase: 2 as const } : undefined;
 export const dayPath = (numero: number, fase = 1) => `${fase === 2 ? "/fase-2" : ""}/giorno/${numero}`;
