@@ -16,7 +16,7 @@ import {
 } from "recharts";
 import { format, isAfter, parseISO, subDays } from "date-fns";
 import { it } from "date-fns/locale";
-import { useListEntries } from "@workspace/api-client-react";
+import { getListEntriesQueryKey, useListEntries } from "@workspace/api-client-react";
 import type { Entry } from "@workspace/api-client-react";
 import { AnimatedNumber } from "@/components/AnimatedNumber";
 import { DataErrorState } from "@/components/DataErrorState";
@@ -26,7 +26,10 @@ import { RevealGroup } from "@/components/RevealGroup";
 import { TerminalBackdrop } from "@/components/TerminalBackdrop";
 import { Grid180 } from "@/components/Grid180";
 import { SiteFooter } from "@/components/SiteFooter";
+import { SeasonSwitch } from "@/components/SeasonSwitch";
 import { useReveal } from "@/lib/use-reveal";
+import { useSelectedSeason } from "@/lib/use-selected-season";
+import { dayPath, SEASON_2_START_DATE } from "@/lib/seasons";
 
 const COLORS = { red: "#B81D1D", copper: "#B87333", acid: "#00FF41", ink: "#E8E4DE", gray: "#6E6A65" };
 const tooltipStyle = {
@@ -369,7 +372,11 @@ const PERIODS = [
 ] as const;
 
 export default function Diario() {
-  const { data: entries, isLoading, isError } = useListEntries();
+  const [season, setSeason] = useSelectedSeason();
+  const params = { fase: season };
+  const { data: entries, isLoading, isError } = useListEntries(params, {
+    query: { queryKey: getListEntriesQueryKey(params) },
+  });
   const [period, setPeriod] = useState<number>(30);
 
   const data = useMemo(() => {
@@ -470,7 +477,7 @@ export default function Diario() {
   if (isError) return <><DataErrorState /><SiteFooter /></>;
 
   const today = new Date();
-  const startMonth = new Date("2026-05-01T00:00:00");
+  const startMonth = new Date(`${season === 1 ? "2026-05-01" : SEASON_2_START_DATE}T00:00:00`);
   const lastDate = data.all.length ? parseISO(data.all[data.all.length - 1].data) : today;
   const endDate = isAfter(lastDate, today) ? lastDate : today;
   const months: Date[] = [];
@@ -506,6 +513,7 @@ export default function Diario() {
           <span className="page-label">DATI DEL PERCORSO</span>
           <h1 className="mt-2 font-serif text-[clamp(56px,12vw,112px)] leading-[0.85] tracking-wide text-foreground bebas">DIARIO</h1>
           <p className="mt-5 max-w-xl font-sans text-[15px] leading-relaxed text-muted-foreground">Nessun dato arrotondato. Nessun giorno nascosto.</p>
+           <SeasonSwitch value={season} onChange={setSeason} />
           <div className="mt-6 inline-flex border border-border">
             {PERIODS.map((option) => (
               <button
@@ -870,7 +878,7 @@ export default function Diario() {
                               entry.alcol === true ? "Alcol" : null,
                             ].filter(Boolean).join(" · ")
                           : date;
-                        return <Link key={date} href={entry ? `/giorno/${entry.numero}` : "#"} title={tooltip} className={`h-5 w-5 sm:h-4 sm:w-4 ${color} ${entry ? "hover:ring-1 hover:ring-foreground" : ""}`} />;
+                        return <Link key={date} href={entry ? dayPath(entry.numero, season) : "#"} title={tooltip} className={`h-5 w-5 sm:h-4 sm:w-4 ${color} ${entry ? "hover:ring-1 hover:ring-foreground" : ""}`} />;
                       })}
                     </div>
                   </div>

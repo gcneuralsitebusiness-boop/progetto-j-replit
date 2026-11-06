@@ -19,9 +19,10 @@ function NavLink({
   accent?: boolean;
 }) {
   const [location] = useLocation();
-  const isActive = location === href || (href !== "/" && location.startsWith(href));
+  const isStatistics = href === "/statistiche" && location === "/diario";
+  const isActive = location === href || isStatistics || (href !== "/" && location.startsWith(href));
   const baseClasses = cn(
-    "text-[12px] font-sans uppercase tracking-[0.2em] transition-colors",
+    "text-[13px] font-sans uppercase tracking-[0.2em] transition-colors",
     accent ? "text-[#B81D1D] hover:text-foreground" : isActive ? "nav-active text-foreground" : "text-muted-foreground hover:text-iron"
   );
 
@@ -51,12 +52,12 @@ export function Navbar() {
   const [underline, setUnderline] = useState({ x: 0, width: 0, visible: false });
   const [hasScrolled, setHasScrolled] = useState(false);
   const navigationItems = [
-    { href: "/chi-sono", label: "Chi Sono" },
-    { href: "/diario", label: "Diario" },
-    { href: "/journaling", label: "Journaling" },
-    { href: "/viaggio", label: "Il Viaggio" },
+    { href: "/", label: "Home" },
+    { href: "/journaling", label: "Diario" },
+    { href: "/statistiche", label: "Statistiche" },
+    { href: "/fase-1", label: "Stagione 1" },
     { href: "/articoli", label: "Articoli" },
-    { href: "/#accesso", label: "Richiedi accesso", accent: true },
+    { href: "/chi-sono", label: "Chi sono" },
   ];
 
   const updateUnderline = () => {
@@ -140,7 +141,7 @@ export function Navbar() {
 
           <nav className="relative hidden lg:flex items-center gap-6 xl:gap-8">
             {navigationItems.map((item) => (
-              <NavLink key={item.href} href={item.href} accent={item.accent} itemRef={(element) => { navRefs.current[item.href] = element; }}>
+              <NavLink key={item.href} href={item.href} itemRef={(element) => { navRefs.current[item.href] = element; }}>
                 {item.label}
               </NavLink>
             ))}
@@ -201,7 +202,7 @@ export function Navbar() {
           }}
         >
           {navigationItems.map((item, index) => (
-              <NavLink key={item.href} href={item.href} accent={item.accent} onClick={closeMenu}>
+              <NavLink key={item.href} href={item.href} onClick={closeMenu}>
               <span className="mobile-nav-item py-3 text-[clamp(24px,7vw,38px)] leading-none" style={{ animationDelay: `${80 + index * 45}ms` }}>
                 {item.label}
               </span>

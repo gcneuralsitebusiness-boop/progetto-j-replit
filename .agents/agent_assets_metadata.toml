@@ -297,3 +297,143 @@ mtime_ms = 1793941975246
 storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:f0698a0b-8b04-4823-a6d3-9f45ae32a3bf/dcdb0c67-1d6e-4a7f-a3d7-6f54b8b51f25/71a55103-9c5d-4b91-a0c2-bda7a3596c0c"
 storage_version_token = "1793941976015201"
 content_type = "text/html"
+
+[[outputs]]
+id = "GdEjSveRVI4dHouGAeocK"
+uri = "file://generated-artifacts/season2-screenshots/home-before-season-2.png"
+type = "image"
+title = "Home prima del 7 novembre"
+description = "Anteprima mobile della home in stato pre-stagione 2."
+logical_id = "d45e1665-d264-461d-a25b-4e12f05e02cb"
+content_hash = "sha256:f839ee4ab696ab550769c7895061511f012c7d5ffdff6330026fdb53a8ccaa71"
+size = 126750
+mtime_ms = 1793950517573
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:f0698a0b-8b04-4823-a6d3-9f45ae32a3bf/d45e1665-d264-461d-a25b-4e12f05e02cb/bba68707-b376-4cd7-909b-f3017ea7df22"
+storage_version_token = "1793951163347858"
+content_type = "image/png"
+
+[[outputs]]
+id = "9_wffh86nJPv8_5OvCz3j"
+uri = "file://generated-artifacts/season2-screenshots/home-with-test-season-2-day-1.png"
+type = "image"
+title = "Home con Giorno 1"
+description = "Screenshot mobile con il giorno di prova; la riga temporanea è stata poi eliminata."
+logical_id = "ae5ab13d-0f0e-40bd-a474-bdb9a745dee8"
+content_hash = "sha256:1d59ed2169f73a0137b58c00799c6cd934e149700d6e7915af7c8814290bc412"
+size = 125904
+mtime_ms = 1793950787773
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:f0698a0b-8b04-4823-a6d3-9f45ae32a3bf/ae5ab13d-0f0e-40bd-a474-bdb9a745dee8/a751884b-dd42-4d03-af32-d547bb33a26e"
+storage_version_token = "1793951163937343"
+content_type = "image/png"
+
+[[outputs]]
+id = "GOF772SVX2IbV4WPGFmAT"
+uri = "file://generated-artifacts/season2-screenshots/home-test-day-entry.png"
+type = "image"
+title = "Home: ultimi giorni e archivio"
+description = "Sezione con il Giorno 1 di prova e il riepilogo della Stagione 1; il dato temporaneo è stato poi eliminato."
+logical_id = "652d2a50-7f7e-4c5d-873d-024790aa3b35"
+content_hash = "sha256:5980060524824380c9ac137f3711181a7504db239aaf69d6870c4ecaaa836223"
+size = 143231
+mtime_ms = 1793950926037
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:f0698a0b-8b04-4823-a6d3-9f45ae32a3bf/652d2a50-7f7e-4c5d-873d-024790aa3b35/c986a7a1-a587-42cb-a49b-bd92d2ee98f7"
+storage_version_token = "1793951164468970"
+content_type = "image/png"
+
+[[outputs]]
+id = "HoKGcIweRA-LYaXHgQeJ_"
+uri = "file://generated-artifacts/season2-screenshots/menu-mobile-open.png"
+type = "image"
+title = "Menu mobile"
+description = "Ordine verificato: Home, Diario, Statistiche, Stagione 1, Articoli, Chi sono."
+logical_id = "c5dcb87c-8cc0-4058-ad7b-c6e33527a53f"
+content_hash = "sha256:417f8f3c0943b2f6949672d2776e0a3b604eab998f5f1d9538f1e87b29a3d031"
+size = 17349
+mtime_ms = 1793950578093
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:f0698a0b-8b04-4823-a6d3-9f45ae32a3bf/c5dcb87c-8cc0-4058-ad7b-c6e33527a53f/4fa64ea2-2acd-41fb-8784-aebfcbe19527"
+storage_version_token = "1793951164992498"
+content_type = "image/png"
+
+[[outputs]]
+id = "gUj99IW4S2JNSAgCN1nGq"
+uri = "file://generated-artifacts/season2-screenshots/diario-season-1.png"
+type = "image"
+title = "Diario · Stagione 1"
+description = "Switch attivo su Stagione 1 e giornate archiviate."
+logical_id = "ff85797b-6e48-4b82-9927-75ae2533f0c7"
+content_hash = "sha256:cecfe044571ea5410f80c0687e59009d95f4f22cf58be37f1d8555cd059270cb"
+size = 139936
+mtime_ms = 1793950792017
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:f0698a0b-8b04-4823-a6d3-9f45ae32a3bf/ff85797b-6e48-4b82-9927-75ae2533f0c7/d4800f2d-8d09-4c45-a56b-09c7074572a8"
+storage_version_token = "1793951165588849"
+content_type = "image/png"
+
+[[outputs]]
+id = "mhPXj2ylD5M-boJmBFmWK"
+uri = "file://generated-artifacts/season2-screenshots/diario-season-2.png"
+type = "image"
+title = "Diario · Stagione 2"
+description = "Switch attivo su Stagione 2 e Giorno 1 di prova; la riga è stata poi eliminata."
+logical_id = "157a02c5-b7cd-42aa-99e3-a57463ab11b7"
+content_hash = "sha256:9fcc991c672519d1289b54e22282c422351ed399f74b1bfad91565b8bc5438b3"
+size = 155102
+mtime_ms = 1793950790781
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:f0698a0b-8b04-4823-a6d3-9f45ae32a3bf/157a02c5-b7cd-42aa-99e3-a57463ab11b7/c0ab0222-561b-4f93-bc6e-e0c7b07f6563"
+storage_version_token = "1793951166163908"
+content_type = "image/png"
+
+[[outputs]]
+id = "YCsf6FBwfpU5DHOFlwrA1"
+uri = "file://generated-artifacts/season2-screenshots/statistiche-season-1.png"
+type = "image"
+title = "Statistiche · Stagione 1"
+description = "Statistiche con il selettore attivo su Stagione 1."
+logical_id = "c1841c74-df9e-4afa-9c47-157abe16c9fe"
+content_hash = "sha256:e28a4aa99de41e8fbfab5efe32e30065d75e4b1c6fd221106037c110770f5099"
+size = 147711
+mtime_ms = 1793950796433
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:f0698a0b-8b04-4823-a6d3-9f45ae32a3bf/c1841c74-df9e-4afa-9c47-157abe16c9fe/b0504ee5-f94d-412b-b62f-5001310873fb"
+storage_version_token = "1793951166745312"
+content_type = "image/png"
+
+[[outputs]]
+id = "qB8a2_dDuUCNOtawPyhJ4"
+uri = "file://generated-artifacts/season2-screenshots/statistiche-season-2.png"
+type = "image"
+title = "Statistiche · Stagione 2"
+description = "Statistiche con il selettore attivo su Stagione 2 e il dato di prova poi eliminato."
+logical_id = "3da9de06-d40f-47f6-8259-37ed05c467ae"
+content_hash = "sha256:896d19a7109ea05457c0669215b9495f377129c448d532bbd0906b8df0f25f3d"
+size = 150162
+mtime_ms = 1793950795049
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:f0698a0b-8b04-4823-a6d3-9f45ae32a3bf/3da9de06-d40f-47f6-8259-37ed05c467ae/f3215d82-9aa1-42f1-9718-700d9e89cc10"
+storage_version_token = "1793951167354615"
+content_type = "image/png"
+
+[[outputs]]
+id = "KCPMuHkufDcnkjn8LNCrC"
+uri = "file://generated-artifacts/season2-screenshots/season-1-archive-top.png"
+type = "image"
+title = "Stagione 1 · pagina archivio"
+description = "Anteprima mobile della pagina archivio e del dato 130 KG."
+logical_id = "fe46b724-1980-472b-a90e-3f1b0042fb71"
+content_hash = "sha256:d5402cafeb0c20a4184960330269d5139df762fb80b5356ac278f2a63e32c161"
+size = 144015
+mtime_ms = 1793950801249
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:f0698a0b-8b04-4823-a6d3-9f45ae32a3bf/fe46b724-1980-472b-a90e-3f1b0042fb71/26a42508-e215-4d35-95b1-e86960e14d08"
+storage_version_token = "1793951167908449"
+content_type = "image/png"
+
+[[outputs]]
+id = "nq_7c88z6pkzcF3GBlBRY"
+uri = "file://generated-artifacts/season2-screenshots/season-1-archive-links.png"
+type = "image"
+title = "Stagione 1 · collegamenti"
+description = "Collegamenti a Diario e Statistiche della Stagione 1 con il testo 130 KG senza interruzione."
+logical_id = "ea80869e-35d6-4f2d-99c8-2de7a751a4c1"
+content_hash = "sha256:e61cd7a51194a54427d58ce13d8f338b6fc4e21d9678433d9fea6e550d8cb31e"
+size = 153247
+mtime_ms = 1793950927749
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:f0698a0b-8b04-4823-a6d3-9f45ae32a3bf/ea80869e-35d6-4f2d-99c8-2de7a751a4c1/54a7b05d-1a7d-458a-a99d-dd76087653ee"
+storage_version_token = "1793951168495176"
+content_type = "image/png"

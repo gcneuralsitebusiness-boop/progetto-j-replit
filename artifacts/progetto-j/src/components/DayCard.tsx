@@ -8,6 +8,7 @@ import { MilestoneBadge } from "./MilestoneBadge";
 import type { EntrySummary } from "@workspace/api-client-react";
 import { stripHtml } from "@/lib/strip-html";
 import { isUnfinishedToday } from "@/lib/current-day";
+import { dayPath } from "@/lib/seasons";
 
 function padDay(n: number): string {
   return n.toString().padStart(3, "0");
@@ -36,9 +37,10 @@ interface DayCardProps {
 }
 
 export function DayCard({ entry, featured = false, hookOnly = false }: DayCardProps) {
+  const href = dayPath(entry.numero, entry.fase ?? 1);
   if (isUnfinishedToday(entry)) {
     return (
-      <Link href={`/giorno/${entry.numero}`} className="block" data-testid="current-day-pending-card">
+      <Link href={href} className="block" data-testid="current-day-pending-card">
         <article className="flex min-h-[320px] flex-col items-center justify-center gap-6 border border-border bg-card px-6 text-center">
           <span className="day-progress-ring" aria-hidden="true" />
           <div>
@@ -69,7 +71,7 @@ export function DayCard({ entry, featured = false, hookOnly = false }: DayCardPr
   if (entry.uscite != null) stats.push({ label: "USCITE", value: entry.uscite, prefix: "€" });
 
   return (
-    <Link href={`/giorno/${entry.numero}`} className="block">
+    <Link href={href} className="block">
     <article
       className={`group relative border border-border bg-card bracket-hover overflow-hidden transition-all duration-300 hover:border-primary card-lift cursor-pointer ${
         featured ? "min-h-[420px]" : ""

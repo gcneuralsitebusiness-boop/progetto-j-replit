@@ -176,7 +176,10 @@ function AppRoutes() {
       <Route path="/journaling" component={Journaling} />
       <Route path="/diario" component={Diario} />
       <Route path="/obiettivi" component={Obiettivi} />
-      <Route path="/statistiche"><Redirect to="/diario" replace /></Route>
+      <Route path="/statistiche">{() => {
+        const search = window.location.search;
+        return <Redirect to={`/diario${search}`} replace />;
+      }}</Route>
       <Route path="/chi-sono" component={ChiSono} />
       <Route path="/social" component={Social} />
       <Route path="/sponsor" component={Sponsor} />

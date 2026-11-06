@@ -72,7 +72,7 @@ export const FASE1_DATA = {
   ] as Section[],
   closing: {
     quote: "Quando esco da questo periodo di merda, divento un fighter di MMA.",
-    caption: "Dal mio diario, a 130 kg.",
+    caption: "Dal mio diario, a 130\u00a0kg.",
     text: "Dal giorno 181 si ricomincia. Corpo, soldi, testa.",
     finalLine: "IC XC NIKA",
     backLink: "← TORNA ALLA HOME",

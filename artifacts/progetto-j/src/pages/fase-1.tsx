@@ -88,7 +88,7 @@ export default function Fase1Page() {
                   <p className="f1-label">{step.label}</p>
                   <span className="f1-num" style={{ marginTop: 12 }} data-testid={`stat-peso-${i}`}>
                     <AnimatedNumber value={step.value} decimals={step.decimals} duration={1200} />
-                    <span className="f1-unit">{step.unit}</span>
+                    <span className="f1-unit">{step.value === 130 ? "\u00a0" : ""}{step.unit}</span>
                   </span>
                 </Reveal>
               </li>
@@ -116,6 +116,10 @@ export default function Fase1Page() {
           <Reveal><p className="f1-again">{closing.text}</p></Reveal>
           <Reveal><p className="f1-nika">{closing.finalLine}</p></Reveal>
           <div className="f1-backwrap">
+            <div style={{ display: "flex", flexDirection: "column", gap: 12, alignItems: "center", marginBottom: 24 }}>
+              <Link href="/journaling?stagione=1" className="f1-back" data-testid="link-season1-journal">DIARIO STAGIONE 1</Link>
+              <Link href="/statistiche?stagione=1" className="f1-back" data-testid="link-season1-statistics">STATISTICHE STAGIONE 1</Link>
+            </div>
             <Link href="/" className="f1-back" data-testid="link-home">{closing.backLink}</Link>
           </div>
         </section>

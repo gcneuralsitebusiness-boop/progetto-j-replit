@@ -4,16 +4,20 @@ import { it } from "date-fns/locale";
 import { getListEntrySummariesQueryKey, useGetSiteContent, useListEntrySummaries } from "@workspace/api-client-react";
 import { DayCard } from "@/components/DayCard";
 import { DataErrorState } from "@/components/DataErrorState";
+import { SeasonSwitch } from "@/components/SeasonSwitch";
 import { SiteFooter } from "@/components/SiteFooter";
 import { isUnfinishedToday } from "@/lib/current-day";
+import { useSelectedSeason } from "@/lib/use-selected-season";
 
 const PAGE_SIZE = 12;
 
 /** Journaling opens directly on the saved days, separate from Diario statistics. */
 export default function Journaling() {
-  const { data: entries, isLoading, isError } = useListEntrySummaries(undefined, {
+  const [season, setSeason] = useSelectedSeason();
+  const params = { fase: season };
+  const { data: entries, isLoading, isError } = useListEntrySummaries(params, {
     query: {
-      queryKey: getListEntrySummariesQueryKey(),
+      queryKey: getListEntrySummariesQueryKey(params),
       refetchInterval: (query) =>
         query.state.data?.some((entry) => isUnfinishedToday(entry)) ? 10_000 : false,
     },
@@ -48,13 +52,14 @@ export default function Journaling() {
       <header className="mb-8">
         <span className="page-label">DIARIO OPERATIVO</span>
         <h1 className="font-serif text-[clamp(56px,12vw,112px)] leading-[0.85] tracking-wide bebas text-foreground mt-2">
-          JOURNALING
+          DIARIO
         </h1>
         {siteContent?.journaling_intro && (
           <p className="mt-6 max-w-2xl whitespace-pre-wrap text-[15px] leading-relaxed text-foreground/80">
             {siteContent.journaling_intro}
           </p>
         )}
+        <SeasonSwitch value={season} onChange={setSeason} />
       </header>
 
       <section aria-label="Giornate del diario">
