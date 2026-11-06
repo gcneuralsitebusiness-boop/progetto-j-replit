@@ -53,8 +53,8 @@ export function planDaysToCreate(
     });
   }
 
-  // The two dates before Season 2 (Nov 5–6) are an intentional break.
-  const lastSeason1Date = addDays(SEASON_2_START_DATE, -3);
+  // November 6 is the one-day break before Season 2 starts on November 7.
+  const lastSeason1Date = addDays(SEASON_2_START_DATE, -2);
   if (today > lastSeason1Date) return [];
 
   const lastDate = season1.maxData ?? today;

@@ -5,9 +5,19 @@ import { getRomeCalendarDate, planDaysToCreate } from "./ensureTodayPlan.ts";
 const season1Ended = { maxData: "2026-11-04", maxNumero: 180 };
 const noSeason2Days = { maxData: null };
 
-test("does not create a day during the November 5–6 break", () => {
-  assert.deepEqual(planDaysToCreate("2026-11-05", season1Ended, noSeason2Days), []);
-  assert.deepEqual(planDaysToCreate("2026-11-06", season1Ended, noSeason2Days), []);
+test("November 5 can be the final Season 1 day, and November 6 is a break", () => {
+  assert.deepEqual(
+    planDaysToCreate("2026-11-05", { maxData: "2026-11-04", maxNumero: 179 }, noSeason2Days),
+    [{ fase: 1, numero: 180, data: "2026-11-05" }],
+  );
+  assert.deepEqual(
+    planDaysToCreate("2026-11-05", { maxData: "2026-11-05", maxNumero: 180 }, noSeason2Days),
+    [],
+  );
+  assert.deepEqual(
+    planDaysToCreate("2026-11-06", { maxData: "2026-11-05", maxNumero: 180 }, noSeason2Days),
+    [],
+  );
 });
 
 test("starts Season 2 on November 7 with day 1", () => {
@@ -31,13 +41,9 @@ test("catches up both Season 2 days when first invoked on November 8", () => {
 });
 
 test("never plans a Season 1 day above 180", () => {
-  assert.deepEqual(
-    planDaysToCreate("2026-11-04", { maxData: "2026-11-03", maxNumero: 179 }, noSeason2Days),
-    [{ fase: 1, numero: 180, data: "2026-11-04" }],
-  );
   const planned = planDaysToCreate(
-    "2026-11-04",
-    { maxData: "2026-11-03", maxNumero: 180 },
+    "2026-11-05",
+    { maxData: "2026-11-04", maxNumero: 180 },
     noSeason2Days,
   );
   assert.ok(planned.every((day) => day.fase !== 1 || day.numero <= 180));
