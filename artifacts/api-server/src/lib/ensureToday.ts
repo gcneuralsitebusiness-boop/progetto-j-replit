@@ -1,4 +1,4 @@
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { db, giorniTable } from "@workspace/db";
 import { logger } from "./logger";
 
@@ -21,7 +21,7 @@ export async function ensureTodayEntry() {
       maxData: sql<string | null>`MAX(${giorniTable.data})`,
       maxNumero: sql<number>`COALESCE(MAX(${giorniTable.numero}), 0)`,
     })
-    .from(giorniTable);
+    .from(giorniTable).where(eq(giorniTable.fase, 1));
 
   const lastDate = maxData ?? today;
   const gap = Math.max(
@@ -40,14 +40,15 @@ export async function ensureTodayEntry() {
     const [existing] = await db
       .select()
       .from(giorniTable)
-      .where(eq(giorniTable.data, date))
+      .where(and(eq(giorniTable.fase, 1), eq(giorniTable.data, date)))
       .limit(1);
     if (existing) continue;
 
     const numero = Number(maxNumero) + offset;
+    if (numero > 180) break;
     const [row] = await db
       .insert(giorniTable)
-      .values({ numero, data: date })
+      .values({ numero, fase: 1, data: date })
       .onConflictDoNothing()
       .returning();
 

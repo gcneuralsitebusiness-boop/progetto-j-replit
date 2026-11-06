@@ -16,7 +16,7 @@ import { isUnfinishedToday } from "@/lib/current-day";
 import { FASE1_DATA } from "@/data/fase1";
 
 export default function Home() {
-  const { data: latestEntries, isLoading: latestLoading, isError: latestError } = useGetLatestEntries({
+  const { data: latestEntries, isLoading: latestLoading, isError: latestError } = useGetLatestEntries(undefined, {
     query: {
       queryKey: getGetLatestEntriesQueryKey(),
       refetchInterval: (query) => query.state.data?.some((entry) => isUnfinishedToday(entry)) ? 10_000 : false,

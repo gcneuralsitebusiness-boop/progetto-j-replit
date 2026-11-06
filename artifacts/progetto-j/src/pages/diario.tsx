@@ -11,7 +11,7 @@ const PAGE_SIZE = 12;
 
 /** Journaling opens directly on the saved days, separate from Diario statistics. */
 export default function Journaling() {
-  const { data: entries, isLoading, isError } = useListEntrySummaries({
+  const { data: entries, isLoading, isError } = useListEntrySummaries(undefined, {
     query: {
       queryKey: getListEntrySummariesQueryKey(),
       refetchInterval: (query) =>

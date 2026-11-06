@@ -13,11 +13,13 @@ import {
   type DailyCanvasVariant,
 } from "@/lib/canvas-card-export";
 import { usePageMeta } from "@/hooks/use-page-meta";
+import { Season2Card } from "@/components/Season2Card";
 
 const GOAL_DAYS = 180;
 const CLIP_API_PATH = `${import.meta.env.BASE_URL}api/giorni`;
 
 type ClipData = {
+  fase?: number;
   numeroGiorno: number;
   rimasti: number;
   data: string;
@@ -545,6 +547,8 @@ function CardContent({ data }: { data: ClipData }) {
 }
 
 export default function Card() {
+  const search = useSearch();
+  const fase = new URLSearchParams(search).get("fase") === "2" ? 2 : 1;
   const { giorno: rawGiorno } = useParams<{ giorno: string }>();
   const parsed = /^\d+$/.test(rawGiorno ?? "") ? Number(rawGiorno) : NaN;
   const valid = Number.isInteger(parsed) && parsed >= 1 && parsed <= GOAL_DAYS;
@@ -560,7 +564,7 @@ export default function Card() {
     let cancelled = false;
     setStatus("loading");
     setData(null);
-    fetch(`${CLIP_API_PATH}/${parsed}/clip`)
+    fetch(`${CLIP_API_PATH}/${parsed}/clip${fase === 2 ? "?fase=2" : ""}`)
       .then(async (response) => {
         if (response.status === 404) throw new Error("not-found");
         if (!response.ok) throw new Error("error");
@@ -578,8 +582,9 @@ export default function Card() {
     return () => {
       cancelled = true;
     };
-  }, [parsed, valid]);
+  }, [parsed, valid, fase]);
 
+  if (status === "ready" && data?.fase === 2) return <Season2Card numero={parsed} />;
   if (status === "ready" && data) return <CardContent data={data} />;
   if (status === "not-found") return <main className="pj-card-state">GIORNO NON TROVATO</main>;
   if (status === "error") return <main className="pj-card-state">ERRORE</main>;

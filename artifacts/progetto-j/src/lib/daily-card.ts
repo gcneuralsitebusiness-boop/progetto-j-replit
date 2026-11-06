@@ -15,6 +15,7 @@ export type DailyCardVariant = (typeof DAILY_CARD_VARIANTS)[number];
 
 export interface DailyCardInput {
   numero: number;
+  fase?: number;
   data: string;
   testo?: string | null;
   sintesi?: string | null;
@@ -258,6 +259,7 @@ export async function renderDailyCard(data: DailyCardData): Promise<HTMLCanvasEl
   if (!ctx) throw new Error("Canvas 2D non disponibile");
 
   const { entry, variant } = data;
+  const accent = entry.fase === 2 ? "#3DDC84" : CARD_RED;
   const image = await loadImage(data.photoUrl);
   const hasImage = Boolean(image);
   ctx.fillStyle = BLACK;
@@ -280,11 +282,11 @@ export async function renderDailyCard(data: DailyCardData): Promise<HTMLCanvasEl
   const isMinimal = variant === "minimal";
   const centerVariant = ["minimal", "ritratto", "contrasto", "progresso", "conto_alla_rovescia"].includes(variant);
 
-  ctx.strokeStyle = CARD_RED;
+  ctx.strokeStyle = accent;
   ctx.lineWidth = 3;
   ctx.strokeRect(72, safeTop, 76, 76);
   setFont(ctx, 54, "Bebas Neue");
-  ctx.fillStyle = CARD_RED;
+  ctx.fillStyle = accent;
   ctx.textAlign = "center";
   ctx.fillText("J", 110, safeTop + 58);
   setFont(ctx, 18, "JetBrains Mono");
@@ -294,7 +296,7 @@ export async function renderDailyCard(data: DailyCardData): Promise<HTMLCanvasEl
 
   if (isMinimal) {
     setFont(ctx, data.format === "story" ? 520 : 410, "Bebas Neue");
-    ctx.fillStyle = CARD_RED;
+    ctx.fillStyle = accent;
     ctx.textAlign = "center";
     ctx.fillText(String(entry.numero).padStart(3, "0"), 540, height * (data.format === "story" ? 0.56 : 0.58));
     setFont(ctx, 24, "JetBrains Mono");
@@ -303,7 +305,7 @@ export async function renderDailyCard(data: DailyCardData): Promise<HTMLCanvasEl
   } else if (centerVariant) {
     const headlineSize = data.format === "story" ? 172 : 138;
     setFont(ctx, 22, "JetBrains Mono");
-    ctx.fillStyle = CARD_RED;
+    ctx.fillStyle = accent;
     ctx.textAlign = "center";
     spacedText(ctx, content.eyebrow, 540, height * 0.43, 5.5, "center");
     setFont(ctx, headlineSize, "Bebas Neue");
@@ -323,7 +325,7 @@ export async function renderDailyCard(data: DailyCardData): Promise<HTMLCanvasEl
     const hasStats = entry.cardMostraParole !== false && statsFor(entry).length > 0;
     const contentBottom = safeBottom - (hasStats ? 185 : 78);
     setFont(ctx, 20, "JetBrains Mono");
-    ctx.fillStyle = CARD_RED;
+    ctx.fillStyle = accent;
     ctx.textAlign = "left";
     spacedText(ctx, content.eyebrow, 72, contentBottom - 330, 4.2);
     setFont(ctx, headlineSize, "Bebas Neue");
@@ -364,12 +366,12 @@ export async function renderDailyCard(data: DailyCardData): Promise<HTMLCanvasEl
   }
 
   setFont(ctx, 16, "JetBrains Mono");
-  ctx.fillStyle = CARD_RED;
+  ctx.fillStyle = accent;
   ctx.textAlign = "left";
   spacedText(ctx, content.accent.toUpperCase(), 72, safeBottom + (data.format === "story" ? 54 : 0), 3.2);
   ctx.textAlign = "right";
   ctx.fillStyle = MUTED;
-  spacedText(ctx, `GIORNO ${String(entry.numero).padStart(3, "0")} / 180`, 1008, safeBottom + (data.format === "story" ? 54 : 0), 2.4, "right");
+  spacedText(ctx, entry.fase === 2 ? `GIORNO ${entry.numero} · STAGIONE 2` : `GIORNO ${String(entry.numero).padStart(3, "0")} / 180`, 1008, safeBottom + (data.format === "story" ? 54 : 0), 2.4, "right");
   return canvas;
 }
 

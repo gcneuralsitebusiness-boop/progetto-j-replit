@@ -283,3 +283,17 @@ mtime_ms = 1793724199199
 storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:f0698a0b-8b04-4823-a6d3-9f45ae32a3bf/947612eb-7cf3-42d2-bb7d-a0be764ae8db/832f2e9b-f481-42ae-8146-5108883e9da2"
 storage_version_token = "1793724207446894"
 content_type = "text/plain"
+
+[[outputs]]
+id = "XB7vTnIrDxTAX7Gu1ydjO"
+uri = "file://generated-artifacts/fase2-verifica.html"
+type = "html"
+title = "Fase 2 — Backup, migrazioni e verifiche"
+description = "Report completo con conteggi, SQL applicato, elenco dei file modificati e prova dei salvataggi separati."
+logical_id = "dcdb0c67-1d6e-4a7f-a3d7-6f54b8b51f25"
+content_hash = "sha256:433dc41f0ae5d07d6ab7120408c9331240286588632bbf64ff24411175d1937c"
+size = 65204
+mtime_ms = 1793941975246
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:f0698a0b-8b04-4823-a6d3-9f45ae32a3bf/dcdb0c67-1d6e-4a7f-a3d7-6f54b8b51f25/71a55103-9c5d-4b91-a0c2-bda7a3596c0c"
+storage_version_token = "1793941976015201"
+content_type = "text/html"

@@ -184,7 +184,8 @@ function AppRoutes() {
       <Route path="/articoli" component={Articoli} />
       <Route path="/a/:slug" component={Articolo} />
       <Route path="/coaching" component={Coaching} />
-      <Route path="/giorno/:id" component={GiornoDetail} />
+      <Route path="/giorno/:id">{() => <GiornoDetail />}</Route>
+      <Route path="/fase-2/giorno/:id">{() => <GiornoDetail fase={2} />}</Route>
       <Route path="/privacy" component={Privacy} />
       <Route path="/termini" component={Termini} />
       <Route path="/grazie" component={Grazie} />

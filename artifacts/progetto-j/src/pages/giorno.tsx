@@ -14,6 +14,7 @@ import { usePageMeta } from "@/hooks/use-page-meta";
 import { containsDiaryHtml, sanitizeDiaryHtml } from "@/lib/diary-html";
 import { isCurrentDayPending } from "@/lib/current-day";
 import { CurrentDayPending } from "@/components/CurrentDayPending";
+import { dayPath, seasonParams, cardSeasonQuery, calendarDayDate } from "@/lib/seasons";
 
 function padDay(n: number) {
   return n.toString().padStart(3, "0");
@@ -320,7 +321,7 @@ function DiaryText({ text, entryId, entryNumero }: { text: string; entryId: numb
   };
 
   const shareLine = async (lineText: string, lineIndex: number) => {
-    const url = `${window.location.origin}/giorno/${entryNumero}?line=${lineIndex}`;
+    const url = `${window.location.origin}${window.location.pathname}?line=${lineIndex}`;
     const title = `Giorno ${entryNumero} — Progetto J`;
     if (typeof navigator.share === "function") {
       try {
@@ -582,7 +583,8 @@ function GiornoContent({
   const firstDiaryLine = entry.testo
     ? stripDayLabel(entry.testo).split(/\r?\n/).find((l) => l.trim())?.trim()
     : undefined;
-  const dateLabel = format(new Date(entry.data), "d MMMM yyyy", { locale: it });
+  const entryDate = calendarDayDate(entry.data, entry.fase);
+  const dateLabel = format(entryDate, "d MMMM yyyy", { locale: it });
   const metaDescription = firstDiaryLine
     ? firstDiaryLine.length > 160
       ? firstDiaryLine.slice(0, 157) + "…"
@@ -603,7 +605,7 @@ function GiornoContent({
     title: `Giorno ${String(entry.numero).padStart(3, "0")} — Progetto J`,
     description: metaDescription,
     image: hasPhoto ? photoUrl : null,
-    url: `https://projectj180day.com/giorno/${entry.numero}`,
+    url: `https://projectj180day.com${dayPath(entry.numero, entry.fase)}`,
   });
 
   return (
@@ -651,10 +653,10 @@ function GiornoContent({
             </div>
             <div className="text-right pb-2">
               <div className="text-[13px] font-sans uppercase tracking-[0.2em] text-muted-foreground">
-                {format(new Date(entry.data), "EEEE", { locale: it })}
+                {format(entryDate, "EEEE", { locale: it })}
               </div>
               <div className="font-serif text-[28px] text-foreground bebas tracking-wide">
-                {format(new Date(entry.data), "d MMMM yyyy", { locale: it })}
+                {format(entryDate, "d MMMM yyyy", { locale: it })}
               </div>
             </div>
           </div>
@@ -664,9 +666,9 @@ function GiornoContent({
           <section className="mb-10 overflow-hidden border border-iron bg-card">
             <div className="flex items-center justify-between border-b border-border px-5 py-3">
               <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">IMMAGINE DEL GIORNO</span>
-              <Link href={`/card/${entry.numero}`} className="font-mono text-[10px] uppercase tracking-[0.16em] text-primary hover:text-foreground">Apri / scarica</Link>
+              <Link href={`/card/${entry.numero}${cardSeasonQuery(entry.fase)}`} className="font-mono text-[10px] uppercase tracking-[0.16em] text-primary hover:text-foreground">Apri / scarica</Link>
             </div>
-            <Link href={`/card/${entry.numero}`} className="block">
+            <Link href={`/card/${entry.numero}${cardSeasonQuery(entry.fase)}`} className="block">
               <div className="mx-auto max-w-md bg-[#0A0A0A]">
                 {hasPhoto ? (
                   <img src={photoUrl ?? undefined} alt={`Immagine del giorno ${entry.numero}`} loading="lazy" className="block aspect-[1080/1350] w-full object-cover" />
@@ -712,7 +714,7 @@ function GiornoContent({
               </div>
             </div>
           )}
-          <TappeChiuseOggi numero={entry.numero} />
+          {entry.fase !== 2 && <TappeChiuseOggi numero={entry.numero} />}
           <LinkedArticles entryData={entry.data} />
         </div>
 
@@ -723,7 +725,7 @@ function GiornoContent({
         <div className="grid grid-cols-2 gap-3">
           {prevEntry ? (
             <Link
-              href={`/giorno/${prevEntry.numero}`}
+              href={dayPath(prevEntry.numero, entry.fase)}
               className="flex min-h-[64px] items-center gap-3 border border-border bg-card px-4 sm:px-5 hover:border-primary transition-colors group"
             >
               <ArrowLeft size={16} className="shrink-0 text-primary" />
@@ -737,7 +739,7 @@ function GiornoContent({
           )}
           {nextEntry ? (
             <Link
-              href={`/giorno/${nextEntry.numero}`}
+              href={dayPath(nextEntry.numero, entry.fase)}
               className="flex min-h-[64px] items-center justify-end gap-3 border border-border bg-card px-4 sm:px-5 hover:border-primary transition-colors text-right group"
             >
               <div className="min-w-0">
@@ -760,12 +762,12 @@ function GiornoContent({
   );
 }
 
-export default function GiornoDetail() {
+export default function GiornoDetail({ fase = 1 }: { fase?: 1 | 2 }) {
   const { id } = useParams<{ id: string }>();
   const requestedNumber = Number(id);
-  const { data: entries, isLoading, isError } = useListEntries({
+  const { data: entries, isLoading, isError } = useListEntries(seasonParams(fase), {
     query: {
-      queryKey: getListEntriesQueryKey(),
+      queryKey: getListEntriesQueryKey(seasonParams(fase)),
       refetchInterval: (query) => isCurrentDayPending(query.state.data, requestedNumber) ? 10_000 : false,
       refetchOnWindowFocus: true,
     },

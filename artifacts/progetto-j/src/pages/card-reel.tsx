@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { useParams, useRoute, Link } from "wouter";
+import { useParams, useRoute, useSearch, Link } from "wouter";
+import { seasonParams, cardSeasonQuery } from "@/lib/seasons";
 import {
   useGetEntry,
   useListEntrySummaries,
@@ -22,7 +23,7 @@ import CardCustomizer, {
 
 const CARD_W = 1080;
 const CARD_H = 1920;
-const RED = "#B81D1D";
+const GREEN = "#3DDC84";
 const BLACK = "#0A0A0A";
 const WHITE = "#E8E4DE";
 const GREY = "#6E6A65";
@@ -67,6 +68,7 @@ function ReelArtwork({
   minimalOverlay: number;
 }) {
   const number = String(entry.numero).padStart(3, "0");
+  const RED = entry.fase === 2 ? GREEN : "#B81D1D";
 
   if (minimal) {
     const photoUrl = entry.foto ? getPhotoUrl(entry.foto) : null;
@@ -151,7 +153,7 @@ function ReelArtwork({
             letterSpacing: "0.1em",
           }}
         >
-          /{GOAL_DAY}
+          {entry.fase === 2 ? `GIORNO ${entry.numero} · STAGIONE 2` : `/${GOAL_DAY}`}
         </div>
       </div>
     );
@@ -250,7 +252,7 @@ function ReelArtwork({
           letterSpacing: "0.3em",
         }}
       >
-        GIORNO / {GOAL_DAY}
+        {entry.fase === 2 ? `GIORNO ${entry.numero} · STAGIONE 2` : `GIORNO / ${GOAL_DAY}`}
       </div>
       <div
         style={{
@@ -412,23 +414,25 @@ function Guides() {
 }
 
 export default function CardReel() {
+  const search = useSearch();
+  const fase = new URLSearchParams(search).get("fase") === "2" ? 2 : 1;
   const [matchMinimal, minimalParams] = useRoute("/card/:giorno/reel-minimal");
   const [, reelParams] = useRoute("/card/:giorno/reel");
   const minimal = Boolean(matchMinimal);
   const giorno = (minimal ? minimalParams?.giorno : reelParams?.giorno) ?? "";
   const requested = Number(giorno);
-  const { data: entry, isLoading, isError } = useGetEntry(requested, {
+  const { data: entry, isLoading, isError } = useGetEntry(requested, seasonParams(fase), {
     query: {
-      queryKey: getGetEntryQueryKey(requested),
+      queryKey: getGetEntryQueryKey(requested, seasonParams(fase)),
       enabled: Number.isInteger(requested) && requested >= 1 && requested <= GOAL_DAY,
       staleTime: 0,
       refetchOnMount: "always",
       refetchOnWindowFocus: true,
     },
   });
-  const { data: daySummaries, isLoading: daysLoading } = useListEntrySummaries({
+  const { data: daySummaries, isLoading: daysLoading } = useListEntrySummaries(seasonParams(fase), {
     query: {
-      queryKey: getListEntrySummariesQueryKey(),
+      queryKey: getListEntrySummariesQueryKey(seasonParams(fase)),
       staleTime: 30_000,
     },
   });
@@ -448,15 +452,16 @@ export default function CardReel() {
   const [minimalOverlay, setMinimalOverlay] = useState(55);
   const [custom, setCustom] = useState<CardCustomization>(customizationFromRecord(null));
   const [customDirty, setCustomDirty] = useState(false);
-  const [initializedFor, setInitializedFor] = useState<number | null>(null);
+  const entryIdentity = entry ? `${fase}:${entry.numero}` : null;
+  const [initializedFor, setInitializedFor] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const updateMutation = useUpdateEntry();
 
   useEffect(() => {
-    if (entry && (initializedFor !== entry.numero || !customDirty)) {
+    if (entry && (initializedFor !== entryIdentity || !customDirty)) {
       setCustom(customizationFromRecord(entry));
-      setInitializedFor(entry.numero);
+      setInitializedFor(entryIdentity);
       setCustomDirty(false);
     }
   }, [entry, initializedFor, customDirty]);
@@ -472,7 +477,7 @@ export default function CardReel() {
   }, []);
 
   const handleDownload = async () => {
-    if (!cardRef.current || !entry || downloading || initializedFor !== entry.numero) return;
+    if (!cardRef.current || !entry || downloading || initializedFor !== entryIdentity) return;
     setDownloading(true);
     setDownloadError(null);
     try {
@@ -483,11 +488,12 @@ export default function CardReel() {
           : (entry.foto ? getPhotoUrl(entry.foto) : null));
       if (minimal) {
         await downloadMinimalCanvasCard({
-          filename: `progettoj-giorno-${String(requested).padStart(3, "0")}-minimal.png`,
+          filename: `progettoj-${fase === 2 ? "fase-2-" : ""}giorno-${String(requested).padStart(3, "0")}-minimal.png`,
           photoUrl,
           blur: minimalBlur,
           overlay: minimalOverlay,
           dayNumber: entry.numero,
+          fase,
         });
       } else {
         // Export the actual preview, not the unrelated daily-card canvas.
@@ -500,7 +506,7 @@ export default function CardReel() {
           style: { transform: "none" },
         });
         const link = document.createElement("a");
-        link.download = `progettoj-giorno-${String(entry.numero).padStart(3, "0")}-reel.png`;
+        link.download = `progettoj-${fase === 2 ? "fase-2-" : ""}giorno-${String(entry.numero).padStart(3, "0")}-reel.png`;
         link.href = png;
         document.body.appendChild(link);
         link.click();
@@ -517,10 +523,10 @@ export default function CardReel() {
     if (!entry) return;
     setSaveError(null);
     updateMutation.mutate(
-      { numero: entry.numero, data: { ...custom } },
+      { numero: entry.numero, params: seasonParams(fase), data: { ...custom } },
       {
         onSuccess: (savedEntry) => {
-          queryClient.setQueryData(getGetEntryQueryKey(entry.numero), savedEntry);
+          queryClient.setQueryData(getGetEntryQueryKey(entry.numero, seasonParams(fase)), savedEntry);
           setCustom(customizationFromRecord(savedEntry));
           setCustomDirty(false);
           setSaved(true);
@@ -552,14 +558,14 @@ export default function CardReel() {
         </span>
         <button
           onClick={handleDownload}
-          disabled={downloading || initializedFor !== entry.numero}
+          disabled={downloading || initializedFor !== entryIdentity}
           className="bg-primary text-primary-foreground font-serif text-[16px] px-6 py-2.5 tracking-wider uppercase hover:bg-primary/90 transition-colors disabled:opacity-50"
         >
           {downloading ? "Generazione..." : minimal ? "Scarica minimal" : "Scarica copertina reel"}
         </button>
         {!minimal && nextDay && (
           <Link
-            href={`/card/${nextDay.numero}/reel`}
+            href={`/card/${nextDay.numero}/reel${cardSeasonQuery(fase)}`}
             aria-label={`Vai alla prossima giornata disponibile, giorno ${nextDay.numero}`}
             className="border border-primary px-6 py-2.5 font-serif text-[16px] uppercase tracking-wider text-foreground transition-colors hover:bg-primary hover:text-primary-foreground"
           >

@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { db, giorniTable } from "@workspace/db";
 import { ensureTodayEntry } from "../lib/ensureToday";
 import {
@@ -14,19 +14,31 @@ import {
 } from "@workspace/api-zod";
 
 const router: IRouter = Router();
+router.use(["/entries", "/giorni", "/bulk/entries"], (req, res, next) => {
+  const fase = Number(req.query.fase ?? 1);
+  if (fase !== 1 && fase !== 2) {
+    res.status(400).json({ error: "Fase non valida: scegliere 1 o 2" });
+    return;
+  }
+  res.locals.fase = fase;
+  next();
+});
+const dayIdentity = (fase: number, numero: number) =>
+  and(eq(giorniTable.fase, fase), eq(giorniTable.numero, numero));
 
 /** Coerce Date objects → ISO strings so Zod string schemas don't crash */
 const ser = <T>(v: T): T => JSON.parse(JSON.stringify(v)) as T;
 
 // GET /entries — all entries sorted by date descending
 router.get("/entries", async (_req, res): Promise<void> => {
-  void ensureTodayEntry().catch((err) => {
+  if (res.locals.fase === 1) void ensureTodayEntry().catch((err) => {
     _req.log.error({ err }, "Failed to ensure today's entry");
   });
 
   const rows = await db
     .select()
     .from(giorniTable)
+    .where(eq(giorniTable.fase, res.locals.fase))
     .orderBy(desc(giorniTable.data));
   res.json(ListEntriesResponse.parse(ser(rows)));
 });
@@ -36,6 +48,7 @@ router.get("/entries/latest", async (_req, res): Promise<void> => {
   const rows = await db
     .select()
     .from(giorniTable)
+    .where(eq(giorniTable.fase, res.locals.fase))
     .orderBy(desc(giorniTable.data))
     .limit(3);
   res.json(GetLatestEntriesResponse.parse(ser(rows)));
@@ -60,7 +73,7 @@ router.get("/giorni/:numero/clip", async (req, res): Promise<void> => {
       fotoClipUrl: giorniTable.foto,
     })
     .from(giorniTable)
-    .where(eq(giorniTable.numero, numero))
+    .where(dayIdentity(res.locals.fase, numero))
     .limit(1);
 
   if (!row) {
@@ -69,6 +82,7 @@ router.get("/giorni/:numero/clip", async (req, res): Promise<void> => {
   }
 
   res.json({
+    fase: res.locals.fase,
     numeroGiorno: row.numeroGiorno,
     rimasti: Math.max(0, 180 - row.numeroGiorno),
     data: row.data,
@@ -87,6 +101,7 @@ router.get("/entries/summary", async (_req, res): Promise<void> => {
   const rows = await db
     .select({
       id: giorniTable.id,
+      fase: giorniTable.fase,
       numero: giorniTable.numero,
       data: giorniTable.data,
       kcal: giorniTable.kcal,
@@ -111,8 +126,15 @@ router.get("/entries/summary", async (_req, res): Promise<void> => {
       routineCompletata: giorniTable.routineCompletata,
     })
     .from(giorniTable)
+    .where(eq(giorniTable.fase, res.locals.fase))
     .orderBy(desc(giorniTable.data));
   res.json(ser(rows));
+});
+
+router.get("/entries/current-season", async (_req, res): Promise<void> => {
+  const [latest] = await db.select({ fase: giorniTable.fase, numero: giorniTable.numero })
+    .from(giorniTable).orderBy(desc(giorniTable.fase), desc(giorniTable.numero)).limit(1);
+  res.json(latest ?? { fase: 1, numero: 0 });
 });
 
 // GET /entries/:numero — complete public detail for a single day
@@ -125,7 +147,7 @@ router.get("/entries/:numero", async (req, res): Promise<void> => {
   const [row] = await db
     .select()
     .from(giorniTable)
-    .where(eq(giorniTable.numero, numero))
+    .where(dayIdentity(res.locals.fase, numero))
     .limit(1);
   if (!row) {
     res.status(404).json({ error: "Entry not found" });
@@ -157,6 +179,8 @@ const RANGES: Record<string, [number, number]> = {
 };
 
 const OPTIONAL_NUMERIC_FIELDS = new Set([
+  "roundSparring", "roundPao", "roundTecnica", "oreLavoro", "risparmio", "entrateOnline",
+  "videoPubblicati", "articoliPubblicati", "follower", "pagineLette", "minutiScrittura",
   "kcal",
   "pasti",
   "acqua",
@@ -186,6 +210,7 @@ const OPTIONAL_BOOLEAN_FIELDS = new Set([
 ]);
 
 const OPTIONAL_TEXT_FIELDS = new Set([
+  "oraSveglia",
   "tipoAllenamento",
   "tipoGiorno",
   "routineFlessioni",
@@ -292,7 +317,7 @@ router.post("/entries", async (req, res): Promise<void> => {
   const existing = await db
     .select()
     .from(giorniTable)
-    .where(eq(giorniTable.numero, parsed.data.numero));
+    .where(dayIdentity(parsed.data.fase ?? res.locals.fase, parsed.data.numero));
   if (existing.length > 0) {
     res.status(409).json({ error: `Entry for giorno ${parsed.data.numero} already exists` });
     return;
@@ -300,6 +325,7 @@ router.post("/entries", async (req, res): Promise<void> => {
 
   const [row] = await db.insert(giorniTable).values({
     ...parsed.data,
+    fase: parsed.data.fase ?? res.locals.fase,
     tipoGiorno: automaticDayType(parsed.data.numero),
   }).returning();
   res.status(201).json(CreateEntryResponse.parse(ser(row)));
@@ -330,13 +356,18 @@ router.patch("/entries/:numero", async (req, res): Promise<void> => {
     return;
   }
 
+  if (body.data.fase != null && body.data.fase !== res.locals.fase) {
+    res.status(400).json({ error: "La fase di una giornata salvata non può cambiare. Crea una nuova giornata nella fase desiderata." });
+    return;
+  }
+
   const [row] = await db
     .update(giorniTable)
     .set({
       ...body.data,
       tipoGiorno: automaticDayType(params.data.numero),
     })
-    .where(eq(giorniTable.numero, params.data.numero))
+    .where(dayIdentity(res.locals.fase, params.data.numero))
     .returning();
 
   if (!row) {
@@ -362,7 +393,7 @@ router.delete("/entries/:numero", async (req, res): Promise<void> => {
 
   const [row] = await db
     .delete(giorniTable)
-    .where(eq(giorniTable.numero, params.data.numero))
+    .where(dayIdentity(res.locals.fase, params.data.numero))
     .returning();
 
   if (!row) {
@@ -558,7 +589,7 @@ router.get("/bulk/entries", async (req, res): Promise<void> => {
     res.status(401).json({ error: "Unauthorized" });
     return;
   }
-  const rows = await db.select().from(giorniTable).orderBy(giorniTable.numero);
+  const rows = await db.select().from(giorniTable).where(eq(giorniTable.fase, res.locals.fase)).orderBy(giorniTable.numero);
   const text = buildBulkText(rows);
   res.setHeader("Content-Type", "text/plain; charset=utf-8");
   res.send(text);
@@ -583,7 +614,7 @@ router.post("/bulk/entries", async (req, res): Promise<void> => {
   }
 
   const existingRows = await Promise.all(
-    blocks.map((block) => db.select().from(giorniTable).where(eq(giorniTable.numero, block.numero)).limit(1))
+    blocks.map((block) => db.select().from(giorniTable).where(dayIdentity(res.locals.fase, block.numero)).limit(1))
   );
   const missingErrors = existingRows
     .map((rows, index) => rows.length ? null : `Giorno ${blocks[index].numero}: non trovato, saltato`)
@@ -604,7 +635,7 @@ router.post("/bulk/entries", async (req, res): Promise<void> => {
       await tx
         .update(giorniTable)
         .set(update)
-        .where(eq(giorniTable.numero, block.numero));
+        .where(dayIdentity(res.locals.fase, block.numero));
       updated++;
     }
   });

@@ -5,6 +5,79 @@
  * API specification for Progetto J — 180-day transformation journal
  * OpenAPI spec version: 0.1.0
  */
+export type SeasonFieldsFase = typeof SeasonFieldsFase[keyof typeof SeasonFieldsFase];
+
+
+export const SeasonFieldsFase = {
+  NUMBER_1: 1,
+  NUMBER_2: 2,
+} as const;
+
+export interface SeasonFields {
+  fase?: SeasonFieldsFase;
+  /**
+     * @minimum 0
+     * @nullable
+     */
+  roundSparring?: number | null;
+  /**
+     * @minimum 0
+     * @nullable
+     */
+  roundPao?: number | null;
+  /**
+     * @minimum 0
+     * @nullable
+     */
+  roundTecnica?: number | null;
+  /**
+     * @nullable
+     * @pattern ^([01][0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9](\.[0-9]+)?)?$
+     */
+  oraSveglia?: string | null;
+  /**
+     * @minimum 0
+     * @maximum 24
+     * @nullable
+     */
+  oreLavoro?: number | null;
+  /**
+     * @minimum 0
+     * @nullable
+     */
+  risparmio?: number | null;
+  /**
+     * @minimum 0
+     * @nullable
+     */
+  entrateOnline?: number | null;
+  /**
+     * @minimum 0
+     * @nullable
+     */
+  videoPubblicati?: number | null;
+  /**
+     * @minimum 0
+     * @nullable
+     */
+  articoliPubblicati?: number | null;
+  /**
+     * @minimum 0
+     * @nullable
+     */
+  follower?: number | null;
+  /**
+     * @minimum 0
+     * @nullable
+     */
+  pagineLette?: number | null;
+  /**
+     * @minimum 0
+     * @nullable
+     */
+  minutiScrittura?: number | null;
+}
+
 export interface PlannerAnnotationInput {
   /** @pattern ^\d{4}-\d{2}-\d{2}$ */
   data: string;
@@ -69,7 +142,7 @@ export const EntrySollevamentoGamba = {
   OLTRE: 'OLTRE',
 } as const;
 
-export interface Entry {
+export type Entry = SeasonFields & ({
   id: number;
   /** Day number (1-180) */
   numero: number;
@@ -254,9 +327,10 @@ export interface Entry {
      */
   cardStory?: string | null;
   createdAt?: string;
-}
+});
 
 export interface EntrySummary {
+  fase?: number;
   id: number;
   numero: number;
   /** @pattern ^\d{4}-\d{2}-\d{2}$ */
@@ -354,7 +428,7 @@ export const EntryInputSollevamentoGamba = {
   OLTRE: 'OLTRE',
 } as const;
 
-export interface EntryInput {
+export type EntryInput = SeasonFields & ({
   numero: number;
   /** @pattern ^\d{4}-\d{2}-\d{2}$ */
   data: string;
@@ -492,7 +566,7 @@ export interface EntryInput {
   cardFeed?: string | null;
   /** @nullable */
   cardStory?: string | null;
-}
+});
 
 /**
  * @nullable
@@ -536,7 +610,7 @@ export const EntryUpdateSollevamentoGamba = {
   OLTRE: 'OLTRE',
 } as const;
 
-export interface EntryUpdate {
+export type EntryUpdate = SeasonFields & ({
   /** @pattern ^\d{4}-\d{2}-\d{2}$ */
   data?: string;
   /**
@@ -673,7 +747,7 @@ export interface EntryUpdate {
   cardFeed?: string | null;
   /** @nullable */
   cardStory?: string | null;
-}
+});
 
 export interface SiteContent {
   /** @nullable */
@@ -1238,6 +1312,89 @@ export type UnauthorizedResponse = ApiError;
  * Not found
  */
 export type NotFoundResponse = ApiError;
+
+export type ListEntriesParams = {
+/**
+ * Season identifier; omitted means Season 1.
+ * @minimum 1
+ * @maximum 2
+ */
+fase?: number;
+};
+
+export type CreateEntryParams = {
+/**
+ * Season identifier; omitted means Season 1.
+ * @minimum 1
+ * @maximum 2
+ */
+fase?: number;
+};
+
+export type GetLatestEntriesParams = {
+/**
+ * Season identifier; omitted means Season 1.
+ * @minimum 1
+ * @maximum 2
+ */
+fase?: number;
+};
+
+export type ListEntrySummariesParams = {
+/**
+ * Season identifier; omitted means Season 1.
+ * @minimum 1
+ * @maximum 2
+ */
+fase?: number;
+};
+
+export type GetEntriesBulkTextParams = {
+/**
+ * Season identifier; omitted means Season 1.
+ * @minimum 1
+ * @maximum 2
+ */
+fase?: number;
+};
+
+export type ImportEntriesBulkTextParams = {
+/**
+ * Season identifier; omitted means Season 1.
+ * @minimum 1
+ * @maximum 2
+ */
+fase?: number;
+};
+
+export type GetCurrentSeason200 = {
+  fase: number;
+  numero: number;
+};
+
+export type GetEntryParams = {
+/**
+ * @minimum 1
+ * @maximum 2
+ */
+fase?: number;
+};
+
+export type UpdateEntryParams = {
+/**
+ * @minimum 1
+ * @maximum 2
+ */
+fase?: number;
+};
+
+export type DeleteEntryParams = {
+/**
+ * @minimum 1
+ * @maximum 2
+ */
+fase?: number;
+};
 
 export type GetPlannerAnnotationParams = {
 /**

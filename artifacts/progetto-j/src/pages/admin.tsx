@@ -18,6 +18,7 @@ import { useUpload, getPhotoUrl } from "@workspace/object-storage-web";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
 import { assertEntrySaved, buildEntryPayload } from "@/lib/entry-save";
+import { seasonParams, cardSeasonQuery, type Fase } from "@/lib/seasons";
 
 const AnalyticsTab = lazy(() =>
   import("@/components/admin/AnalyticsTab").then((module) => ({ default: module.AnalyticsTab })),
@@ -32,7 +33,7 @@ const CandidatureTab = lazy(() => import("@/components/admin/CandidatureTab").th
 const IscrittiTab = lazy(() => import("@/components/admin/IscrittiTab").then((m) => ({ default: m.IscrittiTab })));
 const PlannerTab = lazy(() => import("@/components/admin/PlannerTab").then((m) => ({ default: m.PlannerTab })));
 // Keep card jobs ordered even when the diary tab is temporarily unmounted.
-const dailyCardJobs = new Map<number, Promise<void>>();
+const dailyCardJobs = new Map<string, Promise<void>>();
 
 // ─── Client-side range validation ─────────────────────────────────────────────
 
@@ -170,7 +171,7 @@ function AdminLoginForm() {
 
 // ─── Entry Form ───────────────────────────────────────────────────────────────
 
-function EntryForm({ initialData, defaultNumero = 1, onSuccess, onCancel }: { initialData?: Entry; defaultNumero?: number; onSuccess: (entry: Entry) => void; onCancel?: () => void }) {
+function EntryForm({ initialData, defaultNumero = 1, defaultFase = 2, onFaseChange, onSuccess, onCancel }: { initialData?: Entry; defaultNumero?: number; defaultFase?: Fase; onFaseChange: (fase: Fase) => void; onSuccess: (entry: Entry) => void; onCancel?: () => void }) {
   const queryClient = useQueryClient();
   const createMutation = useCreateEntry();
   const updateMutation = useUpdateEntry();
@@ -222,7 +223,12 @@ function EntryForm({ initialData, defaultNumero = 1, onSuccess, onCancel }: { in
     attrito: initialData?.attrito || "",
     fatto: initialData?.fatto || "",
     nonFatto: initialData?.nonFatto || "",
+    ...initialData,
+    fase: initialData?.fase ?? defaultFase,
   });
+  useEffect(() => {
+    if (!initialData) setFormData((current) => ({ ...current, fase: defaultFase, numero: defaultNumero }));
+  }, [defaultFase, defaultNumero, initialData]);
 
   // ─── Autosave + draft restore ──────────────────────────────────────────────
   const [draftBar, setDraftBar] = useState<{ time: string; data: Partial<EntryInput> } | null>(null);
@@ -275,7 +281,7 @@ function EntryForm({ initialData, defaultNumero = 1, onSuccess, onCancel }: { in
     if (previousNumero < 1 || copyYesterdayPending) return;
     setCopyYesterdayPending(true);
     try {
-    const previousEntry = await queryClient.fetchQuery(getGetEntryQueryOptions(previousNumero));
+    const previousEntry = await queryClient.fetchQuery(getGetEntryQueryOptions(previousNumero, seasonParams(formData.fase ?? defaultFase)));
     setFormData((current) => ({
       ...current,
       kcal: previousEntry.kcal ?? undefined,
@@ -322,12 +328,12 @@ function EntryForm({ initialData, defaultNumero = 1, onSuccess, onCancel }: { in
     } finally {
       setCopyYesterdayPending(false);
     }
-  }, [markManyTouched, formData.numero, copyYesterdayPending, queryClient]);
+  }, [markManyTouched, formData.numero, formData.fase, defaultFase, copyYesterdayPending, queryClient]);
 
   // Load draft when editing an entry
   useEffect(() => {
     if (!initialData) { isMounted.current = true; return; }
-    fetch(`${import.meta.env.BASE_URL}api/admin/drafts/${initialData.numero}`, { credentials: "include" })
+    fetch(`${import.meta.env.BASE_URL}api/admin/drafts/${initialData.numero}${cardSeasonQuery(initialData.fase)}`, { credentials: "include" })
       .then((r) => (r.ok ? r.json() : null))
       .then((draft: { updatedAt: string; dati: Partial<EntryInput> } | null) => {
         if (!draft) return;
@@ -347,7 +353,7 @@ function EntryForm({ initialData, defaultNumero = 1, onSuccess, onCancel }: { in
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ numero: initialData.numero, formJson: formData }),
+        body: JSON.stringify({ numero: initialData.numero, fase: initialData.fase ?? 1, formJson: formData }),
       }).catch(() => {});
     }, 2000);
     return () => { if (autosaveTimer.current) clearTimeout(autosaveTimer.current); };
@@ -356,9 +362,9 @@ function EntryForm({ initialData, defaultNumero = 1, onSuccess, onCancel }: { in
   const deleteDraft = useCallback((numero: number) => {
     // A pending autosave must finish before deletion, or it can restore a stale draft.
     void Promise.resolve(draftRequest.current).finally(() =>
-      fetch(`${import.meta.env.BASE_URL}api/admin/drafts/${numero}`, { method: "DELETE", credentials: "include" }).catch(() => {})
+      fetch(`${import.meta.env.BASE_URL}api/admin/drafts/${numero}${cardSeasonQuery(initialData?.fase ?? formData.fase)}`, { method: "DELETE", credentials: "include" }).catch(() => {})
     );
-  }, []);
+  }, [initialData?.fase, formData.fase]);
 
   // ─── Submit ────────────────────────────────────────────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
@@ -389,11 +395,11 @@ function EntryForm({ initialData, defaultNumero = 1, onSuccess, onCancel }: { in
     if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
     try {
       const savedEntry = initialData
-        ? await updateMutation.mutateAsync({ numero: initialData.numero, data: payload })
+        ? await updateMutation.mutateAsync({ numero: initialData.numero, params: seasonParams(initialData.fase ?? 1), data: payload })
         : await createMutation.mutateAsync({ data: payload });
       assertEntrySaved(payload, savedEntry);
       baseline.current = null;
-      queryClient.setQueryData(getGetEntryQueryKey(savedEntry.numero), savedEntry);
+      queryClient.setQueryData(getGetEntryQueryKey(savedEntry.numero, seasonParams(savedEntry.fase ?? 1)), savedEntry);
       if (initialData && initialData.numero !== savedEntry.numero) {
         queryClient.removeQueries({ queryKey: getGetEntryQueryKey(initialData.numero), exact: true });
       }
@@ -402,6 +408,7 @@ function EntryForm({ initialData, defaultNumero = 1, onSuccess, onCancel }: { in
       if (!initialData) {
           setFormData({
             numero: savedEntry.numero + 1,
+            fase: savedEntry.fase ?? defaultFase,
             data: new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Rome" }).format(new Date()),
             kcal: undefined, pasti: undefined, alcol: undefined, acqua: undefined, acquaAllenamento: undefined,
             tipoAllenamento: undefined, durata: undefined, intensita: undefined,
@@ -481,6 +488,7 @@ function EntryForm({ initialData, defaultNumero = 1, onSuccess, onCancel }: { in
       <div className="flex flex-col gap-1.5">
         <label className="text-[11px] uppercase tracking-widest text-muted-foreground">{label}</label>
         <input
+          aria-label={label}
           type="number"
           step={step}
           value={(formData[key] as number | undefined) ?? ""}
@@ -551,7 +559,7 @@ function EntryForm({ initialData, defaultNumero = 1, onSuccess, onCancel }: { in
         )}
       </div>
 
-      <TappaManager numeroGiorno={Number(formData.numero)} dataGiorno={formData.data} />
+      {formData.fase !== 2 && <TappaManager numeroGiorno={Number(formData.numero)} dataGiorno={formData.data} />}
 
       <DailyTrackingPanel
         formData={formData}
@@ -574,12 +582,18 @@ function EntryForm({ initialData, defaultNumero = 1, onSuccess, onCancel }: { in
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
         <div className="flex flex-col gap-2">
+          <label htmlFor="entry-fase" className="text-[13px] uppercase tracking-widest text-muted-foreground">Fase</label>
+          <select id="entry-fase" value={formData.fase ?? defaultFase} disabled={Boolean(initialData)} onChange={(e) => onFaseChange(Number(e.target.value) as Fase)} className="bg-[#141414] border border-border p-2.5 text-[13px] text-white">
+            <option value={1}>Fase 1</option><option value={2}>Fase 2</option>
+          </select>
+        </div>
+        <div className="flex flex-col gap-2">
           <label className="text-[11px] uppercase tracking-widest text-muted-foreground">Numero *</label>
-          <input type="number" required value={formData.numero ?? ""} onChange={(e) => setFormData({ ...formData, numero: Number(e.target.value) })} className="bg-[#141414] border border-border p-2.5 text-white focus:outline-none focus:border-primary tabular-nums" />
+          <input aria-label="Numero giorno" type="number" required value={formData.numero ?? ""} onChange={(e) => setFormData({ ...formData, numero: Number(e.target.value) })} className="bg-[#141414] border border-border p-2.5 text-white focus:outline-none focus:border-primary tabular-nums" />
         </div>
         <div className="flex flex-col gap-2">
           <label className="text-[11px] uppercase tracking-widest text-muted-foreground">Data *</label>
-          <input type="date" required value={formData.data ?? ""} onChange={(e) => setFormData({ ...formData, data: e.target.value })} className="bg-[#141414] border border-border p-2.5 text-white focus:outline-none focus:border-primary tabular-nums" />
+          <input aria-label="Data giorno" type="date" required value={formData.data ?? ""} onChange={(e) => setFormData({ ...formData, data: e.target.value })} className="bg-[#141414] border border-border p-2.5 text-white focus:outline-none focus:border-primary tabular-nums" />
         </div>
         {field("Sonno (h)", "sonno", "0.5")}
         {field("Flessioni", "flessioni")}
@@ -591,6 +605,32 @@ function EntryForm({ initialData, defaultNumero = 1, onSuccess, onCancel }: { in
         {field("Entrate (€)", "entrate", "0.01")}
         {field("Uscite (€)", "uscite", "0.01")}
       </div>
+
+      {formData.fase === 2 && (
+        <section aria-label="Dati Fase 2" className="border-t border-border pt-6">
+          <h3 className="font-serif text-[26px]">FASE 2</h3>
+          <p className="my-3 text-[13px] text-muted-foreground">Risparmio ed entrate online restano separati da uscite ed entrate. Registra i follower una volta a settimana.</p>
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-4 [&_label]:text-[13px]">
+            {field("Round sparring", "roundSparring")}
+            {field("Round pao", "roundPao")}
+            {field("Round tecnica", "roundTecnica")}
+            <label className="flex flex-col gap-2 text-[13px]">Ora sveglia
+              <input aria-label="Ora sveglia" type="time" value={formData.oraSveglia?.slice(0, 5) ?? ""} onChange={(e) => setFormData({ ...formData, oraSveglia: e.target.value || null })} className="bg-[#141414] border border-border p-2.5 text-white" />
+            </label>
+            {field("Ore lavoro", "oreLavoro", "0.25")}
+            {field("Risparmio (€)", "risparmio", "0.01")}
+            {field("Entrate online (€)", "entrateOnline", "0.01")}
+            {field("Video pubblicati", "videoPubblicati")}
+            {field("Articoli pubblicati", "articoliPubblicati")}
+            {field("Follower", "follower")}
+            {field("Pagine lette", "pagineLette")}
+            {field("Minuti scrittura", "minutiScrittura")}
+            <label className="flex flex-col gap-2 text-[13px]">Alcol
+              <button type="button" role="switch" aria-label="Alcol" aria-checked={formData.alcol === true} onClick={() => { setFormData({ ...formData, alcol: formData.alcol !== true }); markTouched("alcol"); }} className="border border-border bg-[#141414] p-2.5 text-[13px]">{formData.alcol === true ? "Sì" : "No"}</button>
+            </label>
+          </div>
+        </section>
+      )}
 
       <div className="flex flex-col gap-2 mt-2">
         <label className="text-[11px] uppercase tracking-widest text-muted-foreground">Foto</label>
@@ -743,25 +783,27 @@ function EntryForm({ initialData, defaultNumero = 1, onSuccess, onCancel }: { in
 
 function DiarioTab({ scrollToEntry }: { scrollToEntry?: number }) {
   const queryClient = useQueryClient();
-  const { data: summaries, isLoading: listLoading, isError: listError, refetch: refetchList } = useListEntrySummaries();
+  const [selectedFase, setSelectedFase] = useState<Fase>(2);
+  const { data: summaries, isLoading: listLoading, isError: listError, refetch: refetchList } = useListEntrySummaries(seasonParams(selectedFase));
   const entries = summaries as Entry[] | undefined;
   const deleteMutation = useDeleteEntry();
   const [editingNumero, setEditingNumero] = useState<number | null>(null);
   const [search, setSearch] = useState("");
   const formRef = useRef<HTMLDivElement>(null);
   const nextNumero = editingNumero ?? ((entries?.reduce((max, entry) => Math.max(max, entry.numero), 0) ?? 0) + 1);
-  const { data: editingEntry, isLoading: editingLoading, isError: editingError, refetch: refetchEntry } = useGetEntry(editingNumero ?? 0, {
-    query: { queryKey: getGetEntryQueryKey(editingNumero ?? 0), enabled: editingNumero !== null, retry: false },
+  const { data: editingEntry, isLoading: editingLoading, isError: editingError, refetch: refetchEntry } = useGetEntry(editingNumero ?? 0, seasonParams(selectedFase), {
+    query: { queryKey: getGetEntryQueryKey(editingNumero ?? 0, seasonParams(selectedFase)), enabled: editingNumero !== null, retry: false },
   });
   const [saveNotice, setSaveNotice] = useState<{ entry: Entry; cards: "pending" | "done" | "error" } | null>(null);
 
   const generateCards = (savedEntry: Entry) => {
-    const previous = dailyCardJobs.get(savedEntry.numero) ?? Promise.resolve();
+    const identity = `${savedEntry.fase ?? 1}:${savedEntry.numero}`;
+    const previous = dailyCardJobs.get(identity) ?? Promise.resolve();
     const job = previous.catch(() => {}).then(async () => {
       try {
         const { persistDailyCardImages } = await import("@/lib/daily-card-persistence");
         const paths = await persistDailyCardImages(savedEntry);
-        queryClient.setQueryData<Entry>(getGetEntryQueryKey(savedEntry.numero), (current) =>
+        queryClient.setQueryData<Entry>(getGetEntryQueryKey(savedEntry.numero, seasonParams(savedEntry.fase ?? 1)), (current) =>
           current ? { ...current, ...paths } : current
         );
         void queryClient.invalidateQueries({ queryKey: getListEntrySummariesQueryKey() });
@@ -771,9 +813,9 @@ function DiarioTab({ scrollToEntry }: { scrollToEntry?: number }) {
         setSaveNotice((current) => current?.entry === savedEntry ? { ...current, cards: "error" } : current);
       }
     });
-    dailyCardJobs.set(savedEntry.numero, job);
+    dailyCardJobs.set(identity, job);
     void job.finally(() => {
-      if (dailyCardJobs.get(savedEntry.numero) === job) dailyCardJobs.delete(savedEntry.numero);
+      if (dailyCardJobs.get(identity) === job) dailyCardJobs.delete(identity);
     });
   };
 
@@ -786,6 +828,7 @@ function DiarioTab({ scrollToEntry }: { scrollToEntry?: number }) {
   // Support opening a specific entry from OggiTab
   useEffect(() => {
     if (!scrollToEntry) return;
+    setSelectedFase(1);
     setEditingNumero(scrollToEntry);
   }, [scrollToEntry]);
 
@@ -799,7 +842,7 @@ function DiarioTab({ scrollToEntry }: { scrollToEntry?: number }) {
 
   const handleDelete = (numero: number) => {
     if (window.confirm(`Eliminare il giorno ${numero}?`)) {
-      deleteMutation.mutate({ numero }, {
+      deleteMutation.mutate({ numero, params: seasonParams(selectedFase) }, {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: getListEntriesQueryKey() });
           queryClient.invalidateQueries({ queryKey: getListEntrySummariesQueryKey() });
@@ -817,6 +860,14 @@ function DiarioTab({ scrollToEntry }: { scrollToEntry?: number }) {
   }) ?? [];
   return (
     <div className="space-y-12">
+      <label className="flex max-w-xs flex-col gap-2 text-[13px] uppercase tracking-widest">Fase elenco
+        <select aria-label="Fase elenco" value={selectedFase} onChange={(e) => {
+          if (!window.dispatchEvent(new Event("admin-before-navigate", { cancelable: true }))) return;
+          setEditingNumero(null); setSelectedFase(Number(e.target.value) as Fase);
+        }} className="border border-border bg-[#141414] p-3 text-[13px]">
+          <option value={1}>Fase 1</option><option value={2}>Fase 2</option>
+        </select>
+      </label>
       {saveNotice && (
         <div role="status" data-testid="diary-save-success" className="border border-border bg-card p-4 font-sans text-[13px]">
           <p className="text-foreground">Giorno {saveNotice.entry.numero} salvato.</p>
@@ -840,14 +891,14 @@ function DiarioTab({ scrollToEntry }: { scrollToEntry?: number }) {
           ) : editingLoading || !editingEntry ? (
             <div className="bg-card border border-border p-8 text-center text-muted-foreground font-sans animate-pulse">Caricamento giorno...</div>
           ) : (
-            <EntryForm key={editingEntry.id} initialData={editingEntry} onSuccess={handleSaved} onCancel={() => {
+            <EntryForm key={editingEntry.id} initialData={editingEntry} defaultFase={selectedFase} onFaseChange={setSelectedFase} onSuccess={handleSaved} onCancel={() => {
               if (window.dispatchEvent(new Event("admin-before-navigate", { cancelable: true }))) setEditingNumero(null);
             }} />
           )
         ) : (
           listError ? <div><AdminStatus tone="error">Impossibile caricare i giorni.</AdminStatus><AdminRetry onRetry={() => void refetchList()} /></div>
             : listLoading ? <AdminStatus>Caricamento giorni...</AdminStatus>
-            : <EntryForm key="new" defaultNumero={nextNumero} onSuccess={handleSaved} />
+            : <EntryForm key="new" defaultNumero={nextNumero} defaultFase={selectedFase} onFaseChange={setSelectedFase} onSuccess={handleSaved} />
         )}
       </div>
 
@@ -892,7 +943,7 @@ function DiarioTab({ scrollToEntry }: { scrollToEntry?: number }) {
             </div>
             <div className="flex gap-5 flex-wrap">
               <a
-                href={`${import.meta.env.BASE_URL.replace(/\/$/, "")}/card/${entry.numero}`}
+                href={`${import.meta.env.BASE_URL.replace(/\/$/, "")}/card/${entry.numero}${cardSeasonQuery(entry.fase)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-[13px] uppercase tracking-wider font-sans text-foreground hover:text-primary transition-colors"
@@ -900,7 +951,7 @@ function DiarioTab({ scrollToEntry }: { scrollToEntry?: number }) {
                 CARD
               </a>
               <a
-                href={`${import.meta.env.BASE_URL.replace(/\/$/, "")}/card/${entry.numero}/reel`}
+                href={`${import.meta.env.BASE_URL.replace(/\/$/, "")}/card/${entry.numero}/reel${cardSeasonQuery(entry.fase)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-[13px] uppercase tracking-wider font-sans text-foreground hover:text-primary transition-colors"
@@ -908,15 +959,15 @@ function DiarioTab({ scrollToEntry }: { scrollToEntry?: number }) {
                 REEL
               </a>
               <a
-                href={`${import.meta.env.BASE_URL.replace(/\/$/, "")}/card/${entry.numero}/reel-minimal`}
+                href={`${import.meta.env.BASE_URL.replace(/\/$/, "")}/card/${entry.numero}/reel-minimal${cardSeasonQuery(entry.fase)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-[13px] uppercase tracking-wider font-sans text-foreground hover:text-primary transition-colors"
               >
                 MINIMAL
               </a>
-              <button onMouseEnter={() => void queryClient.prefetchQuery(getGetEntryQueryOptions(entry.numero))}
-                onFocus={() => void queryClient.prefetchQuery(getGetEntryQueryOptions(entry.numero))}
+              <button onMouseEnter={() => void queryClient.prefetchQuery(getGetEntryQueryOptions(entry.numero, seasonParams(selectedFase)))}
+                onFocus={() => void queryClient.prefetchQuery(getGetEntryQueryOptions(entry.numero, seasonParams(selectedFase)))}
                 onClick={() => startEditing(entry.numero)} className="text-[13px] uppercase tracking-wider font-sans text-foreground hover:text-primary transition-colors">Modifica</button>
               <button onClick={() => handleDelete(entry.numero)} disabled={deleteMutation.isPending} className="text-[13px] uppercase tracking-wider font-sans text-destructive hover:text-destructive/80 transition-colors">Elimina</button>
             </div>
@@ -1170,7 +1221,7 @@ function BulkEditTab() {
   const queryClient = useQueryClient();
   const [text, setText] = useState("");
   const [result, setResult] = useState<{ updated: number; errors: string[] } | null>(null);
-  const { data: exportedText, isLoading } = useGetEntriesBulkText({ query: { queryKey: ["entriesBulkText"] } });
+  const { data: exportedText, isLoading } = useGetEntriesBulkText(undefined, { query: { queryKey: ["entriesBulkText"] } });
   const importMutation = useImportEntriesBulkText();
 
   useEffect(() => {

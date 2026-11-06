@@ -36,7 +36,7 @@ export async function persistDailyCardImages(entry: DailyCardInput, allEntries: 
     uploadPng(feed, `progetto-j-giorno-${String(entry.numero).padStart(3, "0")}-feed.png`),
     uploadPng(story, `progetto-j-giorno-${String(entry.numero).padStart(3, "0")}-story.png`),
   ]);
-  const patched = await fetch(`${import.meta.env.BASE_URL}api/entries/${entry.numero}`, {
+  const patched = await fetch(`${import.meta.env.BASE_URL}api/entries/${entry.numero}${entry.fase === 2 ? "?fase=2" : ""}`, {
     method: "PATCH",
     credentials: "include",
     headers: { "Content-Type": "application/json" },

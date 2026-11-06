@@ -1,8 +1,14 @@
 import { Router, type IRouter } from "express";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db, bozzeTable } from "@workspace/db";
 
 const router: IRouter = Router();
+router.use("/admin/drafts", (req, res, next) => {
+  const fase = Number(req.query.fase ?? req.body?.fase ?? 1);
+  if (fase !== 1 && fase !== 2) { res.status(400).json({ error: "Fase non valida" }); return; }
+  res.locals.fase = fase;
+  next();
+});
 
 // GET /admin/drafts/:numero — get draft for a diary entry (admin only)
 router.get("/admin/drafts/:numero", async (req, res): Promise<void> => {
@@ -20,7 +26,7 @@ router.get("/admin/drafts/:numero", async (req, res): Promise<void> => {
   const [draft] = await db
     .select()
     .from(bozzeTable)
-    .where(eq(bozzeTable.numero, numero));
+    .where(and(eq(bozzeTable.fase, res.locals.fase), eq(bozzeTable.numero, numero)));
 
   if (!draft) {
     res.status(404).json({ error: "Draft not found" });
@@ -49,9 +55,9 @@ router.post("/admin/drafts", async (req, res): Promise<void> => {
 
   const [draft] = await db
     .insert(bozzeTable)
-    .values({ numero, dati: formJson, updatedAt: new Date() })
+    .values({ numero, fase: res.locals.fase, dati: formJson, updatedAt: new Date() })
     .onConflictDoUpdate({
-      target: bozzeTable.numero,
+      target: [bozzeTable.fase, bozzeTable.numero],
       set: { dati: formJson, updatedAt: new Date() },
     })
     .returning();
@@ -72,7 +78,7 @@ router.delete("/admin/drafts/:numero", async (req, res): Promise<void> => {
     return;
   }
 
-  await db.delete(bozzeTable).where(eq(bozzeTable.numero, numero));
+  await db.delete(bozzeTable).where(and(eq(bozzeTable.fase, res.locals.fase), eq(bozzeTable.numero, numero)));
   res.sendStatus(204);
 });
 

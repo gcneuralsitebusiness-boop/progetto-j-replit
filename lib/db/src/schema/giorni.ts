@@ -1,10 +1,23 @@
-import { pgTable, serial, integer, real, text, date, timestamp, boolean } from "drizzle-orm/pg-core";
+import { pgTable, serial, integer, real, text, date, timestamp, boolean, numeric, time, unique } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
 export const giorniTable = pgTable("giorni", {
   id: serial("id").primaryKey(),
-  numero: integer("numero").notNull().unique(),
+  numero: integer("numero").notNull(),
+  fase: integer("fase").notNull().default(1),
+  roundSparring: integer("round_sparring"),
+  roundPao: integer("round_pao"),
+  roundTecnica: integer("round_tecnica"),
+  oraSveglia: time("ora_sveglia"),
+  oreLavoro: numeric("ore_lavoro", { mode: "number" }),
+  risparmio: numeric("risparmio", { mode: "number" }),
+  entrateOnline: numeric("entrate_online", { mode: "number" }),
+  videoPubblicati: integer("video_pubblicati"),
+  articoliPubblicati: integer("articoli_pubblicati"),
+  follower: integer("follower"),
+  pagineLette: integer("pagine_lette"),
+  minutiScrittura: integer("minuti_scrittura"),
   data: date("data", { mode: "string" }).notNull(),
   kcal: integer("kcal"),
   pasti: integer("pasti"),
@@ -50,7 +63,7 @@ export const giorniTable = pgTable("giorni", {
   cardFeed: text("card_feed"),
   cardStory: text("card_story"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+}, (table) => [unique("giorni_fase_numero_unique").on(table.fase, table.numero)]);
 
 export const insertGiornoSchema = createInsertSchema(giorniTable).omit({
   id: true,

@@ -35,12 +35,21 @@ import type {
   CoachingUpdate,
   CompletaTaskInput,
   ContentInput,
+  CreateEntryParams,
+  DeleteEntryParams,
   Entry,
   EntryInput,
   EntrySummary,
   EntryUpdate,
+  GetCurrentSeason200,
+  GetEntriesBulkTextParams,
+  GetEntryParams,
+  GetLatestEntriesParams,
   GetPlannerAnnotationParams,
   HealthStatus,
+  ImportEntriesBulkTextParams,
+  ListEntriesParams,
+  ListEntrySummariesParams,
   LoginInput,
   NotFoundResponse,
   Obiettivo,
@@ -62,6 +71,7 @@ import type {
   TappaCorrente,
   TaskGiorno,
   UnauthorizedResponse,
+  UpdateEntryParams,
   UploadUrlRequest,
   UploadUrlResponse
 } from './api.schemas';
@@ -171,21 +181,28 @@ export function useHealthCheck<TData = Awaited<ReturnType<typeof healthCheck>>, 
 
 
 
-export const getListEntriesUrl = () => {
+export const getListEntriesUrl = (params?: ListEntriesParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
 
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
 
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/api/entries`
+  return stringifiedParams.length > 0 ? `/api/entries?${stringifiedParams}` : `/api/entries`
 }
 
 /**
  * Returns all entries sorted by date descending
  * @summary List all journal entries
  */
-export const listEntries = async ( options?: RequestInit): Promise<Entry[]> => {
+export const listEntries = async (params?: ListEntriesParams, options?: RequestInit): Promise<Entry[]> => {
 
-  return customFetch<Entry[]>(getListEntriesUrl(),
+  return customFetch<Entry[]>(getListEntriesUrl(params),
   {
     ...options,
     method: 'GET'
@@ -198,23 +215,23 @@ export const listEntries = async ( options?: RequestInit): Promise<Entry[]> => {
 
 
 
-export const getListEntriesQueryKey = () => {
+export const getListEntriesQueryKey = (params?: ListEntriesParams,) => {
     return [
-    `/api/entries`
+    `/api/entries`, ...(params ? [params] : [])
     ] as const;
     }
 
 
-export const getListEntriesQueryOptions = <TData = Awaited<ReturnType<typeof listEntries>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listEntries>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+export const getListEntriesQueryOptions = <TData = Awaited<ReturnType<typeof listEntries>>, TError = ErrorType<unknown>>(params?: ListEntriesParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listEntries>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getListEntriesQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getListEntriesQueryKey(params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listEntries>>> = ({ signal }) => listEntries({ signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listEntries>>> = ({ signal }) => listEntries(params, { signal, ...requestOptions });
 
 
 
@@ -232,11 +249,11 @@ export type ListEntriesQueryError = ErrorType<unknown>
  */
 
 export function useListEntries<TData = Awaited<ReturnType<typeof listEntries>>, TError = ErrorType<unknown>>(
-  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listEntries>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+ params?: ListEntriesParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listEntries>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
-  const queryOptions = getListEntriesQueryOptions(options)
+  const queryOptions = getListEntriesQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
@@ -249,20 +266,28 @@ export function useListEntries<TData = Awaited<ReturnType<typeof listEntries>>, 
 
 
 
-export const getCreateEntryUrl = () => {
+export const getCreateEntryUrl = (params?: CreateEntryParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
 
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
 
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/api/entries`
+  return stringifiedParams.length > 0 ? `/api/entries?${stringifiedParams}` : `/api/entries`
 }
 
 /**
  * @summary Create a new journal entry (admin only)
  */
-export const createEntry = async (entryInput: EntryInput, options?: RequestInit): Promise<Entry> => {
+export const createEntry = async (entryInput: EntryInput,
+    params?: CreateEntryParams, options?: RequestInit): Promise<Entry> => {
 
-  return customFetch<Entry>(getCreateEntryUrl(),
+  return customFetch<Entry>(getCreateEntryUrl(params),
   {
     ...options,
     method: 'POST',
@@ -275,8 +300,8 @@ export const createEntry = async (entryInput: EntryInput, options?: RequestInit)
 
 
 export const getCreateEntryMutationOptions = <TError = ErrorType<ApiError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createEntry>>, TError,{data: BodyType<EntryInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof createEntry>>, TError,{data: BodyType<EntryInput>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createEntry>>, TError,{data: BodyType<EntryInput>;params?: CreateEntryParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createEntry>>, TError,{data: BodyType<EntryInput>;params?: CreateEntryParams}, TContext> => {
 
 const mutationKey = ['createEntry'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -288,10 +313,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createEntry>>, {data: BodyType<EntryInput>}> = (props) => {
-          const {data} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createEntry>>, {data: BodyType<EntryInput>;params?: CreateEntryParams}> = (props) => {
+          const {data,params} = props ?? {};
 
-          return  createEntry(data,requestOptions)
+          return  createEntry(data,params,requestOptions)
         }
 
 
@@ -309,31 +334,38 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  * @summary Create a new journal entry (admin only)
  */
 export const useCreateEntry = <TError = ErrorType<ApiError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createEntry>>, TError,{data: BodyType<EntryInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createEntry>>, TError,{data: BodyType<EntryInput>;params?: CreateEntryParams}, TContext>, request?: SecondParameter<typeof customFetch>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof createEntry>>,
         TError,
-        {data: BodyType<EntryInput>},
+        {data: BodyType<EntryInput>;params?: CreateEntryParams},
         TContext
       > => {
       return useMutation(getCreateEntryMutationOptions(options));
     }
 
-export const getGetLatestEntriesUrl = () => {
+export const getGetLatestEntriesUrl = (params?: GetLatestEntriesParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
 
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
 
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/api/entries/latest`
+  return stringifiedParams.length > 0 ? `/api/entries/latest?${stringifiedParams}` : `/api/entries/latest`
 }
 
 /**
  * Returns the 3 most recent entries for the home page
  * @summary Get 3 most recent journal entries
  */
-export const getLatestEntries = async ( options?: RequestInit): Promise<Entry[]> => {
+export const getLatestEntries = async (params?: GetLatestEntriesParams, options?: RequestInit): Promise<Entry[]> => {
 
-  return customFetch<Entry[]>(getGetLatestEntriesUrl(),
+  return customFetch<Entry[]>(getGetLatestEntriesUrl(params),
   {
     ...options,
     method: 'GET'
@@ -346,23 +378,23 @@ export const getLatestEntries = async ( options?: RequestInit): Promise<Entry[]>
 
 
 
-export const getGetLatestEntriesQueryKey = () => {
+export const getGetLatestEntriesQueryKey = (params?: GetLatestEntriesParams,) => {
     return [
-    `/api/entries/latest`
+    `/api/entries/latest`, ...(params ? [params] : [])
     ] as const;
     }
 
 
-export const getGetLatestEntriesQueryOptions = <TData = Awaited<ReturnType<typeof getLatestEntries>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getLatestEntries>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+export const getGetLatestEntriesQueryOptions = <TData = Awaited<ReturnType<typeof getLatestEntries>>, TError = ErrorType<unknown>>(params?: GetLatestEntriesParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getLatestEntries>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetLatestEntriesQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getGetLatestEntriesQueryKey(params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getLatestEntries>>> = ({ signal }) => getLatestEntries({ signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getLatestEntries>>> = ({ signal }) => getLatestEntries(params, { signal, ...requestOptions });
 
 
 
@@ -380,11 +412,11 @@ export type GetLatestEntriesQueryError = ErrorType<unknown>
  */
 
 export function useGetLatestEntries<TData = Awaited<ReturnType<typeof getLatestEntries>>, TError = ErrorType<unknown>>(
-  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getLatestEntries>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+ params?: GetLatestEntriesParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getLatestEntries>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
-  const queryOptions = getGetLatestEntriesQueryOptions(options)
+  const queryOptions = getGetLatestEntriesQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
@@ -397,21 +429,28 @@ export function useGetLatestEntries<TData = Awaited<ReturnType<typeof getLatestE
 
 
 
-export const getListEntrySummariesUrl = () => {
+export const getListEntrySummariesUrl = (params?: ListEntrySummariesParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
 
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
 
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/api/entries/summary`
+  return stringifiedParams.length > 0 ? `/api/entries/summary?${stringifiedParams}` : `/api/entries/summary`
 }
 
 /**
  * Returns the fields needed by feeds and planning without full entry metadata
  * @summary List lightweight journal entry summaries
  */
-export const listEntrySummaries = async ( options?: RequestInit): Promise<EntrySummary[]> => {
+export const listEntrySummaries = async (params?: ListEntrySummariesParams, options?: RequestInit): Promise<EntrySummary[]> => {
 
-  return customFetch<EntrySummary[]>(getListEntrySummariesUrl(),
+  return customFetch<EntrySummary[]>(getListEntrySummariesUrl(params),
   {
     ...options,
     method: 'GET'
@@ -424,23 +463,23 @@ export const listEntrySummaries = async ( options?: RequestInit): Promise<EntryS
 
 
 
-export const getListEntrySummariesQueryKey = () => {
+export const getListEntrySummariesQueryKey = (params?: ListEntrySummariesParams,) => {
     return [
-    `/api/entries/summary`
+    `/api/entries/summary`, ...(params ? [params] : [])
     ] as const;
     }
 
 
-export const getListEntrySummariesQueryOptions = <TData = Awaited<ReturnType<typeof listEntrySummaries>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listEntrySummaries>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+export const getListEntrySummariesQueryOptions = <TData = Awaited<ReturnType<typeof listEntrySummaries>>, TError = ErrorType<unknown>>(params?: ListEntrySummariesParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listEntrySummaries>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getListEntrySummariesQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getListEntrySummariesQueryKey(params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listEntrySummaries>>> = ({ signal }) => listEntrySummaries({ signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listEntrySummaries>>> = ({ signal }) => listEntrySummaries(params, { signal, ...requestOptions });
 
 
 
@@ -458,11 +497,11 @@ export type ListEntrySummariesQueryError = ErrorType<unknown>
  */
 
 export function useListEntrySummaries<TData = Awaited<ReturnType<typeof listEntrySummaries>>, TError = ErrorType<unknown>>(
-  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listEntrySummaries>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+ params?: ListEntrySummariesParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listEntrySummaries>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
-  const queryOptions = getListEntrySummariesQueryOptions(options)
+  const queryOptions = getListEntrySummariesQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
@@ -475,21 +514,28 @@ export function useListEntrySummaries<TData = Awaited<ReturnType<typeof listEntr
 
 
 
-export const getGetEntriesBulkTextUrl = () => {
+export const getGetEntriesBulkTextUrl = (params?: GetEntriesBulkTextParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
 
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
 
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/api/bulk/entries`
+  return stringifiedParams.length > 0 ? `/api/bulk/entries?${stringifiedParams}` : `/api/bulk/entries`
 }
 
 /**
  * Returns a text representation of all entries for bulk editing
  * @summary Export all entries as editable text
  */
-export const getEntriesBulkText = async ( options?: RequestInit): Promise<string> => {
+export const getEntriesBulkText = async (params?: GetEntriesBulkTextParams, options?: RequestInit): Promise<string> => {
 
-  return customFetch<string>(getGetEntriesBulkTextUrl(),
+  return customFetch<string>(getGetEntriesBulkTextUrl(params),
   {
     ...options,
     method: 'GET'
@@ -502,23 +548,23 @@ export const getEntriesBulkText = async ( options?: RequestInit): Promise<string
 
 
 
-export const getGetEntriesBulkTextQueryKey = () => {
+export const getGetEntriesBulkTextQueryKey = (params?: GetEntriesBulkTextParams,) => {
     return [
-    `/api/bulk/entries`
+    `/api/bulk/entries`, ...(params ? [params] : [])
     ] as const;
     }
 
 
-export const getGetEntriesBulkTextQueryOptions = <TData = Awaited<ReturnType<typeof getEntriesBulkText>>, TError = ErrorType<ApiError>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getEntriesBulkText>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+export const getGetEntriesBulkTextQueryOptions = <TData = Awaited<ReturnType<typeof getEntriesBulkText>>, TError = ErrorType<ApiError>>(params?: GetEntriesBulkTextParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getEntriesBulkText>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetEntriesBulkTextQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getGetEntriesBulkTextQueryKey(params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getEntriesBulkText>>> = ({ signal }) => getEntriesBulkText({ signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getEntriesBulkText>>> = ({ signal }) => getEntriesBulkText(params, { signal, ...requestOptions });
 
 
 
@@ -536,11 +582,11 @@ export type GetEntriesBulkTextQueryError = ErrorType<ApiError>
  */
 
 export function useGetEntriesBulkText<TData = Awaited<ReturnType<typeof getEntriesBulkText>>, TError = ErrorType<ApiError>>(
-  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getEntriesBulkText>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+ params?: GetEntriesBulkTextParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getEntriesBulkText>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
-  const queryOptions = getGetEntriesBulkTextQueryOptions(options)
+  const queryOptions = getGetEntriesBulkTextQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
@@ -553,21 +599,29 @@ export function useGetEntriesBulkText<TData = Awaited<ReturnType<typeof getEntri
 
 
 
-export const getImportEntriesBulkTextUrl = () => {
+export const getImportEntriesBulkTextUrl = (params?: ImportEntriesBulkTextParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
 
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
 
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/api/bulk/entries`
+  return stringifiedParams.length > 0 ? `/api/bulk/entries?${stringifiedParams}` : `/api/bulk/entries`
 }
 
 /**
  * Parses bulk text and updates existing entries. Only updates entries that already exist.
  * @summary Import entries from editable text
  */
-export const importEntriesBulkText = async (bulkTextInput: BulkTextInput, options?: RequestInit): Promise<BulkTextResult> => {
+export const importEntriesBulkText = async (bulkTextInput: BulkTextInput,
+    params?: ImportEntriesBulkTextParams, options?: RequestInit): Promise<BulkTextResult> => {
 
-  return customFetch<BulkTextResult>(getImportEntriesBulkTextUrl(),
+  return customFetch<BulkTextResult>(getImportEntriesBulkTextUrl(params),
   {
     ...options,
     method: 'POST',
@@ -580,8 +634,8 @@ export const importEntriesBulkText = async (bulkTextInput: BulkTextInput, option
 
 
 export const getImportEntriesBulkTextMutationOptions = <TError = ErrorType<ApiError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importEntriesBulkText>>, TError,{data: BodyType<BulkTextInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof importEntriesBulkText>>, TError,{data: BodyType<BulkTextInput>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importEntriesBulkText>>, TError,{data: BodyType<BulkTextInput>;params?: ImportEntriesBulkTextParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof importEntriesBulkText>>, TError,{data: BodyType<BulkTextInput>;params?: ImportEntriesBulkTextParams}, TContext> => {
 
 const mutationKey = ['importEntriesBulkText'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -593,10 +647,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof importEntriesBulkText>>, {data: BodyType<BulkTextInput>}> = (props) => {
-          const {data} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof importEntriesBulkText>>, {data: BodyType<BulkTextInput>;params?: ImportEntriesBulkTextParams}> = (props) => {
+          const {data,params} = props ?? {};
 
-          return  importEntriesBulkText(data,requestOptions)
+          return  importEntriesBulkText(data,params,requestOptions)
         }
 
 
@@ -614,30 +668,27 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  * @summary Import entries from editable text
  */
 export const useImportEntriesBulkText = <TError = ErrorType<ApiError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importEntriesBulkText>>, TError,{data: BodyType<BulkTextInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importEntriesBulkText>>, TError,{data: BodyType<BulkTextInput>;params?: ImportEntriesBulkTextParams}, TContext>, request?: SecondParameter<typeof customFetch>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof importEntriesBulkText>>,
         TError,
-        {data: BodyType<BulkTextInput>},
+        {data: BodyType<BulkTextInput>;params?: ImportEntriesBulkTextParams},
         TContext
       > => {
       return useMutation(getImportEntriesBulkTextMutationOptions(options));
     }
 
-export const getGetEntryUrl = (numero: number,) => {
+export const getGetCurrentSeasonUrl = () => {
 
 
 
 
-  return `/api/entries/${numero}`
+  return `/api/entries/current-season`
 }
 
-/**
- * @summary Get one complete journal entry
- */
-export const getEntry = async (numero: number, options?: RequestInit): Promise<Entry> => {
+export const getCurrentSeason = async ( options?: RequestInit): Promise<GetCurrentSeason200> => {
 
-  return customFetch<Entry>(getGetEntryUrl(numero),
+  return customFetch<GetCurrentSeason200>(getGetCurrentSeasonUrl(),
   {
     ...options,
     method: 'GET'
@@ -650,23 +701,108 @@ export const getEntry = async (numero: number, options?: RequestInit): Promise<E
 
 
 
-export const getGetEntryQueryKey = (numero: number,) => {
+export const getGetCurrentSeasonQueryKey = () => {
     return [
-    `/api/entries/${numero}`
+    `/api/entries/current-season`
     ] as const;
     }
 
 
-export const getGetEntryQueryOptions = <TData = Awaited<ReturnType<typeof getEntry>>, TError = ErrorType<void>>(numero: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getEntry>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+export const getGetCurrentSeasonQueryOptions = <TData = Awaited<ReturnType<typeof getCurrentSeason>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCurrentSeason>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetEntryQueryKey(numero);
+  const queryKey =  queryOptions?.queryKey ?? getGetCurrentSeasonQueryKey();
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getEntry>>> = ({ signal }) => getEntry(numero, { signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCurrentSeason>>> = ({ signal }) => getCurrentSeason({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCurrentSeason>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetCurrentSeasonQueryResult = NonNullable<Awaited<ReturnType<typeof getCurrentSeason>>>
+export type GetCurrentSeasonQueryError = ErrorType<unknown>
+
+
+
+export function useGetCurrentSeason<TData = Awaited<ReturnType<typeof getCurrentSeason>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCurrentSeason>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetCurrentSeasonQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetEntryUrl = (numero: number,
+    params?: GetEntryParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/entries/${numero}?${stringifiedParams}` : `/api/entries/${numero}`
+}
+
+/**
+ * @summary Get one complete journal entry
+ */
+export const getEntry = async (numero: number,
+    params?: GetEntryParams, options?: RequestInit): Promise<Entry> => {
+
+  return customFetch<Entry>(getGetEntryUrl(numero,params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetEntryQueryKey = (numero: number,
+    params?: GetEntryParams,) => {
+    return [
+    `/api/entries/${numero}`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetEntryQueryOptions = <TData = Awaited<ReturnType<typeof getEntry>>, TError = ErrorType<void>>(numero: number,
+    params?: GetEntryParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getEntry>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetEntryQueryKey(numero,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getEntry>>> = ({ signal }) => getEntry(numero,params, { signal, ...requestOptions });
 
 
 
@@ -684,11 +820,12 @@ export type GetEntryQueryError = ErrorType<void>
  */
 
 export function useGetEntry<TData = Awaited<ReturnType<typeof getEntry>>, TError = ErrorType<void>>(
- numero: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getEntry>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+ numero: number,
+    params?: GetEntryParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getEntry>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
-  const queryOptions = getGetEntryQueryOptions(numero,options)
+  const queryOptions = getGetEntryQueryOptions(numero,params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
@@ -701,21 +838,30 @@ export function useGetEntry<TData = Awaited<ReturnType<typeof getEntry>>, TError
 
 
 
-export const getUpdateEntryUrl = (numero: number,) => {
+export const getUpdateEntryUrl = (numero: number,
+    params?: UpdateEntryParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
 
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
 
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/api/entries/${numero}`
+  return stringifiedParams.length > 0 ? `/api/entries/${numero}?${stringifiedParams}` : `/api/entries/${numero}`
 }
 
 /**
  * @summary Update a journal entry (admin only)
  */
 export const updateEntry = async (numero: number,
-    entryUpdate: EntryUpdate, options?: RequestInit): Promise<Entry> => {
+    entryUpdate: EntryUpdate,
+    params?: UpdateEntryParams, options?: RequestInit): Promise<Entry> => {
 
-  return customFetch<Entry>(getUpdateEntryUrl(numero),
+  return customFetch<Entry>(getUpdateEntryUrl(numero,params),
   {
     ...options,
     method: 'PATCH',
@@ -728,8 +874,8 @@ export const updateEntry = async (numero: number,
 
 
 export const getUpdateEntryMutationOptions = <TError = ErrorType<ApiError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateEntry>>, TError,{numero: number;data: BodyType<EntryUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof updateEntry>>, TError,{numero: number;data: BodyType<EntryUpdate>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateEntry>>, TError,{numero: number;data: BodyType<EntryUpdate>;params?: UpdateEntryParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateEntry>>, TError,{numero: number;data: BodyType<EntryUpdate>;params?: UpdateEntryParams}, TContext> => {
 
 const mutationKey = ['updateEntry'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -741,10 +887,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateEntry>>, {numero: number;data: BodyType<EntryUpdate>}> = (props) => {
-          const {numero,data} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateEntry>>, {numero: number;data: BodyType<EntryUpdate>;params?: UpdateEntryParams}> = (props) => {
+          const {numero,data,params} = props ?? {};
 
-          return  updateEntry(numero,data,requestOptions)
+          return  updateEntry(numero,data,params,requestOptions)
         }
 
 
@@ -762,30 +908,39 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  * @summary Update a journal entry (admin only)
  */
 export const useUpdateEntry = <TError = ErrorType<ApiError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateEntry>>, TError,{numero: number;data: BodyType<EntryUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateEntry>>, TError,{numero: number;data: BodyType<EntryUpdate>;params?: UpdateEntryParams}, TContext>, request?: SecondParameter<typeof customFetch>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof updateEntry>>,
         TError,
-        {numero: number;data: BodyType<EntryUpdate>},
+        {numero: number;data: BodyType<EntryUpdate>;params?: UpdateEntryParams},
         TContext
       > => {
       return useMutation(getUpdateEntryMutationOptions(options));
     }
 
-export const getDeleteEntryUrl = (numero: number,) => {
+export const getDeleteEntryUrl = (numero: number,
+    params?: DeleteEntryParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
 
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
 
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/api/entries/${numero}`
+  return stringifiedParams.length > 0 ? `/api/entries/${numero}?${stringifiedParams}` : `/api/entries/${numero}`
 }
 
 /**
  * @summary Delete a journal entry (admin only)
  */
-export const deleteEntry = async (numero: number, options?: RequestInit): Promise<void> => {
+export const deleteEntry = async (numero: number,
+    params?: DeleteEntryParams, options?: RequestInit): Promise<void> => {
 
-  return customFetch<void>(getDeleteEntryUrl(numero),
+  return customFetch<void>(getDeleteEntryUrl(numero,params),
   {
     ...options,
     method: 'DELETE'
@@ -798,8 +953,8 @@ export const deleteEntry = async (numero: number, options?: RequestInit): Promis
 
 
 export const getDeleteEntryMutationOptions = <TError = ErrorType<ApiError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteEntry>>, TError,{numero: number}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof deleteEntry>>, TError,{numero: number}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteEntry>>, TError,{numero: number;params?: DeleteEntryParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteEntry>>, TError,{numero: number;params?: DeleteEntryParams}, TContext> => {
 
 const mutationKey = ['deleteEntry'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -811,10 +966,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteEntry>>, {numero: number}> = (props) => {
-          const {numero} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteEntry>>, {numero: number;params?: DeleteEntryParams}> = (props) => {
+          const {numero,params} = props ?? {};
 
-          return  deleteEntry(numero,requestOptions)
+          return  deleteEntry(numero,params,requestOptions)
         }
 
 
@@ -832,11 +987,11 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  * @summary Delete a journal entry (admin only)
  */
 export const useDeleteEntry = <TError = ErrorType<ApiError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteEntry>>, TError,{numero: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteEntry>>, TError,{numero: number;params?: DeleteEntryParams}, TContext>, request?: SecondParameter<typeof customFetch>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof deleteEntry>>,
         TError,
-        {numero: number},
+        {numero: number;params?: DeleteEntryParams},
         TContext
       > => {
       return useMutation(getDeleteEntryMutationOptions(options));

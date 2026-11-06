@@ -45,7 +45,7 @@ const axisProps = {
 };
 
 export default function Journaling() {
-  const { data: entries, isLoading: entriesLoading, isError: entriesError } = useListEntrySummaries({
+  const { data: entries, isLoading: entriesLoading, isError: entriesError } = useListEntrySummaries(undefined, {
     query: {
       queryKey: getListEntrySummariesQueryKey(),
       refetchInterval: (query) => query.state.data?.some((entry) => isUnfinishedToday(entry)) ? 10_000 : false,

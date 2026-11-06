@@ -16,7 +16,7 @@ router.get("/sitemap.xml", async (_req, res): Promise<void> => {
   </url>`),
     ...entries.map((entry) => `
   <url>
-    <loc>${baseUrl}/giorno/${entry.id}</loc>
+    <loc>${baseUrl}${entry.fase === 2 ? `/fase-2/giorno/${entry.numero}` : `/giorno/${entry.id}`}</loc>
     <lastmod>${new Date(entry.data).toISOString().slice(0, 10)}</lastmod>
     <changefreq>monthly</changefreq>
   </url>`),

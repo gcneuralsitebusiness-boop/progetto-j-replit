@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { count } from "drizzle-orm";
+import { count, eq } from "drizzle-orm";
 import { db, giorniTable, contattiTable, iscrittiTable } from "@workspace/db";
 
 const router: IRouter = Router();
@@ -26,7 +26,7 @@ router.get("/admin/dashboard", async (req, res): Promise<void> => {
       foto: giorniTable.foto,
       peso: giorniTable.peso,
       battito: giorniTable.battito,
-    }).from(giorniTable),
+    }).from(giorniTable).where(eq(giorniTable.fase, 1)),
     db.select({ c: count() }).from(iscrittiTable),
     db.select({ c: count() }).from(contattiTable),
   ]);

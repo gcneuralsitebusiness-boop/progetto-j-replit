@@ -8,8 +8,9 @@
 import type { EntryInputSollevamentoGamba } from './entryInputSollevamentoGamba';
 import type { EntryInputTipoAllenamento } from './entryInputTipoAllenamento';
 import type { EntryInputTipoGiorno } from './entryInputTipoGiorno';
+import type { SeasonFields } from './seasonFields';
 
-export interface EntryInput {
+export type EntryInput = SeasonFields & ({
   numero: number;
   /** @pattern ^\d{4}-\d{2}-\d{2}$ */
   data: string;
@@ -147,4 +148,4 @@ export interface EntryInput {
   cardFeed?: string | null;
   /** @nullable */
   cardStory?: string | null;
-}
+});

@@ -2,6 +2,7 @@
 - [Object Storage web package in monorepo](object-storage-web-monorepo.md) — package.json exports need `types`; project references need `composite` + `emitDeclarationOnly`; run `tsc --build` before artifact typecheck.
 - [Drizzle schema downstream typecheck](drizzle-schema-typecheck.md) — after adding a table, run `tsc --build` in `lib/db` to regenerate `dist/*.d.ts` before downstream typecheck.
 - [Generated API types stale](generated-api-types-stale.md) — `tsc` can fail on content keys while `vite build` succeeds; generated types may lag the runtime contract.
+- [Orval query serialization](orval-query-serialization.md) — define query parameters on operations; path-level-only queries can be typed but silently omitted from generated request URLs.
 - [Vite build env vars](vite-build-env-vars.md) — artifact Vite builds require `PORT` and `BASE_PATH` exported, even for static builds.
 - [Anthropic Cowork integration](anthropic-cowork-integration.md) — provision via Replit AI Integrations, no API key; use provided client; parse fenced JSON defensively; never auto-save AI output.
 - [Tailwind v4 custom component classes](tailwind-v4-custom-classes.md) — `@apply` cannot reference custom classes defined in the same CSS; use raw CSS or keep them as separate classes.

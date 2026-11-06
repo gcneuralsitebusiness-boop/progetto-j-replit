@@ -8,8 +8,9 @@
 import type { EntrySollevamentoGamba } from './entrySollevamentoGamba';
 import type { EntryTipoAllenamento } from './entryTipoAllenamento';
 import type { EntryTipoGiorno } from './entryTipoGiorno';
+import type { SeasonFields } from './seasonFields';
 
-export interface Entry {
+export type Entry = SeasonFields & ({
   id: number;
   /** Day number (1-180) */
   numero: number;
@@ -194,4 +195,4 @@ export interface Entry {
      */
   cardStory?: string | null;
   createdAt?: string;
-}
+});

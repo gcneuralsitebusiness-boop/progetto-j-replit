@@ -557,12 +557,14 @@ export async function downloadMinimalCanvasCard({
   blur,
   overlay,
   dayNumber,
+  fase = 1,
 }: {
   filename: string;
   photoUrl: string | null;
   blur: number;
   overlay: number;
   dayNumber: number;
+  fase?: number;
 }) {
   await waitForFonts();
   const canvas = document.createElement("canvas");
@@ -585,11 +587,12 @@ export async function downloadMinimalCanvasCard({
     }
   }
   setFont(ctx, 520, "Bebas Neue");
-  ctx.fillStyle = CARD_TOKENS.red;
+  ctx.fillStyle = fase === 2 ? "#3DDC84" : CARD_TOKENS.red;
   ctx.textAlign = "center";
   ctx.fillText(String(dayNumber).padStart(3, "0"), CARD_WIDTH / 2, 1115);
   setFont(ctx, 64, "JetBrains Mono");
   ctx.fillStyle = CARD_TOKENS.label;
-  drawSpacedText(ctx, "/180", CARD_WIDTH / 2, 1190, 6.4, "center");
+  if (fase === 2) setFont(ctx, 34, "JetBrains Mono");
+  drawSpacedText(ctx, fase === 2 ? `GIORNO ${dayNumber} · STAGIONE 2` : "/180", CARD_WIDTH / 2, 1190, 6.4, "center");
   await downloadCanvas(canvas, filename);
 }

@@ -431,6 +431,7 @@ router.get("/admin/planner/giorno-attivo", async (req, res): Promise<void> => {
     const rows = await db
       .select({ numero: giorniTable.numero })
       .from(giorniTable)
+      .where(eq(giorniTable.fase, 1))
       .orderBy(desc(giorniTable.numero))
       .limit(1);
     res.json({ numero: rows[0]?.numero ?? null });
