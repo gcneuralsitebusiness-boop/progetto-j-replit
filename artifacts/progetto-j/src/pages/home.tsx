@@ -9,6 +9,7 @@ import {
 import type { Entry } from "@workspace/api-client-react";
 import { DataErrorState } from "@/components/DataErrorState";
 import { DayCardSkeleton } from "@/components/DayCardSkeleton";
+import { Delta } from "@/components/Delta";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SEASON_2_START_DATE } from "@/lib/seasons";
 import { dayPath } from "@/lib/seasons";
@@ -17,7 +18,6 @@ type WeeklyMetric = {
   label: string;
   previous: number;
   current: number;
-  betterWhenHigher: boolean;
   format: (value: number) => string;
 };
 
@@ -65,12 +65,12 @@ function weekMetrics(previous: Entry[], current: Entry[]): WeeklyMetric[] {
   const alcoholDays = (items: Entry[]) => items.filter((entry) => entry.alcol === true).length;
   const money = (value: number) => `€${value.toLocaleString("it-IT", { maximumFractionDigits: 0 })}`;
   return [
-    { label: "GIORNI DI ALLENAMENTO", previous: trainingDays(previous), current: trainingDays(current), betterWhenHigher: true, format: (value) => String(value) },
-    { label: "ROUND TOTALI", previous: sum(previous, "round"), current: sum(current, "round"), betterWhenHigher: true, format: (value) => value.toLocaleString("it-IT", { maximumFractionDigits: 1 }) },
-    { label: "SONNO MEDIO", previous: averageSleep(previous), current: averageSleep(current), betterWhenHigher: true, format: (value) => `${value.toLocaleString("it-IT", { maximumFractionDigits: 1 })} H` },
-    { label: "GIORNI CON ALCOL", previous: alcoholDays(previous), current: alcoholDays(current), betterWhenHigher: false, format: (value) => String(value) },
-    { label: "RISPARMIO", previous: sum(previous, "risparmio"), current: sum(current, "risparmio"), betterWhenHigher: true, format: money },
-    { label: "ENTRATE ONLINE", previous: sum(previous, "entrateOnline"), current: sum(current, "entrateOnline"), betterWhenHigher: true, format: money },
+    { label: "GIORNI DI ALLENAMENTO", previous: trainingDays(previous), current: trainingDays(current), format: (value) => String(value) },
+    { label: "ROUND TOTALI", previous: sum(previous, "round"), current: sum(current, "round"), format: (value) => value.toLocaleString("it-IT", { maximumFractionDigits: 1 }) },
+    { label: "SONNO MEDIO", previous: averageSleep(previous), current: averageSleep(current), format: (value) => `${value.toLocaleString("it-IT", { maximumFractionDigits: 1 })} H` },
+    { label: "GIORNI CON ALCOL", previous: alcoholDays(previous), current: alcoholDays(current), format: (value) => String(value) },
+    { label: "RISPARMIO", previous: sum(previous, "risparmio"), current: sum(current, "risparmio"), format: money },
+    { label: "ENTRATE ONLINE", previous: sum(previous, "entrateOnline"), current: sum(current, "entrateOnline"), format: money },
   ];
 }
 
@@ -96,12 +96,8 @@ function Comparison({ entries }: { entries: Entry[] }) {
           <div className="season-home__mono season-home__muted" style={{ display: "flex", justifyContent: "space-between", gap: 12, marginBottom: 16 }}>
             <span>SETTIMANA SCORSA</span><span>QUESTA SETTIMANA</span>
           </div>
-          <div className="season-home__compare">
+          <div className="season-home__compare graph-paper">
             {weekMetrics(previous, current).map((metric) => {
-              const delta = metric.current - metric.previous;
-              const better = delta === 0 ? null : metric.betterWhenHigher ? delta > 0 : delta < 0;
-              const color = better === null ? "#C9C4BD" : better ? "#3DDC84" : "#B81D1D";
-              const arrow = delta === 0 ? "→" : delta > 0 ? "↑" : "↓";
               return (
                 <div key={metric.label} className="season-home__metric" data-testid={`week-metric-${metric.label.toLowerCase().replaceAll(" ", "-")}`}>
                   <span className="season-home__mono season-home__metric-name">{metric.label}</span>
@@ -110,9 +106,7 @@ function Comparison({ entries }: { entries: Entry[] }) {
                     <span aria-hidden="true" className="season-home__muted">/</span>
                     <span>{metric.format(metric.current)}</span>
                   </span>
-                  <span className="season-home__metric-delta" style={{ color }}>
-                    {arrow} {metric.format(Math.abs(delta))}
-                  </span>
+                  <span className="season-home__metric-delta"><Delta previous={metric.previous} current={metric.current} /></span>
                 </div>
               );
             })}
@@ -148,7 +142,7 @@ export default function Home() {
   if (isError || latestError) return <><DataErrorState /><SiteFooter /></>;
 
   return (
-    <div className="season-home min-h-[100dvh]">
+    <div className="season-home season-root min-h-[100dvh]" data-season="2">
       <main>
         <section className="season-home__hero" data-season-stage={showPreStart ? "pre-start" : latest ? "active" : "awaiting-entry"}>
           <div className="season-home__wrap">
@@ -161,7 +155,7 @@ export default function Home() {
             ) : (
               <>
                 <div className="season-home__number" aria-label={`Giorno ${days}`} data-testid="season-two-counter">{String(days).padStart(2, "0")}</div>
-                <p className="season-home__mono" style={{ color: "#3DDC84" }}>GIORNO {days} / 180</p>
+                <p className="season-home__mono" style={{ color: "var(--accent)" }}>GIORNO {days} / 180</p>
                 <div className="season-home__progress" aria-label={`Avanzamento ${days} su 180 giorni`}>
                   <span style={{ transform: `scaleX(${percent})` }} />
                 </div>
@@ -195,7 +189,7 @@ export default function Home() {
                 ))}
               </div>
             ) : (
-              <div className="border-t border-[#1A1A1A] py-7">
+              <div className="graph-paper border-t border-[#1A1A1A] py-7">
                 <p className="season-home__mono season-home__muted">NESSUN GIORNO PUBBLICATO.</p>
                 <p className="mt-3 text-[15px] text-[#E8E4DE]">
                   {beforeStart

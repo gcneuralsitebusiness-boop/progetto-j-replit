@@ -48,7 +48,7 @@ export default function Journaling() {
   }
 
   return (
-    <div className="min-h-screen pt-24 pb-12 max-w-5xl mx-auto px-5 sm:px-6">
+    <div className="season-root min-h-screen pt-24 pb-12 max-w-5xl mx-auto px-5 sm:px-6" data-season={season}>
       <header className="mb-8">
         <span className="page-label">DIARIO OPERATIVO</span>
         <h1 className="font-serif text-[clamp(56px,12vw,112px)] leading-[0.85] tracking-wide bebas text-foreground mt-2">

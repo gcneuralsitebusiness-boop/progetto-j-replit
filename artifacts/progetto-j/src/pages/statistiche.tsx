@@ -31,10 +31,10 @@ import { useReveal } from "@/lib/use-reveal";
 import { useSelectedSeason } from "@/lib/use-selected-season";
 import { dayPath, SEASON_2_START_DATE } from "@/lib/seasons";
 
-const COLORS = { red: "#B81D1D", copper: "#B87333", acid: "#00FF41", ink: "#E8E4DE", gray: "#6E6A65" };
+const COLORS = { accent: "var(--accent)", copper: "#B87333", acid: "#00FF41", ink: "#E8E4DE", gray: "#6E6A65" };
 const tooltipStyle = {
   backgroundColor: "#0A0A0A",
-  border: "1px solid #B81D1D",
+  border: "1px solid var(--accent)",
   color: "#E8E4DE",
   borderRadius: 0,
   fontFamily: "'JetBrains Mono', monospace",
@@ -200,7 +200,7 @@ const FORCE_METRICS: Array<{
   step: number;
   padding: number;
 }> = [
-  { key: "flessioni", title: "Flessioni", unit: "ripetizioni", color: COLORS.red, step: 10, padding: 2 },
+  { key: "flessioni", title: "Flessioni", unit: "ripetizioni", color: COLORS.accent, step: 10, padding: 2 },
   { key: "trazioni", title: "Trazioni", unit: "ripetizioni", color: COLORS.ink, step: 5, padding: 1 },
   { key: "squat", title: "Squat", unit: "ripetizioni", color: COLORS.acid, step: 10, padding: 2 },
   { key: "plank", title: "Plank", unit: "secondi", color: COLORS.copper, step: 30, padding: 5 },
@@ -473,7 +473,7 @@ export default function Diario() {
     };
   }, [entries, period]);
 
-  if (isLoading) return <div className="min-h-screen pt-24 flex items-center justify-center text-[12px] uppercase tracking-widest text-muted-foreground">Caricamento...</div>;
+  if (isLoading) return <div className="season-root min-h-screen pt-24 flex items-center justify-center text-[12px] uppercase tracking-widest text-muted-foreground" data-season={season}>Caricamento...</div>;
   if (isError) return <><DataErrorState /><SiteFooter /></>;
 
   const today = new Date();
@@ -505,7 +505,7 @@ export default function Diario() {
   ] as const;
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] px-5 pb-16 pt-24 sm:px-6">
+    <div className="season-root min-h-screen bg-[#0A0A0A] px-5 pb-16 pt-24 sm:px-6" data-season={season}>
       <main className="mx-auto max-w-5xl">
         <div className="relative mb-10 overflow-hidden border-b border-[rgba(245,240,232,0.12)] pb-10">
           <TerminalBackdrop intensity="medium" glow />
@@ -534,7 +534,7 @@ export default function Diario() {
 
         <Reveal>
           <Section title="I numeri">
-            <div className="relative overflow-hidden">
+            <div className={`relative overflow-hidden${season === 2 ? " graph-paper" : ""}`}>
               <div className="stats-hero-graph" aria-hidden="true">
                 <PulseTrace entries={data.all} variant="hero" />
               </div>
@@ -581,8 +581,8 @@ export default function Diario() {
                   <ComposedChart data={data.body} margin={{ top: 10, right: 8, left: -20, bottom: 0 }}>
                     <defs>
                       <linearGradient id="pesoGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor={COLORS.red} stopOpacity={0.35} />
-                        <stop offset="100%" stopColor={COLORS.red} stopOpacity={0} />
+                        <stop offset="0%" stopColor={COLORS.accent} stopOpacity={0.35} />
+                        <stop offset="100%" stopColor={COLORS.accent} stopOpacity={0} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid vertical={false} stroke="#1A1A1A" strokeDasharray="2 5" />
@@ -601,7 +601,7 @@ export default function Diario() {
                       type="monotone"
                       dataKey="peso"
                       name="Peso kg"
-                      stroke={COLORS.red}
+                      stroke={COLORS.accent}
                       strokeWidth={3}
                       dot={(props: { cx?: number; cy?: number; index?: number }) => {
                         const isLast = props.index === lastWeightIndex;
@@ -611,7 +611,7 @@ export default function Diario() {
                             cx={props.cx}
                             cy={props.cy}
                             r={isLast ? 5 : 3}
-                            fill={COLORS.red}
+                            fill={COLORS.accent}
                             className={isLast ? "stats-last-dot" : undefined}
                           />
                         );
@@ -709,7 +709,7 @@ export default function Diario() {
                     <Legend wrapperStyle={{ color: COLORS.gray, fontSize: 10, textTransform: "uppercase" }} />
                     <Bar dataKey="acqua" name="acqua" fill="#00A8A8" />
                     <Line type="monotone" dataKey="target" name="target" stroke={COLORS.ink} strokeWidth={2} dot={false} />
-                    <Line type="monotone" dataKey="acquaAllenamento" name="allenamento" stroke={COLORS.red} strokeWidth={2} dot={{ r: 3, fill: COLORS.red }} connectNulls={false} />
+                    <Line type="monotone" dataKey="acquaAllenamento" name="allenamento" stroke={COLORS.accent} strokeWidth={2} dot={{ r: 3, fill: COLORS.accent }} connectNulls={false} />
                   </ComposedChart>
                 </ResponsiveContainer>
               </ChartReveal>
@@ -753,7 +753,7 @@ export default function Diario() {
                       <XAxis dataKey="label" tick={{ fill: COLORS.gray, fontSize: 10 }} tickLine={false} axisLine={false} />
                       <YAxis tick={{ fill: COLORS.gray, fontSize: 10 }} tickLine={false} axisLine={false} />
                       <Tooltip contentStyle={tooltipStyle} formatter={(value: number, name: string) => [value, name === "load" ? "Carico (min × int)" : "Minuti"]} />
-                      <Bar dataKey="load" name="Carico" fill={COLORS.red} />
+                      <Bar dataKey="load" name="Carico" fill={COLORS.accent} />
                       <Bar dataKey="minuti" name="Minuti" fill={COLORS.copper} />
                     </BarChart>
                   </ResponsiveContainer>

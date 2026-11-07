@@ -44,7 +44,7 @@
   --color-muted: hsl(var(--muted));
   --color-muted-foreground: hsl(var(--muted-foreground));
 
-  --color-accent: hsl(var(--accent));
+  --color-accent: hsl(var(--accent-hsl));
   --color-accent-foreground: hsl(var(--accent-foreground));
 
   --color-destructive: hsl(var(--destructive));
@@ -95,6 +95,14 @@
 }
 
 :root, .dark {
+  --bg: #0A0A0A;
+  --text: #E8E4DE;
+  --lines: #1A1A1A;
+  --grey: #C9C4BD;
+  --accent-s1: #B81D1D;
+  --accent-s2: #C9A227;
+  --accent: var(--accent-s1);
+  --accent-hsl: 0 74% 42%;
   --background: 0 0% 4%;
   --foreground: 40 33% 94%;
   --card: 0 0% 7%;
@@ -103,7 +111,6 @@
   --border: 0 0% 10%;
   --muted: 0 0% 12%;
   --muted-foreground: 0 0% 54%;
-  --accent: 0 74% 42%;
   --accent-foreground: 40 33% 94%;
   --primary: 0 74% 42%;
   --primary-foreground: 40 33% 94%;
@@ -152,18 +159,88 @@
   --stagger: 60ms;
 }
 
+.season-root[data-season="1"] {
+  --accent: var(--accent-s1);
+}
+
+.season-root[data-season="2"] {
+  --accent: var(--accent-s2);
+  --accent-hsl: 45.6 67.5% 47.1%;
+  --primary: 45.6 67.5% 47.1%;
+  --primary-foreground: 0 0% 4%;
+  --ring: 45.6 67.5% 47.1%;
+  --sidebar-primary: 45.6 67.5% 47.1%;
+  --sidebar-primary-foreground: 0 0% 4%;
+}
+
+.season-root[data-season="2"] :is(
+  [class~="text-xs"],
+  [class*="text-[9px]"],
+  [class*="text-[10px]"],
+  [class*="text-[11px]"],
+  [class*="text-[12px]"],
+  .page-label
+),
+.season-root[data-season="2"] svg text {
+  font-size: 13px !important;
+}
+
+.graph-paper {
+  position: relative;
+  isolation: isolate;
+}
+.graph-paper::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-color: var(--lines);
+  opacity: 0.45;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cpath d='M0 0H32M0 0V32' fill='none' stroke='white' stroke-width='1'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cpath d='M0 0H32M0 0V32' fill='none' stroke='white' stroke-width='1'/%3E%3C/svg%3E");
+  -webkit-mask-size: 32px 32px;
+  mask-size: 32px 32px;
+}
+
+.delta {
+  display: inline-flex;
+  min-height: 24px;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--app-font-mono);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.delta__value { color: var(--text); }
+.delta__triangle {
+  width: 0;
+  height: 0;
+  border-right: 5px solid transparent;
+  border-left: 5px solid transparent;
+}
+.delta--up .delta__triangle { border-bottom: 8px solid var(--accent); }
+.delta--down .delta__triangle { border-top: 8px solid var(--accent); }
+.delta--flat .delta__triangle {
+  width: 8px;
+  height: 2px;
+  border: 0;
+  background: var(--accent);
+}
+
 /* Season 2 public home: a blunt, editorial record rather than a fitness dashboard. */
-.season-home { background:#0A0A0A; color:#E8E4DE; }
+.season-home { background:var(--bg); color:var(--text); }
 .season-home__wrap { width:min(100% - 40px, 1050px); margin-inline:auto; }
 .season-home__mono { font-family:var(--app-font-mono); font-size:13px; letter-spacing:.14em; text-transform:uppercase; }
 .season-home__hero { min-height: min(760px, 100svh); display:flex; flex-direction:column; justify-content:center; padding:112px 0 64px; border-bottom:1px solid #1A1A1A; }
 .season-home__hero-label { color:#C9C4BD; }
-.season-home__number { margin:20px 0 8px; font-family:'Bebas Neue',sans-serif; font-size:clamp(100px,25vw,260px); line-height:.76; color:#3DDC84; letter-spacing:.005em; }
-.season-home__subnumber { font-family:'Bebas Neue',sans-serif; color:#3DDC84; font-size:clamp(28px,7vw,56px); line-height:1; }
+.season-home__number { margin:20px 0 8px; font-family:'Bebas Neue',sans-serif; font-size:clamp(100px,25vw,260px); line-height:.76; color:var(--accent); letter-spacing:.005em; }
+.season-home__subnumber { font-family:'Bebas Neue',sans-serif; color:var(--accent); font-size:clamp(28px,7vw,56px); line-height:1; }
 .season-home__progress { height:5px; margin:30px 0 18px; background:#1A1A1A; }
-.season-home__progress > span { display:block; height:100%; background:#3DDC84; transition:transform 700ms cubic-bezier(.2,.8,.2,1); transform-origin:left; }
+.season-home__progress > span { display:block; height:100%; background:var(--accent); transition:transform 700ms cubic-bezier(.2,.8,.2,1); transform-origin:left; }
 .season-home__motto { margin-top:20px; font-family:'Bebas Neue',sans-serif; font-size:clamp(30px,6vw,58px); line-height:.98; }
-.season-home__statement { margin-top:12px; color:#3DDC84; font-family:var(--app-font-mono); font-size:13px; letter-spacing:.13em; }
+.season-home__statement { margin-top:12px; color:var(--accent); font-family:var(--app-font-mono); font-size:13px; letter-spacing:.13em; }
 .season-home__section { padding:72px 0; border-bottom:1px solid #1A1A1A; }
 .season-home__section-title { margin:8px 0 28px; font:400 clamp(38px,8vw,72px)/.9 'Bebas Neue',sans-serif; }
 .season-home__eyebrow { color:#C9C4BD; }
@@ -175,7 +252,7 @@
 .season-home__muted { color:#C9C4BD; }
 .season-home__latest { display:grid; grid-template-columns:1fr; border-top:1px solid #1A1A1A; }
 .season-home__day { display:flex; align-items:center; justify-content:space-between; gap:20px; min-height:78px; border-bottom:1px solid #1A1A1A; color:#E8E4DE; text-decoration:none; }
-.season-home__day:hover { color:#3DDC84; }
+.season-home__day:hover { color:var(--accent); }
 .season-home__day strong { display:block; font:400 32px/.95 'Bebas Neue',sans-serif; }
 .season-home__day span { color:#C9C4BD; }
 .season-home__archive { padding:60px 0 74px; background:#111; }
@@ -188,8 +265,9 @@
 .season-home__switch { display:flex; border:1px solid #1A1A1A; width:max-content; margin:26px 0 0; }
 .season-home__switch button { min-height:46px; padding:0 15px; border:0; background:transparent; color:#C9C4BD; font:13px var(--app-font-mono); letter-spacing:.1em; }
 .season-home__switch button[aria-pressed="true"] { color:#0A0A0A; background:#E8E4DE; }
-.season-home__switch button[data-season="2"][aria-pressed="true"] { color:#0A0A0A; background:#3DDC84; }
-.season-home a:focus-visible,.season-home button:focus-visible { outline:2px solid #3DDC84; outline-offset:4px; }
+.season-home__switch button[data-season="2"][aria-pressed="true"] { color:#0A0A0A; background:var(--accent); }
+.season-root[data-season="2"] .season-home__switch button[aria-pressed="true"] { color:#0A0A0A; background:var(--accent); }
+.season-home a:focus-visible,.season-home button:focus-visible { outline:2px solid var(--accent); outline-offset:4px; }
 @media(min-width:700px) {
  .season-home__wrap { width:min(100% - 96px, 1050px); }
  .season-home__hero { min-height:760px; }
