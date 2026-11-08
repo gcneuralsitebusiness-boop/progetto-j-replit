@@ -180,7 +180,7 @@ function FinanceRow({ entry }: { entry: GiornoEntry }) {
   return (
     <div className="flex justify-between items-start py-4 border-b border-border">
       <div className="flex flex-col gap-1">
-        <div className="measured text-[20px] font-sans font-bold text-[hsl(var(--acid))]">
+        <div className="measured text-[20px] font-sans font-bold text-money">
           €{formatCurrency(entrate)}
         </div>
         <div className="text-[11px] font-sans uppercase tracking-[0.12em] text-muted-foreground">
@@ -196,7 +196,7 @@ function FinanceRow({ entry }: { entry: GiornoEntry }) {
         </div>
       </div>
       <div className="flex flex-col gap-1 items-end">
-        <div className={`measured text-[20px] font-sans font-bold ${saldo >= 0 ? "text-[hsl(var(--acid))]" : "text-primary"}`}>
+        <div className={`measured text-[20px] font-sans font-bold ${saldo >= 0 ? "text-money" : "text-foreground"}`}>
           {saldo >= 0 ? "+" : "−"}€{formatCurrency(Math.abs(saldo))}
         </div>
         <div className="text-[11px] font-sans uppercase tracking-[0.12em] text-muted-foreground">

@@ -68,6 +68,7 @@
   --color-bronze: hsl(var(--bronze));
   --color-bronze-foreground: hsl(var(--bronze-foreground));
   --color-acid: hsl(var(--acid));
+  --color-money: var(--money);
   --color-ink: hsl(var(--ink));
   --color-carbon: hsl(var(--carbon));
   --color-scratch: hsl(var(--scratch));
@@ -100,7 +101,9 @@
   --lines: #1A1A1A;
   --grey: #C9C4BD;
   --accent-s1: #B81D1D;
-  --accent-s2: #C9A227;
+  --accent-s2: #1FA663;
+  --accent-s2-dim: #0E4D32;
+  --money: #B6F23A;
   --accent: var(--accent-s1);
   --accent-hsl: 0 74% 42%;
   --background: 0 0% 4%;
@@ -165,12 +168,25 @@
 
 .season-root[data-season="2"] {
   --accent: var(--accent-s2);
-  --accent-hsl: 45.6 67.5% 47.1%;
-  --primary: 45.6 67.5% 47.1%;
+  --accent-hsl: 150.22 68.53% 38.63%;
+  --primary: var(--accent-hsl);
   --primary-foreground: 0 0% 4%;
-  --ring: 45.6 67.5% 47.1%;
-  --sidebar-primary: 45.6 67.5% 47.1%;
+  --ring: var(--accent-hsl);
+  --sidebar-primary: var(--accent-hsl);
   --sidebar-primary-foreground: 0 0% 4%;
+  --one-percent-spinto: var(--accent);
+  --one-percent-mantenuto: var(--accent-s2-dim);
+  --one-percent-crollato: var(--accent-s1);
+}
+
+.season-root[data-season="2"] [data-stato1pct="spinto"] {
+  color: var(--one-percent-spinto);
+}
+.season-root[data-season="2"] [data-stato1pct="mantenuto"] {
+  color: var(--one-percent-mantenuto);
+}
+.season-root[data-season="2"] [data-stato1pct="crollato"] {
+  color: var(--one-percent-crollato);
 }
 
 .season-root[data-season="2"] :is(
@@ -188,6 +204,8 @@
 .graph-paper {
   position: relative;
   isolation: isolate;
+  --graph-paper-line: var(--lines);
+  --graph-paper-line: color-mix(in srgb, var(--lines) 70%, var(--accent-s2-dim) 30%);
 }
 .graph-paper::before {
   content: "";
@@ -195,8 +213,8 @@
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  background-color: var(--lines);
-  opacity: 0.45;
+  background-color: var(--graph-paper-line);
+  opacity: 0.4;
   -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cpath d='M0 0H32M0 0V32' fill='none' stroke='white' stroke-width='1'/%3E%3C/svg%3E");
   mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cpath d='M0 0H32M0 0V32' fill='none' stroke='white' stroke-width='1'/%3E%3C/svg%3E");
   -webkit-mask-size: 32px 32px;

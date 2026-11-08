@@ -11,13 +11,13 @@ export function StatBar({ label, value, max, unit = "", variant = "default" }: S
 
   const colorClasses = {
     default: "bg-primary",
-    income: "bg-[hsl(var(--acid))]",
+    income: "bg-money",
     bronze: "bg-[hsl(var(--bronze))]",
   };
 
   const valueClasses = {
     default: "text-foreground",
-    income: "text-[hsl(var(--acid))]",
+    income: "text-money",
     bronze: "text-[hsl(var(--bronze))]",
   };
 

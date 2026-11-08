@@ -8,6 +8,7 @@
 - [Tailwind v4 custom component classes](tailwind-v4-custom-classes.md) — `@apply` cannot reference custom classes defined in the same CSS; use raw CSS or keep them as separate classes.
 - [Autoscale diary day creation](autoscale-day-creation.md) — trigger idempotent day creation from requests because autoscale can sleep through midnight.
 - [Visual restyle verification](visual-restyle-verification.md) — visual-only Progetto J changes preserve data/routing and finish with build, grep, and responsive preview checks.
+- [Financial accent separation](financial-accent-token.md) — keep financial lime in its own token, distinct from the Season 2 brand green and nonfinancial acid indicators.
 - [Email notification configuration](email-notification-configuration.md) — contact and newsletter notifications require both Resend secrets; delivery is best-effort after persistence.
 - [Preview and live diary data](preview-live-diary-data.md) — compare development and production before assuming preview data was deleted; diary routes use the public day number.
 - [Article HTML content](article-html-content.md) — article bodies accept a small sanitized HTML subset; preserve legacy plain-text rendering when changing the editor or public pages.

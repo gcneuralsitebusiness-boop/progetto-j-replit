@@ -9,7 +9,7 @@ interface DataLabelProps {
 export function DataLabel({ label, value, suffix = "", prefix = "", variant = "default" }: DataLabelProps) {
   const valueClasses = {
     default: "text-foreground",
-    income: "text-[hsl(var(--acid))]",
+    income: "text-money",
     bronze: "text-[hsl(var(--bronze))]",
     primary: "text-primary",
   };

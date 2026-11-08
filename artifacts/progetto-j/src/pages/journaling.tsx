@@ -258,7 +258,7 @@ export default function Journaling() {
         <div className="mb-12 flex snap-x gap-0 overflow-x-auto border border-border bg-card no-scrollbar">
           {kpiItems.map((item) => (
             <div key={item.label} className="min-w-[120px] shrink-0 snap-start border-r border-border p-4 last:border-r-0 sm:min-w-[140px] sm:p-5">
-              <div className={`measured text-[clamp(24px,4vw,36px)] leading-none ${item.label === "ENTRATE" ? "text-[hsl(var(--acid))]" : "text-foreground"}`}>
+              <div className={`measured text-[clamp(24px,4vw,36px)] leading-none ${item.label === "ENTRATE" ? "text-money" : "text-foreground"}`}>
                 {item.prefix}
                 {typeof item.value === "number" ? (
                   <AnimatedNumber
@@ -411,12 +411,12 @@ export default function Journaling() {
                 <div className="flex items-center justify-between mb-5">
                   <h3 className="text-[11px] font-sans uppercase tracking-[0.2em] text-muted-foreground">ENTRATE VS USCITE</h3>
                   <div className="flex items-center gap-5">
-                    <span className="flex items-center gap-2 text-[10px] font-sans uppercase tracking-[0.16em] text-[#4ade80]">
-                      <span style={{ display: "inline-block", width: 16, height: 2, background: "#4ade80", borderRadius: 1 }} />
+                    <span className="flex items-center gap-2 text-[10px] font-sans uppercase tracking-[0.16em] text-money">
+                      <span style={{ display: "inline-block", width: 16, height: 2, background: "var(--money)", borderRadius: 1 }} />
                       Entrate
                     </span>
                     <span className="flex items-center gap-2 text-[10px] font-sans uppercase tracking-[0.16em] text-iron">
-                      <span style={{ display: "inline-block", width: 16, height: 2, background: "hsl(0 68% 38%)", borderRadius: 1 }} />
+                      <span style={{ display: "inline-block", width: 16, height: 2, background: "var(--grey)", borderRadius: 1 }} />
                       Uscite
                     </span>
                   </div>
@@ -445,8 +445,8 @@ export default function Journaling() {
                           ]}
                         />
                       )}
-                      <Bar dataKey="entrate" name="entrate" fill="#4ade80" maxBarSize={28} />
-                      <Bar dataKey="uscite" name="uscite" fill="hsl(0 68% 38%)" maxBarSize={28} />
+                      <Bar dataKey="entrate" name="entrate" fill="var(--money)" maxBarSize={28} />
+                      <Bar dataKey="uscite" name="uscite" fill="var(--grey)" maxBarSize={28} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
