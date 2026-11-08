@@ -15,6 +15,12 @@ ALTER TABLE giorni
   ADD COLUMN follower integer,
   ADD COLUMN pagine_lette integer,
   ADD COLUMN minuti_scrittura integer;
+ALTER TABLE giorni
+  ADD COLUMN squat integer,
+  ADD COLUMN stretching_min integer,
+  ADD COLUMN stato_1pct text,
+  ADD COLUMN fronte_settimana text,
+  ADD COLUMN nota_1pct text;
 ALTER TABLE giorni ADD CONSTRAINT giorni_fase_numero_unique UNIQUE (fase, numero);
 ALTER TABLE giorni DROP CONSTRAINT giorni_numero_unique;
 COMMIT;
