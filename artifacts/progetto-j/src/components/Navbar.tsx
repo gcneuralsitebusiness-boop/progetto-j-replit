@@ -56,7 +56,7 @@ export function Navbar() {
     { href: "/journaling", label: "Diario" },
     { href: "/statistiche", label: "Statistiche" },
     { href: "/fase-1", label: "Stagione 1" },
-    { href: "/articoli", label: "Articoli" },
+    { href: "/articoli", label: "SCRITTI" },
     { href: "/chi-sono", label: "Chi sono" },
   ];
 
