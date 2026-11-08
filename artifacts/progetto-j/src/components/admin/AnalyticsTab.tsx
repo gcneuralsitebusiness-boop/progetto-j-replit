@@ -86,7 +86,7 @@ function adminArticlePath(slug: string): string {
 }
 
 function adminDiaryPath(day: string): string {
-  return `${import.meta.env.BASE_URL}admin?editDay=${encodeURIComponent(day)}`;
+  return `${import.meta.env.BASE_URL}admin?editDay=${encodeURIComponent(day)}&fase=2`;
 }
 
 function AnonymousSessions({ sessions }: { sessions: AnalyticsData["sessions"] }) {

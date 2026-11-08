@@ -148,4 +148,142 @@ export type EntryInput = SeasonFields & ({
   cardFeed?: string | null;
   /** @nullable */
   cardStory?: string | null;
-});
+}) & Required<Pick<SeasonFields & ({
+  numero: number;
+  /** @pattern ^\d{4}-\d{2}-\d{2}$ */
+  data: string;
+  /** @nullable */
+  kcal?: number | null;
+  /**
+     * @minimum 1
+     * @maximum 6
+     * @nullable
+     */
+  pasti?: number | null;
+  /** @nullable */
+  alcol?: boolean | null;
+  /**
+     * @minimum 0
+     * @maximum 20
+     * @nullable
+     */
+  acqua?: number | null;
+  /**
+     * @minimum 0
+     * @maximum 10
+     * @nullable
+     */
+  acquaAllenamento?: number | null;
+  /** @nullable */
+  tipoAllenamento?: EntryInputTipoAllenamento;
+  /**
+     * @minimum 0
+     * @nullable
+     */
+  durata?: number | null;
+  /**
+     * @minimum 1
+     * @maximum 5
+     * @nullable
+     */
+  intensita?: number | null;
+  /** @nullable */
+  tipoGiorno?: EntryInputTipoGiorno;
+  /** @nullable */
+  routineCompletata?: boolean | null;
+  /** @nullable */
+  routineForza?: boolean | null;
+  /** @nullable */
+  routineFlessioni?: string | null;
+  /** @nullable */
+  routineTrazioni?: string | null;
+  /** @nullable */
+  routineSquat?: string | null;
+  /**
+     * @minimum 0
+     * @nullable
+     */
+  plank?: number | null;
+  /** @nullable */
+  collo?: boolean | null;
+  /** @nullable */
+  mobilita?: boolean | null;
+  /** @nullable */
+  sollevamentoGamba?: EntryInputSollevamentoGamba;
+  /** @nullable */
+  grapplingVuoto?: boolean | null;
+  /**
+     * @minimum 1
+     * @maximum 5
+     * @nullable
+     */
+  energia?: number | null;
+  /** @nullable */
+  noteAllenamento?: string | null;
+  /** @nullable */
+  sonno?: number | null;
+  /** @nullable */
+  flessioni?: number | null;
+  /** @nullable */
+  addominali?: number | null;
+  /** @nullable */
+  round?: number | null;
+  /** @nullable */
+  km?: number | null;
+  /** @nullable */
+  peso?: number | null;
+  /** @nullable */
+  battito?: number | null;
+  /** @nullable */
+  entrate?: number | null;
+  /** @nullable */
+  uscite?: number | null;
+  /** @nullable */
+  testo?: string | null;
+  /**
+     * @maxLength 180
+     * @nullable
+     */
+  sintesi?: string | null;
+  /** @nullable */
+  foto?: string | null;
+  /**
+     * @maxLength 280
+     * @nullable
+     */
+  attrito?: string | null;
+  /**
+     * @maxLength 280
+     * @nullable
+     */
+  fatto?: string | null;
+  /**
+     * @maxLength 280
+     * @nullable
+     */
+  nonFatto?: string | null;
+  /**
+     * @maxLength 60
+     * @nullable
+     */
+  cardTitolo?: string | null;
+  /**
+     * @maxLength 24
+     * @nullable
+     */
+  cardSottotitolo?: string | null;
+  /** @nullable */
+  cardImmagine?: string | null;
+  /**
+     * @minimum 30
+     * @maximum 90
+     * @nullable
+     */
+  cardOverlay?: number | null;
+  /** @nullable */
+  cardMostraParole?: boolean | null;
+  /** @nullable */
+  cardFeed?: string | null;
+  /** @nullable */
+  cardStory?: string | null;
+}), 'fase'>>;

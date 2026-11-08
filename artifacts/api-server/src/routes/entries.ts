@@ -1,7 +1,8 @@
-import { Router, type IRouter } from "express";
-import { and, desc, eq } from "drizzle-orm";
+import { Router, type IRouter, type Request } from "express";
+import { and, desc, eq, ne, sql } from "drizzle-orm";
 import { db, giorniTable } from "@workspace/db";
 import { ensureTodayEntry } from "../lib/ensureToday";
+import { validateSeasonDay } from "../lib/entrySeasonRules";
 import {
   CreateEntryBody,
   UpdateEntryBody,
@@ -14,7 +15,11 @@ import {
 } from "@workspace/api-zod";
 
 const router: IRouter = Router();
-router.use(["/entries", "/giorni", "/bulk/entries"], (req, res, next) => {
+router.use(["/entries", "/giorni", "/bulk/entries"], async (req, res, next) => {
+  if (req.path.startsWith("/bulk/entries") && req.query.fase == null) {
+    res.status(400).json({ error: "La fase è obbligatoria per esportare o importare il diario." });
+    return;
+  }
   const fase = Number(req.query.fase ?? 1);
   if (fase !== 1 && fase !== 2) {
     res.status(400).json({ error: "Fase non valida: scegliere 1 o 2" });
@@ -22,9 +27,11 @@ router.use(["/entries", "/giorni", "/bulk/entries"], (req, res, next) => {
   }
   res.locals.fase = fase;
   if (req.method === "GET") {
-    void ensureTodayEntry().catch((err) => {
+    try {
+      await ensureTodayEntry();
+    } catch (err) {
       req.log.error({ err }, "Failed to ensure today's entry");
-    });
+    }
   }
   next();
 });
@@ -294,10 +301,28 @@ function automaticDayType(numero: number): "A" | "B" {
   return numero % 2 === 0 ? "B" : "A";
 }
 
+function hasArchiveOverride(req: Request): boolean {
+  return req.query.overrideArchivio === "true";
+}
+
 // POST /entries — create entry (admin only)
 router.post("/entries", async (req, res): Promise<void> => {
   if (!req.session?.adminAuthenticated) {
     res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  const requestedFase = req.body?.fase;
+  if (requestedFase !== 1 && requestedFase !== 2) {
+    res.status(400).json({ error: "La fase è obbligatoria e deve essere 1 o 2." });
+    return;
+  }
+  if (req.query.fase != null && Number(req.query.fase) !== requestedFase) {
+    res.status(400).json({ error: "La fase nell'URL non corrisponde alla fase del giorno." });
+    return;
+  }
+  if (requestedFase === 1 && !hasArchiveOverride(req)) {
+    res.status(403).json({ error: "La Fase 1 è un archivio in sola lettura. Attiva l'override esplicito per modificarla." });
     return;
   }
 
@@ -314,21 +339,31 @@ router.post("/entries", async (req, res): Promise<void> => {
     return;
   }
 
-  // Check for duplicate numero
-  const existing = await db
-    .select()
-    .from(giorniTable)
-    .where(dayIdentity(parsed.data.fase ?? res.locals.fase, parsed.data.numero));
-  if (existing.length > 0) {
-    res.status(409).json({ error: `Entry for giorno ${parsed.data.numero} already exists` });
+  const identityError = validateSeasonDay(parsed.data.fase, parsed.data.numero, parsed.data.data);
+  if (identityError) {
+    res.status(400).json({ error: identityError });
     return;
   }
 
-  const [row] = await db.insert(giorniTable).values({
-    ...parsed.data,
-    fase: parsed.data.fase ?? res.locals.fase,
-    tipoGiorno: automaticDayType(parsed.data.numero),
-  }).returning();
+  const result = await db.transaction(async (tx) => {
+    await tx.execute(sql`SELECT pg_advisory_xact_lock(486741, ${parsed.data.fase})`);
+    const [existingNumber] = await tx.select({ id: giorniTable.id }).from(giorniTable)
+      .where(dayIdentity(parsed.data.fase, parsed.data.numero)).limit(1);
+    if (existingNumber) return { conflict: `Il giorno ${parsed.data.numero} esiste già nella Fase ${parsed.data.fase}.` };
+    const [existingDate] = await tx.select({ numero: giorniTable.numero }).from(giorniTable)
+      .where(and(eq(giorniTable.fase, parsed.data.fase), eq(giorniTable.data, parsed.data.data))).limit(1);
+    if (existingDate) return { conflict: `La data ${parsed.data.data} è già usata dal giorno ${existingDate.numero} della Fase ${parsed.data.fase}.` };
+    const [row] = await tx.insert(giorniTable).values({
+      ...parsed.data,
+      tipoGiorno: automaticDayType(parsed.data.numero),
+    }).returning();
+    return row ? { row } : { conflict: `Il giorno ${parsed.data.numero} esiste già nella Fase ${parsed.data.fase}.` };
+  });
+  if ("conflict" in result) {
+    res.status(409).json({ error: result.conflict });
+    return;
+  }
+  const row = result.row;
   res.status(201).json(CreateEntryResponse.parse(ser(row)));
 });
 
@@ -345,6 +380,11 @@ router.patch("/entries/:numero", async (req, res): Promise<void> => {
     return;
   }
 
+  if (req.body?.fase !== 1 && req.body?.fase !== 2) {
+    res.status(400).json({ error: "La fase è obbligatoria e deve essere 1 o 2." });
+    return;
+  }
+
   const body = UpdateEntryBody.safeParse(normalizeEntryBody(req.body));
   if (!body.success) {
     res.status(400).json({ error: body.error.message });
@@ -357,25 +397,56 @@ router.patch("/entries/:numero", async (req, res): Promise<void> => {
     return;
   }
 
-  if (body.data.fase != null && body.data.fase !== res.locals.fase) {
+  const fase = body.data.fase;
+  if (req.query.fase != null && Number(req.query.fase) !== fase) {
     res.status(400).json({ error: "La fase di una giornata salvata non può cambiare. Crea una nuova giornata nella fase desiderata." });
     return;
   }
+  if (fase === 1 && !hasArchiveOverride(req)) {
+    res.status(403).json({ error: "La Fase 1 è un archivio in sola lettura. Attiva l'override esplicito per modificarla." });
+    return;
+  }
 
-  const [row] = await db
-    .update(giorniTable)
-    .set({
+  const result = await db.transaction(async (tx) => {
+    await tx.execute(sql`SELECT pg_advisory_xact_lock(486741, ${fase})`);
+    const [current] = await tx.select().from(giorniTable)
+      .where(dayIdentity(fase, params.data.numero)).limit(1);
+    if (!current) return { missing: true as const };
+
+    const nextDate = body.data.data ?? current.data;
+    const identityError = validateSeasonDay(fase, params.data.numero, nextDate, nextDate === current.data);
+    if (identityError) return { invalid: identityError };
+
+    if (nextDate !== current.data) {
+      const [dateConflict] = await tx.select({ numero: giorniTable.numero }).from(giorniTable)
+        .where(and(eq(giorniTable.fase, fase), eq(giorniTable.data, nextDate), ne(giorniTable.numero, params.data.numero)))
+        .limit(1);
+      if (dateConflict) {
+        return { conflict: `La data ${nextDate} è già usata dal giorno ${dateConflict.numero} della Fase ${fase}.` };
+      }
+    }
+
+    const [row] = await tx.update(giorniTable).set({
       ...body.data,
       tipoGiorno: automaticDayType(params.data.numero),
-    })
-    .where(dayIdentity(res.locals.fase, params.data.numero))
-    .returning();
+    }).where(dayIdentity(fase, params.data.numero)).returning();
+    return row ? { row } : { missing: true as const };
+  });
 
-  if (!row) {
+  if ("invalid" in result) {
+    res.status(400).json({ error: result.invalid });
+    return;
+  }
+  if ("conflict" in result) {
+    res.status(409).json({ error: result.conflict });
+    return;
+  }
+  if ("missing" in result) {
     res.status(404).json({ error: "Entry not found" });
     return;
   }
 
+  const row = result.row;
   res.json(UpdateEntryResponse.parse(ser(row)));
 });
 
@@ -392,9 +463,19 @@ router.delete("/entries/:numero", async (req, res): Promise<void> => {
     return;
   }
 
+  if (req.query.fase == null || (Number(req.query.fase) !== 1 && Number(req.query.fase) !== 2)) {
+    res.status(400).json({ error: "La fase è obbligatoria per eliminare un giorno." });
+    return;
+  }
+  const fase = Number(req.query.fase);
+  if (fase === 1 && !hasArchiveOverride(req)) {
+    res.status(403).json({ error: "La Fase 1 è un archivio in sola lettura. Attiva l'override esplicito per eliminarla." });
+    return;
+  }
+
   const [row] = await db
     .delete(giorniTable)
-    .where(dayIdentity(res.locals.fase, params.data.numero))
+    .where(dayIdentity(fase, params.data.numero))
     .returning();
 
   if (!row) {
@@ -582,6 +663,11 @@ function parseBulkText(text: string): { blocks: ParsedBlock[]; errors: string[] 
       testo,
     });
   }
+  const seenNumbers = new Set<number>();
+  for (const block of blocks) {
+    if (seenNumbers.has(block.numero)) errors.push(`Giorno ${block.numero}: compare più di una volta nell'importazione`);
+    seenNumbers.add(block.numero);
+  }
   return { blocks, errors };
 }
 
@@ -601,6 +687,10 @@ router.post("/bulk/entries", async (req, res): Promise<void> => {
     res.status(401).json({ error: "Unauthorized" });
     return;
   }
+  if (res.locals.fase === 1 && !hasArchiveOverride(req)) {
+    res.status(403).json({ error: "La Fase 1 è un archivio in sola lettura. Attiva l'override esplicito per importare modifiche." });
+    return;
+  }
 
   const text = req.body?.text;
   if (typeof text !== "string") {
@@ -614,19 +704,34 @@ router.post("/bulk/entries", async (req, res): Promise<void> => {
     return;
   }
 
-  const existingRows = await Promise.all(
-    blocks.map((block) => db.select().from(giorniTable).where(dayIdentity(res.locals.fase, block.numero)).limit(1))
-  );
-  const missingErrors = existingRows
-    .map((rows, index) => rows.length ? null : `Giorno ${blocks[index].numero}: non trovato, saltato`)
-    .filter((error): error is string => error != null);
-  if (missingErrors.length > 0) {
-    res.status(400).json({ error: "Import non valido", errors: missingErrors });
-    return;
-  }
+  const result = await db.transaction(async (tx) => {
+    await tx.execute(sql`SELECT pg_advisory_xact_lock(486741, ${res.locals.fase})`);
+    const existingRows = await tx.select().from(giorniTable).where(eq(giorniTable.fase, res.locals.fase));
+    const existingByNumber = new Map(existingRows.map((row) => [row.numero, row]));
+    const validationErrors: string[] = [];
+    const changedDates = new Map<string, number>();
 
-  let updated = 0;
-  await db.transaction(async (tx) => {
+    for (const block of blocks) {
+      const current = existingByNumber.get(block.numero);
+      if (!current) {
+        validationErrors.push(`Giorno ${block.numero}: non trovato, saltato`);
+        continue;
+      }
+      const identityError = validateSeasonDay(res.locals.fase, block.numero, block.data, block.data === current.data);
+      if (identityError) validationErrors.push(`Giorno ${block.numero}: ${identityError}`);
+      if (block.data !== current.data) {
+        const other = existingRows.find((row) => row.numero !== block.numero && row.data === block.data);
+        if (other) validationErrors.push(`Giorno ${block.numero}: la data ${block.data} è già usata dal giorno ${other.numero}.`);
+        const otherImport = changedDates.get(block.data);
+        if (otherImport != null && otherImport !== block.numero) {
+          validationErrors.push(`La data ${block.data} è assegnata a più giorni nell'importazione.`);
+        }
+        changedDates.set(block.data, block.numero);
+      }
+    }
+    if (validationErrors.length > 0) return { errors: validationErrors };
+
+    let updated = 0;
     for (const block of blocks) {
       const update: Record<string, unknown> = { data: block.data };
       for (const field of block.providedFields) {
@@ -639,9 +744,14 @@ router.post("/bulk/entries", async (req, res): Promise<void> => {
         .where(dayIdentity(res.locals.fase, block.numero));
       updated++;
     }
+    return { updated };
   });
 
-  res.json({ updated, errors });
+  if ("errors" in result) {
+    res.status(400).json({ error: "Import non valido", errors: result.errors });
+    return;
+  }
+  res.json({ updated: result.updated, errors: [] });
 });
 
 export default router;

@@ -523,7 +523,7 @@ export default function CardReel() {
     if (!entry) return;
     setSaveError(null);
     updateMutation.mutate(
-      { numero: entry.numero, params: seasonParams(fase), data: { ...custom } },
+      { numero: entry.numero, params: { fase, ...(fase === 1 ? { overrideArchivio: false } : {}) }, data: { ...custom, fase } },
       {
         onSuccess: (savedEntry) => {
           queryClient.setQueryData(getGetEntryQueryKey(entry.numero, seasonParams(fase)), savedEntry);

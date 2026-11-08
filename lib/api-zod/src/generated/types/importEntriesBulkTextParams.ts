@@ -13,4 +13,8 @@ export type ImportEntriesBulkTextParams = {
  * @maximum 2
  */
 fase?: number;
+/**
+ * Explicit confirmation to modify the frozen Season 1 archive
+ */
+overrideArchivio?: boolean;
 };

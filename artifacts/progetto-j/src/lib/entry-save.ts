@@ -27,7 +27,11 @@ function normalized(value: unknown, key?: string): unknown {
 
 /** In a PATCH, undefined would disappear in JSON and leave a cleared field unchanged. */
 export function buildEntryPayload(form: Partial<EntryInput>, initial?: Entry): EntryInput {
-  const payload: EntryInput = { numero: Number(form.numero), data: form.data! };
+  const payload: EntryInput = {
+    fase: Number(form.fase ?? initial?.fase ?? 2) as 1 | 2,
+    numero: Number(form.numero),
+    data: form.data!,
+  };
   for (const key of EDITABLE_FIELDS) {
     const value = normalized(form[key], key);
     if (initial ? value !== normalized(initial[key], key) : value !== null) {

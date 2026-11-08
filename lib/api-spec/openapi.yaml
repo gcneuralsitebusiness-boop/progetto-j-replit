@@ -64,7 +64,15 @@ paths:
                   $ref: "#/components/schemas/Entry"
     post:
       operationId: createEntry
-      parameters: [*faseQuery]
+      parameters:
+        - *faseQuery
+        - &archiveOverrideQuery
+          name: overrideArchivio
+          in: query
+          required: false
+          description: Explicit confirmation to modify the frozen Season 1 archive
+          schema:
+            type: boolean
       tags: [entries]
       summary: Create a new journal entry (admin only)
       requestBody:
@@ -149,7 +157,7 @@ paths:
                 $ref: "#/components/schemas/ApiError"
     post:
       operationId: importEntriesBulkText
-      parameters: [*faseQuery]
+      parameters: [*faseQuery, *archiveOverrideQuery]
       tags: [entries]
       summary: Import entries from editable text
       description: Parses bulk text and updates existing entries. Only updates entries that already exist.
@@ -230,6 +238,7 @@ paths:
       tags: [entries]
       summary: Update a journal entry (admin only)
       parameters:
+        - *archiveOverrideQuery
         - name: numero
           in: path
           required: true
@@ -265,6 +274,7 @@ paths:
       tags: [entries]
       summary: Delete a journal entry (admin only)
       parameters:
+        - *archiveOverrideQuery
         - name: numero
           in: path
           required: true
@@ -1425,6 +1435,7 @@ components:
         - $ref: "#/components/schemas/SeasonFields"
       type: object
       required:
+        - fase
         - numero
         - data
       properties:
@@ -1547,6 +1558,8 @@ components:
       allOf:
         - $ref: "#/components/schemas/SeasonFields"
       type: object
+      required:
+        - fase
       properties:
         data:
           type: string

@@ -24,7 +24,7 @@ async function uploadPng(blob: Blob, filename: string): Promise<string> {
 }
 
 /** Generates the feed and story PNGs after an authenticated day save, then stores their object paths. */
-export async function persistDailyCardImages(entry: DailyCardInput, allEntries: DailyCardInput[] = []): Promise<{ cardFeed: string; cardStory: string }> {
+export async function persistDailyCardImages(entry: DailyCardInput, allEntries: DailyCardInput[] = [], allowArchiveOverride = false): Promise<{ cardFeed: string; cardStory: string }> {
   if (!entry.testo?.trim()) return { cardFeed: entry.cardFeed ?? "", cardStory: entry.cardStory ?? "" };
   const photoPath = entry.cardImmagine || entry.foto;
   const photoUrl = photoPath ? (getPhotoUrl(photoPath) ?? photoPath) : null;
@@ -36,11 +36,14 @@ export async function persistDailyCardImages(entry: DailyCardInput, allEntries: 
     uploadPng(feed, `progetto-j-giorno-${String(entry.numero).padStart(3, "0")}-feed.png`),
     uploadPng(story, `progetto-j-giorno-${String(entry.numero).padStart(3, "0")}-story.png`),
   ]);
-  const patched = await fetch(`${import.meta.env.BASE_URL}api/entries/${entry.numero}${entry.fase === 2 ? "?fase=2" : ""}`, {
+  const fase = entry.fase ?? 1;
+  const params = new URLSearchParams({ fase: String(fase) });
+  if (fase === 1 && allowArchiveOverride) params.set("overrideArchivio", "true");
+  const patched = await fetch(`${import.meta.env.BASE_URL}api/entries/${entry.numero}?${params.toString()}`, {
     method: "PATCH",
     credentials: "include",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ cardFeed, cardStory }),
+    body: JSON.stringify({ fase, cardFeed, cardStory }),
   });
   if (!patched.ok) throw new Error("Le card sono state caricate ma non associate al giorno");
   return { cardFeed, cardStory };

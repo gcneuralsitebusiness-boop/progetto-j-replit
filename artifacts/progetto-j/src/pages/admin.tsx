@@ -18,7 +18,7 @@ import { useUpload, getPhotoUrl } from "@workspace/object-storage-web";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
 import { assertEntrySaved, buildEntryPayload } from "@/lib/entry-save";
-import { seasonParams, cardSeasonQuery, type Fase } from "@/lib/seasons";
+import { cardSeasonQuery, type Fase } from "@/lib/seasons";
 
 const AnalyticsTab = lazy(() =>
   import("@/components/admin/AnalyticsTab").then((module) => ({ default: module.AnalyticsTab })),
@@ -56,6 +56,43 @@ const CLIENT_RANGES: Record<string, [number, number, string]> = {
   entrate:    [0,   100000, "0–100 000 €"],
   uscite:     [0,   100000, "0–100 000 €"],
 };
+
+const ENTRY_REVIEW_LABELS: Record<string, string> = {
+  numero: "Numero giorno", data: "Data", testo: "Testo", foto: "Foto", sintesi: "Sintesi card",
+  peso: "Peso", battito: "Battito", sonno: "Sonno", flessioni: "Flessioni", addominali: "Addominali",
+  round: "Round", km: "Km", entrate: "Entrate", uscite: "Uscite", attrito: "Attrito",
+  fatto: "Fatto", nonFatto: "Non fatto", kcal: "Kcal", pasti: "Pasti", alcol: "Alcol",
+  acqua: "Acqua", acquaAllenamento: "Acqua allenamento", tipoAllenamento: "Tipo allenamento",
+  durata: "Durata", intensita: "Intensità", tipoGiorno: "Tipo giorno", routineCompletata: "Routine completata",
+  routineForza: "Routine forza", routineFlessioni: "Routine flessioni", routineTrazioni: "Routine trazioni",
+  routineSquat: "Routine squat", plank: "Plank", collo: "Collo", mobilita: "Mobilità",
+  sollevamentoGamba: "Sollevamento gamba", grapplingVuoto: "Grappling vuoto", energia: "Energia",
+  noteAllenamento: "Note allenamento", roundSparring: "Round sparring", roundPao: "Round pao",
+  roundTecnica: "Round tecnica", oraSveglia: "Ora sveglia", oreLavoro: "Ore lavoro",
+  risparmio: "Risparmio", entrateOnline: "Entrate online", videoPubblicati: "Video pubblicati",
+  articoliPubblicati: "Articoli pubblicati", follower: "Follower", pagineLette: "Pagine lette",
+  minutiScrittura: "Minuti scrittura", cardTitolo: "Titolo card", cardSottotitolo: "Sottotitolo card",
+  cardImmagine: "Immagine card", cardOverlay: "Overlay card", cardMostraParole: "Parole card",
+  cardFeed: "Card feed", cardStory: "Card story",
+};
+
+function reviewValue(value: unknown): unknown {
+  if (value == null || (typeof value === "string" && value.trim() === "")) return null;
+  return value;
+}
+
+const adminSeasonParams = (fase: Fase) => ({ fase });
+const adminSeasonQuery = (fase: Fase) => `?fase=${fase}`;
+
+function entryReviewChanges(payload: EntryInput, initial: Entry) {
+  const changes = Object.entries(payload).filter(([key, value]) =>
+    key !== "fase" && reviewValue(value) !== reviewValue(initial[key as keyof Entry])
+  );
+  return {
+    overwritten: changes.filter(([, value]) => reviewValue(value) !== null).map(([key]) => ENTRY_REVIEW_LABELS[key] ?? key),
+    cleared: changes.filter(([, value]) => reviewValue(value) === null).map(([key]) => ENTRY_REVIEW_LABELS[key] ?? key),
+  };
+}
 
 function validateEntry(data: Partial<Record<string, unknown>>): Record<string, string> {
   const errors: Record<string, string> = {};
@@ -171,7 +208,7 @@ function AdminLoginForm() {
 
 // ─── Entry Form ───────────────────────────────────────────────────────────────
 
-function EntryForm({ initialData, defaultNumero = 1, defaultFase = 2, onFaseChange, onSuccess, onCancel }: { initialData?: Entry; defaultNumero?: number; defaultFase?: Fase; onFaseChange: (fase: Fase) => void; onSuccess: (entry: Entry) => void; onCancel?: () => void }) {
+function EntryForm({ initialData, defaultNumero = 1, defaultFase = 2, allowArchiveOverride = false, onFaseChange, onSuccess, onCancel }: { initialData?: Entry; defaultNumero?: number; defaultFase?: Fase; allowArchiveOverride?: boolean; onFaseChange: (fase: Fase) => void; onSuccess: (entry: Entry) => void; onCancel?: () => void }) {
   const queryClient = useQueryClient();
   const createMutation = useCreateEntry();
   const updateMutation = useUpdateEntry();
@@ -234,6 +271,7 @@ function EntryForm({ initialData, defaultNumero = 1, defaultFase = 2, onFaseChan
   const [draftBar, setDraftBar] = useState<{ time: string; data: Partial<EntryInput> } | null>(null);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [reviewPending, setReviewPending] = useState<{ overwritten: string[]; cleared: string[] } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const savingRef = useRef(false);
   const [copyYesterdayPending, setCopyYesterdayPending] = useState(false);
@@ -281,7 +319,7 @@ function EntryForm({ initialData, defaultNumero = 1, defaultFase = 2, onFaseChan
     if (previousNumero < 1 || copyYesterdayPending) return;
     setCopyYesterdayPending(true);
     try {
-    const previousEntry = await queryClient.fetchQuery(getGetEntryQueryOptions(previousNumero, seasonParams(formData.fase ?? defaultFase)));
+    const previousEntry = await queryClient.fetchQuery(getGetEntryQueryOptions(previousNumero, adminSeasonParams((formData.fase ?? defaultFase) as Fase)));
     setFormData((current) => ({
       ...current,
       kcal: previousEntry.kcal ?? undefined,
@@ -333,7 +371,7 @@ function EntryForm({ initialData, defaultNumero = 1, defaultFase = 2, onFaseChan
   // Load draft when editing an entry
   useEffect(() => {
     if (!initialData) { isMounted.current = true; return; }
-    fetch(`${import.meta.env.BASE_URL}api/admin/drafts/${initialData.numero}${cardSeasonQuery(initialData.fase)}`, { credentials: "include" })
+    fetch(`${import.meta.env.BASE_URL}api/admin/drafts/${initialData.numero}${adminSeasonQuery((initialData.fase ?? defaultFase) as Fase)}`, { credentials: "include" })
       .then((r) => (r.ok ? r.json() : null))
       .then((draft: { updatedAt: string; dati: Partial<EntryInput> } | null) => {
         if (!draft) return;
@@ -342,7 +380,7 @@ function EntryForm({ initialData, defaultNumero = 1, defaultFase = 2, onFaseChan
       })
       .catch(() => {})
       .finally(() => { isMounted.current = true; });
-  }, [initialData?.numero]);
+  }, [initialData?.numero, initialData?.fase, defaultFase]);
 
   // Autosave to server (editing only), debounced 2 s
   useEffect(() => {
@@ -362,13 +400,12 @@ function EntryForm({ initialData, defaultNumero = 1, defaultFase = 2, onFaseChan
   const deleteDraft = useCallback((numero: number) => {
     // A pending autosave must finish before deletion, or it can restore a stale draft.
     void Promise.resolve(draftRequest.current).finally(() =>
-      fetch(`${import.meta.env.BASE_URL}api/admin/drafts/${numero}${cardSeasonQuery(initialData?.fase ?? formData.fase)}`, { method: "DELETE", credentials: "include" }).catch(() => {})
+      fetch(`${import.meta.env.BASE_URL}api/admin/drafts/${numero}${adminSeasonQuery((initialData?.fase ?? formData.fase ?? defaultFase) as Fase)}`, { method: "DELETE", credentials: "include" }).catch(() => {})
     );
-  }, [initialData?.fase, formData.fase]);
+  }, [initialData?.fase, formData.fase, defaultFase]);
 
   // ─── Submit ────────────────────────────────────────────────────────────────
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const saveEntry = async () => {
     if (savingRef.current || isUploading || isClipUploading || isClipProcessing || copyYesterdayPending) return;
     setSubmitError(null);
 
@@ -394,14 +431,18 @@ function EntryForm({ initialData, defaultNumero = 1, defaultFase = 2, onFaseChan
     setIsSaving(true);
     if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
     try {
+      const phaseParams = {
+        fase: payload.fase,
+        ...(payload.fase === 1 ? { overrideArchivio: allowArchiveOverride } : {}),
+      };
       const savedEntry = initialData
-        ? await updateMutation.mutateAsync({ numero: initialData.numero, params: seasonParams(initialData.fase ?? 1), data: payload })
-        : await createMutation.mutateAsync({ data: payload });
+        ? await updateMutation.mutateAsync({ numero: initialData.numero, params: phaseParams, data: payload })
+        : await createMutation.mutateAsync({ params: phaseParams, data: payload });
       assertEntrySaved(payload, savedEntry);
       baseline.current = null;
-      queryClient.setQueryData(getGetEntryQueryKey(savedEntry.numero, seasonParams(savedEntry.fase ?? 1)), savedEntry);
+      queryClient.setQueryData(getGetEntryQueryKey(savedEntry.numero, adminSeasonParams(savedEntry.fase ?? 1)), savedEntry);
       if (initialData && initialData.numero !== savedEntry.numero) {
-        queryClient.removeQueries({ queryKey: getGetEntryQueryKey(initialData.numero), exact: true });
+        queryClient.removeQueries({ queryKey: getGetEntryQueryKey(initialData.numero, adminSeasonParams((initialData.fase ?? 1) as Fase)), exact: true });
       }
       invalidate();
       deleteDraft(initialData?.numero ?? savedEntry.numero);
@@ -430,6 +471,20 @@ function EntryForm({ initialData, defaultNumero = 1, defaultFase = 2, onFaseChan
       savingRef.current = false;
       setIsSaving(false);
     }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (savingRef.current || isUploading || isClipUploading || isClipProcessing || copyYesterdayPending) return;
+    const errors = validateEntry(formData as Record<string, unknown>);
+    setValidationErrors(errors);
+    if (Object.keys(errors).length > 0) return;
+
+    if (initialData) {
+      setReviewPending(entryReviewChanges(buildEntryPayload(formData, initialData), initialData));
+      return;
+    }
+    void saveEntry();
   };
 
   const photoUrl = getPhotoUrl(formData.foto);
@@ -532,7 +587,7 @@ function EntryForm({ initialData, defaultNumero = 1, defaultFase = 2, onFaseChan
 
   return (
     <form onSubmit={handleSubmit} data-testid="diary-entry-form" className="bg-card border border-border p-6 md:p-8">
-      <fieldset disabled={isSaving} className="flex min-w-0 flex-col gap-6">
+      <fieldset disabled={isSaving || Boolean(reviewPending)} className="flex min-w-0 flex-col gap-6">
       {/* Draft restore bar */}
       {draftBar && (
         <div className="flex items-center justify-between gap-4 bg-[#1a1100] border border-primary/40 px-4 py-3">
@@ -576,7 +631,7 @@ function EntryForm({ initialData, defaultNumero = 1, defaultFase = 2, onFaseChan
           <p role="alert" data-testid="diary-save-error" className="mb-3 text-[13px] font-sans text-primary border border-primary/40 bg-primary/10 px-4 py-3">{submitError}</p>
         )}
         <button type="submit" data-testid="save-diary-entry" disabled={isPending} className="w-full bg-[#B81D1D] text-white font-serif text-[18px] py-4 tracking-wider hover:bg-[#9A1515] transition-colors uppercase disabled:opacity-50">
-          {isPending ? "Attendi..." : "Salva Giorno"}
+          {isPending ? "Attendi..." : initialData ? "Rivedi modifiche" : "Salva Giorno"}
         </button>
       </div>
 
@@ -589,7 +644,7 @@ function EntryForm({ initialData, defaultNumero = 1, defaultFase = 2, onFaseChan
         </div>
         <div className="flex flex-col gap-2">
           <label className="text-[11px] uppercase tracking-widest text-muted-foreground">Numero *</label>
-          <input aria-label="Numero giorno" type="number" required value={formData.numero ?? ""} onChange={(e) => setFormData({ ...formData, numero: Number(e.target.value) })} className="bg-[#141414] border border-border p-2.5 text-white focus:outline-none focus:border-primary tabular-nums" />
+          <input aria-label="Numero giorno" type="number" required value={formData.numero ?? ""} disabled={Boolean(initialData)} onChange={(e) => setFormData({ ...formData, numero: Number(e.target.value) })} className="bg-[#141414] border border-border p-2.5 text-white focus:outline-none focus:border-primary tabular-nums disabled:opacity-50" />
         </div>
         <div className="flex flex-col gap-2">
           <label className="text-[11px] uppercase tracking-widest text-muted-foreground">Data *</label>
@@ -775,24 +830,53 @@ function EntryForm({ initialData, defaultNumero = 1, defaultFase = 2, onFaseChan
       </section>
 
       </fieldset>
+      {reviewPending && initialData && (
+        <div role="alertdialog" aria-modal="true" aria-label="Conferma modifiche al giorno" className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+          <section className="max-h-[85vh] w-full max-w-xl overflow-y-auto border border-border bg-card p-6">
+            <h3 className="font-serif text-xl uppercase tracking-wider">Conferma modifica</h3>
+            <p className="mt-3 font-sans text-sm text-muted-foreground">
+              Fase {initialData.fase ?? defaultFase} · Giorno {initialData.numero} · {initialData.data}
+            </p>
+            <p className="mt-4 font-sans text-sm">Questi dati verranno sovrascritti o cancellati:</p>
+            <p className="mt-2 font-sans text-sm text-muted-foreground">
+              Sovrascritti: {reviewPending.overwritten.length ? reviewPending.overwritten.join(", ") : "nessuno"}
+            </p>
+            <p className="mt-1 font-sans text-sm text-muted-foreground">
+              Svuotati: {reviewPending.cleared.length ? reviewPending.cleared.join(", ") : "nessuno"}
+            </p>
+            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <button type="button" onClick={() => setReviewPending(null)} className="border border-border px-4 py-3 font-sans text-sm uppercase tracking-wider">
+                Torna al modulo
+              </button>
+              <button type="button" disabled={isPending} onClick={() => { setReviewPending(null); void saveEntry(); }} className="bg-primary px-4 py-3 font-sans text-sm uppercase tracking-wider text-primary-foreground disabled:opacity-50">
+                {isPending ? "Salvataggio..." : "Conferma e salva"}
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
     </form>
   );
 }
 
 // ─── Tab: Diario ──────────────────────────────────────────────────────────────
 
-function DiarioTab({ scrollToEntry }: { scrollToEntry?: number }) {
+type DiaryTarget = { numero: number; fase: Fase };
+
+function DiarioTab({ scrollToEntry }: { scrollToEntry?: DiaryTarget }) {
   const queryClient = useQueryClient();
   const [selectedFase, setSelectedFase] = useState<Fase>(2);
-  const { data: summaries, isLoading: listLoading, isError: listError, refetch: refetchList } = useListEntrySummaries(seasonParams(selectedFase));
+  const [archiveOverride, setArchiveOverride] = useState(false);
+  const { data: summaries, isLoading: listLoading, isError: listError, refetch: refetchList } = useListEntrySummaries(adminSeasonParams(selectedFase));
   const entries = summaries as Entry[] | undefined;
   const deleteMutation = useDeleteEntry();
   const [editingNumero, setEditingNumero] = useState<number | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<Entry | null>(null);
   const [search, setSearch] = useState("");
   const formRef = useRef<HTMLDivElement>(null);
   const nextNumero = editingNumero ?? ((entries?.reduce((max, entry) => Math.max(max, entry.numero), 0) ?? 0) + 1);
-  const { data: editingEntry, isLoading: editingLoading, isError: editingError, refetch: refetchEntry } = useGetEntry(editingNumero ?? 0, seasonParams(selectedFase), {
-    query: { queryKey: getGetEntryQueryKey(editingNumero ?? 0, seasonParams(selectedFase)), enabled: editingNumero !== null, retry: false },
+  const { data: editingEntry, isLoading: editingLoading, isError: editingError, refetch: refetchEntry } = useGetEntry(editingNumero ?? 0, adminSeasonParams(selectedFase), {
+    query: { queryKey: getGetEntryQueryKey(editingNumero ?? 0, adminSeasonParams(selectedFase)), enabled: editingNumero !== null, retry: false },
   });
   const [saveNotice, setSaveNotice] = useState<{ entry: Entry; cards: "pending" | "done" | "error" } | null>(null);
 
@@ -802,8 +886,8 @@ function DiarioTab({ scrollToEntry }: { scrollToEntry?: number }) {
     const job = previous.catch(() => {}).then(async () => {
       try {
         const { persistDailyCardImages } = await import("@/lib/daily-card-persistence");
-        const paths = await persistDailyCardImages(savedEntry);
-        queryClient.setQueryData<Entry>(getGetEntryQueryKey(savedEntry.numero, seasonParams(savedEntry.fase ?? 1)), (current) =>
+        const paths = await persistDailyCardImages(savedEntry, [], archiveOverride);
+        queryClient.setQueryData<Entry>(getGetEntryQueryKey(savedEntry.numero, adminSeasonParams((savedEntry.fase ?? 1) as Fase)), (current) =>
           current ? { ...current, ...paths } : current
         );
         void queryClient.invalidateQueries({ queryKey: getListEntrySummariesQueryKey() });
@@ -828,8 +912,8 @@ function DiarioTab({ scrollToEntry }: { scrollToEntry?: number }) {
   // Support opening a specific entry from OggiTab
   useEffect(() => {
     if (!scrollToEntry) return;
-    setSelectedFase(1);
-    setEditingNumero(scrollToEntry);
+    setSelectedFase(scrollToEntry.fase);
+    setEditingNumero(scrollToEntry.numero);
   }, [scrollToEntry]);
 
   const startEditing = (numero: number) => {
@@ -840,16 +924,26 @@ function DiarioTab({ scrollToEntry }: { scrollToEntry?: number }) {
     }, 50);
   };
 
-  const handleDelete = (numero: number) => {
-    if (window.confirm(`Eliminare il giorno ${numero}?`)) {
-      deleteMutation.mutate({ numero, params: seasonParams(selectedFase) }, {
+  const handleDelete = (entry: Entry) => {
+    setPendingDelete(entry);
+  };
+
+  const confirmDelete = () => {
+    if (!pendingDelete) return;
+    deleteMutation.mutate({
+      numero: pendingDelete.numero,
+      params: {
+        fase: selectedFase,
+        ...(selectedFase === 1 ? { overrideArchivio: archiveOverride } : {}),
+      },
+    }, {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: getListEntriesQueryKey() });
           queryClient.invalidateQueries({ queryKey: getListEntrySummariesQueryKey() });
           queryClient.invalidateQueries({ queryKey: getGetLatestEntriesQueryKey() });
+          setPendingDelete(null);
         },
       });
-    }
   };
 
   // Client-side search filter
@@ -863,11 +957,21 @@ function DiarioTab({ scrollToEntry }: { scrollToEntry?: number }) {
       <label className="flex max-w-xs flex-col gap-2 text-[13px] uppercase tracking-widest">Fase elenco
         <select aria-label="Fase elenco" value={selectedFase} onChange={(e) => {
           if (!window.dispatchEvent(new Event("admin-before-navigate", { cancelable: true }))) return;
-          setEditingNumero(null); setSelectedFase(Number(e.target.value) as Fase);
+          setEditingNumero(null); setPendingDelete(null); setArchiveOverride(false); setSelectedFase(Number(e.target.value) as Fase);
         }} className="border border-border bg-[#141414] p-3 text-[13px]">
           <option value={1}>Fase 1</option><option value={2}>Fase 2</option>
         </select>
       </label>
+      {selectedFase === 1 && (
+        <div className="border border-primary/50 bg-card p-4 font-sans text-[13px]">
+          <p className="font-semibold">Archivio Fase 1 · sola lettura</p>
+          <p className="mt-1 text-muted-foreground">Le modifiche e le eliminazioni sono bloccate finché non attivi l’override esplicito.</p>
+          <label className="mt-3 flex items-center gap-3">
+            <input type="checkbox" checked={archiveOverride} onChange={(event) => setArchiveOverride(event.target.checked)} />
+            Attiva override per modificare o eliminare dati dell’archivio
+          </label>
+        </div>
+      )}
       {saveNotice && (
         <div role="status" data-testid="diary-save-success" className="border border-border bg-card p-4 font-sans text-[13px]">
           <p className="text-foreground">Giorno {saveNotice.entry.numero} salvato.</p>
@@ -886,19 +990,23 @@ function DiarioTab({ scrollToEntry }: { scrollToEntry?: number }) {
       <ObiettiviEditor />
       <div ref={formRef} className="scroll-mt-28">
         {editingNumero !== null ? (
-          editingError ? (
+          selectedFase === 1 && !archiveOverride ? (
+            <AdminStatus tone="error">Questo giorno appartiene all’archivio Fase 1. Attiva l’override per aprire l’editor.</AdminStatus>
+          ) : editingError ? (
             <div><AdminStatus tone="error">Impossibile caricare il giorno. Nessun dato è stato modificato.</AdminStatus><AdminRetry onRetry={() => void refetchEntry()} /></div>
           ) : editingLoading || !editingEntry ? (
             <div className="bg-card border border-border p-8 text-center text-muted-foreground font-sans animate-pulse">Caricamento giorno...</div>
           ) : (
-            <EntryForm key={editingEntry.id} initialData={editingEntry} defaultFase={selectedFase} onFaseChange={setSelectedFase} onSuccess={handleSaved} onCancel={() => {
+            <EntryForm key={editingEntry.id} initialData={editingEntry} defaultFase={selectedFase} allowArchiveOverride={archiveOverride} onFaseChange={setSelectedFase} onSuccess={handleSaved} onCancel={() => {
               if (window.dispatchEvent(new Event("admin-before-navigate", { cancelable: true }))) setEditingNumero(null);
             }} />
           )
         ) : (
-          listError ? <div><AdminStatus tone="error">Impossibile caricare i giorni.</AdminStatus><AdminRetry onRetry={() => void refetchList()} /></div>
+          selectedFase === 1 && !archiveOverride ? (
+            <AdminStatus>Archivio in sola lettura. Attiva l’override per aggiungere o modificare una giornata.</AdminStatus>
+          ) : listError ? <div><AdminStatus tone="error">Impossibile caricare i giorni.</AdminStatus><AdminRetry onRetry={() => void refetchList()} /></div>
             : listLoading ? <AdminStatus>Caricamento giorni...</AdminStatus>
-            : <EntryForm key="new" defaultNumero={nextNumero} defaultFase={selectedFase} onFaseChange={setSelectedFase} onSuccess={handleSaved} />
+            : <EntryForm key="new" defaultNumero={nextNumero} defaultFase={selectedFase} allowArchiveOverride={archiveOverride} onFaseChange={setSelectedFase} onSuccess={handleSaved} />
         )}
       </div>
 
@@ -966,10 +1074,10 @@ function DiarioTab({ scrollToEntry }: { scrollToEntry?: number }) {
               >
                 MINIMAL
               </a>
-              <button onMouseEnter={() => void queryClient.prefetchQuery(getGetEntryQueryOptions(entry.numero, seasonParams(selectedFase)))}
-                onFocus={() => void queryClient.prefetchQuery(getGetEntryQueryOptions(entry.numero, seasonParams(selectedFase)))}
-                onClick={() => startEditing(entry.numero)} className="text-[13px] uppercase tracking-wider font-sans text-foreground hover:text-primary transition-colors">Modifica</button>
-              <button onClick={() => handleDelete(entry.numero)} disabled={deleteMutation.isPending} className="text-[13px] uppercase tracking-wider font-sans text-destructive hover:text-destructive/80 transition-colors">Elimina</button>
+              <button onMouseEnter={() => void queryClient.prefetchQuery(getGetEntryQueryOptions(entry.numero, adminSeasonParams(selectedFase)))}
+                onFocus={() => void queryClient.prefetchQuery(getGetEntryQueryOptions(entry.numero, adminSeasonParams(selectedFase)))}
+                onClick={() => startEditing(entry.numero)} disabled={selectedFase === 1 && !archiveOverride} className="text-[13px] uppercase tracking-wider font-sans text-foreground hover:text-primary transition-colors disabled:cursor-not-allowed disabled:opacity-40">Modifica</button>
+              <button onClick={() => handleDelete(entry)} disabled={deleteMutation.isPending || (selectedFase === 1 && !archiveOverride)} className="text-[13px] uppercase tracking-wider font-sans text-destructive hover:text-destructive/80 transition-colors disabled:cursor-not-allowed disabled:opacity-40">Elimina</button>
             </div>
           </div>
         ))}
@@ -979,6 +1087,31 @@ function DiarioTab({ scrollToEntry }: { scrollToEntry?: number }) {
           </p>
         )}
       </div>
+      {pendingDelete && (
+        <div role="alertdialog" aria-modal="true" aria-label="Conferma eliminazione giornata" className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+          <section className="max-h-[85vh] w-full max-w-xl overflow-y-auto border border-border bg-card p-6">
+            <h3 className="font-serif text-xl uppercase tracking-wider">Conferma eliminazione</h3>
+            <p className="mt-3 font-sans text-sm text-muted-foreground">
+              Fase {pendingDelete.fase ?? selectedFase} · Giorno {pendingDelete.numero} · {pendingDelete.data}
+            </p>
+            <p className="mt-4 font-sans text-sm">Verrà eliminata l’intera giornata e tutti i suoi dati; nessun altro giorno sarà modificato.</p>
+            <p className="mt-2 font-sans text-sm text-muted-foreground">
+              Campi valorizzati da cancellare: {Object.entries(pendingDelete)
+                .filter(([key, value]) => !["id", "fase", "numero", "data", "createdAt"].includes(key) && reviewValue(value) !== null)
+                .map(([key]) => ENTRY_REVIEW_LABELS[key] ?? key)
+                .join(", ") || "nessuno"}
+            </p>
+            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <button type="button" onClick={() => setPendingDelete(null)} className="border border-border px-4 py-3 font-sans text-sm uppercase tracking-wider">
+                Annulla
+              </button>
+              <button type="button" disabled={deleteMutation.isPending} onClick={confirmDelete} className="bg-primary px-4 py-3 font-sans text-sm uppercase tracking-wider text-primary-foreground disabled:opacity-50">
+                {deleteMutation.isPending ? "Eliminazione..." : "Conferma eliminazione"}
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
     </div>
   );
 }
@@ -986,6 +1119,7 @@ function DiarioTab({ scrollToEntry }: { scrollToEntry?: number }) {
 // ─── Tab: Oggi ────────────────────────────────────────────────────────────────
 
 interface DashboardData {
+  fase: Fase;
   todayDate: string;
   todayEntry: { numero: number; testo: string | null; foto: string | null } | null;
   currentDay: number;
@@ -999,10 +1133,10 @@ interface DashboardData {
   backup: { key: string; createdAt: string; sizeBytes: number } | null;
 }
 
-function OggiTab({ onSwitchTab }: { onSwitchTab: (tab: string, scrollToEntry?: number) => void }) {
+function OggiTab({ onSwitchTab }: { onSwitchTab: (tab: string, target?: DiaryTarget) => void }) {
   const [backupFeedback, setBackupFeedback] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [isRunningBackup, setIsRunningBackup] = useState(false);
-  const { data: dailyEntries } = useListEntrySummaries();
+  const { data: dailyEntries } = useListEntrySummaries({ fase: 2 });
   const {
     data: dashboard,
     isLoading: loading,
@@ -1037,7 +1171,7 @@ function OggiTab({ onSwitchTab }: { onSwitchTab: (tab: string, scrollToEntry?: n
   }
 
   const todayLabel = new Date(dashboard.todayDate + "T12:00:00").toLocaleDateString("it-IT", { weekday: "long", day: "numeric", month: "long" }).toUpperCase();
-  const todayCard = dailyEntries?.find((entry) => entry.numero === dashboard.todayEntry?.numero);
+  const todayCard = dailyEntries?.find((entry) => entry.fase === 2 && entry.numero === dashboard.todayEntry?.numero);
   const todayCardImage = todayCard?.foto ? (getPhotoUrl(todayCard.foto) ?? todayCard.foto) : null;
 
   return (
@@ -1053,14 +1187,14 @@ function OggiTab({ onSwitchTab }: { onSwitchTab: (tab: string, scrollToEntry?: n
           dashboard.todayEntry.testo ? (
             <div className="flex items-center gap-3">
               <span className="text-[13px] font-sans text-muted-foreground">Giorno {dashboard.todayEntry.numero} completato.</span>
-              <button onClick={() => onSwitchTab("diario", dashboard.todayEntry!.numero)}
+              <button onClick={() => onSwitchTab("diario", { numero: dashboard.todayEntry!.numero, fase: dashboard.fase })}
                 className="text-[11px] uppercase tracking-wider font-sans border border-border px-4 py-1.5 hover:bg-[#141414] hover:text-foreground transition-colors text-muted-foreground">
                 Apri
               </button>
             </div>
           ) : (
             <button
-              onClick={() => onSwitchTab("diario", dashboard.todayEntry!.numero)}
+              onClick={() => onSwitchTab("diario", { numero: dashboard.todayEntry!.numero, fase: dashboard.fase })}
               className="self-start bg-primary text-primary-foreground font-serif text-[18px] py-3 px-8 tracking-wider hover:bg-primary/90 transition-colors uppercase"
             >
               COMPLETA IL GIORNO {dashboard.todayEntry.numero}
@@ -1083,14 +1217,14 @@ function OggiTab({ onSwitchTab }: { onSwitchTab: (tab: string, scrollToEntry?: n
               <h2 className="text-[22px] font-serif tracking-wider">CARD DI OGGI</h2>
               <p className="mt-1 text-[13px] font-sans text-muted-foreground">Anteprima feed rigenerata al salvataggio del giorno.</p>
             </div>
-            <a href={`${import.meta.env.BASE_URL.replace(/\/$/, "")}/card/${todayCard.numero}`} target="_blank" rel="noopener noreferrer" className="border border-primary px-3 py-2 text-[10px] font-mono uppercase tracking-widest text-primary hover:bg-primary hover:text-primary-foreground">Apri card</a>
+            <a href={`${import.meta.env.BASE_URL.replace(/\/$/, "")}/card/${todayCard.numero}${cardSeasonQuery(todayCard.fase)}`} target="_blank" rel="noopener noreferrer" className="border border-primary px-3 py-2 text-[10px] font-mono uppercase tracking-widest text-primary hover:bg-primary hover:text-primary-foreground">Apri card</a>
           </div>
           <div className="grid max-w-2xl grid-cols-2 gap-4">
-            <a href={`${import.meta.env.BASE_URL.replace(/\/$/, "")}/card/${todayCard.numero}?format=feed`} target="_blank" rel="noopener noreferrer" className="overflow-hidden border border-border bg-[#0A0A0A] hover:border-primary">
+            <a href={`${import.meta.env.BASE_URL.replace(/\/$/, "")}/card/${todayCard.numero}${cardSeasonQuery(todayCard.fase)}${todayCard.fase === 2 ? "&" : "?"}format=feed`} target="_blank" rel="noopener noreferrer" className="overflow-hidden border border-border bg-[#0A0A0A] hover:border-primary">
               {todayCardImage ? <img src={todayCardImage} alt={`Immagine del giorno ${todayCard.numero}`} className="aspect-[1080/1350] w-full object-cover" /> : <div className="flex aspect-[1080/1350] w-full items-center justify-center px-6 text-center font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Nessuna immagine disponibile</div>}
               <span className="block border-t border-border px-3 py-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Feed · PNG</span>
             </a>
-            <a href={`${import.meta.env.BASE_URL.replace(/\/$/, "")}/card/${todayCard.numero}?format=story`} target="_blank" rel="noopener noreferrer" className="overflow-hidden border border-border bg-[#0A0A0A] hover:border-primary">
+            <a href={`${import.meta.env.BASE_URL.replace(/\/$/, "")}/card/${todayCard.numero}${cardSeasonQuery(todayCard.fase)}${todayCard.fase === 2 ? "&" : "?"}format=story`} target="_blank" rel="noopener noreferrer" className="overflow-hidden border border-border bg-[#0A0A0A] hover:border-primary">
               {todayCard.cardStory ? <img src={getPhotoUrl(todayCard.cardStory) ?? todayCard.cardStory} alt={`Card story giorno ${todayCard.numero}`} className="aspect-[1080/1920] w-full object-cover" /> : <div className="flex aspect-[1080/1920] w-full items-center justify-center px-6 text-center font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Card story non disponibile</div>}
               <span className="block border-t border-border px-3 py-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Story · PNG</span>
             </a>
@@ -1118,7 +1252,7 @@ function OggiTab({ onSwitchTab }: { onSwitchTab: (tab: string, scrollToEntry?: n
                   {days.slice(0, 12).map((day) => (
                     <button
                       key={day}
-                      onClick={() => onSwitchTab("diario", day)}
+                      onClick={() => onSwitchTab("diario", { numero: day, fase: dashboard.fase })}
                       className="border border-border px-2 py-1 font-mono text-[11px] text-foreground hover:border-primary hover:text-primary transition-colors"
                       title={`Modifica giorno ${day}`}
                     >
@@ -1217,29 +1351,121 @@ function OggiTab({ onSwitchTab }: { onSwitchTab: (tab: string, scrollToEntry?: n
 
 // ─── Tab: Bulk Edit ───────────────────────────────────────────────────────────
 
+type BulkReviewItem = { numero: number; data: string; overwritten: string[]; cleared: string[] };
+
+const BULK_REVIEW_LABELS: Record<string, string> = {
+  DATA: "Data", KCAL: "Kcal", PASTI: "Pasti", ACQUA: "Acqua",
+  ACQUA_ALLENAMENTO: "Acqua allenamento", SONNO: "Sonno", FLESSIONI: "Flessioni",
+  ADDOMINALI: "Addominali", ROUND: "Round", KM: "Km", PESO: "Peso",
+  BATTITO: "Battito", ENTRATE: "Entrate", USCITE: "Uscite", TESTO: "Testo",
+};
+
+function parseBulkReviewText(text: string): Map<number, Record<string, string | null>> {
+  const result = new Map<number, Record<string, string | null>>();
+  let numero: number | null = null;
+  let values: Record<string, string | null> = {};
+  let inText = false;
+  let textLines: string[] = [];
+
+  const finish = () => {
+    if (numero == null) return;
+    result.set(numero, values);
+  };
+  for (const line of text.split(/\r?\n/)) {
+    const header = line.match(/^# GIORNO (\d+)$/);
+    if (header) {
+      finish();
+      numero = Number(header[1]);
+      values = {};
+      inText = false;
+      textLines = [];
+      continue;
+    }
+    if (numero == null) continue;
+    if (line.trim() === "TESTO:") {
+      inText = true;
+      textLines = [];
+      continue;
+    }
+    if (line.trim() === "FINE_TESTO") {
+      inText = false;
+      const textValue = textLines.join("\n").trim();
+      values.TESTO = textValue || null;
+      continue;
+    }
+    if (inText) {
+      textLines.push(line);
+      continue;
+    }
+    const separator = line.indexOf(":");
+    if (separator < 0) continue;
+    const key = line.slice(0, separator).trim().toUpperCase();
+    if (key === "DATA" || Object.hasOwn(BULK_REVIEW_LABELS, key)) {
+      const value = line.slice(separator + 1).trim();
+      values[key] = value === "" || value === "-" || value.toLowerCase() === "null" ? null : value;
+    }
+  }
+  finish();
+  return result;
+}
+
+function buildBulkReview(original: string, edited: string): BulkReviewItem[] {
+  const before = parseBulkReviewText(original);
+  const after = parseBulkReviewText(edited);
+  const changes: BulkReviewItem[] = [];
+  for (const [numero, next] of after) {
+    const previous = before.get(numero) ?? {};
+    const changedFields = Object.keys(next).filter((key) => (previous[key] ?? null) !== (next[key] ?? null));
+    if (changedFields.length === 0) continue;
+    changes.push({
+      numero,
+      data: next.DATA ?? "data non indicata",
+      overwritten: changedFields.filter((key) => next[key] !== null).map((key) => BULK_REVIEW_LABELS[key] ?? key),
+      cleared: changedFields.filter((key) => next[key] === null).map((key) => BULK_REVIEW_LABELS[key] ?? key),
+    });
+  }
+  return changes;
+}
+
 function BulkEditTab() {
   const queryClient = useQueryClient();
+  const [selectedFase, setSelectedFase] = useState<Fase>(2);
+  const [archiveOverride, setArchiveOverride] = useState(false);
   const [text, setText] = useState("");
   const [result, setResult] = useState<{ updated: number; errors: string[] } | null>(null);
-  const { data: exportedText, isLoading } = useGetEntriesBulkText(undefined, { query: { queryKey: ["entriesBulkText"] } });
+  const [reviewItems, setReviewItems] = useState<BulkReviewItem[] | null>(null);
+  const { data: exportedText, isLoading } = useGetEntriesBulkText({ fase: selectedFase }, { query: { queryKey: ["entriesBulkText", selectedFase] } });
   const importMutation = useImportEntriesBulkText();
 
   useEffect(() => {
     if (exportedText && text === "") {
       setText(exportedText);
     }
-  }, [exportedText]);
+  }, [exportedText, selectedFase]);
 
   const handleImport = () => {
     setResult(null);
+    setReviewItems(buildBulkReview(exportedText ?? "", text));
+  };
+
+  const confirmImport = () => {
+    if (reviewItems == null) return;
+    setResult(null);
     importMutation.mutate(
-      { data: { text } },
+      {
+        params: {
+          fase: selectedFase,
+          ...(selectedFase === 1 ? { overrideArchivio: archiveOverride } : {}),
+        },
+        data: { text },
+      },
       {
         onSuccess: (res) => {
           setResult(res);
+          setReviewItems(null);
           queryClient.invalidateQueries({ queryKey: getListEntriesQueryKey() });
           queryClient.invalidateQueries({ queryKey: getGetLatestEntriesQueryKey() });
-          queryClient.invalidateQueries({ queryKey: ["entriesBulkText"] });
+          queryClient.invalidateQueries({ queryKey: ["entriesBulkText", selectedFase] });
         },
       }
     );
@@ -1250,7 +1476,7 @@ function BulkEditTab() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `progetto-j-diario-${new Date().toISOString().split("T")[0]}.txt`;
+    a.download = `progetto-j-diario-fase-${selectedFase}-${new Date().toISOString().split("T")[0]}.txt`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -1262,7 +1488,7 @@ function BulkEditTab() {
       <div className="bg-card border border-border p-6 md:p-8 flex flex-col gap-6">
         <div className="flex justify-between items-start">
           <div>
-            <h2 className="text-[28px] font-serif tracking-wider">BULK EDIT · DIARIO</h2>
+            <h2 className="text-[28px] font-serif tracking-wider">BULK EDIT · DIARIO · FASE {selectedFase}</h2>
             <p className="text-muted-foreground font-sans text-sm leading-relaxed mt-2">
               Modifica tutte le descrizioni e i dati tecnici in un unico file di testo. Puoi copiarlo, modificarlo fuori dal sito e reimportarlo. Vengono aggiornati solo i giorni già esistenti.
             </p>
@@ -1272,9 +1498,30 @@ function BulkEditTab() {
           </div>
         </div>
 
+        <label className="flex max-w-xs flex-col gap-2 text-[13px] uppercase tracking-widest">Fase da esportare/importare
+          <select aria-label="Fase bulk" value={selectedFase} onChange={(event) => {
+            setSelectedFase(Number(event.target.value) as Fase);
+            setArchiveOverride(false);
+            setText("");
+            setReviewItems(null);
+            setResult(null);
+          }} className="border border-border bg-[#141414] p-3 text-[13px]">
+            <option value={1}>Fase 1</option><option value={2}>Fase 2</option>
+          </select>
+        </label>
+        {selectedFase === 1 && (
+          <div className="border border-primary/50 p-4 font-sans text-[13px]">
+            <p>La Fase 1 è un archivio in sola lettura.</p>
+            <label className="mt-3 flex items-center gap-3">
+              <input type="checkbox" checked={archiveOverride} onChange={(event) => setArchiveOverride(event.target.checked)} />
+              Attiva override per importare modifiche nell’archivio
+            </label>
+          </div>
+        )}
+
         <textarea
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onChange={(e) => { setText(e.target.value); setReviewItems(null); }}
           rows={24}
           className="bg-[#141414] border border-border p-4 text-[13px] font-mono text-foreground focus:outline-none focus:border-primary resize-y leading-relaxed"
           placeholder="# GIORNO 1\nDATA: 2026-07-19\nKCAL: -\n...\nTESTO:\n...\nFINE_TESTO"
@@ -1283,10 +1530,10 @@ function BulkEditTab() {
         <div className="flex flex-col sm:flex-row gap-4">
           <button
             onClick={handleImport}
-            disabled={importMutation.isPending || text.trim() === ""}
+            disabled={importMutation.isPending || isLoading || text.trim() === ""}
             className="flex-1 bg-primary text-primary-foreground font-serif text-[18px] py-4 tracking-wider hover:bg-primary/90 transition-colors uppercase disabled:opacity-50"
           >
-            {importMutation.isPending ? "Importazione..." : "Importa modifiche"}
+            {importMutation.isPending ? "Importazione..." : "Rivedi modifiche"}
           </button>
           <button
             onClick={handleDownload}
@@ -1296,6 +1543,37 @@ function BulkEditTab() {
             Scarica file
           </button>
         </div>
+
+        {reviewItems && (
+          <section role="alertdialog" aria-label="Revisione importazione" className="border border-primary/50 bg-card p-5">
+            <h3 className="font-serif text-xl uppercase tracking-wider">Controlla prima di importare</h3>
+            <p className="mt-2 font-sans text-sm text-muted-foreground">
+              Fase {selectedFase} · {reviewItems.length} giornate con modifiche. L’importazione aggiorna solo i giorni già esistenti.
+            </p>
+            {reviewItems.length === 0 ? (
+              <p className="mt-4 font-sans text-sm">Non risultano differenze rispetto all’esportazione iniziale.</p>
+            ) : (
+              <ul className="mt-4 max-h-72 space-y-3 overflow-y-auto font-sans text-sm">
+                {reviewItems.map((item) => (
+                  <li key={item.numero} className="border-b border-border pb-3">
+                    <p>Fase {selectedFase} · Giorno {item.numero} · {item.data}</p>
+                    <p className="mt-1 text-muted-foreground">
+                      Sovrascritti: {item.overwritten.join(", ") || "nessuno"} · Svuotati: {item.cleared.join(", ") || "nessuno"}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <div className="mt-5 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <button type="button" onClick={() => setReviewItems(null)} className="border border-border px-4 py-3 font-sans text-sm uppercase tracking-wider">
+                Torna al testo
+              </button>
+              <button type="button" disabled={importMutation.isPending || (selectedFase === 1 && !archiveOverride)} onClick={confirmImport} className="bg-primary px-4 py-3 font-sans text-sm uppercase tracking-wider text-primary-foreground disabled:opacity-50">
+                {importMutation.isPending ? "Importazione..." : "Conferma importazione"}
+              </button>
+            </div>
+          </section>
+        )}
 
         {result && (
           <div className={`border p-4 font-sans text-sm ${result.errors.length > 0 ? "border-primary text-primary" : "border-green-500 text-green-500"}`}>
@@ -1550,11 +1828,13 @@ export default function Admin() {
   const logoutMutation = useAdminLogout();
   const [activeTab, setActiveTab] = useState<Tab>("oggi");
   const [headerBackupFeedback, setHeaderBackupFeedback] = useState<string | null>(null);
-  const [diarioScrollTo, setDiarioScrollTo] = useState<number | undefined>(undefined);
+  const [diarioScrollTo, setDiarioScrollTo] = useState<DiaryTarget | undefined>(undefined);
   // Read ?editArticle=slug from URL to jump straight into editing
   const searchParams = new URLSearchParams(window.location.search);
   const editArticleSlug = searchParams.get("editArticle") ?? undefined;
   const editDay = Number(searchParams.get("editDay"));
+  const requestedEditFase = Number(searchParams.get("fase"));
+  const editFase: Fase = requestedEditFase === 1 ? 1 : 2;
   const [pendingEditSlug, setPendingEditSlug] = useState<string | undefined>(editArticleSlug);
 
   useEffect(() => {
@@ -1562,7 +1842,7 @@ export default function Admin() {
       setActiveTab("articoli");
     } else if (Number.isInteger(editDay) && editDay > 0) {
       setActiveTab("diario");
-      setDiarioScrollTo(editDay);
+      setDiarioScrollTo({ numero: editDay, fase: editFase });
     } else {
       return;
     }
@@ -1584,9 +1864,9 @@ export default function Admin() {
     });
   };
 
-  const handleSwitchTab = (tab: string, scrollToEntry?: number) => {
+  const handleSwitchTab = (tab: string, target?: DiaryTarget) => {
     if (!window.dispatchEvent(new Event("admin-before-navigate", { cancelable: true }))) return;
-    setDiarioScrollTo(scrollToEntry);
+    setDiarioScrollTo(target);
     setActiveTab(tab as Tab);
   };
 

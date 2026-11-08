@@ -1,6 +1,7 @@
 import { Router, type IRouter } from "express";
 import { count, eq } from "drizzle-orm";
 import { db, giorniTable, contattiTable, iscrittiTable } from "@workspace/db";
+import { ensureTodayEntry } from "../lib/ensureToday";
 
 const router: IRouter = Router();
 
@@ -11,6 +12,7 @@ router.get("/admin/dashboard", async (req, res): Promise<void> => {
     return;
   }
 
+  await ensureTodayEntry();
   // Today's date in Europe/Rome
   const todayRome = new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Rome" });
 
@@ -20,13 +22,14 @@ router.get("/admin/dashboard", async (req, res): Promise<void> => {
     contactsResult,
   ] = await Promise.all([
     db.select({
+      fase: giorniTable.fase,
       numero: giorniTable.numero,
       data: giorniTable.data,
       testo: giorniTable.testo,
       foto: giorniTable.foto,
       peso: giorniTable.peso,
       battito: giorniTable.battito,
-    }).from(giorniTable).where(eq(giorniTable.fase, 1)),
+    }).from(giorniTable).where(eq(giorniTable.fase, 2)),
     db.select({ c: count() }).from(iscrittiTable),
     db.select({ c: count() }).from(contattiTable),
   ]);
@@ -42,6 +45,7 @@ router.get("/admin/dashboard", async (req, res): Promise<void> => {
   };
 
   res.json({
+    fase: 2,
     todayDate: todayRome,
     todayEntry,
     currentDay,

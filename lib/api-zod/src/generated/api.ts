@@ -161,7 +161,8 @@ export const createEntryQueryFaseMax = 2;
 
 
 export const CreateEntryQueryParams = zod.object({
-  "fase": zod.coerce.number().min(1).max(createEntryQueryFaseMax).optional().describe('Season identifier; omitted means Season 1.')
+  "fase": zod.coerce.number().min(1).max(createEntryQueryFaseMax).optional().describe('Season identifier; omitted means Season 1.'),
+  "overrideArchivio": zod.coerce.boolean().optional().describe('Explicit confirmation to modify the frozen Season 1 archive')
 })
 
 export const createEntryBodyOneRoundSparringMin = 0;
@@ -223,7 +224,7 @@ export const createEntryBodyTwoCardOverlayMax = 90;
 
 
 export const CreateEntryBody = zod.object({
-  "fase": zod.union([zod.literal(1),zod.literal(2)]).optional(),
+  "fase": zod.union([zod.literal(1),zod.literal(2)]),
   "roundSparring": zod.number().min(createEntryBodyOneRoundSparringMin).nullish(),
   "roundPao": zod.number().min(createEntryBodyOneRoundPaoMin).nullish(),
   "roundTecnica": zod.number().min(createEntryBodyOneRoundTecnicaMin).nullish(),
@@ -617,7 +618,8 @@ export const importEntriesBulkTextQueryFaseMax = 2;
 
 
 export const ImportEntriesBulkTextQueryParams = zod.object({
-  "fase": zod.coerce.number().min(1).max(importEntriesBulkTextQueryFaseMax).optional().describe('Season identifier; omitted means Season 1.')
+  "fase": zod.coerce.number().min(1).max(importEntriesBulkTextQueryFaseMax).optional().describe('Season identifier; omitted means Season 1.'),
+  "overrideArchivio": zod.coerce.boolean().optional().describe('Explicit confirmation to modify the frozen Season 1 archive')
 })
 
 export const ImportEntriesBulkTextBody = zod.object({
@@ -786,7 +788,8 @@ export const updateEntryQueryFaseMax = 2;
 
 
 export const UpdateEntryQueryParams = zod.object({
-  "fase": zod.coerce.number().min(1).max(updateEntryQueryFaseMax).optional()
+  "fase": zod.coerce.number().min(1).max(updateEntryQueryFaseMax).optional(),
+  "overrideArchivio": zod.coerce.boolean().optional().describe('Explicit confirmation to modify the frozen Season 1 archive')
 })
 
 export const updateEntryBodyOneRoundSparringMin = 0;
@@ -848,7 +851,7 @@ export const updateEntryBodyTwoCardOverlayMax = 90;
 
 
 export const UpdateEntryBody = zod.object({
-  "fase": zod.union([zod.literal(1),zod.literal(2)]).optional(),
+  "fase": zod.union([zod.literal(1),zod.literal(2)]),
   "roundSparring": zod.number().min(updateEntryBodyOneRoundSparringMin).nullish(),
   "roundPao": zod.number().min(updateEntryBodyOneRoundPaoMin).nullish(),
   "roundTecnica": zod.number().min(updateEntryBodyOneRoundTecnicaMin).nullish(),
@@ -1043,7 +1046,8 @@ export const deleteEntryQueryFaseMax = 2;
 
 
 export const DeleteEntryQueryParams = zod.object({
-  "fase": zod.coerce.number().min(1).max(deleteEntryQueryFaseMax).optional()
+  "fase": zod.coerce.number().min(1).max(deleteEntryQueryFaseMax).optional(),
+  "overrideArchivio": zod.coerce.boolean().optional().describe('Explicit confirmation to modify the frozen Season 1 archive')
 })
 
 export const DeleteEntryResponse = zod.void()
