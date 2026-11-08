@@ -16,6 +16,7 @@
 - [Daily tracking fields](daily-tracking-fields.md) — keep new routine text fields separate from legacy numeric exercise counters; automatic blank days must not count as tracking data.
 - [Optional admin input normalization](optional-admin-input-normalization.md) — normalize blank draft/form values to null at the API boundary before Zod and Drizzle.
 - [Daily tracking panel](daily-tracking-panel.md) — quick-status tracking uses nullable fields, automatic A/B day type, and streak activity from training or routine.
+- [Season 2 1% form feedback](season2-one-percent-form.md) — the user tested the 1% admin block and found it clear and quick to fill.
 - [Simple dated planner](planner-single-screen.md) — user wants only things to do and an annotation by date; no fixed routines or templates; preserve legacy data.
 - [Playwright Chromium on NixOS](playwright-nixos-setup.md) — after `playwright install chromium`, patchelf the binary with `~/.nix-profile/lib` (needs `nix-env -iA nixpkgs.mesa` first) or the browser won't launch.
 - [Mockup sandbox typecheck](mockup-sandbox-typecheck.md) — sandbox-wide typecheck can fail on duplicate React types in bundled UI components; verify isolated previews separately.
