@@ -52,14 +52,18 @@ const CLIENT_RANGES: Record<string, [number, number, string]> = {
   km:         [0,   100,    "0–100"],
   flessioni:  [0,   2000,   "0–2000"],
   addominali: [0,   2000,   "0–2000"],
+  squat:      [0,   2000,   "0–2000"],
+  stretchingMin: [0, 240,  "0–240 minuti"],
   round:      [0,   2000,   "0–2000"],
   entrate:    [0,   100000, "0–100 000 €"],
   uscite:     [0,   100000, "0–100 000 €"],
 };
+const CLIENT_INTEGER_FIELDS = new Set(["squat", "stretchingMin"]);
 
 const ENTRY_REVIEW_LABELS: Record<string, string> = {
   numero: "Numero giorno", data: "Data", testo: "Testo", foto: "Foto", sintesi: "Sintesi card",
   peso: "Peso", battito: "Battito", sonno: "Sonno", flessioni: "Flessioni", addominali: "Addominali",
+  squat: "Squat", stretchingMin: "Stretching (min)", stato1pct: "Stato 1%", fronteSettimana: "Fronte della settimana", nota1pct: "Nota 1%",
   round: "Round", km: "Km", entrate: "Entrate", uscite: "Uscite", attrito: "Attrito",
   fatto: "Fatto", nonFatto: "Non fatto", kcal: "Kcal", pasti: "Pasti", alcol: "Alcol",
   acqua: "Acqua", acquaAllenamento: "Acqua allenamento", tipoAllenamento: "Tipo allenamento",
@@ -100,6 +104,10 @@ function validateEntry(data: Partial<Record<string, unknown>>): Record<string, s
     const val = data[field];
     if (val == null || val === "") continue;
     const num = Number(val);
+    if (CLIENT_INTEGER_FIELDS.has(field) && !Number.isInteger(num)) {
+      errors[field] = "Inserisci un numero intero";
+      continue;
+    }
     if (!Number.isNaN(num) && (num < min || num > max)) {
       errors[field] = `Intervallo consentito: ${label}`;
     }
@@ -248,6 +256,11 @@ function EntryForm({ initialData, defaultNumero = 1, defaultFase = 2, allowArchi
     sonno: initialData?.sonno ?? undefined,
     flessioni: initialData?.flessioni ?? undefined,
     addominali: initialData?.addominali ?? undefined,
+    squat: initialData?.squat ?? undefined,
+    stretchingMin: initialData?.stretchingMin ?? undefined,
+    stato1pct: initialData?.stato1pct ?? undefined,
+    fronteSettimana: initialData?.fronteSettimana ?? undefined,
+    nota1pct: initialData?.nota1pct ?? "",
     round: initialData?.round ?? undefined,
     km: initialData?.km ?? undefined,
     peso: initialData?.peso ?? undefined,
@@ -345,6 +358,9 @@ function EntryForm({ initialData, defaultNumero = 1, defaultFase = 2, allowArchi
       sonno: previousEntry.sonno ?? undefined,
       flessioni: previousEntry.flessioni ?? undefined,
       addominali: previousEntry.addominali ?? undefined,
+      squat: previousEntry.squat ?? undefined,
+      stretchingMin: previousEntry.stretchingMin ?? undefined,
+      fronteSettimana: previousEntry.fronteSettimana ?? undefined,
       round: previousEntry.round ?? undefined,
       km: previousEntry.km ?? undefined,
       peso: previousEntry.peso ?? undefined,
@@ -457,7 +473,8 @@ function EntryForm({ initialData, defaultNumero = 1, defaultFase = 2, allowArchi
             routineTrazioni: "", routineSquat: "", plank: undefined, collo: undefined,
             mobilita: undefined, sollevamentoGamba: undefined, grapplingVuoto: undefined,
             energia: undefined, noteAllenamento: "",
-            sonno: undefined, flessioni: undefined, addominali: undefined,
+            sonno: undefined, flessioni: undefined, addominali: undefined, squat: undefined, stretchingMin: undefined,
+            stato1pct: undefined, fronteSettimana: undefined, nota1pct: "",
             round: undefined, km: undefined, peso: undefined, battito: undefined,
             entrate: undefined, uscite: undefined,
             testo: "", foto: "", sintesi: "", attrito: "", fatto: "", nonFatto: "",
@@ -653,6 +670,8 @@ function EntryForm({ initialData, defaultNumero = 1, defaultFase = 2, allowArchi
         {field("Sonno (h)", "sonno", "0.5")}
         {field("Flessioni", "flessioni")}
         {field("Addominali", "addominali")}
+        {field("Squat", "squat", "1")}
+        {field("Stretching (min)", "stretchingMin", "1")}
         {field("Round", "round")}
         {field("Km", "km", "0.1")}
         {field("Peso (kg)", "peso", "0.1")}
@@ -682,6 +701,57 @@ function EntryForm({ initialData, defaultNumero = 1, defaultFase = 2, allowArchi
             {field("Minuti scrittura", "minutiScrittura")}
             <label className="flex flex-col gap-2 text-[13px]">Alcol
               <button type="button" role="switch" aria-label="Alcol" aria-checked={formData.alcol === true} onClick={() => { setFormData({ ...formData, alcol: formData.alcol !== true }); markTouched("alcol"); }} className="border border-border bg-[#141414] p-2.5 text-[13px]">{formData.alcol === true ? "Sì" : "No"}</button>
+            </label>
+          </div>
+        </section>
+      )}
+
+      {formData.fase === 2 && (
+        <section aria-label="Blocco 1%" className="border-t border-border pt-5">
+          <h3 className="font-serif text-[22px]">1%</h3>
+          <p className="mb-4 mt-2 text-[12px] text-muted-foreground">
+            Registra lo stato del giorno e il fronte della settimana. Il fronte viene riportato quando usi “Copia dati di ieri”.
+          </p>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <label className="flex flex-col gap-2 text-[11px] uppercase tracking-widest text-muted-foreground">
+              Stato
+              <select
+                aria-label="Stato 1%"
+                value={formData.stato1pct ?? ""}
+                onChange={(event) => setFormData({ ...formData, stato1pct: (event.target.value || undefined) as EntryInput["stato1pct"] })}
+                className="border border-border bg-[#141414] p-2.5 text-white"
+              >
+                <option value="">Non impostato</option>
+                <option value="spinto">Spinto</option>
+                <option value="mantenuto">Mantenuto</option>
+                <option value="crollato">Crollato</option>
+              </select>
+            </label>
+            <label className="flex flex-col gap-2 text-[11px] uppercase tracking-widest text-muted-foreground">
+              Fronte della settimana
+              <select
+                aria-label="Fronte della settimana"
+                value={formData.fronteSettimana ?? ""}
+                onChange={(event) => setFormData({ ...formData, fronteSettimana: (event.target.value || undefined) as EntryInput["fronteSettimana"] })}
+                className="border border-border bg-[#141414] p-2.5 text-white"
+              >
+                <option value="">Non impostato</option>
+                <option value="corpo">Corpo</option>
+                <option value="scrittura">Scrittura</option>
+                <option value="soldi">Soldi</option>
+                <option value="social">Social</option>
+              </select>
+            </label>
+            <label className="flex flex-col gap-2 text-[11px] uppercase tracking-widest text-muted-foreground md:col-span-2">
+              Nota 1% <span className="font-sans normal-case tracking-normal">{formData.nota1pct?.length ?? 0}/200</span>
+              <textarea
+                aria-label="Nota 1%"
+                rows={2}
+                maxLength={200}
+                value={formData.nota1pct ?? ""}
+                onChange={(event) => setFormData({ ...formData, nota1pct: event.target.value.slice(0, 200) })}
+                className="resize-y border border-border bg-[#141414] p-3 font-sans text-sm leading-relaxed text-white placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary"
+              />
             </label>
           </div>
         </section>

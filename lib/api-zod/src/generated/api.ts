@@ -70,6 +70,14 @@ export const listEntriesResponseTwoPlankMin = 0;
 
 export const listEntriesResponseTwoEnergiaMax = 5;
 
+export const listEntriesResponseTwoSquatMin = 0;
+export const listEntriesResponseTwoSquatMax = 2000;
+
+export const listEntriesResponseTwoStretchingMinMin = 0;
+export const listEntriesResponseTwoStretchingMinMax = 240;
+
+export const listEntriesResponseTwoNota1pctMax = 200;
+
 export const listEntriesResponseTwoSintesiMax = 180;
 
 export const listEntriesResponseTwoAttritoMax = 280;
@@ -129,6 +137,11 @@ export const ListEntriesResponseItem = zod.object({
   "sonno": zod.number().nullish().describe('Hours of sleep'),
   "flessioni": zod.number().nullish(),
   "addominali": zod.number().nullish(),
+  "squat": zod.number().min(listEntriesResponseTwoSquatMin).max(listEntriesResponseTwoSquatMax).nullish(),
+  "stretchingMin": zod.number().min(listEntriesResponseTwoStretchingMinMin).max(listEntriesResponseTwoStretchingMinMax).nullish(),
+  "stato1pct": zod.union([zod.literal('spinto'),zod.literal('mantenuto'),zod.literal('crollato'),zod.literal(null)]).nullish(),
+  "fronteSettimana": zod.union([zod.literal('corpo'),zod.literal('scrittura'),zod.literal('soldi'),zod.literal('social'),zod.literal(null)]).nullish(),
+  "nota1pct": zod.string().max(listEntriesResponseTwoNota1pctMax).nullish(),
   "round": zod.number().nullish(),
   "km": zod.number().nullish(),
   "peso": zod.number().nullish().describe('Weight in kg'),
@@ -206,6 +219,14 @@ export const createEntryBodyTwoPlankMin = 0;
 
 export const createEntryBodyTwoEnergiaMax = 5;
 
+export const createEntryBodyTwoSquatMin = 0;
+export const createEntryBodyTwoSquatMax = 2000;
+
+export const createEntryBodyTwoStretchingMinMin = 0;
+export const createEntryBodyTwoStretchingMinMax = 240;
+
+export const createEntryBodyTwoNota1pctMax = 200;
+
 export const createEntryBodyTwoSintesiMax = 180;
 
 export const createEntryBodyTwoAttritoMax = 280;
@@ -264,6 +285,11 @@ export const CreateEntryBody = zod.object({
   "sonno": zod.number().nullish(),
   "flessioni": zod.number().nullish(),
   "addominali": zod.number().nullish(),
+  "squat": zod.number().min(createEntryBodyTwoSquatMin).max(createEntryBodyTwoSquatMax).nullish(),
+  "stretchingMin": zod.number().min(createEntryBodyTwoStretchingMinMin).max(createEntryBodyTwoStretchingMinMax).nullish(),
+  "stato1pct": zod.union([zod.literal('spinto'),zod.literal('mantenuto'),zod.literal('crollato'),zod.literal(null)]).nullish(),
+  "fronteSettimana": zod.union([zod.literal('corpo'),zod.literal('scrittura'),zod.literal('soldi'),zod.literal('social'),zod.literal(null)]).nullish(),
+  "nota1pct": zod.string().max(createEntryBodyTwoNota1pctMax).nullish(),
   "round": zod.number().nullish(),
   "km": zod.number().nullish(),
   "peso": zod.number().nullish(),
@@ -326,6 +352,14 @@ export const createEntryResponseTwoPlankMin = 0;
 
 export const createEntryResponseTwoEnergiaMax = 5;
 
+export const createEntryResponseTwoSquatMin = 0;
+export const createEntryResponseTwoSquatMax = 2000;
+
+export const createEntryResponseTwoStretchingMinMin = 0;
+export const createEntryResponseTwoStretchingMinMax = 240;
+
+export const createEntryResponseTwoNota1pctMax = 200;
+
 export const createEntryResponseTwoSintesiMax = 180;
 
 export const createEntryResponseTwoAttritoMax = 280;
@@ -385,6 +419,11 @@ export const CreateEntryResponse = zod.object({
   "sonno": zod.number().nullish().describe('Hours of sleep'),
   "flessioni": zod.number().nullish(),
   "addominali": zod.number().nullish(),
+  "squat": zod.number().min(createEntryResponseTwoSquatMin).max(createEntryResponseTwoSquatMax).nullish(),
+  "stretchingMin": zod.number().min(createEntryResponseTwoStretchingMinMin).max(createEntryResponseTwoStretchingMinMax).nullish(),
+  "stato1pct": zod.union([zod.literal('spinto'),zod.literal('mantenuto'),zod.literal('crollato'),zod.literal(null)]).nullish(),
+  "fronteSettimana": zod.union([zod.literal('corpo'),zod.literal('scrittura'),zod.literal('soldi'),zod.literal('social'),zod.literal(null)]).nullish(),
+  "nota1pct": zod.string().max(createEntryResponseTwoNota1pctMax).nullish(),
   "round": zod.number().nullish(),
   "km": zod.number().nullish(),
   "peso": zod.number().nullish().describe('Weight in kg'),
@@ -461,6 +500,14 @@ export const getLatestEntriesResponseTwoPlankMin = 0;
 
 export const getLatestEntriesResponseTwoEnergiaMax = 5;
 
+export const getLatestEntriesResponseTwoSquatMin = 0;
+export const getLatestEntriesResponseTwoSquatMax = 2000;
+
+export const getLatestEntriesResponseTwoStretchingMinMin = 0;
+export const getLatestEntriesResponseTwoStretchingMinMax = 240;
+
+export const getLatestEntriesResponseTwoNota1pctMax = 200;
+
 export const getLatestEntriesResponseTwoSintesiMax = 180;
 
 export const getLatestEntriesResponseTwoAttritoMax = 280;
@@ -520,6 +567,11 @@ export const GetLatestEntriesResponseItem = zod.object({
   "sonno": zod.number().nullish().describe('Hours of sleep'),
   "flessioni": zod.number().nullish(),
   "addominali": zod.number().nullish(),
+  "squat": zod.number().min(getLatestEntriesResponseTwoSquatMin).max(getLatestEntriesResponseTwoSquatMax).nullish(),
+  "stretchingMin": zod.number().min(getLatestEntriesResponseTwoStretchingMinMin).max(getLatestEntriesResponseTwoStretchingMinMax).nullish(),
+  "stato1pct": zod.union([zod.literal('spinto'),zod.literal('mantenuto'),zod.literal('crollato'),zod.literal(null)]).nullish(),
+  "fronteSettimana": zod.union([zod.literal('corpo'),zod.literal('scrittura'),zod.literal('soldi'),zod.literal('social'),zod.literal(null)]).nullish(),
+  "nota1pct": zod.string().max(getLatestEntriesResponseTwoNota1pctMax).nullish(),
   "round": zod.number().nullish(),
   "km": zod.number().nullish(),
   "peso": zod.number().nullish().describe('Weight in kg'),
@@ -694,6 +746,14 @@ export const getEntryResponseTwoPlankMin = 0;
 
 export const getEntryResponseTwoEnergiaMax = 5;
 
+export const getEntryResponseTwoSquatMin = 0;
+export const getEntryResponseTwoSquatMax = 2000;
+
+export const getEntryResponseTwoStretchingMinMin = 0;
+export const getEntryResponseTwoStretchingMinMax = 240;
+
+export const getEntryResponseTwoNota1pctMax = 200;
+
 export const getEntryResponseTwoSintesiMax = 180;
 
 export const getEntryResponseTwoAttritoMax = 280;
@@ -753,6 +813,11 @@ export const GetEntryResponse = zod.object({
   "sonno": zod.number().nullish().describe('Hours of sleep'),
   "flessioni": zod.number().nullish(),
   "addominali": zod.number().nullish(),
+  "squat": zod.number().min(getEntryResponseTwoSquatMin).max(getEntryResponseTwoSquatMax).nullish(),
+  "stretchingMin": zod.number().min(getEntryResponseTwoStretchingMinMin).max(getEntryResponseTwoStretchingMinMax).nullish(),
+  "stato1pct": zod.union([zod.literal('spinto'),zod.literal('mantenuto'),zod.literal('crollato'),zod.literal(null)]).nullish(),
+  "fronteSettimana": zod.union([zod.literal('corpo'),zod.literal('scrittura'),zod.literal('soldi'),zod.literal('social'),zod.literal(null)]).nullish(),
+  "nota1pct": zod.string().max(getEntryResponseTwoNota1pctMax).nullish(),
   "round": zod.number().nullish(),
   "km": zod.number().nullish(),
   "peso": zod.number().nullish().describe('Weight in kg'),
@@ -833,6 +898,14 @@ export const updateEntryBodyTwoPlankMin = 0;
 
 export const updateEntryBodyTwoEnergiaMax = 5;
 
+export const updateEntryBodyTwoSquatMin = 0;
+export const updateEntryBodyTwoSquatMax = 2000;
+
+export const updateEntryBodyTwoStretchingMinMin = 0;
+export const updateEntryBodyTwoStretchingMinMax = 240;
+
+export const updateEntryBodyTwoNota1pctMax = 200;
+
 export const updateEntryBodyTwoSintesiMax = 180;
 
 export const updateEntryBodyTwoAttritoMax = 280;
@@ -890,6 +963,11 @@ export const UpdateEntryBody = zod.object({
   "sonno": zod.number().nullish(),
   "flessioni": zod.number().nullish(),
   "addominali": zod.number().nullish(),
+  "squat": zod.number().min(updateEntryBodyTwoSquatMin).max(updateEntryBodyTwoSquatMax).nullish(),
+  "stretchingMin": zod.number().min(updateEntryBodyTwoStretchingMinMin).max(updateEntryBodyTwoStretchingMinMax).nullish(),
+  "stato1pct": zod.union([zod.literal('spinto'),zod.literal('mantenuto'),zod.literal('crollato'),zod.literal(null)]).nullish(),
+  "fronteSettimana": zod.union([zod.literal('corpo'),zod.literal('scrittura'),zod.literal('soldi'),zod.literal('social'),zod.literal(null)]).nullish(),
+  "nota1pct": zod.string().max(updateEntryBodyTwoNota1pctMax).nullish(),
   "round": zod.number().nullish(),
   "km": zod.number().nullish(),
   "peso": zod.number().nullish(),
@@ -952,6 +1030,14 @@ export const updateEntryResponseTwoPlankMin = 0;
 
 export const updateEntryResponseTwoEnergiaMax = 5;
 
+export const updateEntryResponseTwoSquatMin = 0;
+export const updateEntryResponseTwoSquatMax = 2000;
+
+export const updateEntryResponseTwoStretchingMinMin = 0;
+export const updateEntryResponseTwoStretchingMinMax = 240;
+
+export const updateEntryResponseTwoNota1pctMax = 200;
+
 export const updateEntryResponseTwoSintesiMax = 180;
 
 export const updateEntryResponseTwoAttritoMax = 280;
@@ -1011,6 +1097,11 @@ export const UpdateEntryResponse = zod.object({
   "sonno": zod.number().nullish().describe('Hours of sleep'),
   "flessioni": zod.number().nullish(),
   "addominali": zod.number().nullish(),
+  "squat": zod.number().min(updateEntryResponseTwoSquatMin).max(updateEntryResponseTwoSquatMax).nullish(),
+  "stretchingMin": zod.number().min(updateEntryResponseTwoStretchingMinMin).max(updateEntryResponseTwoStretchingMinMax).nullish(),
+  "stato1pct": zod.union([zod.literal('spinto'),zod.literal('mantenuto'),zod.literal('crollato'),zod.literal(null)]).nullish(),
+  "fronteSettimana": zod.union([zod.literal('corpo'),zod.literal('scrittura'),zod.literal('soldi'),zod.literal('social'),zod.literal(null)]).nullish(),
+  "nota1pct": zod.string().max(updateEntryResponseTwoNota1pctMax).nullish(),
   "round": zod.number().nullish(),
   "km": zod.number().nullish(),
   "peso": zod.number().nullish().describe('Weight in kg'),

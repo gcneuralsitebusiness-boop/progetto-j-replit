@@ -1307,6 +1307,23 @@ components:
           type: ["integer", "null"]
         addominali:
           type: ["integer", "null"]
+        squat:
+          type: ["integer", "null"]
+          minimum: 0
+          maximum: 2000
+        stretchingMin:
+          type: ["integer", "null"]
+          minimum: 0
+          maximum: 240
+        stato1pct:
+          type: ["string", "null"]
+          enum: [spinto, mantenuto, crollato, null]
+        fronteSettimana:
+          type: ["string", "null"]
+          enum: [corpo, scrittura, soldi, social, null]
+        nota1pct:
+          type: ["string", "null"]
+          maxLength: 200
         round:
           type: ["integer", "null"]
         km:
@@ -1507,6 +1524,23 @@ components:
           type: ["integer", "null"]
         addominali:
           type: ["integer", "null"]
+        squat:
+          type: ["integer", "null"]
+          minimum: 0
+          maximum: 2000
+        stretchingMin:
+          type: ["integer", "null"]
+          minimum: 0
+          maximum: 240
+        stato1pct:
+          type: ["string", "null"]
+          enum: [spinto, mantenuto, crollato, null]
+        fronteSettimana:
+          type: ["string", "null"]
+          enum: [corpo, scrittura, soldi, social, null]
+        nota1pct:
+          type: ["string", "null"]
+          maxLength: 200
         round:
           type: ["integer", "null"]
         km:
@@ -1627,6 +1661,23 @@ components:
           type: ["integer", "null"]
         addominali:
           type: ["integer", "null"]
+        squat:
+          type: ["integer", "null"]
+          minimum: 0
+          maximum: 2000
+        stretchingMin:
+          type: ["integer", "null"]
+          minimum: 0
+          maximum: 240
+        stato1pct:
+          type: ["string", "null"]
+          enum: [spinto, mantenuto, crollato, null]
+        fronteSettimana:
+          type: ["string", "null"]
+          enum: [corpo, scrittura, soldi, social, null]
+        nota1pct:
+          type: ["string", "null"]
+          maxLength: 200
         round:
           type: ["integer", "null"]
         km:

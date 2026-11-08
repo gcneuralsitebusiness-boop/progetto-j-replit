@@ -5,7 +5,9 @@
  * API specification for Progetto J — 180-day transformation journal
  * OpenAPI spec version: 0.1.0
  */
+import type { EntryFronteSettimana } from './entryFronteSettimana';
 import type { EntrySollevamentoGamba } from './entrySollevamentoGamba';
+import type { EntryStato1pct } from './entryStato1pct';
 import type { EntryTipoAllenamento } from './entryTipoAllenamento';
 import type { EntryTipoGiorno } from './entryTipoGiorno';
 import type { SeasonFields } from './seasonFields';
@@ -97,6 +99,27 @@ export type Entry = SeasonFields & ({
   flessioni?: number | null;
   /** @nullable */
   addominali?: number | null;
+  /**
+     * @minimum 0
+     * @maximum 2000
+     * @nullable
+     */
+  squat?: number | null;
+  /**
+     * @minimum 0
+     * @maximum 240
+     * @nullable
+     */
+  stretchingMin?: number | null;
+  /** @nullable */
+  stato1pct?: EntryStato1pct;
+  /** @nullable */
+  fronteSettimana?: EntryFronteSettimana;
+  /**
+     * @maxLength 200
+     * @nullable
+     */
+  nota1pct?: string | null;
   /** @nullable */
   round?: number | null;
   /** @nullable */

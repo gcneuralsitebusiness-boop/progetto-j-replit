@@ -181,10 +181,13 @@ const RANGES: Record<string, [number, number]> = {
   km: [0, 100],
   flessioni: [0, 2000],
   addominali: [0, 2000],
+  squat: [0, 2000],
+  stretchingMin: [0, 240],
   round: [0, 2000],
   entrate: [0, 100000],
   uscite: [0, 100000],
 };
+const INTEGER_FIELDS = new Set(["squat", "stretchingMin"]);
 
 const OPTIONAL_NUMERIC_FIELDS = new Set([
   "roundSparring", "roundPao", "roundTecnica", "oreLavoro", "risparmio", "entrateOnline",
@@ -200,6 +203,8 @@ const OPTIONAL_NUMERIC_FIELDS = new Set([
   "sonno",
   "flessioni",
   "addominali",
+  "squat",
+  "stretchingMin",
   "round",
   "km",
   "peso",
@@ -230,6 +235,9 @@ const OPTIONAL_TEXT_FIELDS = new Set([
   "sintesi",
   "foto",
   "attrito",
+  "stato1pct",
+  "fronteSettimana",
+  "nota1pct",
   "fatto",
   "nonFatto",
   "cardTitolo",
@@ -290,6 +298,9 @@ function validateRanges(data: Record<string, unknown>): string | null {
     if (val == null) continue;
     const num = Number(val);
     if (Number.isNaN(num)) continue;
+    if (INTEGER_FIELDS.has(field) && !Number.isInteger(num)) {
+      return `${field}: inserire un numero intero`;
+    }
     if (num < min || num > max) {
       return `${field}: il valore ${num} è fuori dall'intervallo consentito (${min}–${max})`;
     }

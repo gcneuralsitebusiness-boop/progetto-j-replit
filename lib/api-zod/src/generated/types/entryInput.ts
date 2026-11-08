@@ -5,7 +5,9 @@
  * API specification for Progetto J — 180-day transformation journal
  * OpenAPI spec version: 0.1.0
  */
+import type { EntryInputFronteSettimana } from './entryInputFronteSettimana';
 import type { EntryInputSollevamentoGamba } from './entryInputSollevamentoGamba';
+import type { EntryInputStato1pct } from './entryInputStato1pct';
 import type { EntryInputTipoAllenamento } from './entryInputTipoAllenamento';
 import type { EntryInputTipoGiorno } from './entryInputTipoGiorno';
 import type { SeasonFields } from './seasonFields';
@@ -88,6 +90,27 @@ export type EntryInput = SeasonFields & ({
   flessioni?: number | null;
   /** @nullable */
   addominali?: number | null;
+  /**
+     * @minimum 0
+     * @maximum 2000
+     * @nullable
+     */
+  squat?: number | null;
+  /**
+     * @minimum 0
+     * @maximum 240
+     * @nullable
+     */
+  stretchingMin?: number | null;
+  /** @nullable */
+  stato1pct?: EntryInputStato1pct;
+  /** @nullable */
+  fronteSettimana?: EntryInputFronteSettimana;
+  /**
+     * @maxLength 200
+     * @nullable
+     */
+  nota1pct?: string | null;
   /** @nullable */
   round?: number | null;
   /** @nullable */
@@ -226,6 +249,27 @@ export type EntryInput = SeasonFields & ({
   flessioni?: number | null;
   /** @nullable */
   addominali?: number | null;
+  /**
+     * @minimum 0
+     * @maximum 2000
+     * @nullable
+     */
+  squat?: number | null;
+  /**
+     * @minimum 0
+     * @maximum 240
+     * @nullable
+     */
+  stretchingMin?: number | null;
+  /** @nullable */
+  stato1pct?: EntryInputStato1pct;
+  /** @nullable */
+  fronteSettimana?: EntryInputFronteSettimana;
+  /**
+     * @maxLength 200
+     * @nullable
+     */
+  nota1pct?: string | null;
   /** @nullable */
   round?: number | null;
   /** @nullable */

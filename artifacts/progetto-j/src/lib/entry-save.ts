@@ -7,11 +7,12 @@ const EDITABLE_FIELDS = [
   "kcal", "pasti", "alcol", "acqua", "acquaAllenamento", "tipoAllenamento", "durata", "intensita",
   "tipoGiorno", "routineCompletata", "routineForza", "routineFlessioni", "routineTrazioni",
   "routineSquat", "plank", "collo", "mobilita", "sollevamentoGamba", "grapplingVuoto",
-  "energia", "noteAllenamento", "sonno", "flessioni", "addominali", "round", "km", "peso",
+  "energia", "noteAllenamento", "sonno", "flessioni", "addominali", "squat", "stretchingMin",
+  "stato1pct", "fronteSettimana", "nota1pct", "round", "km", "peso",
   "battito", "entrate", "uscite", "testo", "foto", "sintesi", "attrito", "fatto", "nonFatto",
 ] as const satisfies readonly (keyof EntryInput)[];
 
-const NUMERIC_FIELDS = new Set(["kcal", "pasti", "acqua", "acquaAllenamento", "durata", "intensita", "plank", "energia", "sonno", "flessioni", "addominali", "round", "km", "peso", "battito", "entrate", "uscite"]);
+const NUMERIC_FIELDS = new Set(["kcal", "pasti", "acqua", "acquaAllenamento", "durata", "intensita", "plank", "energia", "sonno", "flessioni", "addominali", "squat", "stretchingMin", "round", "km", "peso", "battito", "entrate", "uscite"]);
 for (const key of ["roundSparring", "roundPao", "roundTecnica", "oreLavoro", "risparmio", "entrateOnline", "videoPubblicati", "articoliPubblicati", "follower", "pagineLette", "minutiScrittura"]) NUMERIC_FIELDS.add(key);
 const BOOLEAN_FIELDS = new Set(["alcol", "routineCompletata", "routineForza", "collo", "mobilita", "grapplingVuoto"]);
 

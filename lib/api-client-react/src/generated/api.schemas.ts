@@ -142,6 +142,31 @@ export const EntrySollevamentoGamba = {
   OLTRE: 'OLTRE',
 } as const;
 
+/**
+ * @nullable
+ */
+export type EntryStato1pct = typeof EntryStato1pct[keyof typeof EntryStato1pct] | null;
+
+
+export const EntryStato1pct = {
+  spinto: 'spinto',
+  mantenuto: 'mantenuto',
+  crollato: 'crollato',
+} as const;
+
+/**
+ * @nullable
+ */
+export type EntryFronteSettimana = typeof EntryFronteSettimana[keyof typeof EntryFronteSettimana] | null;
+
+
+export const EntryFronteSettimana = {
+  corpo: 'corpo',
+  scrittura: 'scrittura',
+  soldi: 'soldi',
+  social: 'social',
+} as const;
+
 export type Entry = SeasonFields & ({
   id: number;
   /** Day number (1-180) */
@@ -229,6 +254,27 @@ export type Entry = SeasonFields & ({
   flessioni?: number | null;
   /** @nullable */
   addominali?: number | null;
+  /**
+     * @minimum 0
+     * @maximum 2000
+     * @nullable
+     */
+  squat?: number | null;
+  /**
+     * @minimum 0
+     * @maximum 240
+     * @nullable
+     */
+  stretchingMin?: number | null;
+  /** @nullable */
+  stato1pct?: EntryStato1pct;
+  /** @nullable */
+  fronteSettimana?: EntryFronteSettimana;
+  /**
+     * @maxLength 200
+     * @nullable
+     */
+  nota1pct?: string | null;
   /** @nullable */
   round?: number | null;
   /** @nullable */
@@ -428,6 +474,31 @@ export const EntryInputSollevamentoGamba = {
   OLTRE: 'OLTRE',
 } as const;
 
+/**
+ * @nullable
+ */
+export type EntryInputStato1pct = typeof EntryInputStato1pct[keyof typeof EntryInputStato1pct] | null;
+
+
+export const EntryInputStato1pct = {
+  spinto: 'spinto',
+  mantenuto: 'mantenuto',
+  crollato: 'crollato',
+} as const;
+
+/**
+ * @nullable
+ */
+export type EntryInputFronteSettimana = typeof EntryInputFronteSettimana[keyof typeof EntryInputFronteSettimana] | null;
+
+
+export const EntryInputFronteSettimana = {
+  corpo: 'corpo',
+  scrittura: 'scrittura',
+  soldi: 'soldi',
+  social: 'social',
+} as const;
+
 export type EntryInput = SeasonFields & ({
   numero: number;
   /** @pattern ^\d{4}-\d{2}-\d{2}$ */
@@ -506,6 +577,27 @@ export type EntryInput = SeasonFields & ({
   flessioni?: number | null;
   /** @nullable */
   addominali?: number | null;
+  /**
+     * @minimum 0
+     * @maximum 2000
+     * @nullable
+     */
+  squat?: number | null;
+  /**
+     * @minimum 0
+     * @maximum 240
+     * @nullable
+     */
+  stretchingMin?: number | null;
+  /** @nullable */
+  stato1pct?: EntryInputStato1pct;
+  /** @nullable */
+  fronteSettimana?: EntryInputFronteSettimana;
+  /**
+     * @maxLength 200
+     * @nullable
+     */
+  nota1pct?: string | null;
   /** @nullable */
   round?: number | null;
   /** @nullable */
@@ -644,6 +736,27 @@ export type EntryInput = SeasonFields & ({
   flessioni?: number | null;
   /** @nullable */
   addominali?: number | null;
+  /**
+     * @minimum 0
+     * @maximum 2000
+     * @nullable
+     */
+  squat?: number | null;
+  /**
+     * @minimum 0
+     * @maximum 240
+     * @nullable
+     */
+  stretchingMin?: number | null;
+  /** @nullable */
+  stato1pct?: EntryInputStato1pct;
+  /** @nullable */
+  fronteSettimana?: EntryInputFronteSettimana;
+  /**
+     * @maxLength 200
+     * @nullable
+     */
+  nota1pct?: string | null;
   /** @nullable */
   round?: number | null;
   /** @nullable */
@@ -748,6 +861,31 @@ export const EntryUpdateSollevamentoGamba = {
   OLTRE: 'OLTRE',
 } as const;
 
+/**
+ * @nullable
+ */
+export type EntryUpdateStato1pct = typeof EntryUpdateStato1pct[keyof typeof EntryUpdateStato1pct] | null;
+
+
+export const EntryUpdateStato1pct = {
+  spinto: 'spinto',
+  mantenuto: 'mantenuto',
+  crollato: 'crollato',
+} as const;
+
+/**
+ * @nullable
+ */
+export type EntryUpdateFronteSettimana = typeof EntryUpdateFronteSettimana[keyof typeof EntryUpdateFronteSettimana] | null;
+
+
+export const EntryUpdateFronteSettimana = {
+  corpo: 'corpo',
+  scrittura: 'scrittura',
+  soldi: 'soldi',
+  social: 'social',
+} as const;
+
 export type EntryUpdate = SeasonFields & ({
   /** @pattern ^\d{4}-\d{2}-\d{2}$ */
   data?: string;
@@ -825,6 +963,27 @@ export type EntryUpdate = SeasonFields & ({
   flessioni?: number | null;
   /** @nullable */
   addominali?: number | null;
+  /**
+     * @minimum 0
+     * @maximum 2000
+     * @nullable
+     */
+  squat?: number | null;
+  /**
+     * @minimum 0
+     * @maximum 240
+     * @nullable
+     */
+  stretchingMin?: number | null;
+  /** @nullable */
+  stato1pct?: EntryUpdateStato1pct;
+  /** @nullable */
+  fronteSettimana?: EntryUpdateFronteSettimana;
+  /**
+     * @maxLength 200
+     * @nullable
+     */
+  nota1pct?: string | null;
   /** @nullable */
   round?: number | null;
   /** @nullable */
@@ -962,6 +1121,27 @@ export type EntryUpdate = SeasonFields & ({
   flessioni?: number | null;
   /** @nullable */
   addominali?: number | null;
+  /**
+     * @minimum 0
+     * @maximum 2000
+     * @nullable
+     */
+  squat?: number | null;
+  /**
+     * @minimum 0
+     * @maximum 240
+     * @nullable
+     */
+  stretchingMin?: number | null;
+  /** @nullable */
+  stato1pct?: EntryUpdateStato1pct;
+  /** @nullable */
+  fronteSettimana?: EntryUpdateFronteSettimana;
+  /**
+     * @maxLength 200
+     * @nullable
+     */
+  nota1pct?: string | null;
   /** @nullable */
   round?: number | null;
   /** @nullable */
