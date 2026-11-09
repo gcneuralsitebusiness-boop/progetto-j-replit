@@ -1,4 +1,4 @@
-import { SEASON_2_START_DATE } from "@workspace/api-zod/seasons";
+import { SEASON_1_END_DATE, SEASON_2_START_DATE } from "@workspace/api-zod/seasons";
 
 const DAY_MS = 86_400_000;
 
@@ -31,9 +31,8 @@ export function validateSeasonDay(
   if (fase === 1) {
     if (numero > 180) return "La Fase 1 non può superare il giorno 180.";
     if (data >= SEASON_2_START_DATE) return "Una data della Stagione 2 non può essere salvata nell'archivio della Fase 1.";
-    const lastSeason1Date = new Date(Date.parse(`${SEASON_2_START_DATE}T00:00:00.000Z`) - DAY_MS * 2)
-      .toISOString().slice(0, 10);
-    const breakDate = new Date(Date.parse(`${SEASON_2_START_DATE}T00:00:00.000Z`) - DAY_MS)
+    const lastSeason1Date = SEASON_1_END_DATE;
+    const breakDate = new Date(Date.parse(`${SEASON_1_END_DATE}T00:00:00.000Z`) + DAY_MS)
       .toISOString().slice(0, 10);
     if (data > lastSeason1Date && !(allowExistingSeason1BreakDate && data === breakDate)) {
       return `La Fase 1 si è conclusa il ${lastSeason1Date}; le nuove giornate devono rispettare questa data.`;

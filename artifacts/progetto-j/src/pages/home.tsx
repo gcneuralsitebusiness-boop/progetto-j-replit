@@ -14,8 +14,7 @@ import { Delta } from "@/components/Delta";
 import { PulseTrace } from "@/components/PulseTrace";
 import { SiteFooter } from "@/components/SiteFooter";
 import { FASE1_DATA } from "@/data/fase1";
-import { SEASON_2_START_DATE } from "@/lib/seasons";
-import { dayPath } from "@/lib/seasons";
+import { dayPath, SEASON_1_END_DATE, SEASON_2_START_DATE } from "@/lib/seasons";
 
 // Update this value manually when a new verified weigh-in is available.
 const CURRENT_WEIGHT_KG = 83.4;
@@ -167,6 +166,12 @@ export default function Home() {
   );
   const latest = sortedEntries.at(-1);
   const today = romeToday();
+  const seasonStartLabel = new Intl.DateTimeFormat("it-IT", {
+    day: "numeric",
+    month: "long",
+    timeZone: "UTC",
+  }).format(new Date(`${SEASON_2_START_DATE}T12:00:00Z`));
+  const isSeasonPause = today > SEASON_1_END_DATE && today < SEASON_2_START_DATE;
   const days = today < SEASON_2_START_DATE
     ? 1
     : Math.min(Math.max(latest?.numero ?? 0, seasonDayForDate(today)), 180);
@@ -187,8 +192,13 @@ export default function Home() {
               <span>Oggi documento la risalita. Ogni giorno, senza nascondere niente.</span>
             </h1>
             <p className="season-home__mono season-home__hero-meta" data-testid="text-current-season-day">
-              Project J · la mia trasformazione documentata ogni giorno, dati veri inclusi · Giorno {days}
+              Project J · la mia trasformazione documentata ogni giorno, dati veri inclusi · {today < SEASON_2_START_DATE ? `Giorno 1 · dal ${seasonStartLabel}` : `Giorno ${days}`}
             </p>
+            {isSeasonPause && (
+              <p className="season-home__mono season-home__hero-meta" role="status" data-testid="status-season-pause">
+                La Stagione 2 inizia il {seasonStartLabel}. In questi giorni non viene creata una nuova giornata.
+              </p>
+            )}
           </div>
         </section>
 

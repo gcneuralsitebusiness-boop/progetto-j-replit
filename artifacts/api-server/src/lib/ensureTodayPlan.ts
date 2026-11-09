@@ -1,4 +1,4 @@
-import { SEASON_2_START_DATE } from "@workspace/api-zod/seasons";
+import { SEASON_1_END_DATE, SEASON_2_START_DATE } from "@workspace/api-zod/seasons";
 
 const MAX_BACKFILL_DAYS = 30;
 const DAY_MS = 86_400_000;
@@ -53,9 +53,8 @@ export function planDaysToCreate(
     });
   }
 
-  // November 6 is the one-day break before Season 2 starts on November 7.
-  const lastSeason1Date = addDays(SEASON_2_START_DATE, -2);
-  if (today > lastSeason1Date) return [];
+  // Season 1 remains closed after November 5; November 6–8 have no season.
+  if (today > SEASON_1_END_DATE) return [];
 
   const lastDate = season1.maxData ?? today;
   const gap = Math.max(0, daysBetween(lastDate, today));
@@ -65,7 +64,7 @@ export function planDaysToCreate(
   for (let offset = 1; offset <= daysToCreate; offset++) {
     const data = addDays(lastDate, offset);
     const numero = season1.maxNumero + offset;
-    if (data > lastSeason1Date || numero > 180) break;
+    if (data > SEASON_1_END_DATE || numero > 180) break;
     planned.push({ fase: 1, numero, data });
   }
 

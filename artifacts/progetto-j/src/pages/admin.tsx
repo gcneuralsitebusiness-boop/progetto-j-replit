@@ -18,7 +18,7 @@ import { useUpload, getPhotoUrl } from "@workspace/object-storage-web";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
 import { assertEntrySaved, buildEntryPayload } from "@/lib/entry-save";
-import { cardSeasonQuery, type Fase } from "@/lib/seasons";
+import { cardSeasonQuery, SEASON_1_END_DATE, SEASON_2_START_DATE, type Fase } from "@/lib/seasons";
 
 const AnalyticsTab = lazy(() =>
   import("@/components/admin/AnalyticsTab").then((module) => ({ default: module.AnalyticsTab })),
@@ -1241,6 +1241,12 @@ function OggiTab({ onSwitchTab }: { onSwitchTab: (tab: string, target?: DiaryTar
   }
 
   const todayLabel = new Date(dashboard.todayDate + "T12:00:00").toLocaleDateString("it-IT", { weekday: "long", day: "numeric", month: "long" }).toUpperCase();
+  const isSeasonPause = dashboard.todayDate > SEASON_1_END_DATE && dashboard.todayDate < SEASON_2_START_DATE;
+  const seasonStartLabel = new Intl.DateTimeFormat("it-IT", {
+    day: "numeric",
+    month: "long",
+    timeZone: "UTC",
+  }).format(new Date(`${SEASON_2_START_DATE}T12:00:00Z`));
   const todayCard = dailyEntries?.find((entry) => entry.fase === 2 && entry.numero === dashboard.todayEntry?.numero);
   const todayCardImage = todayCard?.foto ? (getPhotoUrl(todayCard.foto) ?? todayCard.foto) : null;
 
@@ -1270,6 +1276,10 @@ function OggiTab({ onSwitchTab }: { onSwitchTab: (tab: string, target?: DiaryTar
               COMPLETA IL GIORNO {dashboard.todayEntry.numero}
             </button>
           )
+        ) : isSeasonPause ? (
+          <AdminStatus>
+            Nessuna giornata da creare oggi. La Stagione 2 inizia il {seasonStartLabel}.
+          </AdminStatus>
         ) : (
           <button
             onClick={() => onSwitchTab("diario")}
