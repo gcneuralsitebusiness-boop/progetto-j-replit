@@ -251,11 +251,20 @@
 .season-home { background:var(--bg); color:var(--text); }
 .season-home__wrap { width:min(100% - 40px, 1050px); margin-inline:auto; }
 .season-home__mono { font-family:var(--app-font-mono); font-size:13px; letter-spacing:.1em; text-transform:uppercase; }
-.season-home__hero { min-height:min(760px, 100svh); display:flex; align-items:center; padding:116px 0 72px; border-bottom:1px solid var(--lines); }
+.season-home__hero { min-height:min(800px, 100svh); display:flex; align-items:center; padding:116px 0 64px; border-bottom:1px solid var(--lines); }
+.season-home__hero-inner { display:flex; flex-direction:column; align-items:center; text-align:center; }
 .season-home__hero-label,.season-home__eyebrow { color:var(--grey); }
-.season-home__hero-title { display:grid; gap:4px; margin:28px 0 24px; font:400 clamp(45px, 11.5vw, 112px)/.9 'Bebas Neue',sans-serif; letter-spacing:.01em; }
-.season-home__hero-title span:nth-child(2) { color:var(--accent); }
-.season-home__hero-meta { max-width:780px; color:var(--grey); line-height:1.8; text-transform:none; letter-spacing:.025em; }
+.season-home__hero-counter { margin:18px 0 0; color:var(--grey); font-variant-numeric:tabular-nums; letter-spacing:.2em; }
+.season-home__hero-number { margin:22px 0 0; color:var(--accent); font:400 clamp(168px, 34vw, 380px)/.76 'Bebas Neue',sans-serif; font-variant-numeric:tabular-nums; letter-spacing:-.045em; }
+.season-home__hero-copy { display:grid; gap:4px; max-width:760px; margin:24px 0 0; font-size:clamp(16px, 2vw, 20px); line-height:1.5; }
+.season-home__hero-meta { max-width:780px; margin:14px 0 0; color:var(--grey); line-height:1.8; text-transform:none; letter-spacing:.025em; }
+.season-home__hero-pause { max-width:680px; margin:6px 0 0; color:var(--grey); line-height:1.7; text-transform:none; letter-spacing:.025em; }
+.season-home__hero-progress { width:min(100%, 560px); margin:30px auto 0; text-align:left; }
+.season-home__hero-progress-labels { display:flex; justify-content:space-between; gap:12px; margin-bottom:10px; color:var(--grey); font-size:11px; letter-spacing:.14em; }
+.season-home__hero-track { height:4px; overflow:hidden; background:var(--lines); }
+.season-home__hero-fill { height:100%; background:var(--accent); transition:width var(--dur-slow) var(--ease-out); }
+.season-home__hero-cta { margin-top:30px; border-color:var(--accent); background:var(--accent); color:var(--bg); }
+.season-home__hero-cta:hover { border-color:var(--text); background:transparent; color:var(--text); }
 .season-home__section { padding:72px 0; border-bottom:1px solid var(--lines); }
 .season-home__section-title { margin:8px 0 26px; font:400 clamp(38px,8vw,74px)/.9 'Bebas Neue',sans-serif; }
 .season-home__pact { padding-block:64px 70px; }
@@ -320,8 +329,8 @@
 @keyframes season-home-pulse { from { opacity:.35; } to { opacity:.8; } }
 @media(min-width:700px) {
  .season-home__wrap { width:min(100% - 96px, 1050px); }
- .season-home__hero { min-height:760px; }
- .season-home__hero-title { max-width:1080px; }
+ .season-home__hero { min-height:800px; }
+ .season-home__hero-number { font-size:clamp(260px, 32vw, 400px); }
  .season-home__proof-grid { grid-template-columns:1fr 1fr; }
  .season-home__proof-stat { min-height:170px; padding:28px; }
  .season-home__gates .season-home__wrap { grid-template-columns:repeat(3,1fr); }
@@ -334,6 +343,13 @@
  .season-home__feed { padding:30px; }
  .season-home__archive-grid { grid-template-columns:repeat(4,1fr); }
  .season-home__archive-stat:not(:last-child) { border-right:1px solid var(--lines); padding-right:16px; }
+}
+@media(max-width:520px) {
+ .season-home__hero { min-height:min(780px, 100svh); padding:112px 0 48px; }
+ .season-home__hero-number { margin-top:18px; font-size:clamp(152px, 43vw, 220px); }
+ .season-home__hero-copy { margin-top:20px; font-size:16px; }
+ .season-home__hero-progress { margin-top:26px; }
+ .season-home__hero-progress-labels { font-size:10px; letter-spacing:.08em; }
 }
 @media(prefers-reduced-motion:reduce) {
  .season-home__article-skeletons span { animation:none; }

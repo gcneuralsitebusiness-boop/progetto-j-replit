@@ -175,6 +175,9 @@ export default function Home() {
   const days = today < SEASON_2_START_DATE
     ? 1
     : Math.min(Math.max(latest?.numero ?? 0, seasonDayForDate(today)), 180);
+  const progressDays = today < SEASON_2_START_DATE ? 0 : days;
+  const remainingDays = Math.max(180 - progressDays, 0);
+  const progressPercent = (progressDays / 180) * 100;
   const startingWeight = JOURNEY_START_WEIGHT_KG.toLocaleString("it-IT");
   const currentWeight = CURRENT_WEIGHT_KG.toLocaleString("it-IT", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
@@ -184,21 +187,53 @@ export default function Home() {
     <div className="season-home season-root min-h-[100dvh]" data-season="2">
       <main>
         <section className="season-home__hero" aria-labelledby="home-title">
-          <div className="season-home__wrap">
+          <div className="season-home__wrap season-home__hero-inner">
             <p className="season-home__mono season-home__hero-label">PROJECT J · STAGIONE 2</p>
-            <h1 id="home-title" className="season-home__hero-title">
+            <p className="season-home__mono season-home__hero-counter">
+              GIORNO {String(days).padStart(3, "0")} / 180
+            </p>
+            <h1
+              id="home-title"
+              className="season-home__hero-number"
+              aria-label={`Giorno ${days}`}
+              data-testid="text-current-season-day"
+            >
+              {String(days).padStart(3, "0")}
+            </h1>
+            <p className="season-home__hero-copy">
               <span>130 chili. Dipendente. Una vita finita a 20 anni.</span>
               <span>Battere la dipendenza mi ha insegnato a combattere — non il contrario.</span>
               <span>Oggi documento la risalita. Ogni giorno, senza nascondere niente.</span>
-            </h1>
-            <p className="season-home__mono season-home__hero-meta" data-testid="text-current-season-day">
-              Project J · la mia trasformazione documentata ogni giorno, dati veri inclusi · {today < SEASON_2_START_DATE ? `Giorno 1 · dal ${seasonStartLabel}` : `Giorno ${days}`}
+            </p>
+            <p className="season-home__mono season-home__hero-meta" data-testid="text-current-season-status">
+              {today < SEASON_2_START_DATE
+                ? `Giorno 1 · dal ${seasonStartLabel}`
+                : `Project J · la mia trasformazione documentata ogni giorno, dati veri inclusi · Giorno ${days}`}
             </p>
             {isSeasonPause && (
-              <p className="season-home__mono season-home__hero-meta" role="status" data-testid="status-season-pause">
+              <p className="season-home__mono season-home__hero-pause" role="status" data-testid="status-season-pause">
                 La Stagione 2 inizia il {seasonStartLabel}. In questi giorni non viene creata una nuova giornata.
               </p>
             )}
+            <div className="season-home__hero-progress">
+              <div className="season-home__hero-progress-labels season-home__mono">
+                <span>STAGIONE 2</span>
+                <span>{remainingDays} GIORNI RIMANENTI</span>
+              </div>
+              <div
+                className="season-home__hero-track"
+                role="progressbar"
+                aria-label="Avanzamento della Stagione 2"
+                aria-valuemin={0}
+                aria-valuemax={180}
+                aria-valuenow={progressDays}
+              >
+                <div className="season-home__hero-fill" style={{ width: `${progressPercent}%` }} />
+              </div>
+            </div>
+            <Link href="/journaling?stagione=2" className="season-home__link season-home__hero-cta" data-testid="link-hero-diario">
+              APRI IL DIARIO
+            </Link>
           </div>
         </section>
 
