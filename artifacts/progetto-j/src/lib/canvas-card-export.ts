@@ -1,4 +1,5 @@
 import { stripHtml } from "@/lib/strip-html";
+import { getSeasonAccentColor } from "@/lib/seasons";
 
 export const CARD_WIDTH = 1080;
 export const CARD_HEIGHTS = { feed: 1350, story: 1920 } as const;
@@ -587,7 +588,7 @@ export async function downloadMinimalCanvasCard({
     }
   }
   setFont(ctx, 520, "Bebas Neue");
-  ctx.fillStyle = fase === 2 ? "#3DDC84" : CARD_TOKENS.red;
+  ctx.fillStyle = fase === 2 ? getSeasonAccentColor(2) : CARD_TOKENS.red;
   ctx.textAlign = "center";
   ctx.fillText(String(dayNumber).padStart(3, "0"), CARD_WIDTH / 2, 1115);
   setFont(ctx, 64, "JetBrains Mono");

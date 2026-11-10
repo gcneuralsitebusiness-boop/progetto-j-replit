@@ -2,6 +2,7 @@ import { Link } from "wouter";
 import { useGetSiteContent } from "@workspace/api-client-react";
 import { Cross } from "@/components/Cross";
 import { EmailCapture } from "@/components/EmailCapture";
+import { NEWSLETTER_ENABLED } from "@/constants/feature-flags";
 
 export function SiteFooter() {
   const { data: siteContent } = useGetSiteContent();
@@ -9,9 +10,7 @@ export function SiteFooter() {
 
   return (
     <>
-      <div id="email-capture">
-        <EmailCapture />
-      </div>
+      {NEWSLETTER_ENABLED && <div id="email-capture"><EmailCapture /></div>}
       <footer className="border-t border-border py-12 mt-12 w-full">
         <div className="max-w-5xl mx-auto px-5 sm:px-6 flex flex-col items-center gap-6">
           <Cross />
@@ -23,7 +22,7 @@ export function SiteFooter() {
             <Link href="/journaling" className="hover:text-primary transition-colors">Diario</Link>
             <Link href="/statistiche" className="hover:text-primary transition-colors">Statistiche</Link>
             <Link href="/fase-1" className="hover:text-primary transition-colors">Stagione 1</Link>
-            <Link href="/articoli" className="hover:text-primary transition-colors">Articoli</Link>
+            <Link href="/articoli" className="hover:text-primary transition-colors">Scritti</Link>
             <Link href="/chi-sono" className="hover:text-primary transition-colors">Chi sono</Link>
             <Link href="/privacy" className="hover:text-primary transition-colors">Privacy</Link>
             <Link href="/termini" className="hover:text-primary transition-colors">Termini</Link>

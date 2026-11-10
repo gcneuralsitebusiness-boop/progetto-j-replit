@@ -45,7 +45,7 @@ export function DayCard({ entry, featured = false, hookOnly = false }: DayCardPr
           <span className="day-progress-ring" aria-hidden="true" />
           <div>
             <h3 className="font-serif text-[26px] tracking-wider">GIORNATA IN CORSO</h3>
-            <p className="mt-2 font-mono text-[11px] uppercase tracking-wider text-muted-foreground">Attendi completamento</p>
+            <p className="mt-2 font-mono text-[13px] uppercase tracking-wider text-muted-foreground">Attendi completamento</p>
           </div>
         </article>
       </Link>
@@ -70,6 +70,48 @@ export function DayCard({ entry, featured = false, hookOnly = false }: DayCardPr
   if (entry.entrate != null) stats.push({ label: "ENTRATE", value: entry.entrate, prefix: "€", income: true });
   if (entry.uscite != null) stats.push({ label: "USCITE", value: entry.uscite, prefix: "€" });
 
+  if (!hasPhoto) {
+    return (
+      <Link href={href} className="block" aria-label={`Apri la giornata ${entry.numero}`}>
+        <article className="group border border-border bg-card p-5 transition-colors hover:border-primary">
+          <header className="flex flex-wrap items-baseline justify-between gap-3 border-b border-border pb-4">
+            <h3 className="font-serif text-[36px] leading-none text-primary bebas tracking-wide">
+              GIORNO {padDay(entry.numero)}
+            </h3>
+            <time className="font-mono text-[13px] uppercase tracking-[0.12em] text-muted-foreground">
+              {format(new Date(entry.data), "d MMM yyyy", { locale: it })}
+            </time>
+          </header>
+
+          {stats.length > 0 ? (
+            <dl className="mt-4 grid grid-cols-2 gap-x-5 gap-y-4 border-b border-border pb-4 sm:grid-cols-3">
+              {stats.map((stat) => (
+                <div key={stat.label}>
+                  <dt className="font-mono text-[13px] uppercase tracking-[0.08em] text-muted-foreground">
+                    {stat.label}
+                  </dt>
+                  <dd className={`mt-1 font-sans text-[15px] tabular-nums ${stat.income ? "text-money" : "text-foreground"}`}>
+                    {stat.prefix ?? ""}
+                    {stat.value.toLocaleString("it-IT", { maximumFractionDigits: 1 })}
+                    {stat.suffix ? ` ${stat.suffix}` : ""}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          ) : (
+            <p className="mt-4 border-b border-border pb-4 font-mono text-[13px] uppercase tracking-[0.08em] text-muted-foreground">
+              Nessun dato registrato
+            </p>
+          )}
+
+          <span className="mt-4 block font-mono text-[13px] uppercase tracking-[0.12em] text-primary">
+            Apri giornata
+          </span>
+        </article>
+      </Link>
+    );
+  }
+
   return (
     <Link href={href} className="block">
     <article
@@ -79,21 +121,12 @@ export function DayCard({ entry, featured = false, hookOnly = false }: DayCardPr
     >
       {/* Photo header */}
       <div className="relative h-48 sm:h-56 md:h-64 overflow-hidden">
-        {hasPhoto ? (
-          <img
-            src={getPhotoUrl(cardImage) ?? cardImage ?? undefined}
-            alt={`Immagine del giorno ${entry.numero}`}
-            loading="lazy"
-            className="w-full h-full object-cover grayscale-[20%] contrast-110 transition-transform duration-700 group-hover:scale-[1.05]"
-          />
-        ) : (
-          <div className="relative h-full w-full border border-iron bg-[#0A0A0A]">
-            <div className="crosshatch absolute inset-0 opacity-30" />
-            <span className="absolute inset-0 flex items-center justify-center px-4 text-center text-[11px] font-sans uppercase tracking-[0.2em] text-[#3A3A3A]">
-              NESSUNA IMMAGINE — SOLO IL LAVORO
-            </span>
-          </div>
-        )}
+        <img
+          src={getPhotoUrl(cardImage) ?? cardImage ?? undefined}
+          alt={`Immagine del giorno ${entry.numero}`}
+          loading="lazy"
+          className="w-full h-full object-cover grayscale-[20%] contrast-110 transition-transform duration-700 group-hover:scale-[1.05]"
+        />
         <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent" />
         <div className="absolute top-4 right-4">
           <MilestoneBadge day={entry.numero} />

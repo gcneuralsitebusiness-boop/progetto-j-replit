@@ -1,4 +1,5 @@
 import { stripHtml } from "@/lib/strip-html";
+import { getSeasonAccentColor } from "@/lib/seasons";
 
 export const CARD_WIDTH = 1080;
 export const CARD_HEIGHTS = { feed: 1350, story: 1920 } as const;
@@ -259,7 +260,7 @@ export async function renderDailyCard(data: DailyCardData): Promise<HTMLCanvasEl
   if (!ctx) throw new Error("Canvas 2D non disponibile");
 
   const { entry, variant } = data;
-  const accent = entry.fase === 2 ? "#3DDC84" : CARD_RED;
+  const accent = entry.fase === 2 ? getSeasonAccentColor(2) : CARD_RED;
   const image = await loadImage(data.photoUrl);
   const hasImage = Boolean(image);
   ctx.fillStyle = BLACK;

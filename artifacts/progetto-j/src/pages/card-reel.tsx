@@ -23,7 +23,7 @@ import CardCustomizer, {
 
 const CARD_W = 1080;
 const CARD_H = 1920;
-const GREEN = "#3DDC84";
+const GREEN = "var(--accent-s2)";
 const BLACK = "#0A0A0A";
 const WHITE = "#E8E4DE";
 const GREY = "#6E6A65";

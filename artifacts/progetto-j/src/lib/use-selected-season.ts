@@ -20,6 +20,7 @@ export function useSelectedSeason(): [SeasonNumber, (season: SeasonNumber) => vo
     params.set("stagione", String(next));
     window.history.pushState({}, "", `${window.location.pathname}?${params.toString()}`);
     setSeason(next);
+    window.dispatchEvent(new Event("pj:season-change"));
   }, []);
 
   return [season, selectSeason];

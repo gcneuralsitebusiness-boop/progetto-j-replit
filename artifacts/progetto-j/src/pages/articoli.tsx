@@ -59,9 +59,9 @@ export default function Articoli() {
     <div className="min-h-screen pt-20 pb-20 max-w-5xl mx-auto px-5 sm:px-6">
       <Reveal>
         <div className="mb-6">
-          <span className="page-label">SCRITTI</span>
+          <span className="page-label" style={{ fontSize: 13 }}>SCRITTI</span>
           <h1 className="font-serif text-[clamp(56px,12vw,112px)] leading-[0.85] tracking-wide bebas text-foreground mt-2">
-            ARTICOLI
+            SCRITTI
           </h1>
         </div>
       </Reveal>
@@ -79,7 +79,7 @@ export default function Articoli() {
             <button
               key={cat}
               onClick={() => setFilter(cat)}
-              className={`shrink-0 min-h-10 text-[11px] font-sans uppercase tracking-[0.15em] px-3 py-1.5 border transition-colors ${
+              className={`shrink-0 min-h-10 text-[13px] font-sans uppercase tracking-[0.15em] px-3 py-1.5 border transition-colors ${
                 filter === cat ? "bg-primary text-primary-foreground border-primary" : "bg-transparent text-muted-foreground border-border hover:border-iron hover:text-iron"
               }`}
             >
@@ -97,7 +97,7 @@ export default function Articoli() {
           </div>
         ) : filtered.length === 0 ? (
           <div className="col-span-full text-center py-12 text-muted-foreground font-sans text-[14px] uppercase tracking-[0.2em]">
-            Gli articoli arrivano presto.
+            Gli scritti arrivano presto.
           </div>
         ) : (
           <>
@@ -116,7 +116,7 @@ export default function Articoli() {
                     )}
                     <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-[#0A0A0A]/60 to-transparent" />
                     <div className="relative p-6 sm:p-8">
-                      <span className="inline-flex border border-border px-2 py-1 text-[10px] font-sans uppercase tracking-[0.2em] text-muted-foreground">
+                      <span className="inline-flex border border-border px-2 py-1 text-[13px] font-sans uppercase tracking-[0.2em] text-muted-foreground">
                         {normalizeArticleCategory(featuredArticle.categoria)}
                       </span>
                       <h3 className="mt-3 max-w-[600px] font-serif text-[clamp(36px,6vw,56px)] leading-[0.9] text-foreground uppercase bebas transition-colors group-hover:text-primary">
@@ -125,7 +125,7 @@ export default function Articoli() {
                       <p className="mt-3 max-w-[600px] truncate text-[14px] font-sans text-muted-foreground">
                         {excerpt(featuredArticle.contenuto, 100)}
                       </p>
-                      <span className="mt-4 inline-flex items-center gap-1.5 text-[11px] font-sans uppercase tracking-[0.15em] text-primary">
+                      <span className="mt-4 inline-flex items-center gap-1.5 text-[13px] font-sans uppercase tracking-[0.15em] text-primary">
                         {readingTime(featuredArticle.contenuto)} min di lettura <ArrowRight size={13} aria-hidden="true" />
                       </span>
                     </div>
@@ -158,7 +158,7 @@ export default function Articoli() {
                             ) : (
                               <div className="absolute inset-0 h-full w-full border border-iron bg-[#0A0A0A]">
                                 <div className="crosshatch absolute inset-0 opacity-30" />
-                                <span className="absolute inset-0 flex items-center justify-center text-[11px] font-sans uppercase tracking-[0.2em] text-[#3A3A3A]">
+                                <span className="absolute inset-0 flex items-center justify-center text-[13px] font-sans uppercase tracking-[0.2em] text-[#3A3A3A]">
                                   NESSUNA IMMAGINE
                                 </span>
                               </div>
@@ -167,10 +167,10 @@ export default function Articoli() {
 
                           <div className="p-5 flex flex-col flex-1">
                             <div className="flex items-center justify-between mb-3">
-                              <span className="text-[10px] font-sans uppercase tracking-[0.2em] border border-border px-2 py-1 text-muted-foreground">
+                              <span className="text-[13px] font-sans uppercase tracking-[0.2em] border border-border px-2 py-1 text-muted-foreground">
                                 {normalizeArticleCategory(a.categoria)}
                               </span>
-                              <span className="text-[11px] font-sans text-muted-foreground">
+                              <span className="text-[13px] font-sans text-muted-foreground">
                                 {format(new Date(a.data), "d MMM yyyy", { locale: it })}
                               </span>
                             </div>
@@ -183,7 +183,7 @@ export default function Articoli() {
                               {ex}
                             </p>
 
-                            <span className="inline-flex items-center gap-1.5 text-[11px] font-sans uppercase tracking-[0.15em] text-primary">
+                            <span className="inline-flex items-center gap-1.5 text-[13px] font-sans uppercase tracking-[0.15em] text-primary">
                               {minutes} min di lettura <ArrowRight size={13} aria-hidden="true" />
                             </span>
                           </div>

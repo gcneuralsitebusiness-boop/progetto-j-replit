@@ -283,7 +283,7 @@ export default function Home() {
         <section className="season-home__section season-home__now" aria-labelledby="now-title">
           <div className="season-home__wrap">
             <h2 id="now-title" className="season-home__section-title">ADESSO</h2>
-            <Comparison entries={sortedEntries} />
+            {sortedEntries.length > 1 && <Comparison entries={sortedEntries} />}
             <div className="season-home__now-grid graph-paper">
               <section className="season-home__feed" aria-labelledby="latest-title">
                 <h3 id="latest-title" className="season-home__subheading">ULTIMI GIORNI</h3>

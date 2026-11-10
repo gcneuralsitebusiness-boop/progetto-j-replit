@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
+import { NEWSLETTER_ENABLED } from "@/constants/feature-flags";
 
 export function EmailCapture() {
   const [, setLocation] = useLocation();
@@ -30,6 +31,8 @@ export function EmailCapture() {
       setIsSubmitting(false);
     }
   };
+
+  if (!NEWSLETTER_ENABLED) return null;
 
   return (
     <section className="w-full border-y border-border bg-[#0A0A0A] px-5 py-16">

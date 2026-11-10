@@ -1,6 +1,14 @@
 export { SEASON_1_END_DATE, SEASON_2_START_DATE } from "@workspace/api-zod/seasons";
 
 export type Fase = 1 | 2;
+export function getSeasonAccentColor(fase: Fase): string {
+  const token = getComputedStyle(document.documentElement)
+    .getPropertyValue(`--accent-s${fase}`)
+    .trim();
+  if (!token) throw new Error(`Token accento stagione ${fase} non disponibile`);
+  return token;
+}
+
 export const seasonParams = (fase: number) => fase === 2 ? { fase: 2 as const } : undefined;
 export const dayPath = (numero: number, fase = 1) => `${fase === 2 ? "/fase-2" : ""}/giorno/${numero}`;
 export const cardSeasonQuery = (fase = 1) => fase === 2 ? "?fase=2" : "";

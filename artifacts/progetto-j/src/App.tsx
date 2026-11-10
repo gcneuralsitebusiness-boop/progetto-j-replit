@@ -109,7 +109,7 @@ function PageMetadata() {
       "/obiettivi": { title: "Obiettivi — Progetto J", description: "Obiettivi del ciclo in corso, stato avanzamento e tappe di Progetto J." },
       "/chi-sono": { title: "Chi sono — Progetto J", description: "La storia, il metodo e la persona dietro Progetto J." },
       "/viaggio": { title: "Il viaggio di J — Progetto J", description: "Otto paesi visitati, quattro da prendere. Quattro discipline, quattro posti dove sono nate." },
-      "/articoli": { title: "Articoli — Progetto J", description: "Riflessioni, metodo e lezioni raccolte durante il percorso Progetto J." },
+      "/articoli": { title: "Scritti — Progetto J", description: "Riflessioni, metodo e lezioni raccolte durante il percorso Progetto J." },
       "/coaching": { title: "Coaching — Progetto J", description: "Un protocollo di 12 settimane basato su allenamento, nutrizione, sonno e dati." },
       "/social": { title: "Social — Progetto J", description: "Segui Progetto J sui canali social e contatta il progetto." },
       "/privacy": { title: "Privacy — Progetto J", description: "Come Progetto J gestisce analytics anonimi, newsletter e richieste di contatto." },

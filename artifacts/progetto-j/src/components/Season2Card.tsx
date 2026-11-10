@@ -28,16 +28,16 @@ export function Season2Card({ numero }: { numero: number }) {
     return () => { active = false; if (url) URL.revokeObjectURL(url); };
   }, [entry, format]);
   return (
-    <main className="min-h-screen bg-[#0A0A0A] px-5 pb-16 pt-28 text-[#E8E4DE]">
+    <main className="season-root min-h-screen bg-[#0A0A0A] px-5 pb-16 pt-28 text-[#E8E4DE]" data-season="2">
       <div className="mx-auto max-w-3xl">
-        <h1 className="font-serif text-[40px] text-[#3DDC84]">GIORNO {numero} · STAGIONE 2</h1>
+        <h1 className="font-serif text-[40px] text-[var(--accent)]">GIORNO {numero} · STAGIONE 2</h1>
         <div className="my-6 flex flex-wrap gap-4 text-[13px]">
           <label className="flex items-center gap-3">Formato
             <select aria-label="Formato card" value={format} onChange={(e) => setFormat(e.target.value as DailyCardFormat)} className="border border-[#E8E4DE] bg-[#0A0A0A] p-3 text-[13px]">
               <option value="feed">Feed 1080 × 1350</option><option value="story">Story 1080 × 1920</option>
             </select>
           </label>
-          {image && <a href={image} download={`progetto-j-fase-2-giorno-${numero}-${format}.png`} className="border border-[#3DDC84] px-5 py-3 text-[13px]">SCARICA CARD</a>}
+          {image && <a href={image} download={`progetto-j-fase-2-giorno-${numero}-${format}.png`} className="border border-[var(--accent)] px-5 py-3 text-[13px]">SCARICA CARD</a>}
         </div>
         {(isError || error) && <p role="alert" className="text-[15px]">Impossibile generare la card. Riprova.</p>}
         {!isError && !error && (isLoading || !image) && <p role="status" className="text-[15px]">Generazione card…</p>}

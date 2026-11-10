@@ -418,7 +418,7 @@ function LinkedArticles({ entryData }: { entryData: string }) {
   return (
     <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-[140px_1fr] gap-x-8 border-t border-iron py-10">
       <div className="font-sans text-[13px] uppercase tracking-[0.2em] text-muted-foreground md:sticky md:top-24 self-start mb-4 md:mb-0">
-        ARTICOLI
+        SCRITTI
       </div>
       <div className="flex flex-col gap-4">
         {matched.map((article) => (

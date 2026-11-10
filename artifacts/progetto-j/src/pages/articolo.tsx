@@ -84,9 +84,9 @@ export default function Articolo() {
         <div className="mb-6">
           <Link
             href="/articoli"
-            className="inline-flex items-center gap-2 text-[11px] font-sans uppercase tracking-[0.2em] text-muted-foreground hover:text-primary transition-colors"
+            className="inline-flex items-center gap-2 text-[13px] font-sans uppercase tracking-[0.2em] text-muted-foreground hover:text-primary transition-colors"
           >
-            <ArrowLeft size={13} /> Articoli
+            <ArrowLeft size={13} /> Scritti
           </Link>
         </div>
 

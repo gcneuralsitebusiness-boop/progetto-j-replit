@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, type CSSProperties } from "react";
 import { ScrollProgress } from "@/components/ScrollProgress";
 import { cn } from "@/lib/utils";
 
@@ -23,7 +23,7 @@ function NavLink({
   const isActive = location === href || isStatistics || (href !== "/" && location.startsWith(href));
   const baseClasses = cn(
     "text-[13px] font-sans uppercase tracking-[0.2em] transition-colors",
-    accent ? "text-[#B81D1D] hover:text-foreground" : isActive ? "nav-active text-foreground" : "text-muted-foreground hover:text-iron"
+    accent ? "text-[var(--accent)] hover:text-foreground" : isActive ? "nav-active text-foreground" : "text-muted-foreground hover:text-iron"
   );
 
   if (external) {
@@ -45,6 +45,7 @@ function NavLink({
 
 export function Navbar() {
   const [location] = useLocation();
+  const [headerSeason, setHeaderSeason] = useState<1 | 2>(() => getHeaderSeason(location));
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const menuRef = useRef<HTMLElement>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
@@ -59,6 +60,26 @@ export function Navbar() {
     { href: "/articoli", label: "SCRITTI" },
     { href: "/chi-sono", label: "Chi sono" },
   ];
+  const headerStyle = {
+    "--accent": headerSeason === 1 ? "var(--accent-s1)" : "var(--accent-s2)",
+    backgroundColor: hasScrolled ? "#0A0A0A" : "transparent",
+    borderBottom: `1px solid ${hasScrolled ? "rgba(245,240,232,0.12)" : "transparent"}`,
+    transition: "background-color 200ms linear, border-color 200ms linear",
+  } as CSSProperties;
+
+  useEffect(() => {
+    setHeaderSeason(getHeaderSeason(location));
+  }, [location]);
+
+  useEffect(() => {
+    const syncSeason = () => setHeaderSeason(getHeaderSeason(location));
+    window.addEventListener("popstate", syncSeason);
+    window.addEventListener("pj:season-change", syncSeason);
+    return () => {
+      window.removeEventListener("popstate", syncSeason);
+      window.removeEventListener("pj:season-change", syncSeason);
+    };
+  }, [location]);
 
   const updateUnderline = () => {
     const active = navigationItems.find((item) => location === item.href || location.startsWith(item.href));
@@ -124,17 +145,13 @@ export function Navbar() {
       <ScrollProgress />
       <header
         className="fixed top-0 w-full z-50"
-        style={{
-          backgroundColor: hasScrolled ? "#0A0A0A" : "transparent",
-          borderBottom: `1px solid ${hasScrolled ? "rgba(245,240,232,0.12)" : "transparent"}`,
-          transition: "background-color 200ms linear, border-color 200ms linear",
-        }}
+        style={headerStyle}
       >
         <div className="max-w-5xl mx-auto px-5 sm:px-6 h-16 flex items-center justify-between">
           <Link
             href="/"
-            className="font-serif text-[32px] text-primary leading-none bebas tracking-wide"
-            style={{ position: "relative", zIndex: 10000 }}
+            className="font-serif text-[32px] leading-none bebas tracking-wide"
+            style={{ position: "relative", zIndex: 10000, color: "var(--accent)" }}
           >
             J
           </Link>
@@ -153,7 +170,7 @@ export function Navbar() {
                 bottom: "-6px",
                 width: `${underline.width}px`,
                 height: "2px",
-                background: "#B81D1D",
+                background: "var(--accent)",
                 transform: `translateX(${underline.x}px) scaleX(${underline.visible ? 1 : 0})`,
                 transformOrigin: "left center",
                 transition: "transform var(--dur-base) var(--ease-out)",
@@ -164,7 +181,7 @@ export function Navbar() {
 
           <button
             ref={menuButtonRef}
-            className="lg:hidden min-h-11 min-w-11 inline-flex items-center justify-center text-foreground hover:text-primary transition-colors"
+            className="lg:hidden min-h-11 min-w-11 inline-flex items-center justify-center text-foreground hover:text-[var(--accent)] transition-colors"
             style={{ position: "relative", zIndex: 10000 }}
             onClick={() => setMobileMenuOpen((v) => !v)}
             aria-label={mobileMenuOpen ? "Chiudi menu" : "Apri menu"}
@@ -212,4 +229,12 @@ export function Navbar() {
       )}
     </>
   );
+}
+
+function getHeaderSeason(location: string): 1 | 2 {
+  if (location === "/fase-1" || location.startsWith("/giorno/")) return 1;
+  if (location === "/journaling" || location === "/diario") {
+    return new URLSearchParams(window.location.search).get("stagione") === "1" ? 1 : 2;
+  }
+  return 2;
 }
