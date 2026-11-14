@@ -6,6 +6,10 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from './adminEntry';
+export * from './adminGoalsResponse';
+export * from './adminGoalsResponseMonthlyMoney';
+export * from './adminGoalsResponseWeek';
 export * from './apiError';
 export * from './article';
 export * from './articleInput';
@@ -46,6 +50,7 @@ export * from './entryUpdateSollevamentoGamba';
 export * from './entryUpdateStato1pct';
 export * from './entryUpdateTipoAllenamento';
 export * from './entryUpdateTipoGiorno';
+export * from './getAdminEntryParams';
 export * from './getCurrentSeason200';
 export * from './getEntriesBulkTextParams';
 export * from './getEntryParams';
@@ -56,6 +61,7 @@ export * from './importEntriesBulkTextParams';
 export * from './listEntriesParams';
 export * from './listEntrySummariesParams';
 export * from './loginInput';
+export * from './monthlyMoneyGoal';
 export * from './notFoundResponse';
 export * from './nuovaTappaTasks';
 export * from './obiettivo';
@@ -74,6 +80,8 @@ export * from './pageUpdate';
 export * from './plannerAnnotation';
 export * from './plannerAnnotationInput';
 export * from './plannerLegacyNote';
+export * from './privateRoutineFields';
+export * from './routineFields';
 export * from './seasonFields';
 export * from './seasonFieldsFase';
 export * from './siteContent';
@@ -94,3 +102,4 @@ export * from './unauthorizedResponse';
 export * from './updateEntryParams';
 export * from './uploadUrlRequest';
 export * from './uploadUrlResponse';
+export * from './weeklyGoalResult';

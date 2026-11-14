@@ -10,9 +10,10 @@ import type { EntrySollevamentoGamba } from './entrySollevamentoGamba';
 import type { EntryStato1pct } from './entryStato1pct';
 import type { EntryTipoAllenamento } from './entryTipoAllenamento';
 import type { EntryTipoGiorno } from './entryTipoGiorno';
+import type { RoutineFields } from './routineFields';
 import type { SeasonFields } from './seasonFields';
 
-export type Entry = SeasonFields & ({
+export type Entry = SeasonFields & RoutineFields & ({
   id: number;
   /** Day number (1-180) */
   numero: number;

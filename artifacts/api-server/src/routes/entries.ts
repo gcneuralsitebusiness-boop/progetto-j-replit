@@ -3,6 +3,7 @@ import { and, desc, eq, ne, sql } from "drizzle-orm";
 import { db, giorniTable } from "@workspace/db";
 import { ensureTodayEntry } from "../lib/ensureToday";
 import { validateSeasonDay } from "../lib/entrySeasonRules";
+import { applySeason2AutomaticValues } from "../lib/entryAutomaticValues";
 import {
   CreateEntryBody,
   UpdateEntryBody,
@@ -183,15 +184,32 @@ const RANGES: Record<string, [number, number]> = {
   addominali: [0, 2000],
   squat: [0, 2000],
   stretchingMin: [0, 240],
+  shadowMinuti: [0, 1440],
+  dentiVolte: [0, 3],
   round: [0, 2000],
   entrate: [0, 100000],
   uscite: [0, 100000],
+  fondoEmergenza: [0, 100000],
+  investimento: [0, 100000],
+  kcalColazione: [0, 15000],
+  kcalPranzo: [0, 15000],
+  kcalCena: [0, 15000],
 };
-const INTEGER_FIELDS = new Set(["squat", "stretchingMin"]);
+const INTEGER_FIELDS = new Set([
+  "squat", "stretchingMin", "shadowMinuti", "dentiVolte", "pagineBibbia",
+  "pagineLibro", "kcalColazione", "kcalPranzo", "kcalCena",
+  "caroselliPubblicati", "youtubePubblicati",
+]);
+const NON_NEGATIVE_FIELDS = new Set([
+  "pagineBibbia", "pagineLibro", "caroselliPubblicati", "youtubePubblicati",
+]);
 
 const OPTIONAL_NUMERIC_FIELDS = new Set([
   "roundSparring", "roundPao", "roundTecnica", "oreLavoro", "risparmio", "entrateOnline",
   "videoPubblicati", "articoliPubblicati", "follower", "pagineLette", "minutiScrittura",
+  "shadowMinuti", "dentiVolte", "pagineBibbia", "pagineLibro",
+  "kcalColazione", "kcalPranzo", "kcalCena", "fondoEmergenza", "investimento",
+  "caroselliPubblicati", "youtubePubblicati",
   "kcal",
   "pasti",
   "acqua",
@@ -220,6 +238,12 @@ const OPTIONAL_BOOLEAN_FIELDS = new Set([
   "collo",
   "mobilita",
   "grapplingVuoto",
+  "allenamentoTecnica",
+  "allenamentoPesi",
+  "sparringFatto",
+  "diarioFatto",
+  "brainstormingArticoli",
+  "doccia",
 ]);
 
 const OPTIONAL_TEXT_FIELDS = new Set([
@@ -238,6 +262,7 @@ const OPTIONAL_TEXT_FIELDS = new Set([
   "stato1pct",
   "fronteSettimana",
   "nota1pct",
+  "libroAttuale",
   "fatto",
   "nonFatto",
   "cardTitolo",
@@ -246,6 +271,7 @@ const OPTIONAL_TEXT_FIELDS = new Set([
   "cardFeed",
   "cardStory",
 ]);
+const OPTIONAL_TIME_FIELDS = new Set(["lavoroInizio", "lavoroFine"]);
 
 function isValidIsoDate(value: string): boolean {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
@@ -289,6 +315,14 @@ function normalizeEntryBody(input: unknown): unknown {
     if (typeof value === "string" && value.trim() === "") normalized[field] = null;
   }
 
+  for (const field of OPTIONAL_TIME_FIELDS) {
+    if (!(field in normalized)) continue;
+    const value = normalized[field];
+    if (typeof value !== "string") continue;
+    const trimmed = value.trim();
+    normalized[field] = trimmed === "" ? null : trimmed.slice(0, 5);
+  }
+
   return normalized;
 }
 
@@ -303,6 +337,12 @@ function validateRanges(data: Record<string, unknown>): string | null {
     }
     if (num < min || num > max) {
       return `${field}: il valore ${num} è fuori dall'intervallo consentito (${min}–${max})`;
+    }
+  }
+  for (const field of NON_NEGATIVE_FIELDS) {
+    const value = data[field];
+    if (value != null && Number(value) < 0) {
+      return `${field}: il valore non può essere negativo`;
     }
   }
   return null;
@@ -344,7 +384,11 @@ router.post("/entries", async (req, res): Promise<void> => {
     return;
   }
 
-  const rangeError = validateRanges(parsed.data as Record<string, unknown>);
+  const entryValues = applySeason2AutomaticValues(
+    parsed.data.fase,
+    parsed.data as unknown as Record<string, unknown>,
+  ) as typeof parsed.data;
+  const rangeError = validateRanges(entryValues as Record<string, unknown>);
   if (rangeError) {
     res.status(400).json({ error: rangeError });
     return;
@@ -365,7 +409,7 @@ router.post("/entries", async (req, res): Promise<void> => {
       .where(and(eq(giorniTable.fase, parsed.data.fase), eq(giorniTable.data, parsed.data.data))).limit(1);
     if (existingDate) return { conflict: `La data ${parsed.data.data} è già usata dal giorno ${existingDate.numero} della Fase ${parsed.data.fase}.` };
     const [row] = await tx.insert(giorniTable).values({
-      ...parsed.data,
+      ...entryValues,
       tipoGiorno: automaticDayType(parsed.data.numero),
     }).returning();
     return row ? { row } : { conflict: `Il giorno ${parsed.data.numero} esiste già nella Fase ${parsed.data.fase}.` };
@@ -424,6 +468,14 @@ router.patch("/entries/:numero", async (req, res): Promise<void> => {
       .where(dayIdentity(fase, params.data.numero)).limit(1);
     if (!current) return { missing: true as const };
 
+    const entryValues = applySeason2AutomaticValues(
+      fase,
+      body.data as unknown as Record<string, unknown>,
+      current as unknown as Record<string, unknown>,
+    ) as typeof body.data;
+    const automaticRangeError = validateRanges(entryValues as Record<string, unknown>);
+    if (automaticRangeError) return { invalid: automaticRangeError };
+
     const nextDate = body.data.data ?? current.data;
     const identityError = validateSeasonDay(fase, params.data.numero, nextDate, nextDate === current.data);
     if (identityError) return { invalid: identityError };
@@ -438,7 +490,7 @@ router.patch("/entries/:numero", async (req, res): Promise<void> => {
     }
 
     const [row] = await tx.update(giorniTable).set({
-      ...body.data,
+      ...entryValues,
       tipoGiorno: automaticDayType(params.data.numero),
     }).where(dayIdentity(fase, params.data.numero)).returning();
     return row ? { row } : { missing: true as const };

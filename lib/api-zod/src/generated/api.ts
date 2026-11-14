@@ -53,45 +53,66 @@ export const listEntriesResponseOnePagineLetteMin = 0;
 
 export const listEntriesResponseOneMinutiScritturaMin = 0;
 
-export const listEntriesResponseTwoDataRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
-export const listEntriesResponseTwoPastiMax = 6;
+export const listEntriesResponseTwoShadowMinutiMin = 0;
+export const listEntriesResponseTwoShadowMinutiMax = 1440;
 
-export const listEntriesResponseTwoAcquaMin = 0;
-export const listEntriesResponseTwoAcquaMax = 20;
+export const listEntriesResponseTwoPagineBibbiaMin = 0;
 
-export const listEntriesResponseTwoAcquaAllenamentoMin = 0;
-export const listEntriesResponseTwoAcquaAllenamentoMax = 10;
+export const listEntriesResponseTwoPagineLibroMin = 0;
 
-export const listEntriesResponseTwoDurataMin = 0;
+export const listEntriesResponseTwoKcalColazioneMin = 0;
 
-export const listEntriesResponseTwoIntensitaMax = 5;
+export const listEntriesResponseTwoKcalPranzoMin = 0;
 
-export const listEntriesResponseTwoPlankMin = 0;
+export const listEntriesResponseTwoKcalCenaMin = 0;
 
-export const listEntriesResponseTwoEnergiaMax = 5;
+export const listEntriesResponseTwoFondoEmergenzaMin = 0;
 
-export const listEntriesResponseTwoSquatMin = 0;
-export const listEntriesResponseTwoSquatMax = 2000;
+export const listEntriesResponseTwoInvestimentoMin = 0;
 
-export const listEntriesResponseTwoStretchingMinMin = 0;
-export const listEntriesResponseTwoStretchingMinMax = 240;
+export const listEntriesResponseTwoCaroselliPubblicatiMin = 0;
 
-export const listEntriesResponseTwoNota1pctMax = 200;
+export const listEntriesResponseTwoYoutubePubblicatiMin = 0;
 
-export const listEntriesResponseTwoSintesiMax = 180;
+export const listEntriesResponseThreeDataRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
+export const listEntriesResponseThreePastiMax = 6;
 
-export const listEntriesResponseTwoAttritoMax = 280;
+export const listEntriesResponseThreeAcquaMin = 0;
+export const listEntriesResponseThreeAcquaMax = 20;
 
-export const listEntriesResponseTwoFattoMax = 280;
+export const listEntriesResponseThreeAcquaAllenamentoMin = 0;
+export const listEntriesResponseThreeAcquaAllenamentoMax = 10;
 
-export const listEntriesResponseTwoNonFattoMax = 280;
+export const listEntriesResponseThreeDurataMin = 0;
 
-export const listEntriesResponseTwoCardTitoloMax = 60;
+export const listEntriesResponseThreeIntensitaMax = 5;
 
-export const listEntriesResponseTwoCardSottotitoloMax = 24;
+export const listEntriesResponseThreePlankMin = 0;
 
-export const listEntriesResponseTwoCardOverlayMin = 30;
-export const listEntriesResponseTwoCardOverlayMax = 90;
+export const listEntriesResponseThreeEnergiaMax = 5;
+
+export const listEntriesResponseThreeSquatMin = 0;
+export const listEntriesResponseThreeSquatMax = 2000;
+
+export const listEntriesResponseThreeStretchingMinMin = 0;
+export const listEntriesResponseThreeStretchingMinMax = 240;
+
+export const listEntriesResponseThreeNota1pctMax = 200;
+
+export const listEntriesResponseThreeSintesiMax = 180;
+
+export const listEntriesResponseThreeAttritoMax = 280;
+
+export const listEntriesResponseThreeFattoMax = 280;
+
+export const listEntriesResponseThreeNonFattoMax = 280;
+
+export const listEntriesResponseThreeCardTitoloMax = 60;
+
+export const listEntriesResponseThreeCardSottotitoloMax = 24;
+
+export const listEntriesResponseThreeCardOverlayMin = 30;
+export const listEntriesResponseThreeCardOverlayMax = 90;
 
 
 
@@ -110,38 +131,55 @@ export const ListEntriesResponseItem = zod.object({
   "pagineLette": zod.number().min(listEntriesResponseOnePagineLetteMin).nullish(),
   "minutiScrittura": zod.number().min(listEntriesResponseOneMinutiScritturaMin).nullish()
 }).and(zod.object({
+  "shadowMinuti": zod.number().min(listEntriesResponseTwoShadowMinutiMin).max(listEntriesResponseTwoShadowMinutiMax).nullish(),
+  "allenamentoTecnica": zod.boolean().nullish(),
+  "allenamentoPesi": zod.boolean().nullish(),
+  "sparringFatto": zod.boolean().nullish(),
+  "pagineBibbia": zod.number().min(listEntriesResponseTwoPagineBibbiaMin).nullish(),
+  "pagineLibro": zod.number().min(listEntriesResponseTwoPagineLibroMin).nullish(),
+  "libroAttuale": zod.string().nullish(),
+  "diarioFatto": zod.boolean().nullish(),
+  "brainstormingArticoli": zod.boolean().nullish(),
+  "kcalColazione": zod.number().min(listEntriesResponseTwoKcalColazioneMin).nullish(),
+  "kcalPranzo": zod.number().min(listEntriesResponseTwoKcalPranzoMin).nullish(),
+  "kcalCena": zod.number().min(listEntriesResponseTwoKcalCenaMin).nullish(),
+  "fondoEmergenza": zod.number().min(listEntriesResponseTwoFondoEmergenzaMin).nullish(),
+  "investimento": zod.number().min(listEntriesResponseTwoInvestimentoMin).nullish(),
+  "caroselliPubblicati": zod.number().min(listEntriesResponseTwoCaroselliPubblicatiMin).nullish(),
+  "youtubePubblicati": zod.number().min(listEntriesResponseTwoYoutubePubblicatiMin).nullish()
+})).and(zod.object({
   "id": zod.number(),
   "numero": zod.number().describe('Day number (1-180)'),
-  "data": zod.string().regex(listEntriesResponseTwoDataRegExp).describe('ISO date string (YYYY-MM-DD)'),
+  "data": zod.string().regex(listEntriesResponseThreeDataRegExp).describe('ISO date string (YYYY-MM-DD)'),
   "kcal": zod.number().nullish(),
-  "pasti": zod.number().min(1).max(listEntriesResponseTwoPastiMax).nullish(),
+  "pasti": zod.number().min(1).max(listEntriesResponseThreePastiMax).nullish(),
   "alcol": zod.boolean().nullish(),
-  "acqua": zod.number().min(listEntriesResponseTwoAcquaMin).max(listEntriesResponseTwoAcquaMax).nullish(),
-  "acquaAllenamento": zod.number().min(listEntriesResponseTwoAcquaAllenamentoMin).max(listEntriesResponseTwoAcquaAllenamentoMax).nullish().describe('Liters of water consumed around training'),
+  "acqua": zod.number().min(listEntriesResponseThreeAcquaMin).max(listEntriesResponseThreeAcquaMax).nullish(),
+  "acquaAllenamento": zod.number().min(listEntriesResponseThreeAcquaAllenamentoMin).max(listEntriesResponseThreeAcquaAllenamentoMax).nullish().describe('Liters of water consumed around training'),
   "tipoAllenamento": zod.union([zod.literal('NESSUNO'),zod.literal('MMA'),zod.literal('MUAY THAI'),zod.literal('BJJ'),zod.literal('CALISTHENICS'),zod.literal('CORSA'),zod.literal('SPARRING'),zod.literal('MISTO'),zod.literal(null)]).nullish(),
-  "durata": zod.number().min(listEntriesResponseTwoDurataMin).nullish(),
-  "intensita": zod.number().min(1).max(listEntriesResponseTwoIntensitaMax).nullish(),
+  "durata": zod.number().min(listEntriesResponseThreeDurataMin).nullish(),
+  "intensita": zod.number().min(1).max(listEntriesResponseThreeIntensitaMax).nullish(),
   "tipoGiorno": zod.union([zod.literal('A'),zod.literal('B'),zod.literal('RECUPERO'),zod.literal(null)]).nullish(),
   "routineCompletata": zod.boolean().nullish(),
   "routineForza": zod.boolean().nullish(),
   "routineFlessioni": zod.string().nullish(),
   "routineTrazioni": zod.string().nullish(),
   "routineSquat": zod.string().nullish(),
-  "plank": zod.number().min(listEntriesResponseTwoPlankMin).nullish(),
+  "plank": zod.number().min(listEntriesResponseThreePlankMin).nullish(),
   "collo": zod.boolean().nullish(),
   "mobilita": zod.boolean().nullish(),
   "sollevamentoGamba": zod.union([zod.literal('ANCA'),zod.literal('PETTO'),zod.literal('TESTA'),zod.literal('OLTRE'),zod.literal(null)]).nullish(),
   "grapplingVuoto": zod.boolean().nullish(),
-  "energia": zod.number().min(1).max(listEntriesResponseTwoEnergiaMax).nullish(),
+  "energia": zod.number().min(1).max(listEntriesResponseThreeEnergiaMax).nullish(),
   "noteAllenamento": zod.string().nullish(),
   "sonno": zod.number().nullish().describe('Hours of sleep'),
   "flessioni": zod.number().nullish(),
   "addominali": zod.number().nullish(),
-  "squat": zod.number().min(listEntriesResponseTwoSquatMin).max(listEntriesResponseTwoSquatMax).nullish(),
-  "stretchingMin": zod.number().min(listEntriesResponseTwoStretchingMinMin).max(listEntriesResponseTwoStretchingMinMax).nullish(),
+  "squat": zod.number().min(listEntriesResponseThreeSquatMin).max(listEntriesResponseThreeSquatMax).nullish(),
+  "stretchingMin": zod.number().min(listEntriesResponseThreeStretchingMinMin).max(listEntriesResponseThreeStretchingMinMax).nullish(),
   "stato1pct": zod.union([zod.literal('spinto'),zod.literal('mantenuto'),zod.literal('crollato'),zod.literal(null)]).nullish(),
   "fronteSettimana": zod.union([zod.literal('corpo'),zod.literal('scrittura'),zod.literal('soldi'),zod.literal('social'),zod.literal(null)]).nullish(),
-  "nota1pct": zod.string().max(listEntriesResponseTwoNota1pctMax).nullish(),
+  "nota1pct": zod.string().max(listEntriesResponseThreeNota1pctMax).nullish(),
   "round": zod.number().nullish(),
   "km": zod.number().nullish(),
   "peso": zod.number().nullish().describe('Weight in kg'),
@@ -149,15 +187,15 @@ export const ListEntriesResponseItem = zod.object({
   "entrate": zod.number().nullish().describe('Daily income (€)'),
   "uscite": zod.number().nullish().describe('Daily expenses (€)'),
   "testo": zod.string().nullish().describe('Diary text'),
-  "sintesi": zod.string().max(listEntriesResponseTwoSintesiMax).nullish().describe('Short Instagram card summary'),
+  "sintesi": zod.string().max(listEntriesResponseThreeSintesiMax).nullish().describe('Short Instagram card summary'),
   "foto": zod.string().nullish().describe('Photo URL'),
-  "attrito": zod.string().max(listEntriesResponseTwoAttritoMax).nullish().describe('The main friction faced on this day'),
-  "fatto": zod.string().max(listEntriesResponseTwoFattoMax).nullish().describe('What was completed on this day'),
-  "nonFatto": zod.string().max(listEntriesResponseTwoNonFattoMax).nullish().describe('What was intentionally not completed on this day'),
-  "cardTitolo": zod.string().max(listEntriesResponseTwoCardTitoloMax).nullish().describe('Custom Instagram card title (falls back to day number)'),
-  "cardSottotitolo": zod.string().max(listEntriesResponseTwoCardSottotitoloMax).nullish().describe('Custom Instagram card subtitle'),
+  "attrito": zod.string().max(listEntriesResponseThreeAttritoMax).nullish().describe('The main friction faced on this day'),
+  "fatto": zod.string().max(listEntriesResponseThreeFattoMax).nullish().describe('What was completed on this day'),
+  "nonFatto": zod.string().max(listEntriesResponseThreeNonFattoMax).nullish().describe('What was intentionally not completed on this day'),
+  "cardTitolo": zod.string().max(listEntriesResponseThreeCardTitoloMax).nullish().describe('Custom Instagram card title (falls back to day number)'),
+  "cardSottotitolo": zod.string().max(listEntriesResponseThreeCardSottotitoloMax).nullish().describe('Custom Instagram card subtitle'),
   "cardImmagine": zod.string().nullish().describe('Custom Instagram card background image path'),
-  "cardOverlay": zod.number().min(listEntriesResponseTwoCardOverlayMin).max(listEntriesResponseTwoCardOverlayMax).nullish().describe('Card overlay intensity (30-90, default 58)'),
+  "cardOverlay": zod.number().min(listEntriesResponseThreeCardOverlayMin).max(listEntriesResponseThreeCardOverlayMax).nullish().describe('Card overlay intensity (30-90, default 58)'),
   "cardMostraParole": zod.boolean().nullish().describe('Show stats\/word count on the card (default true)'),
   "cardFeed": zod.string().nullish().describe('Persisted feed card PNG object path'),
   "cardStory": zod.string().nullish().describe('Persisted story card PNG object path'),
@@ -202,45 +240,71 @@ export const createEntryBodyOnePagineLetteMin = 0;
 
 export const createEntryBodyOneMinutiScritturaMin = 0;
 
-export const createEntryBodyTwoDataRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
-export const createEntryBodyTwoPastiMax = 6;
+export const createEntryBodyTwoShadowMinutiMin = 0;
+export const createEntryBodyTwoShadowMinutiMax = 1440;
 
-export const createEntryBodyTwoAcquaMin = 0;
-export const createEntryBodyTwoAcquaMax = 20;
+export const createEntryBodyTwoPagineBibbiaMin = 0;
 
-export const createEntryBodyTwoAcquaAllenamentoMin = 0;
-export const createEntryBodyTwoAcquaAllenamentoMax = 10;
+export const createEntryBodyTwoPagineLibroMin = 0;
 
-export const createEntryBodyTwoDurataMin = 0;
+export const createEntryBodyTwoKcalColazioneMin = 0;
 
-export const createEntryBodyTwoIntensitaMax = 5;
+export const createEntryBodyTwoKcalPranzoMin = 0;
 
-export const createEntryBodyTwoPlankMin = 0;
+export const createEntryBodyTwoKcalCenaMin = 0;
 
-export const createEntryBodyTwoEnergiaMax = 5;
+export const createEntryBodyTwoFondoEmergenzaMin = 0;
 
-export const createEntryBodyTwoSquatMin = 0;
-export const createEntryBodyTwoSquatMax = 2000;
+export const createEntryBodyTwoInvestimentoMin = 0;
 
-export const createEntryBodyTwoStretchingMinMin = 0;
-export const createEntryBodyTwoStretchingMinMax = 240;
+export const createEntryBodyTwoCaroselliPubblicatiMin = 0;
 
-export const createEntryBodyTwoNota1pctMax = 200;
+export const createEntryBodyTwoYoutubePubblicatiMin = 0;
 
-export const createEntryBodyTwoSintesiMax = 180;
+export const createEntryBodyThreeDentiVolteMin = 0;
+export const createEntryBodyThreeDentiVolteMax = 3;
 
-export const createEntryBodyTwoAttritoMax = 280;
+export const createEntryBodyThreeLavoroInizioRegExp = new RegExp('^([01][0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9](\\.[0-9]+)?)?$');
+export const createEntryBodyThreeLavoroFineRegExp = new RegExp('^([01][0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9](\\.[0-9]+)?)?$');
+export const createEntryBodyFourDataRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
+export const createEntryBodyFourPastiMax = 6;
 
-export const createEntryBodyTwoFattoMax = 280;
+export const createEntryBodyFourAcquaMin = 0;
+export const createEntryBodyFourAcquaMax = 20;
 
-export const createEntryBodyTwoNonFattoMax = 280;
+export const createEntryBodyFourAcquaAllenamentoMin = 0;
+export const createEntryBodyFourAcquaAllenamentoMax = 10;
 
-export const createEntryBodyTwoCardTitoloMax = 60;
+export const createEntryBodyFourDurataMin = 0;
 
-export const createEntryBodyTwoCardSottotitoloMax = 24;
+export const createEntryBodyFourIntensitaMax = 5;
 
-export const createEntryBodyTwoCardOverlayMin = 30;
-export const createEntryBodyTwoCardOverlayMax = 90;
+export const createEntryBodyFourPlankMin = 0;
+
+export const createEntryBodyFourEnergiaMax = 5;
+
+export const createEntryBodyFourSquatMin = 0;
+export const createEntryBodyFourSquatMax = 2000;
+
+export const createEntryBodyFourStretchingMinMin = 0;
+export const createEntryBodyFourStretchingMinMax = 240;
+
+export const createEntryBodyFourNota1pctMax = 200;
+
+export const createEntryBodyFourSintesiMax = 180;
+
+export const createEntryBodyFourAttritoMax = 280;
+
+export const createEntryBodyFourFattoMax = 280;
+
+export const createEntryBodyFourNonFattoMax = 280;
+
+export const createEntryBodyFourCardTitoloMax = 60;
+
+export const createEntryBodyFourCardSottotitoloMax = 24;
+
+export const createEntryBodyFourCardOverlayMin = 30;
+export const createEntryBodyFourCardOverlayMax = 90;
 
 
 
@@ -259,37 +323,59 @@ export const CreateEntryBody = zod.object({
   "pagineLette": zod.number().min(createEntryBodyOnePagineLetteMin).nullish(),
   "minutiScrittura": zod.number().min(createEntryBodyOneMinutiScritturaMin).nullish()
 }).and(zod.object({
+  "shadowMinuti": zod.number().min(createEntryBodyTwoShadowMinutiMin).max(createEntryBodyTwoShadowMinutiMax).nullish(),
+  "allenamentoTecnica": zod.boolean().nullish(),
+  "allenamentoPesi": zod.boolean().nullish(),
+  "sparringFatto": zod.boolean().nullish(),
+  "pagineBibbia": zod.number().min(createEntryBodyTwoPagineBibbiaMin).nullish(),
+  "pagineLibro": zod.number().min(createEntryBodyTwoPagineLibroMin).nullish(),
+  "libroAttuale": zod.string().nullish(),
+  "diarioFatto": zod.boolean().nullish(),
+  "brainstormingArticoli": zod.boolean().nullish(),
+  "kcalColazione": zod.number().min(createEntryBodyTwoKcalColazioneMin).nullish(),
+  "kcalPranzo": zod.number().min(createEntryBodyTwoKcalPranzoMin).nullish(),
+  "kcalCena": zod.number().min(createEntryBodyTwoKcalCenaMin).nullish(),
+  "fondoEmergenza": zod.number().min(createEntryBodyTwoFondoEmergenzaMin).nullish(),
+  "investimento": zod.number().min(createEntryBodyTwoInvestimentoMin).nullish(),
+  "caroselliPubblicati": zod.number().min(createEntryBodyTwoCaroselliPubblicatiMin).nullish(),
+  "youtubePubblicati": zod.number().min(createEntryBodyTwoYoutubePubblicatiMin).nullish()
+})).and(zod.object({
+  "dentiVolte": zod.number().min(createEntryBodyThreeDentiVolteMin).max(createEntryBodyThreeDentiVolteMax).nullish(),
+  "doccia": zod.boolean().nullish(),
+  "lavoroInizio": zod.string().regex(createEntryBodyThreeLavoroInizioRegExp).nullish(),
+  "lavoroFine": zod.string().regex(createEntryBodyThreeLavoroFineRegExp).nullish()
+})).and(zod.object({
   "numero": zod.number(),
-  "data": zod.string().regex(createEntryBodyTwoDataRegExp),
+  "data": zod.string().regex(createEntryBodyFourDataRegExp),
   "kcal": zod.number().nullish(),
-  "pasti": zod.number().min(1).max(createEntryBodyTwoPastiMax).nullish(),
+  "pasti": zod.number().min(1).max(createEntryBodyFourPastiMax).nullish(),
   "alcol": zod.boolean().nullish(),
-  "acqua": zod.number().min(createEntryBodyTwoAcquaMin).max(createEntryBodyTwoAcquaMax).nullish(),
-  "acquaAllenamento": zod.number().min(createEntryBodyTwoAcquaAllenamentoMin).max(createEntryBodyTwoAcquaAllenamentoMax).nullish(),
+  "acqua": zod.number().min(createEntryBodyFourAcquaMin).max(createEntryBodyFourAcquaMax).nullish(),
+  "acquaAllenamento": zod.number().min(createEntryBodyFourAcquaAllenamentoMin).max(createEntryBodyFourAcquaAllenamentoMax).nullish(),
   "tipoAllenamento": zod.union([zod.literal('NESSUNO'),zod.literal('MMA'),zod.literal('MUAY THAI'),zod.literal('BJJ'),zod.literal('CALISTHENICS'),zod.literal('CORSA'),zod.literal('SPARRING'),zod.literal('MISTO'),zod.literal(null)]).nullish(),
-  "durata": zod.number().min(createEntryBodyTwoDurataMin).nullish(),
-  "intensita": zod.number().min(1).max(createEntryBodyTwoIntensitaMax).nullish(),
+  "durata": zod.number().min(createEntryBodyFourDurataMin).nullish(),
+  "intensita": zod.number().min(1).max(createEntryBodyFourIntensitaMax).nullish(),
   "tipoGiorno": zod.union([zod.literal('A'),zod.literal('B'),zod.literal('RECUPERO'),zod.literal(null)]).nullish(),
   "routineCompletata": zod.boolean().nullish(),
   "routineForza": zod.boolean().nullish(),
   "routineFlessioni": zod.string().nullish(),
   "routineTrazioni": zod.string().nullish(),
   "routineSquat": zod.string().nullish(),
-  "plank": zod.number().min(createEntryBodyTwoPlankMin).nullish(),
+  "plank": zod.number().min(createEntryBodyFourPlankMin).nullish(),
   "collo": zod.boolean().nullish(),
   "mobilita": zod.boolean().nullish(),
   "sollevamentoGamba": zod.union([zod.literal('ANCA'),zod.literal('PETTO'),zod.literal('TESTA'),zod.literal('OLTRE'),zod.literal(null)]).nullish(),
   "grapplingVuoto": zod.boolean().nullish(),
-  "energia": zod.number().min(1).max(createEntryBodyTwoEnergiaMax).nullish(),
+  "energia": zod.number().min(1).max(createEntryBodyFourEnergiaMax).nullish(),
   "noteAllenamento": zod.string().nullish(),
   "sonno": zod.number().nullish(),
   "flessioni": zod.number().nullish(),
   "addominali": zod.number().nullish(),
-  "squat": zod.number().min(createEntryBodyTwoSquatMin).max(createEntryBodyTwoSquatMax).nullish(),
-  "stretchingMin": zod.number().min(createEntryBodyTwoStretchingMinMin).max(createEntryBodyTwoStretchingMinMax).nullish(),
+  "squat": zod.number().min(createEntryBodyFourSquatMin).max(createEntryBodyFourSquatMax).nullish(),
+  "stretchingMin": zod.number().min(createEntryBodyFourStretchingMinMin).max(createEntryBodyFourStretchingMinMax).nullish(),
   "stato1pct": zod.union([zod.literal('spinto'),zod.literal('mantenuto'),zod.literal('crollato'),zod.literal(null)]).nullish(),
   "fronteSettimana": zod.union([zod.literal('corpo'),zod.literal('scrittura'),zod.literal('soldi'),zod.literal('social'),zod.literal(null)]).nullish(),
-  "nota1pct": zod.string().max(createEntryBodyTwoNota1pctMax).nullish(),
+  "nota1pct": zod.string().max(createEntryBodyFourNota1pctMax).nullish(),
   "round": zod.number().nullish(),
   "km": zod.number().nullish(),
   "peso": zod.number().nullish(),
@@ -297,133 +383,176 @@ export const CreateEntryBody = zod.object({
   "entrate": zod.number().nullish(),
   "uscite": zod.number().nullish(),
   "testo": zod.string().nullish(),
-  "sintesi": zod.string().max(createEntryBodyTwoSintesiMax).nullish(),
+  "sintesi": zod.string().max(createEntryBodyFourSintesiMax).nullish(),
   "foto": zod.string().nullish(),
-  "attrito": zod.string().max(createEntryBodyTwoAttritoMax).nullish(),
-  "fatto": zod.string().max(createEntryBodyTwoFattoMax).nullish(),
-  "nonFatto": zod.string().max(createEntryBodyTwoNonFattoMax).nullish(),
-  "cardTitolo": zod.string().max(createEntryBodyTwoCardTitoloMax).nullish(),
-  "cardSottotitolo": zod.string().max(createEntryBodyTwoCardSottotitoloMax).nullish(),
+  "attrito": zod.string().max(createEntryBodyFourAttritoMax).nullish(),
+  "fatto": zod.string().max(createEntryBodyFourFattoMax).nullish(),
+  "nonFatto": zod.string().max(createEntryBodyFourNonFattoMax).nullish(),
+  "cardTitolo": zod.string().max(createEntryBodyFourCardTitoloMax).nullish(),
+  "cardSottotitolo": zod.string().max(createEntryBodyFourCardSottotitoloMax).nullish(),
   "cardImmagine": zod.string().nullish(),
-  "cardOverlay": zod.number().min(createEntryBodyTwoCardOverlayMin).max(createEntryBodyTwoCardOverlayMax).nullish(),
+  "cardOverlay": zod.number().min(createEntryBodyFourCardOverlayMin).max(createEntryBodyFourCardOverlayMax).nullish(),
   "cardMostraParole": zod.boolean().nullish(),
   "cardFeed": zod.string().nullish(),
   "cardStory": zod.string().nullish()
 }))
 
-export const createEntryResponseOneRoundSparringMin = 0;
+export const createEntryResponseOneOneRoundSparringMin = 0;
 
-export const createEntryResponseOneRoundPaoMin = 0;
+export const createEntryResponseOneOneRoundPaoMin = 0;
 
-export const createEntryResponseOneRoundTecnicaMin = 0;
+export const createEntryResponseOneOneRoundTecnicaMin = 0;
 
-export const createEntryResponseOneOraSvegliaRegExp = new RegExp('^([01][0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9](\\.[0-9]+)?)?$');
-export const createEntryResponseOneOreLavoroMin = 0;
-export const createEntryResponseOneOreLavoroMax = 24;
+export const createEntryResponseOneOneOraSvegliaRegExp = new RegExp('^([01][0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9](\\.[0-9]+)?)?$');
+export const createEntryResponseOneOneOreLavoroMin = 0;
+export const createEntryResponseOneOneOreLavoroMax = 24;
 
-export const createEntryResponseOneRisparmioMin = 0;
+export const createEntryResponseOneOneRisparmioMin = 0;
 
-export const createEntryResponseOneEntrateOnlineMin = 0;
+export const createEntryResponseOneOneEntrateOnlineMin = 0;
 
-export const createEntryResponseOneVideoPubblicatiMin = 0;
+export const createEntryResponseOneOneVideoPubblicatiMin = 0;
 
-export const createEntryResponseOneArticoliPubblicatiMin = 0;
+export const createEntryResponseOneOneArticoliPubblicatiMin = 0;
 
-export const createEntryResponseOneFollowerMin = 0;
+export const createEntryResponseOneOneFollowerMin = 0;
 
-export const createEntryResponseOnePagineLetteMin = 0;
+export const createEntryResponseOneOnePagineLetteMin = 0;
 
-export const createEntryResponseOneMinutiScritturaMin = 0;
+export const createEntryResponseOneOneMinutiScritturaMin = 0;
 
-export const createEntryResponseTwoDataRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
-export const createEntryResponseTwoPastiMax = 6;
+export const createEntryResponseOneTwoShadowMinutiMin = 0;
+export const createEntryResponseOneTwoShadowMinutiMax = 1440;
 
-export const createEntryResponseTwoAcquaMin = 0;
-export const createEntryResponseTwoAcquaMax = 20;
+export const createEntryResponseOneTwoPagineBibbiaMin = 0;
 
-export const createEntryResponseTwoAcquaAllenamentoMin = 0;
-export const createEntryResponseTwoAcquaAllenamentoMax = 10;
+export const createEntryResponseOneTwoPagineLibroMin = 0;
 
-export const createEntryResponseTwoDurataMin = 0;
+export const createEntryResponseOneTwoKcalColazioneMin = 0;
 
-export const createEntryResponseTwoIntensitaMax = 5;
+export const createEntryResponseOneTwoKcalPranzoMin = 0;
 
-export const createEntryResponseTwoPlankMin = 0;
+export const createEntryResponseOneTwoKcalCenaMin = 0;
 
-export const createEntryResponseTwoEnergiaMax = 5;
+export const createEntryResponseOneTwoFondoEmergenzaMin = 0;
 
-export const createEntryResponseTwoSquatMin = 0;
-export const createEntryResponseTwoSquatMax = 2000;
+export const createEntryResponseOneTwoInvestimentoMin = 0;
 
-export const createEntryResponseTwoStretchingMinMin = 0;
-export const createEntryResponseTwoStretchingMinMax = 240;
+export const createEntryResponseOneTwoCaroselliPubblicatiMin = 0;
 
-export const createEntryResponseTwoNota1pctMax = 200;
+export const createEntryResponseOneTwoYoutubePubblicatiMin = 0;
 
-export const createEntryResponseTwoSintesiMax = 180;
+export const createEntryResponseOneThreeDataRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
+export const createEntryResponseOneThreePastiMax = 6;
 
-export const createEntryResponseTwoAttritoMax = 280;
+export const createEntryResponseOneThreeAcquaMin = 0;
+export const createEntryResponseOneThreeAcquaMax = 20;
 
-export const createEntryResponseTwoFattoMax = 280;
+export const createEntryResponseOneThreeAcquaAllenamentoMin = 0;
+export const createEntryResponseOneThreeAcquaAllenamentoMax = 10;
 
-export const createEntryResponseTwoNonFattoMax = 280;
+export const createEntryResponseOneThreeDurataMin = 0;
 
-export const createEntryResponseTwoCardTitoloMax = 60;
+export const createEntryResponseOneThreeIntensitaMax = 5;
 
-export const createEntryResponseTwoCardSottotitoloMax = 24;
+export const createEntryResponseOneThreePlankMin = 0;
 
-export const createEntryResponseTwoCardOverlayMin = 30;
-export const createEntryResponseTwoCardOverlayMax = 90;
+export const createEntryResponseOneThreeEnergiaMax = 5;
 
+export const createEntryResponseOneThreeSquatMin = 0;
+export const createEntryResponseOneThreeSquatMax = 2000;
+
+export const createEntryResponseOneThreeStretchingMinMin = 0;
+export const createEntryResponseOneThreeStretchingMinMax = 240;
+
+export const createEntryResponseOneThreeNota1pctMax = 200;
+
+export const createEntryResponseOneThreeSintesiMax = 180;
+
+export const createEntryResponseOneThreeAttritoMax = 280;
+
+export const createEntryResponseOneThreeFattoMax = 280;
+
+export const createEntryResponseOneThreeNonFattoMax = 280;
+
+export const createEntryResponseOneThreeCardTitoloMax = 60;
+
+export const createEntryResponseOneThreeCardSottotitoloMax = 24;
+
+export const createEntryResponseOneThreeCardOverlayMin = 30;
+export const createEntryResponseOneThreeCardOverlayMax = 90;
+
+export const createEntryResponseTwoDentiVolteMin = 0;
+export const createEntryResponseTwoDentiVolteMax = 3;
+
+export const createEntryResponseTwoLavoroInizioRegExp = new RegExp('^([01][0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9](\\.[0-9]+)?)?$');
+export const createEntryResponseTwoLavoroFineRegExp = new RegExp('^([01][0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9](\\.[0-9]+)?)?$');
 
 
 export const CreateEntryResponse = zod.object({
   "fase": zod.union([zod.literal(1),zod.literal(2)]).optional(),
-  "roundSparring": zod.number().min(createEntryResponseOneRoundSparringMin).nullish(),
-  "roundPao": zod.number().min(createEntryResponseOneRoundPaoMin).nullish(),
-  "roundTecnica": zod.number().min(createEntryResponseOneRoundTecnicaMin).nullish(),
-  "oraSveglia": zod.string().regex(createEntryResponseOneOraSvegliaRegExp).nullish(),
-  "oreLavoro": zod.number().min(createEntryResponseOneOreLavoroMin).max(createEntryResponseOneOreLavoroMax).nullish(),
-  "risparmio": zod.number().min(createEntryResponseOneRisparmioMin).nullish(),
-  "entrateOnline": zod.number().min(createEntryResponseOneEntrateOnlineMin).nullish(),
-  "videoPubblicati": zod.number().min(createEntryResponseOneVideoPubblicatiMin).nullish(),
-  "articoliPubblicati": zod.number().min(createEntryResponseOneArticoliPubblicatiMin).nullish(),
-  "follower": zod.number().min(createEntryResponseOneFollowerMin).nullish(),
-  "pagineLette": zod.number().min(createEntryResponseOnePagineLetteMin).nullish(),
-  "minutiScrittura": zod.number().min(createEntryResponseOneMinutiScritturaMin).nullish()
+  "roundSparring": zod.number().min(createEntryResponseOneOneRoundSparringMin).nullish(),
+  "roundPao": zod.number().min(createEntryResponseOneOneRoundPaoMin).nullish(),
+  "roundTecnica": zod.number().min(createEntryResponseOneOneRoundTecnicaMin).nullish(),
+  "oraSveglia": zod.string().regex(createEntryResponseOneOneOraSvegliaRegExp).nullish(),
+  "oreLavoro": zod.number().min(createEntryResponseOneOneOreLavoroMin).max(createEntryResponseOneOneOreLavoroMax).nullish(),
+  "risparmio": zod.number().min(createEntryResponseOneOneRisparmioMin).nullish(),
+  "entrateOnline": zod.number().min(createEntryResponseOneOneEntrateOnlineMin).nullish(),
+  "videoPubblicati": zod.number().min(createEntryResponseOneOneVideoPubblicatiMin).nullish(),
+  "articoliPubblicati": zod.number().min(createEntryResponseOneOneArticoliPubblicatiMin).nullish(),
+  "follower": zod.number().min(createEntryResponseOneOneFollowerMin).nullish(),
+  "pagineLette": zod.number().min(createEntryResponseOneOnePagineLetteMin).nullish(),
+  "minutiScrittura": zod.number().min(createEntryResponseOneOneMinutiScritturaMin).nullish()
 }).and(zod.object({
+  "shadowMinuti": zod.number().min(createEntryResponseOneTwoShadowMinutiMin).max(createEntryResponseOneTwoShadowMinutiMax).nullish(),
+  "allenamentoTecnica": zod.boolean().nullish(),
+  "allenamentoPesi": zod.boolean().nullish(),
+  "sparringFatto": zod.boolean().nullish(),
+  "pagineBibbia": zod.number().min(createEntryResponseOneTwoPagineBibbiaMin).nullish(),
+  "pagineLibro": zod.number().min(createEntryResponseOneTwoPagineLibroMin).nullish(),
+  "libroAttuale": zod.string().nullish(),
+  "diarioFatto": zod.boolean().nullish(),
+  "brainstormingArticoli": zod.boolean().nullish(),
+  "kcalColazione": zod.number().min(createEntryResponseOneTwoKcalColazioneMin).nullish(),
+  "kcalPranzo": zod.number().min(createEntryResponseOneTwoKcalPranzoMin).nullish(),
+  "kcalCena": zod.number().min(createEntryResponseOneTwoKcalCenaMin).nullish(),
+  "fondoEmergenza": zod.number().min(createEntryResponseOneTwoFondoEmergenzaMin).nullish(),
+  "investimento": zod.number().min(createEntryResponseOneTwoInvestimentoMin).nullish(),
+  "caroselliPubblicati": zod.number().min(createEntryResponseOneTwoCaroselliPubblicatiMin).nullish(),
+  "youtubePubblicati": zod.number().min(createEntryResponseOneTwoYoutubePubblicatiMin).nullish()
+})).and(zod.object({
   "id": zod.number(),
   "numero": zod.number().describe('Day number (1-180)'),
-  "data": zod.string().regex(createEntryResponseTwoDataRegExp).describe('ISO date string (YYYY-MM-DD)'),
+  "data": zod.string().regex(createEntryResponseOneThreeDataRegExp).describe('ISO date string (YYYY-MM-DD)'),
   "kcal": zod.number().nullish(),
-  "pasti": zod.number().min(1).max(createEntryResponseTwoPastiMax).nullish(),
+  "pasti": zod.number().min(1).max(createEntryResponseOneThreePastiMax).nullish(),
   "alcol": zod.boolean().nullish(),
-  "acqua": zod.number().min(createEntryResponseTwoAcquaMin).max(createEntryResponseTwoAcquaMax).nullish(),
-  "acquaAllenamento": zod.number().min(createEntryResponseTwoAcquaAllenamentoMin).max(createEntryResponseTwoAcquaAllenamentoMax).nullish().describe('Liters of water consumed around training'),
+  "acqua": zod.number().min(createEntryResponseOneThreeAcquaMin).max(createEntryResponseOneThreeAcquaMax).nullish(),
+  "acquaAllenamento": zod.number().min(createEntryResponseOneThreeAcquaAllenamentoMin).max(createEntryResponseOneThreeAcquaAllenamentoMax).nullish().describe('Liters of water consumed around training'),
   "tipoAllenamento": zod.union([zod.literal('NESSUNO'),zod.literal('MMA'),zod.literal('MUAY THAI'),zod.literal('BJJ'),zod.literal('CALISTHENICS'),zod.literal('CORSA'),zod.literal('SPARRING'),zod.literal('MISTO'),zod.literal(null)]).nullish(),
-  "durata": zod.number().min(createEntryResponseTwoDurataMin).nullish(),
-  "intensita": zod.number().min(1).max(createEntryResponseTwoIntensitaMax).nullish(),
+  "durata": zod.number().min(createEntryResponseOneThreeDurataMin).nullish(),
+  "intensita": zod.number().min(1).max(createEntryResponseOneThreeIntensitaMax).nullish(),
   "tipoGiorno": zod.union([zod.literal('A'),zod.literal('B'),zod.literal('RECUPERO'),zod.literal(null)]).nullish(),
   "routineCompletata": zod.boolean().nullish(),
   "routineForza": zod.boolean().nullish(),
   "routineFlessioni": zod.string().nullish(),
   "routineTrazioni": zod.string().nullish(),
   "routineSquat": zod.string().nullish(),
-  "plank": zod.number().min(createEntryResponseTwoPlankMin).nullish(),
+  "plank": zod.number().min(createEntryResponseOneThreePlankMin).nullish(),
   "collo": zod.boolean().nullish(),
   "mobilita": zod.boolean().nullish(),
   "sollevamentoGamba": zod.union([zod.literal('ANCA'),zod.literal('PETTO'),zod.literal('TESTA'),zod.literal('OLTRE'),zod.literal(null)]).nullish(),
   "grapplingVuoto": zod.boolean().nullish(),
-  "energia": zod.number().min(1).max(createEntryResponseTwoEnergiaMax).nullish(),
+  "energia": zod.number().min(1).max(createEntryResponseOneThreeEnergiaMax).nullish(),
   "noteAllenamento": zod.string().nullish(),
   "sonno": zod.number().nullish().describe('Hours of sleep'),
   "flessioni": zod.number().nullish(),
   "addominali": zod.number().nullish(),
-  "squat": zod.number().min(createEntryResponseTwoSquatMin).max(createEntryResponseTwoSquatMax).nullish(),
-  "stretchingMin": zod.number().min(createEntryResponseTwoStretchingMinMin).max(createEntryResponseTwoStretchingMinMax).nullish(),
+  "squat": zod.number().min(createEntryResponseOneThreeSquatMin).max(createEntryResponseOneThreeSquatMax).nullish(),
+  "stretchingMin": zod.number().min(createEntryResponseOneThreeStretchingMinMin).max(createEntryResponseOneThreeStretchingMinMax).nullish(),
   "stato1pct": zod.union([zod.literal('spinto'),zod.literal('mantenuto'),zod.literal('crollato'),zod.literal(null)]).nullish(),
   "fronteSettimana": zod.union([zod.literal('corpo'),zod.literal('scrittura'),zod.literal('soldi'),zod.literal('social'),zod.literal(null)]).nullish(),
-  "nota1pct": zod.string().max(createEntryResponseTwoNota1pctMax).nullish(),
+  "nota1pct": zod.string().max(createEntryResponseOneThreeNota1pctMax).nullish(),
   "round": zod.number().nullish(),
   "km": zod.number().nullish(),
   "peso": zod.number().nullish().describe('Weight in kg'),
@@ -431,19 +560,24 @@ export const CreateEntryResponse = zod.object({
   "entrate": zod.number().nullish().describe('Daily income (€)'),
   "uscite": zod.number().nullish().describe('Daily expenses (€)'),
   "testo": zod.string().nullish().describe('Diary text'),
-  "sintesi": zod.string().max(createEntryResponseTwoSintesiMax).nullish().describe('Short Instagram card summary'),
+  "sintesi": zod.string().max(createEntryResponseOneThreeSintesiMax).nullish().describe('Short Instagram card summary'),
   "foto": zod.string().nullish().describe('Photo URL'),
-  "attrito": zod.string().max(createEntryResponseTwoAttritoMax).nullish().describe('The main friction faced on this day'),
-  "fatto": zod.string().max(createEntryResponseTwoFattoMax).nullish().describe('What was completed on this day'),
-  "nonFatto": zod.string().max(createEntryResponseTwoNonFattoMax).nullish().describe('What was intentionally not completed on this day'),
-  "cardTitolo": zod.string().max(createEntryResponseTwoCardTitoloMax).nullish().describe('Custom Instagram card title (falls back to day number)'),
-  "cardSottotitolo": zod.string().max(createEntryResponseTwoCardSottotitoloMax).nullish().describe('Custom Instagram card subtitle'),
+  "attrito": zod.string().max(createEntryResponseOneThreeAttritoMax).nullish().describe('The main friction faced on this day'),
+  "fatto": zod.string().max(createEntryResponseOneThreeFattoMax).nullish().describe('What was completed on this day'),
+  "nonFatto": zod.string().max(createEntryResponseOneThreeNonFattoMax).nullish().describe('What was intentionally not completed on this day'),
+  "cardTitolo": zod.string().max(createEntryResponseOneThreeCardTitoloMax).nullish().describe('Custom Instagram card title (falls back to day number)'),
+  "cardSottotitolo": zod.string().max(createEntryResponseOneThreeCardSottotitoloMax).nullish().describe('Custom Instagram card subtitle'),
   "cardImmagine": zod.string().nullish().describe('Custom Instagram card background image path'),
-  "cardOverlay": zod.number().min(createEntryResponseTwoCardOverlayMin).max(createEntryResponseTwoCardOverlayMax).nullish().describe('Card overlay intensity (30-90, default 58)'),
+  "cardOverlay": zod.number().min(createEntryResponseOneThreeCardOverlayMin).max(createEntryResponseOneThreeCardOverlayMax).nullish().describe('Card overlay intensity (30-90, default 58)'),
   "cardMostraParole": zod.boolean().nullish().describe('Show stats\/word count on the card (default true)'),
   "cardFeed": zod.string().nullish().describe('Persisted feed card PNG object path'),
   "cardStory": zod.string().nullish().describe('Persisted story card PNG object path'),
   "createdAt": zod.string().optional()
+})).and(zod.object({
+  "dentiVolte": zod.number().min(createEntryResponseTwoDentiVolteMin).max(createEntryResponseTwoDentiVolteMax).nullish(),
+  "doccia": zod.boolean().nullish(),
+  "lavoroInizio": zod.string().regex(createEntryResponseTwoLavoroInizioRegExp).nullish(),
+  "lavoroFine": zod.string().regex(createEntryResponseTwoLavoroFineRegExp).nullish()
 }))
 
 
@@ -483,45 +617,66 @@ export const getLatestEntriesResponseOnePagineLetteMin = 0;
 
 export const getLatestEntriesResponseOneMinutiScritturaMin = 0;
 
-export const getLatestEntriesResponseTwoDataRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
-export const getLatestEntriesResponseTwoPastiMax = 6;
+export const getLatestEntriesResponseTwoShadowMinutiMin = 0;
+export const getLatestEntriesResponseTwoShadowMinutiMax = 1440;
 
-export const getLatestEntriesResponseTwoAcquaMin = 0;
-export const getLatestEntriesResponseTwoAcquaMax = 20;
+export const getLatestEntriesResponseTwoPagineBibbiaMin = 0;
 
-export const getLatestEntriesResponseTwoAcquaAllenamentoMin = 0;
-export const getLatestEntriesResponseTwoAcquaAllenamentoMax = 10;
+export const getLatestEntriesResponseTwoPagineLibroMin = 0;
 
-export const getLatestEntriesResponseTwoDurataMin = 0;
+export const getLatestEntriesResponseTwoKcalColazioneMin = 0;
 
-export const getLatestEntriesResponseTwoIntensitaMax = 5;
+export const getLatestEntriesResponseTwoKcalPranzoMin = 0;
 
-export const getLatestEntriesResponseTwoPlankMin = 0;
+export const getLatestEntriesResponseTwoKcalCenaMin = 0;
 
-export const getLatestEntriesResponseTwoEnergiaMax = 5;
+export const getLatestEntriesResponseTwoFondoEmergenzaMin = 0;
 
-export const getLatestEntriesResponseTwoSquatMin = 0;
-export const getLatestEntriesResponseTwoSquatMax = 2000;
+export const getLatestEntriesResponseTwoInvestimentoMin = 0;
 
-export const getLatestEntriesResponseTwoStretchingMinMin = 0;
-export const getLatestEntriesResponseTwoStretchingMinMax = 240;
+export const getLatestEntriesResponseTwoCaroselliPubblicatiMin = 0;
 
-export const getLatestEntriesResponseTwoNota1pctMax = 200;
+export const getLatestEntriesResponseTwoYoutubePubblicatiMin = 0;
 
-export const getLatestEntriesResponseTwoSintesiMax = 180;
+export const getLatestEntriesResponseThreeDataRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
+export const getLatestEntriesResponseThreePastiMax = 6;
 
-export const getLatestEntriesResponseTwoAttritoMax = 280;
+export const getLatestEntriesResponseThreeAcquaMin = 0;
+export const getLatestEntriesResponseThreeAcquaMax = 20;
 
-export const getLatestEntriesResponseTwoFattoMax = 280;
+export const getLatestEntriesResponseThreeAcquaAllenamentoMin = 0;
+export const getLatestEntriesResponseThreeAcquaAllenamentoMax = 10;
 
-export const getLatestEntriesResponseTwoNonFattoMax = 280;
+export const getLatestEntriesResponseThreeDurataMin = 0;
 
-export const getLatestEntriesResponseTwoCardTitoloMax = 60;
+export const getLatestEntriesResponseThreeIntensitaMax = 5;
 
-export const getLatestEntriesResponseTwoCardSottotitoloMax = 24;
+export const getLatestEntriesResponseThreePlankMin = 0;
 
-export const getLatestEntriesResponseTwoCardOverlayMin = 30;
-export const getLatestEntriesResponseTwoCardOverlayMax = 90;
+export const getLatestEntriesResponseThreeEnergiaMax = 5;
+
+export const getLatestEntriesResponseThreeSquatMin = 0;
+export const getLatestEntriesResponseThreeSquatMax = 2000;
+
+export const getLatestEntriesResponseThreeStretchingMinMin = 0;
+export const getLatestEntriesResponseThreeStretchingMinMax = 240;
+
+export const getLatestEntriesResponseThreeNota1pctMax = 200;
+
+export const getLatestEntriesResponseThreeSintesiMax = 180;
+
+export const getLatestEntriesResponseThreeAttritoMax = 280;
+
+export const getLatestEntriesResponseThreeFattoMax = 280;
+
+export const getLatestEntriesResponseThreeNonFattoMax = 280;
+
+export const getLatestEntriesResponseThreeCardTitoloMax = 60;
+
+export const getLatestEntriesResponseThreeCardSottotitoloMax = 24;
+
+export const getLatestEntriesResponseThreeCardOverlayMin = 30;
+export const getLatestEntriesResponseThreeCardOverlayMax = 90;
 
 
 
@@ -540,38 +695,55 @@ export const GetLatestEntriesResponseItem = zod.object({
   "pagineLette": zod.number().min(getLatestEntriesResponseOnePagineLetteMin).nullish(),
   "minutiScrittura": zod.number().min(getLatestEntriesResponseOneMinutiScritturaMin).nullish()
 }).and(zod.object({
+  "shadowMinuti": zod.number().min(getLatestEntriesResponseTwoShadowMinutiMin).max(getLatestEntriesResponseTwoShadowMinutiMax).nullish(),
+  "allenamentoTecnica": zod.boolean().nullish(),
+  "allenamentoPesi": zod.boolean().nullish(),
+  "sparringFatto": zod.boolean().nullish(),
+  "pagineBibbia": zod.number().min(getLatestEntriesResponseTwoPagineBibbiaMin).nullish(),
+  "pagineLibro": zod.number().min(getLatestEntriesResponseTwoPagineLibroMin).nullish(),
+  "libroAttuale": zod.string().nullish(),
+  "diarioFatto": zod.boolean().nullish(),
+  "brainstormingArticoli": zod.boolean().nullish(),
+  "kcalColazione": zod.number().min(getLatestEntriesResponseTwoKcalColazioneMin).nullish(),
+  "kcalPranzo": zod.number().min(getLatestEntriesResponseTwoKcalPranzoMin).nullish(),
+  "kcalCena": zod.number().min(getLatestEntriesResponseTwoKcalCenaMin).nullish(),
+  "fondoEmergenza": zod.number().min(getLatestEntriesResponseTwoFondoEmergenzaMin).nullish(),
+  "investimento": zod.number().min(getLatestEntriesResponseTwoInvestimentoMin).nullish(),
+  "caroselliPubblicati": zod.number().min(getLatestEntriesResponseTwoCaroselliPubblicatiMin).nullish(),
+  "youtubePubblicati": zod.number().min(getLatestEntriesResponseTwoYoutubePubblicatiMin).nullish()
+})).and(zod.object({
   "id": zod.number(),
   "numero": zod.number().describe('Day number (1-180)'),
-  "data": zod.string().regex(getLatestEntriesResponseTwoDataRegExp).describe('ISO date string (YYYY-MM-DD)'),
+  "data": zod.string().regex(getLatestEntriesResponseThreeDataRegExp).describe('ISO date string (YYYY-MM-DD)'),
   "kcal": zod.number().nullish(),
-  "pasti": zod.number().min(1).max(getLatestEntriesResponseTwoPastiMax).nullish(),
+  "pasti": zod.number().min(1).max(getLatestEntriesResponseThreePastiMax).nullish(),
   "alcol": zod.boolean().nullish(),
-  "acqua": zod.number().min(getLatestEntriesResponseTwoAcquaMin).max(getLatestEntriesResponseTwoAcquaMax).nullish(),
-  "acquaAllenamento": zod.number().min(getLatestEntriesResponseTwoAcquaAllenamentoMin).max(getLatestEntriesResponseTwoAcquaAllenamentoMax).nullish().describe('Liters of water consumed around training'),
+  "acqua": zod.number().min(getLatestEntriesResponseThreeAcquaMin).max(getLatestEntriesResponseThreeAcquaMax).nullish(),
+  "acquaAllenamento": zod.number().min(getLatestEntriesResponseThreeAcquaAllenamentoMin).max(getLatestEntriesResponseThreeAcquaAllenamentoMax).nullish().describe('Liters of water consumed around training'),
   "tipoAllenamento": zod.union([zod.literal('NESSUNO'),zod.literal('MMA'),zod.literal('MUAY THAI'),zod.literal('BJJ'),zod.literal('CALISTHENICS'),zod.literal('CORSA'),zod.literal('SPARRING'),zod.literal('MISTO'),zod.literal(null)]).nullish(),
-  "durata": zod.number().min(getLatestEntriesResponseTwoDurataMin).nullish(),
-  "intensita": zod.number().min(1).max(getLatestEntriesResponseTwoIntensitaMax).nullish(),
+  "durata": zod.number().min(getLatestEntriesResponseThreeDurataMin).nullish(),
+  "intensita": zod.number().min(1).max(getLatestEntriesResponseThreeIntensitaMax).nullish(),
   "tipoGiorno": zod.union([zod.literal('A'),zod.literal('B'),zod.literal('RECUPERO'),zod.literal(null)]).nullish(),
   "routineCompletata": zod.boolean().nullish(),
   "routineForza": zod.boolean().nullish(),
   "routineFlessioni": zod.string().nullish(),
   "routineTrazioni": zod.string().nullish(),
   "routineSquat": zod.string().nullish(),
-  "plank": zod.number().min(getLatestEntriesResponseTwoPlankMin).nullish(),
+  "plank": zod.number().min(getLatestEntriesResponseThreePlankMin).nullish(),
   "collo": zod.boolean().nullish(),
   "mobilita": zod.boolean().nullish(),
   "sollevamentoGamba": zod.union([zod.literal('ANCA'),zod.literal('PETTO'),zod.literal('TESTA'),zod.literal('OLTRE'),zod.literal(null)]).nullish(),
   "grapplingVuoto": zod.boolean().nullish(),
-  "energia": zod.number().min(1).max(getLatestEntriesResponseTwoEnergiaMax).nullish(),
+  "energia": zod.number().min(1).max(getLatestEntriesResponseThreeEnergiaMax).nullish(),
   "noteAllenamento": zod.string().nullish(),
   "sonno": zod.number().nullish().describe('Hours of sleep'),
   "flessioni": zod.number().nullish(),
   "addominali": zod.number().nullish(),
-  "squat": zod.number().min(getLatestEntriesResponseTwoSquatMin).max(getLatestEntriesResponseTwoSquatMax).nullish(),
-  "stretchingMin": zod.number().min(getLatestEntriesResponseTwoStretchingMinMin).max(getLatestEntriesResponseTwoStretchingMinMax).nullish(),
+  "squat": zod.number().min(getLatestEntriesResponseThreeSquatMin).max(getLatestEntriesResponseThreeSquatMax).nullish(),
+  "stretchingMin": zod.number().min(getLatestEntriesResponseThreeStretchingMinMin).max(getLatestEntriesResponseThreeStretchingMinMax).nullish(),
   "stato1pct": zod.union([zod.literal('spinto'),zod.literal('mantenuto'),zod.literal('crollato'),zod.literal(null)]).nullish(),
   "fronteSettimana": zod.union([zod.literal('corpo'),zod.literal('scrittura'),zod.literal('soldi'),zod.literal('social'),zod.literal(null)]).nullish(),
-  "nota1pct": zod.string().max(getLatestEntriesResponseTwoNota1pctMax).nullish(),
+  "nota1pct": zod.string().max(getLatestEntriesResponseThreeNota1pctMax).nullish(),
   "round": zod.number().nullish(),
   "km": zod.number().nullish(),
   "peso": zod.number().nullish().describe('Weight in kg'),
@@ -579,15 +751,15 @@ export const GetLatestEntriesResponseItem = zod.object({
   "entrate": zod.number().nullish().describe('Daily income (€)'),
   "uscite": zod.number().nullish().describe('Daily expenses (€)'),
   "testo": zod.string().nullish().describe('Diary text'),
-  "sintesi": zod.string().max(getLatestEntriesResponseTwoSintesiMax).nullish().describe('Short Instagram card summary'),
+  "sintesi": zod.string().max(getLatestEntriesResponseThreeSintesiMax).nullish().describe('Short Instagram card summary'),
   "foto": zod.string().nullish().describe('Photo URL'),
-  "attrito": zod.string().max(getLatestEntriesResponseTwoAttritoMax).nullish().describe('The main friction faced on this day'),
-  "fatto": zod.string().max(getLatestEntriesResponseTwoFattoMax).nullish().describe('What was completed on this day'),
-  "nonFatto": zod.string().max(getLatestEntriesResponseTwoNonFattoMax).nullish().describe('What was intentionally not completed on this day'),
-  "cardTitolo": zod.string().max(getLatestEntriesResponseTwoCardTitoloMax).nullish().describe('Custom Instagram card title (falls back to day number)'),
-  "cardSottotitolo": zod.string().max(getLatestEntriesResponseTwoCardSottotitoloMax).nullish().describe('Custom Instagram card subtitle'),
+  "attrito": zod.string().max(getLatestEntriesResponseThreeAttritoMax).nullish().describe('The main friction faced on this day'),
+  "fatto": zod.string().max(getLatestEntriesResponseThreeFattoMax).nullish().describe('What was completed on this day'),
+  "nonFatto": zod.string().max(getLatestEntriesResponseThreeNonFattoMax).nullish().describe('What was intentionally not completed on this day'),
+  "cardTitolo": zod.string().max(getLatestEntriesResponseThreeCardTitoloMax).nullish().describe('Custom Instagram card title (falls back to day number)'),
+  "cardSottotitolo": zod.string().max(getLatestEntriesResponseThreeCardSottotitoloMax).nullish().describe('Custom Instagram card subtitle'),
   "cardImmagine": zod.string().nullish().describe('Custom Instagram card background image path'),
-  "cardOverlay": zod.number().min(getLatestEntriesResponseTwoCardOverlayMin).max(getLatestEntriesResponseTwoCardOverlayMax).nullish().describe('Card overlay intensity (30-90, default 58)'),
+  "cardOverlay": zod.number().min(getLatestEntriesResponseThreeCardOverlayMin).max(getLatestEntriesResponseThreeCardOverlayMax).nullish().describe('Card overlay intensity (30-90, default 58)'),
   "cardMostraParole": zod.boolean().nullish().describe('Show stats\/word count on the card (default true)'),
   "cardFeed": zod.string().nullish().describe('Persisted feed card PNG object path'),
   "cardStory": zod.string().nullish().describe('Persisted story card PNG object path'),
@@ -729,45 +901,66 @@ export const getEntryResponseOnePagineLetteMin = 0;
 
 export const getEntryResponseOneMinutiScritturaMin = 0;
 
-export const getEntryResponseTwoDataRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
-export const getEntryResponseTwoPastiMax = 6;
+export const getEntryResponseTwoShadowMinutiMin = 0;
+export const getEntryResponseTwoShadowMinutiMax = 1440;
 
-export const getEntryResponseTwoAcquaMin = 0;
-export const getEntryResponseTwoAcquaMax = 20;
+export const getEntryResponseTwoPagineBibbiaMin = 0;
 
-export const getEntryResponseTwoAcquaAllenamentoMin = 0;
-export const getEntryResponseTwoAcquaAllenamentoMax = 10;
+export const getEntryResponseTwoPagineLibroMin = 0;
 
-export const getEntryResponseTwoDurataMin = 0;
+export const getEntryResponseTwoKcalColazioneMin = 0;
 
-export const getEntryResponseTwoIntensitaMax = 5;
+export const getEntryResponseTwoKcalPranzoMin = 0;
 
-export const getEntryResponseTwoPlankMin = 0;
+export const getEntryResponseTwoKcalCenaMin = 0;
 
-export const getEntryResponseTwoEnergiaMax = 5;
+export const getEntryResponseTwoFondoEmergenzaMin = 0;
 
-export const getEntryResponseTwoSquatMin = 0;
-export const getEntryResponseTwoSquatMax = 2000;
+export const getEntryResponseTwoInvestimentoMin = 0;
 
-export const getEntryResponseTwoStretchingMinMin = 0;
-export const getEntryResponseTwoStretchingMinMax = 240;
+export const getEntryResponseTwoCaroselliPubblicatiMin = 0;
 
-export const getEntryResponseTwoNota1pctMax = 200;
+export const getEntryResponseTwoYoutubePubblicatiMin = 0;
 
-export const getEntryResponseTwoSintesiMax = 180;
+export const getEntryResponseThreeDataRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
+export const getEntryResponseThreePastiMax = 6;
 
-export const getEntryResponseTwoAttritoMax = 280;
+export const getEntryResponseThreeAcquaMin = 0;
+export const getEntryResponseThreeAcquaMax = 20;
 
-export const getEntryResponseTwoFattoMax = 280;
+export const getEntryResponseThreeAcquaAllenamentoMin = 0;
+export const getEntryResponseThreeAcquaAllenamentoMax = 10;
 
-export const getEntryResponseTwoNonFattoMax = 280;
+export const getEntryResponseThreeDurataMin = 0;
 
-export const getEntryResponseTwoCardTitoloMax = 60;
+export const getEntryResponseThreeIntensitaMax = 5;
 
-export const getEntryResponseTwoCardSottotitoloMax = 24;
+export const getEntryResponseThreePlankMin = 0;
 
-export const getEntryResponseTwoCardOverlayMin = 30;
-export const getEntryResponseTwoCardOverlayMax = 90;
+export const getEntryResponseThreeEnergiaMax = 5;
+
+export const getEntryResponseThreeSquatMin = 0;
+export const getEntryResponseThreeSquatMax = 2000;
+
+export const getEntryResponseThreeStretchingMinMin = 0;
+export const getEntryResponseThreeStretchingMinMax = 240;
+
+export const getEntryResponseThreeNota1pctMax = 200;
+
+export const getEntryResponseThreeSintesiMax = 180;
+
+export const getEntryResponseThreeAttritoMax = 280;
+
+export const getEntryResponseThreeFattoMax = 280;
+
+export const getEntryResponseThreeNonFattoMax = 280;
+
+export const getEntryResponseThreeCardTitoloMax = 60;
+
+export const getEntryResponseThreeCardSottotitoloMax = 24;
+
+export const getEntryResponseThreeCardOverlayMin = 30;
+export const getEntryResponseThreeCardOverlayMax = 90;
 
 
 
@@ -786,38 +979,55 @@ export const GetEntryResponse = zod.object({
   "pagineLette": zod.number().min(getEntryResponseOnePagineLetteMin).nullish(),
   "minutiScrittura": zod.number().min(getEntryResponseOneMinutiScritturaMin).nullish()
 }).and(zod.object({
+  "shadowMinuti": zod.number().min(getEntryResponseTwoShadowMinutiMin).max(getEntryResponseTwoShadowMinutiMax).nullish(),
+  "allenamentoTecnica": zod.boolean().nullish(),
+  "allenamentoPesi": zod.boolean().nullish(),
+  "sparringFatto": zod.boolean().nullish(),
+  "pagineBibbia": zod.number().min(getEntryResponseTwoPagineBibbiaMin).nullish(),
+  "pagineLibro": zod.number().min(getEntryResponseTwoPagineLibroMin).nullish(),
+  "libroAttuale": zod.string().nullish(),
+  "diarioFatto": zod.boolean().nullish(),
+  "brainstormingArticoli": zod.boolean().nullish(),
+  "kcalColazione": zod.number().min(getEntryResponseTwoKcalColazioneMin).nullish(),
+  "kcalPranzo": zod.number().min(getEntryResponseTwoKcalPranzoMin).nullish(),
+  "kcalCena": zod.number().min(getEntryResponseTwoKcalCenaMin).nullish(),
+  "fondoEmergenza": zod.number().min(getEntryResponseTwoFondoEmergenzaMin).nullish(),
+  "investimento": zod.number().min(getEntryResponseTwoInvestimentoMin).nullish(),
+  "caroselliPubblicati": zod.number().min(getEntryResponseTwoCaroselliPubblicatiMin).nullish(),
+  "youtubePubblicati": zod.number().min(getEntryResponseTwoYoutubePubblicatiMin).nullish()
+})).and(zod.object({
   "id": zod.number(),
   "numero": zod.number().describe('Day number (1-180)'),
-  "data": zod.string().regex(getEntryResponseTwoDataRegExp).describe('ISO date string (YYYY-MM-DD)'),
+  "data": zod.string().regex(getEntryResponseThreeDataRegExp).describe('ISO date string (YYYY-MM-DD)'),
   "kcal": zod.number().nullish(),
-  "pasti": zod.number().min(1).max(getEntryResponseTwoPastiMax).nullish(),
+  "pasti": zod.number().min(1).max(getEntryResponseThreePastiMax).nullish(),
   "alcol": zod.boolean().nullish(),
-  "acqua": zod.number().min(getEntryResponseTwoAcquaMin).max(getEntryResponseTwoAcquaMax).nullish(),
-  "acquaAllenamento": zod.number().min(getEntryResponseTwoAcquaAllenamentoMin).max(getEntryResponseTwoAcquaAllenamentoMax).nullish().describe('Liters of water consumed around training'),
+  "acqua": zod.number().min(getEntryResponseThreeAcquaMin).max(getEntryResponseThreeAcquaMax).nullish(),
+  "acquaAllenamento": zod.number().min(getEntryResponseThreeAcquaAllenamentoMin).max(getEntryResponseThreeAcquaAllenamentoMax).nullish().describe('Liters of water consumed around training'),
   "tipoAllenamento": zod.union([zod.literal('NESSUNO'),zod.literal('MMA'),zod.literal('MUAY THAI'),zod.literal('BJJ'),zod.literal('CALISTHENICS'),zod.literal('CORSA'),zod.literal('SPARRING'),zod.literal('MISTO'),zod.literal(null)]).nullish(),
-  "durata": zod.number().min(getEntryResponseTwoDurataMin).nullish(),
-  "intensita": zod.number().min(1).max(getEntryResponseTwoIntensitaMax).nullish(),
+  "durata": zod.number().min(getEntryResponseThreeDurataMin).nullish(),
+  "intensita": zod.number().min(1).max(getEntryResponseThreeIntensitaMax).nullish(),
   "tipoGiorno": zod.union([zod.literal('A'),zod.literal('B'),zod.literal('RECUPERO'),zod.literal(null)]).nullish(),
   "routineCompletata": zod.boolean().nullish(),
   "routineForza": zod.boolean().nullish(),
   "routineFlessioni": zod.string().nullish(),
   "routineTrazioni": zod.string().nullish(),
   "routineSquat": zod.string().nullish(),
-  "plank": zod.number().min(getEntryResponseTwoPlankMin).nullish(),
+  "plank": zod.number().min(getEntryResponseThreePlankMin).nullish(),
   "collo": zod.boolean().nullish(),
   "mobilita": zod.boolean().nullish(),
   "sollevamentoGamba": zod.union([zod.literal('ANCA'),zod.literal('PETTO'),zod.literal('TESTA'),zod.literal('OLTRE'),zod.literal(null)]).nullish(),
   "grapplingVuoto": zod.boolean().nullish(),
-  "energia": zod.number().min(1).max(getEntryResponseTwoEnergiaMax).nullish(),
+  "energia": zod.number().min(1).max(getEntryResponseThreeEnergiaMax).nullish(),
   "noteAllenamento": zod.string().nullish(),
   "sonno": zod.number().nullish().describe('Hours of sleep'),
   "flessioni": zod.number().nullish(),
   "addominali": zod.number().nullish(),
-  "squat": zod.number().min(getEntryResponseTwoSquatMin).max(getEntryResponseTwoSquatMax).nullish(),
-  "stretchingMin": zod.number().min(getEntryResponseTwoStretchingMinMin).max(getEntryResponseTwoStretchingMinMax).nullish(),
+  "squat": zod.number().min(getEntryResponseThreeSquatMin).max(getEntryResponseThreeSquatMax).nullish(),
+  "stretchingMin": zod.number().min(getEntryResponseThreeStretchingMinMin).max(getEntryResponseThreeStretchingMinMax).nullish(),
   "stato1pct": zod.union([zod.literal('spinto'),zod.literal('mantenuto'),zod.literal('crollato'),zod.literal(null)]).nullish(),
   "fronteSettimana": zod.union([zod.literal('corpo'),zod.literal('scrittura'),zod.literal('soldi'),zod.literal('social'),zod.literal(null)]).nullish(),
-  "nota1pct": zod.string().max(getEntryResponseTwoNota1pctMax).nullish(),
+  "nota1pct": zod.string().max(getEntryResponseThreeNota1pctMax).nullish(),
   "round": zod.number().nullish(),
   "km": zod.number().nullish(),
   "peso": zod.number().nullish().describe('Weight in kg'),
@@ -825,15 +1035,15 @@ export const GetEntryResponse = zod.object({
   "entrate": zod.number().nullish().describe('Daily income (€)'),
   "uscite": zod.number().nullish().describe('Daily expenses (€)'),
   "testo": zod.string().nullish().describe('Diary text'),
-  "sintesi": zod.string().max(getEntryResponseTwoSintesiMax).nullish().describe('Short Instagram card summary'),
+  "sintesi": zod.string().max(getEntryResponseThreeSintesiMax).nullish().describe('Short Instagram card summary'),
   "foto": zod.string().nullish().describe('Photo URL'),
-  "attrito": zod.string().max(getEntryResponseTwoAttritoMax).nullish().describe('The main friction faced on this day'),
-  "fatto": zod.string().max(getEntryResponseTwoFattoMax).nullish().describe('What was completed on this day'),
-  "nonFatto": zod.string().max(getEntryResponseTwoNonFattoMax).nullish().describe('What was intentionally not completed on this day'),
-  "cardTitolo": zod.string().max(getEntryResponseTwoCardTitoloMax).nullish().describe('Custom Instagram card title (falls back to day number)'),
-  "cardSottotitolo": zod.string().max(getEntryResponseTwoCardSottotitoloMax).nullish().describe('Custom Instagram card subtitle'),
+  "attrito": zod.string().max(getEntryResponseThreeAttritoMax).nullish().describe('The main friction faced on this day'),
+  "fatto": zod.string().max(getEntryResponseThreeFattoMax).nullish().describe('What was completed on this day'),
+  "nonFatto": zod.string().max(getEntryResponseThreeNonFattoMax).nullish().describe('What was intentionally not completed on this day'),
+  "cardTitolo": zod.string().max(getEntryResponseThreeCardTitoloMax).nullish().describe('Custom Instagram card title (falls back to day number)'),
+  "cardSottotitolo": zod.string().max(getEntryResponseThreeCardSottotitoloMax).nullish().describe('Custom Instagram card subtitle'),
   "cardImmagine": zod.string().nullish().describe('Custom Instagram card background image path'),
-  "cardOverlay": zod.number().min(getEntryResponseTwoCardOverlayMin).max(getEntryResponseTwoCardOverlayMax).nullish().describe('Card overlay intensity (30-90, default 58)'),
+  "cardOverlay": zod.number().min(getEntryResponseThreeCardOverlayMin).max(getEntryResponseThreeCardOverlayMax).nullish().describe('Card overlay intensity (30-90, default 58)'),
   "cardMostraParole": zod.boolean().nullish().describe('Show stats\/word count on the card (default true)'),
   "cardFeed": zod.string().nullish().describe('Persisted feed card PNG object path'),
   "cardStory": zod.string().nullish().describe('Persisted story card PNG object path'),
@@ -881,45 +1091,71 @@ export const updateEntryBodyOnePagineLetteMin = 0;
 
 export const updateEntryBodyOneMinutiScritturaMin = 0;
 
-export const updateEntryBodyTwoDataRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
-export const updateEntryBodyTwoPastiMax = 6;
+export const updateEntryBodyTwoShadowMinutiMin = 0;
+export const updateEntryBodyTwoShadowMinutiMax = 1440;
 
-export const updateEntryBodyTwoAcquaMin = 0;
-export const updateEntryBodyTwoAcquaMax = 20;
+export const updateEntryBodyTwoPagineBibbiaMin = 0;
 
-export const updateEntryBodyTwoAcquaAllenamentoMin = 0;
-export const updateEntryBodyTwoAcquaAllenamentoMax = 10;
+export const updateEntryBodyTwoPagineLibroMin = 0;
 
-export const updateEntryBodyTwoDurataMin = 0;
+export const updateEntryBodyTwoKcalColazioneMin = 0;
 
-export const updateEntryBodyTwoIntensitaMax = 5;
+export const updateEntryBodyTwoKcalPranzoMin = 0;
 
-export const updateEntryBodyTwoPlankMin = 0;
+export const updateEntryBodyTwoKcalCenaMin = 0;
 
-export const updateEntryBodyTwoEnergiaMax = 5;
+export const updateEntryBodyTwoFondoEmergenzaMin = 0;
 
-export const updateEntryBodyTwoSquatMin = 0;
-export const updateEntryBodyTwoSquatMax = 2000;
+export const updateEntryBodyTwoInvestimentoMin = 0;
 
-export const updateEntryBodyTwoStretchingMinMin = 0;
-export const updateEntryBodyTwoStretchingMinMax = 240;
+export const updateEntryBodyTwoCaroselliPubblicatiMin = 0;
 
-export const updateEntryBodyTwoNota1pctMax = 200;
+export const updateEntryBodyTwoYoutubePubblicatiMin = 0;
 
-export const updateEntryBodyTwoSintesiMax = 180;
+export const updateEntryBodyThreeDentiVolteMin = 0;
+export const updateEntryBodyThreeDentiVolteMax = 3;
 
-export const updateEntryBodyTwoAttritoMax = 280;
+export const updateEntryBodyThreeLavoroInizioRegExp = new RegExp('^([01][0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9](\\.[0-9]+)?)?$');
+export const updateEntryBodyThreeLavoroFineRegExp = new RegExp('^([01][0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9](\\.[0-9]+)?)?$');
+export const updateEntryBodyFourDataRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
+export const updateEntryBodyFourPastiMax = 6;
 
-export const updateEntryBodyTwoFattoMax = 280;
+export const updateEntryBodyFourAcquaMin = 0;
+export const updateEntryBodyFourAcquaMax = 20;
 
-export const updateEntryBodyTwoNonFattoMax = 280;
+export const updateEntryBodyFourAcquaAllenamentoMin = 0;
+export const updateEntryBodyFourAcquaAllenamentoMax = 10;
 
-export const updateEntryBodyTwoCardTitoloMax = 60;
+export const updateEntryBodyFourDurataMin = 0;
 
-export const updateEntryBodyTwoCardSottotitoloMax = 24;
+export const updateEntryBodyFourIntensitaMax = 5;
 
-export const updateEntryBodyTwoCardOverlayMin = 30;
-export const updateEntryBodyTwoCardOverlayMax = 90;
+export const updateEntryBodyFourPlankMin = 0;
+
+export const updateEntryBodyFourEnergiaMax = 5;
+
+export const updateEntryBodyFourSquatMin = 0;
+export const updateEntryBodyFourSquatMax = 2000;
+
+export const updateEntryBodyFourStretchingMinMin = 0;
+export const updateEntryBodyFourStretchingMinMax = 240;
+
+export const updateEntryBodyFourNota1pctMax = 200;
+
+export const updateEntryBodyFourSintesiMax = 180;
+
+export const updateEntryBodyFourAttritoMax = 280;
+
+export const updateEntryBodyFourFattoMax = 280;
+
+export const updateEntryBodyFourNonFattoMax = 280;
+
+export const updateEntryBodyFourCardTitoloMax = 60;
+
+export const updateEntryBodyFourCardSottotitoloMax = 24;
+
+export const updateEntryBodyFourCardOverlayMin = 30;
+export const updateEntryBodyFourCardOverlayMax = 90;
 
 
 
@@ -938,36 +1174,58 @@ export const UpdateEntryBody = zod.object({
   "pagineLette": zod.number().min(updateEntryBodyOnePagineLetteMin).nullish(),
   "minutiScrittura": zod.number().min(updateEntryBodyOneMinutiScritturaMin).nullish()
 }).and(zod.object({
-  "data": zod.string().regex(updateEntryBodyTwoDataRegExp).optional(),
-  "pasti": zod.number().min(1).max(updateEntryBodyTwoPastiMax).nullish(),
+  "shadowMinuti": zod.number().min(updateEntryBodyTwoShadowMinutiMin).max(updateEntryBodyTwoShadowMinutiMax).nullish(),
+  "allenamentoTecnica": zod.boolean().nullish(),
+  "allenamentoPesi": zod.boolean().nullish(),
+  "sparringFatto": zod.boolean().nullish(),
+  "pagineBibbia": zod.number().min(updateEntryBodyTwoPagineBibbiaMin).nullish(),
+  "pagineLibro": zod.number().min(updateEntryBodyTwoPagineLibroMin).nullish(),
+  "libroAttuale": zod.string().nullish(),
+  "diarioFatto": zod.boolean().nullish(),
+  "brainstormingArticoli": zod.boolean().nullish(),
+  "kcalColazione": zod.number().min(updateEntryBodyTwoKcalColazioneMin).nullish(),
+  "kcalPranzo": zod.number().min(updateEntryBodyTwoKcalPranzoMin).nullish(),
+  "kcalCena": zod.number().min(updateEntryBodyTwoKcalCenaMin).nullish(),
+  "fondoEmergenza": zod.number().min(updateEntryBodyTwoFondoEmergenzaMin).nullish(),
+  "investimento": zod.number().min(updateEntryBodyTwoInvestimentoMin).nullish(),
+  "caroselliPubblicati": zod.number().min(updateEntryBodyTwoCaroselliPubblicatiMin).nullish(),
+  "youtubePubblicati": zod.number().min(updateEntryBodyTwoYoutubePubblicatiMin).nullish()
+})).and(zod.object({
+  "dentiVolte": zod.number().min(updateEntryBodyThreeDentiVolteMin).max(updateEntryBodyThreeDentiVolteMax).nullish(),
+  "doccia": zod.boolean().nullish(),
+  "lavoroInizio": zod.string().regex(updateEntryBodyThreeLavoroInizioRegExp).nullish(),
+  "lavoroFine": zod.string().regex(updateEntryBodyThreeLavoroFineRegExp).nullish()
+})).and(zod.object({
+  "data": zod.string().regex(updateEntryBodyFourDataRegExp).optional(),
+  "pasti": zod.number().min(1).max(updateEntryBodyFourPastiMax).nullish(),
   "alcol": zod.boolean().nullish(),
-  "acqua": zod.number().min(updateEntryBodyTwoAcquaMin).max(updateEntryBodyTwoAcquaMax).nullish(),
-  "acquaAllenamento": zod.number().min(updateEntryBodyTwoAcquaAllenamentoMin).max(updateEntryBodyTwoAcquaAllenamentoMax).nullish(),
+  "acqua": zod.number().min(updateEntryBodyFourAcquaMin).max(updateEntryBodyFourAcquaMax).nullish(),
+  "acquaAllenamento": zod.number().min(updateEntryBodyFourAcquaAllenamentoMin).max(updateEntryBodyFourAcquaAllenamentoMax).nullish(),
   "tipoAllenamento": zod.union([zod.literal('NESSUNO'),zod.literal('MMA'),zod.literal('MUAY THAI'),zod.literal('BJJ'),zod.literal('CALISTHENICS'),zod.literal('CORSA'),zod.literal('SPARRING'),zod.literal('MISTO'),zod.literal(null)]).nullish(),
-  "durata": zod.number().min(updateEntryBodyTwoDurataMin).nullish(),
-  "intensita": zod.number().min(1).max(updateEntryBodyTwoIntensitaMax).nullish(),
+  "durata": zod.number().min(updateEntryBodyFourDurataMin).nullish(),
+  "intensita": zod.number().min(1).max(updateEntryBodyFourIntensitaMax).nullish(),
   "tipoGiorno": zod.union([zod.literal('A'),zod.literal('B'),zod.literal('RECUPERO'),zod.literal(null)]).nullish(),
   "routineCompletata": zod.boolean().nullish(),
   "routineForza": zod.boolean().nullish(),
   "routineFlessioni": zod.string().nullish(),
   "routineTrazioni": zod.string().nullish(),
   "routineSquat": zod.string().nullish(),
-  "plank": zod.number().min(updateEntryBodyTwoPlankMin).nullish(),
+  "plank": zod.number().min(updateEntryBodyFourPlankMin).nullish(),
   "collo": zod.boolean().nullish(),
   "mobilita": zod.boolean().nullish(),
   "sollevamentoGamba": zod.union([zod.literal('ANCA'),zod.literal('PETTO'),zod.literal('TESTA'),zod.literal('OLTRE'),zod.literal(null)]).nullish(),
   "grapplingVuoto": zod.boolean().nullish(),
-  "energia": zod.number().min(1).max(updateEntryBodyTwoEnergiaMax).nullish(),
+  "energia": zod.number().min(1).max(updateEntryBodyFourEnergiaMax).nullish(),
   "noteAllenamento": zod.string().nullish(),
   "kcal": zod.number().nullish(),
   "sonno": zod.number().nullish(),
   "flessioni": zod.number().nullish(),
   "addominali": zod.number().nullish(),
-  "squat": zod.number().min(updateEntryBodyTwoSquatMin).max(updateEntryBodyTwoSquatMax).nullish(),
-  "stretchingMin": zod.number().min(updateEntryBodyTwoStretchingMinMin).max(updateEntryBodyTwoStretchingMinMax).nullish(),
+  "squat": zod.number().min(updateEntryBodyFourSquatMin).max(updateEntryBodyFourSquatMax).nullish(),
+  "stretchingMin": zod.number().min(updateEntryBodyFourStretchingMinMin).max(updateEntryBodyFourStretchingMinMax).nullish(),
   "stato1pct": zod.union([zod.literal('spinto'),zod.literal('mantenuto'),zod.literal('crollato'),zod.literal(null)]).nullish(),
   "fronteSettimana": zod.union([zod.literal('corpo'),zod.literal('scrittura'),zod.literal('soldi'),zod.literal('social'),zod.literal(null)]).nullish(),
-  "nota1pct": zod.string().max(updateEntryBodyTwoNota1pctMax).nullish(),
+  "nota1pct": zod.string().max(updateEntryBodyFourNota1pctMax).nullish(),
   "round": zod.number().nullish(),
   "km": zod.number().nullish(),
   "peso": zod.number().nullish(),
@@ -975,133 +1233,176 @@ export const UpdateEntryBody = zod.object({
   "entrate": zod.number().nullish(),
   "uscite": zod.number().nullish(),
   "testo": zod.string().nullish(),
-  "sintesi": zod.string().max(updateEntryBodyTwoSintesiMax).nullish(),
+  "sintesi": zod.string().max(updateEntryBodyFourSintesiMax).nullish(),
   "foto": zod.string().nullish(),
-  "attrito": zod.string().max(updateEntryBodyTwoAttritoMax).nullish(),
-  "fatto": zod.string().max(updateEntryBodyTwoFattoMax).nullish(),
-  "nonFatto": zod.string().max(updateEntryBodyTwoNonFattoMax).nullish(),
-  "cardTitolo": zod.string().max(updateEntryBodyTwoCardTitoloMax).nullish(),
-  "cardSottotitolo": zod.string().max(updateEntryBodyTwoCardSottotitoloMax).nullish(),
+  "attrito": zod.string().max(updateEntryBodyFourAttritoMax).nullish(),
+  "fatto": zod.string().max(updateEntryBodyFourFattoMax).nullish(),
+  "nonFatto": zod.string().max(updateEntryBodyFourNonFattoMax).nullish(),
+  "cardTitolo": zod.string().max(updateEntryBodyFourCardTitoloMax).nullish(),
+  "cardSottotitolo": zod.string().max(updateEntryBodyFourCardSottotitoloMax).nullish(),
   "cardImmagine": zod.string().nullish(),
-  "cardOverlay": zod.number().min(updateEntryBodyTwoCardOverlayMin).max(updateEntryBodyTwoCardOverlayMax).nullish(),
+  "cardOverlay": zod.number().min(updateEntryBodyFourCardOverlayMin).max(updateEntryBodyFourCardOverlayMax).nullish(),
   "cardMostraParole": zod.boolean().nullish(),
   "cardFeed": zod.string().nullish(),
   "cardStory": zod.string().nullish()
 }))
 
-export const updateEntryResponseOneRoundSparringMin = 0;
+export const updateEntryResponseOneOneRoundSparringMin = 0;
 
-export const updateEntryResponseOneRoundPaoMin = 0;
+export const updateEntryResponseOneOneRoundPaoMin = 0;
 
-export const updateEntryResponseOneRoundTecnicaMin = 0;
+export const updateEntryResponseOneOneRoundTecnicaMin = 0;
 
-export const updateEntryResponseOneOraSvegliaRegExp = new RegExp('^([01][0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9](\\.[0-9]+)?)?$');
-export const updateEntryResponseOneOreLavoroMin = 0;
-export const updateEntryResponseOneOreLavoroMax = 24;
+export const updateEntryResponseOneOneOraSvegliaRegExp = new RegExp('^([01][0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9](\\.[0-9]+)?)?$');
+export const updateEntryResponseOneOneOreLavoroMin = 0;
+export const updateEntryResponseOneOneOreLavoroMax = 24;
 
-export const updateEntryResponseOneRisparmioMin = 0;
+export const updateEntryResponseOneOneRisparmioMin = 0;
 
-export const updateEntryResponseOneEntrateOnlineMin = 0;
+export const updateEntryResponseOneOneEntrateOnlineMin = 0;
 
-export const updateEntryResponseOneVideoPubblicatiMin = 0;
+export const updateEntryResponseOneOneVideoPubblicatiMin = 0;
 
-export const updateEntryResponseOneArticoliPubblicatiMin = 0;
+export const updateEntryResponseOneOneArticoliPubblicatiMin = 0;
 
-export const updateEntryResponseOneFollowerMin = 0;
+export const updateEntryResponseOneOneFollowerMin = 0;
 
-export const updateEntryResponseOnePagineLetteMin = 0;
+export const updateEntryResponseOneOnePagineLetteMin = 0;
 
-export const updateEntryResponseOneMinutiScritturaMin = 0;
+export const updateEntryResponseOneOneMinutiScritturaMin = 0;
 
-export const updateEntryResponseTwoDataRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
-export const updateEntryResponseTwoPastiMax = 6;
+export const updateEntryResponseOneTwoShadowMinutiMin = 0;
+export const updateEntryResponseOneTwoShadowMinutiMax = 1440;
 
-export const updateEntryResponseTwoAcquaMin = 0;
-export const updateEntryResponseTwoAcquaMax = 20;
+export const updateEntryResponseOneTwoPagineBibbiaMin = 0;
 
-export const updateEntryResponseTwoAcquaAllenamentoMin = 0;
-export const updateEntryResponseTwoAcquaAllenamentoMax = 10;
+export const updateEntryResponseOneTwoPagineLibroMin = 0;
 
-export const updateEntryResponseTwoDurataMin = 0;
+export const updateEntryResponseOneTwoKcalColazioneMin = 0;
 
-export const updateEntryResponseTwoIntensitaMax = 5;
+export const updateEntryResponseOneTwoKcalPranzoMin = 0;
 
-export const updateEntryResponseTwoPlankMin = 0;
+export const updateEntryResponseOneTwoKcalCenaMin = 0;
 
-export const updateEntryResponseTwoEnergiaMax = 5;
+export const updateEntryResponseOneTwoFondoEmergenzaMin = 0;
 
-export const updateEntryResponseTwoSquatMin = 0;
-export const updateEntryResponseTwoSquatMax = 2000;
+export const updateEntryResponseOneTwoInvestimentoMin = 0;
 
-export const updateEntryResponseTwoStretchingMinMin = 0;
-export const updateEntryResponseTwoStretchingMinMax = 240;
+export const updateEntryResponseOneTwoCaroselliPubblicatiMin = 0;
 
-export const updateEntryResponseTwoNota1pctMax = 200;
+export const updateEntryResponseOneTwoYoutubePubblicatiMin = 0;
 
-export const updateEntryResponseTwoSintesiMax = 180;
+export const updateEntryResponseOneThreeDataRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
+export const updateEntryResponseOneThreePastiMax = 6;
 
-export const updateEntryResponseTwoAttritoMax = 280;
+export const updateEntryResponseOneThreeAcquaMin = 0;
+export const updateEntryResponseOneThreeAcquaMax = 20;
 
-export const updateEntryResponseTwoFattoMax = 280;
+export const updateEntryResponseOneThreeAcquaAllenamentoMin = 0;
+export const updateEntryResponseOneThreeAcquaAllenamentoMax = 10;
 
-export const updateEntryResponseTwoNonFattoMax = 280;
+export const updateEntryResponseOneThreeDurataMin = 0;
 
-export const updateEntryResponseTwoCardTitoloMax = 60;
+export const updateEntryResponseOneThreeIntensitaMax = 5;
 
-export const updateEntryResponseTwoCardSottotitoloMax = 24;
+export const updateEntryResponseOneThreePlankMin = 0;
 
-export const updateEntryResponseTwoCardOverlayMin = 30;
-export const updateEntryResponseTwoCardOverlayMax = 90;
+export const updateEntryResponseOneThreeEnergiaMax = 5;
 
+export const updateEntryResponseOneThreeSquatMin = 0;
+export const updateEntryResponseOneThreeSquatMax = 2000;
+
+export const updateEntryResponseOneThreeStretchingMinMin = 0;
+export const updateEntryResponseOneThreeStretchingMinMax = 240;
+
+export const updateEntryResponseOneThreeNota1pctMax = 200;
+
+export const updateEntryResponseOneThreeSintesiMax = 180;
+
+export const updateEntryResponseOneThreeAttritoMax = 280;
+
+export const updateEntryResponseOneThreeFattoMax = 280;
+
+export const updateEntryResponseOneThreeNonFattoMax = 280;
+
+export const updateEntryResponseOneThreeCardTitoloMax = 60;
+
+export const updateEntryResponseOneThreeCardSottotitoloMax = 24;
+
+export const updateEntryResponseOneThreeCardOverlayMin = 30;
+export const updateEntryResponseOneThreeCardOverlayMax = 90;
+
+export const updateEntryResponseTwoDentiVolteMin = 0;
+export const updateEntryResponseTwoDentiVolteMax = 3;
+
+export const updateEntryResponseTwoLavoroInizioRegExp = new RegExp('^([01][0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9](\\.[0-9]+)?)?$');
+export const updateEntryResponseTwoLavoroFineRegExp = new RegExp('^([01][0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9](\\.[0-9]+)?)?$');
 
 
 export const UpdateEntryResponse = zod.object({
   "fase": zod.union([zod.literal(1),zod.literal(2)]).optional(),
-  "roundSparring": zod.number().min(updateEntryResponseOneRoundSparringMin).nullish(),
-  "roundPao": zod.number().min(updateEntryResponseOneRoundPaoMin).nullish(),
-  "roundTecnica": zod.number().min(updateEntryResponseOneRoundTecnicaMin).nullish(),
-  "oraSveglia": zod.string().regex(updateEntryResponseOneOraSvegliaRegExp).nullish(),
-  "oreLavoro": zod.number().min(updateEntryResponseOneOreLavoroMin).max(updateEntryResponseOneOreLavoroMax).nullish(),
-  "risparmio": zod.number().min(updateEntryResponseOneRisparmioMin).nullish(),
-  "entrateOnline": zod.number().min(updateEntryResponseOneEntrateOnlineMin).nullish(),
-  "videoPubblicati": zod.number().min(updateEntryResponseOneVideoPubblicatiMin).nullish(),
-  "articoliPubblicati": zod.number().min(updateEntryResponseOneArticoliPubblicatiMin).nullish(),
-  "follower": zod.number().min(updateEntryResponseOneFollowerMin).nullish(),
-  "pagineLette": zod.number().min(updateEntryResponseOnePagineLetteMin).nullish(),
-  "minutiScrittura": zod.number().min(updateEntryResponseOneMinutiScritturaMin).nullish()
+  "roundSparring": zod.number().min(updateEntryResponseOneOneRoundSparringMin).nullish(),
+  "roundPao": zod.number().min(updateEntryResponseOneOneRoundPaoMin).nullish(),
+  "roundTecnica": zod.number().min(updateEntryResponseOneOneRoundTecnicaMin).nullish(),
+  "oraSveglia": zod.string().regex(updateEntryResponseOneOneOraSvegliaRegExp).nullish(),
+  "oreLavoro": zod.number().min(updateEntryResponseOneOneOreLavoroMin).max(updateEntryResponseOneOneOreLavoroMax).nullish(),
+  "risparmio": zod.number().min(updateEntryResponseOneOneRisparmioMin).nullish(),
+  "entrateOnline": zod.number().min(updateEntryResponseOneOneEntrateOnlineMin).nullish(),
+  "videoPubblicati": zod.number().min(updateEntryResponseOneOneVideoPubblicatiMin).nullish(),
+  "articoliPubblicati": zod.number().min(updateEntryResponseOneOneArticoliPubblicatiMin).nullish(),
+  "follower": zod.number().min(updateEntryResponseOneOneFollowerMin).nullish(),
+  "pagineLette": zod.number().min(updateEntryResponseOneOnePagineLetteMin).nullish(),
+  "minutiScrittura": zod.number().min(updateEntryResponseOneOneMinutiScritturaMin).nullish()
 }).and(zod.object({
+  "shadowMinuti": zod.number().min(updateEntryResponseOneTwoShadowMinutiMin).max(updateEntryResponseOneTwoShadowMinutiMax).nullish(),
+  "allenamentoTecnica": zod.boolean().nullish(),
+  "allenamentoPesi": zod.boolean().nullish(),
+  "sparringFatto": zod.boolean().nullish(),
+  "pagineBibbia": zod.number().min(updateEntryResponseOneTwoPagineBibbiaMin).nullish(),
+  "pagineLibro": zod.number().min(updateEntryResponseOneTwoPagineLibroMin).nullish(),
+  "libroAttuale": zod.string().nullish(),
+  "diarioFatto": zod.boolean().nullish(),
+  "brainstormingArticoli": zod.boolean().nullish(),
+  "kcalColazione": zod.number().min(updateEntryResponseOneTwoKcalColazioneMin).nullish(),
+  "kcalPranzo": zod.number().min(updateEntryResponseOneTwoKcalPranzoMin).nullish(),
+  "kcalCena": zod.number().min(updateEntryResponseOneTwoKcalCenaMin).nullish(),
+  "fondoEmergenza": zod.number().min(updateEntryResponseOneTwoFondoEmergenzaMin).nullish(),
+  "investimento": zod.number().min(updateEntryResponseOneTwoInvestimentoMin).nullish(),
+  "caroselliPubblicati": zod.number().min(updateEntryResponseOneTwoCaroselliPubblicatiMin).nullish(),
+  "youtubePubblicati": zod.number().min(updateEntryResponseOneTwoYoutubePubblicatiMin).nullish()
+})).and(zod.object({
   "id": zod.number(),
   "numero": zod.number().describe('Day number (1-180)'),
-  "data": zod.string().regex(updateEntryResponseTwoDataRegExp).describe('ISO date string (YYYY-MM-DD)'),
+  "data": zod.string().regex(updateEntryResponseOneThreeDataRegExp).describe('ISO date string (YYYY-MM-DD)'),
   "kcal": zod.number().nullish(),
-  "pasti": zod.number().min(1).max(updateEntryResponseTwoPastiMax).nullish(),
+  "pasti": zod.number().min(1).max(updateEntryResponseOneThreePastiMax).nullish(),
   "alcol": zod.boolean().nullish(),
-  "acqua": zod.number().min(updateEntryResponseTwoAcquaMin).max(updateEntryResponseTwoAcquaMax).nullish(),
-  "acquaAllenamento": zod.number().min(updateEntryResponseTwoAcquaAllenamentoMin).max(updateEntryResponseTwoAcquaAllenamentoMax).nullish().describe('Liters of water consumed around training'),
+  "acqua": zod.number().min(updateEntryResponseOneThreeAcquaMin).max(updateEntryResponseOneThreeAcquaMax).nullish(),
+  "acquaAllenamento": zod.number().min(updateEntryResponseOneThreeAcquaAllenamentoMin).max(updateEntryResponseOneThreeAcquaAllenamentoMax).nullish().describe('Liters of water consumed around training'),
   "tipoAllenamento": zod.union([zod.literal('NESSUNO'),zod.literal('MMA'),zod.literal('MUAY THAI'),zod.literal('BJJ'),zod.literal('CALISTHENICS'),zod.literal('CORSA'),zod.literal('SPARRING'),zod.literal('MISTO'),zod.literal(null)]).nullish(),
-  "durata": zod.number().min(updateEntryResponseTwoDurataMin).nullish(),
-  "intensita": zod.number().min(1).max(updateEntryResponseTwoIntensitaMax).nullish(),
+  "durata": zod.number().min(updateEntryResponseOneThreeDurataMin).nullish(),
+  "intensita": zod.number().min(1).max(updateEntryResponseOneThreeIntensitaMax).nullish(),
   "tipoGiorno": zod.union([zod.literal('A'),zod.literal('B'),zod.literal('RECUPERO'),zod.literal(null)]).nullish(),
   "routineCompletata": zod.boolean().nullish(),
   "routineForza": zod.boolean().nullish(),
   "routineFlessioni": zod.string().nullish(),
   "routineTrazioni": zod.string().nullish(),
   "routineSquat": zod.string().nullish(),
-  "plank": zod.number().min(updateEntryResponseTwoPlankMin).nullish(),
+  "plank": zod.number().min(updateEntryResponseOneThreePlankMin).nullish(),
   "collo": zod.boolean().nullish(),
   "mobilita": zod.boolean().nullish(),
   "sollevamentoGamba": zod.union([zod.literal('ANCA'),zod.literal('PETTO'),zod.literal('TESTA'),zod.literal('OLTRE'),zod.literal(null)]).nullish(),
   "grapplingVuoto": zod.boolean().nullish(),
-  "energia": zod.number().min(1).max(updateEntryResponseTwoEnergiaMax).nullish(),
+  "energia": zod.number().min(1).max(updateEntryResponseOneThreeEnergiaMax).nullish(),
   "noteAllenamento": zod.string().nullish(),
   "sonno": zod.number().nullish().describe('Hours of sleep'),
   "flessioni": zod.number().nullish(),
   "addominali": zod.number().nullish(),
-  "squat": zod.number().min(updateEntryResponseTwoSquatMin).max(updateEntryResponseTwoSquatMax).nullish(),
-  "stretchingMin": zod.number().min(updateEntryResponseTwoStretchingMinMin).max(updateEntryResponseTwoStretchingMinMax).nullish(),
+  "squat": zod.number().min(updateEntryResponseOneThreeSquatMin).max(updateEntryResponseOneThreeSquatMax).nullish(),
+  "stretchingMin": zod.number().min(updateEntryResponseOneThreeStretchingMinMin).max(updateEntryResponseOneThreeStretchingMinMax).nullish(),
   "stato1pct": zod.union([zod.literal('spinto'),zod.literal('mantenuto'),zod.literal('crollato'),zod.literal(null)]).nullish(),
   "fronteSettimana": zod.union([zod.literal('corpo'),zod.literal('scrittura'),zod.literal('soldi'),zod.literal('social'),zod.literal(null)]).nullish(),
-  "nota1pct": zod.string().max(updateEntryResponseTwoNota1pctMax).nullish(),
+  "nota1pct": zod.string().max(updateEntryResponseOneThreeNota1pctMax).nullish(),
   "round": zod.number().nullish(),
   "km": zod.number().nullish(),
   "peso": zod.number().nullish().describe('Weight in kg'),
@@ -1109,19 +1410,24 @@ export const UpdateEntryResponse = zod.object({
   "entrate": zod.number().nullish().describe('Daily income (€)'),
   "uscite": zod.number().nullish().describe('Daily expenses (€)'),
   "testo": zod.string().nullish().describe('Diary text'),
-  "sintesi": zod.string().max(updateEntryResponseTwoSintesiMax).nullish().describe('Short Instagram card summary'),
+  "sintesi": zod.string().max(updateEntryResponseOneThreeSintesiMax).nullish().describe('Short Instagram card summary'),
   "foto": zod.string().nullish().describe('Photo URL'),
-  "attrito": zod.string().max(updateEntryResponseTwoAttritoMax).nullish().describe('The main friction faced on this day'),
-  "fatto": zod.string().max(updateEntryResponseTwoFattoMax).nullish().describe('What was completed on this day'),
-  "nonFatto": zod.string().max(updateEntryResponseTwoNonFattoMax).nullish().describe('What was intentionally not completed on this day'),
-  "cardTitolo": zod.string().max(updateEntryResponseTwoCardTitoloMax).nullish().describe('Custom Instagram card title (falls back to day number)'),
-  "cardSottotitolo": zod.string().max(updateEntryResponseTwoCardSottotitoloMax).nullish().describe('Custom Instagram card subtitle'),
+  "attrito": zod.string().max(updateEntryResponseOneThreeAttritoMax).nullish().describe('The main friction faced on this day'),
+  "fatto": zod.string().max(updateEntryResponseOneThreeFattoMax).nullish().describe('What was completed on this day'),
+  "nonFatto": zod.string().max(updateEntryResponseOneThreeNonFattoMax).nullish().describe('What was intentionally not completed on this day'),
+  "cardTitolo": zod.string().max(updateEntryResponseOneThreeCardTitoloMax).nullish().describe('Custom Instagram card title (falls back to day number)'),
+  "cardSottotitolo": zod.string().max(updateEntryResponseOneThreeCardSottotitoloMax).nullish().describe('Custom Instagram card subtitle'),
   "cardImmagine": zod.string().nullish().describe('Custom Instagram card background image path'),
-  "cardOverlay": zod.number().min(updateEntryResponseTwoCardOverlayMin).max(updateEntryResponseTwoCardOverlayMax).nullish().describe('Card overlay intensity (30-90, default 58)'),
+  "cardOverlay": zod.number().min(updateEntryResponseOneThreeCardOverlayMin).max(updateEntryResponseOneThreeCardOverlayMax).nullish().describe('Card overlay intensity (30-90, default 58)'),
   "cardMostraParole": zod.boolean().nullish().describe('Show stats\/word count on the card (default true)'),
   "cardFeed": zod.string().nullish().describe('Persisted feed card PNG object path'),
   "cardStory": zod.string().nullish().describe('Persisted story card PNG object path'),
   "createdAt": zod.string().optional()
+})).and(zod.object({
+  "dentiVolte": zod.number().min(updateEntryResponseTwoDentiVolteMin).max(updateEntryResponseTwoDentiVolteMax).nullish(),
+  "doccia": zod.boolean().nullish(),
+  "lavoroInizio": zod.string().regex(updateEntryResponseTwoLavoroInizioRegExp).nullish(),
+  "lavoroFine": zod.string().regex(updateEntryResponseTwoLavoroFineRegExp).nullish()
 }))
 
 
@@ -1340,6 +1646,242 @@ export const AdminLogoutResponse = zod.object({
  */
 export const AdminMeResponse = zod.object({
   "authenticated": zod.boolean()
+})
+
+
+/**
+ * @summary Get one entry with admin-only fields
+ */
+export const GetAdminEntryParams = zod.object({
+  "numero": zod.coerce.number()
+})
+
+export const getAdminEntryQueryFaseMax = 2;
+
+
+
+export const GetAdminEntryQueryParams = zod.object({
+  "fase": zod.coerce.number().min(1).max(getAdminEntryQueryFaseMax)
+})
+
+export const getAdminEntryResponseOneOneRoundSparringMin = 0;
+
+export const getAdminEntryResponseOneOneRoundPaoMin = 0;
+
+export const getAdminEntryResponseOneOneRoundTecnicaMin = 0;
+
+export const getAdminEntryResponseOneOneOraSvegliaRegExp = new RegExp('^([01][0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9](\\.[0-9]+)?)?$');
+export const getAdminEntryResponseOneOneOreLavoroMin = 0;
+export const getAdminEntryResponseOneOneOreLavoroMax = 24;
+
+export const getAdminEntryResponseOneOneRisparmioMin = 0;
+
+export const getAdminEntryResponseOneOneEntrateOnlineMin = 0;
+
+export const getAdminEntryResponseOneOneVideoPubblicatiMin = 0;
+
+export const getAdminEntryResponseOneOneArticoliPubblicatiMin = 0;
+
+export const getAdminEntryResponseOneOneFollowerMin = 0;
+
+export const getAdminEntryResponseOneOnePagineLetteMin = 0;
+
+export const getAdminEntryResponseOneOneMinutiScritturaMin = 0;
+
+export const getAdminEntryResponseOneTwoShadowMinutiMin = 0;
+export const getAdminEntryResponseOneTwoShadowMinutiMax = 1440;
+
+export const getAdminEntryResponseOneTwoPagineBibbiaMin = 0;
+
+export const getAdminEntryResponseOneTwoPagineLibroMin = 0;
+
+export const getAdminEntryResponseOneTwoKcalColazioneMin = 0;
+
+export const getAdminEntryResponseOneTwoKcalPranzoMin = 0;
+
+export const getAdminEntryResponseOneTwoKcalCenaMin = 0;
+
+export const getAdminEntryResponseOneTwoFondoEmergenzaMin = 0;
+
+export const getAdminEntryResponseOneTwoInvestimentoMin = 0;
+
+export const getAdminEntryResponseOneTwoCaroselliPubblicatiMin = 0;
+
+export const getAdminEntryResponseOneTwoYoutubePubblicatiMin = 0;
+
+export const getAdminEntryResponseOneThreeDataRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
+export const getAdminEntryResponseOneThreePastiMax = 6;
+
+export const getAdminEntryResponseOneThreeAcquaMin = 0;
+export const getAdminEntryResponseOneThreeAcquaMax = 20;
+
+export const getAdminEntryResponseOneThreeAcquaAllenamentoMin = 0;
+export const getAdminEntryResponseOneThreeAcquaAllenamentoMax = 10;
+
+export const getAdminEntryResponseOneThreeDurataMin = 0;
+
+export const getAdminEntryResponseOneThreeIntensitaMax = 5;
+
+export const getAdminEntryResponseOneThreePlankMin = 0;
+
+export const getAdminEntryResponseOneThreeEnergiaMax = 5;
+
+export const getAdminEntryResponseOneThreeSquatMin = 0;
+export const getAdminEntryResponseOneThreeSquatMax = 2000;
+
+export const getAdminEntryResponseOneThreeStretchingMinMin = 0;
+export const getAdminEntryResponseOneThreeStretchingMinMax = 240;
+
+export const getAdminEntryResponseOneThreeNota1pctMax = 200;
+
+export const getAdminEntryResponseOneThreeSintesiMax = 180;
+
+export const getAdminEntryResponseOneThreeAttritoMax = 280;
+
+export const getAdminEntryResponseOneThreeFattoMax = 280;
+
+export const getAdminEntryResponseOneThreeNonFattoMax = 280;
+
+export const getAdminEntryResponseOneThreeCardTitoloMax = 60;
+
+export const getAdminEntryResponseOneThreeCardSottotitoloMax = 24;
+
+export const getAdminEntryResponseOneThreeCardOverlayMin = 30;
+export const getAdminEntryResponseOneThreeCardOverlayMax = 90;
+
+export const getAdminEntryResponseTwoDentiVolteMin = 0;
+export const getAdminEntryResponseTwoDentiVolteMax = 3;
+
+export const getAdminEntryResponseTwoLavoroInizioRegExp = new RegExp('^([01][0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9](\\.[0-9]+)?)?$');
+export const getAdminEntryResponseTwoLavoroFineRegExp = new RegExp('^([01][0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9](\\.[0-9]+)?)?$');
+
+
+export const GetAdminEntryResponse = zod.object({
+  "fase": zod.union([zod.literal(1),zod.literal(2)]).optional(),
+  "roundSparring": zod.number().min(getAdminEntryResponseOneOneRoundSparringMin).nullish(),
+  "roundPao": zod.number().min(getAdminEntryResponseOneOneRoundPaoMin).nullish(),
+  "roundTecnica": zod.number().min(getAdminEntryResponseOneOneRoundTecnicaMin).nullish(),
+  "oraSveglia": zod.string().regex(getAdminEntryResponseOneOneOraSvegliaRegExp).nullish(),
+  "oreLavoro": zod.number().min(getAdminEntryResponseOneOneOreLavoroMin).max(getAdminEntryResponseOneOneOreLavoroMax).nullish(),
+  "risparmio": zod.number().min(getAdminEntryResponseOneOneRisparmioMin).nullish(),
+  "entrateOnline": zod.number().min(getAdminEntryResponseOneOneEntrateOnlineMin).nullish(),
+  "videoPubblicati": zod.number().min(getAdminEntryResponseOneOneVideoPubblicatiMin).nullish(),
+  "articoliPubblicati": zod.number().min(getAdminEntryResponseOneOneArticoliPubblicatiMin).nullish(),
+  "follower": zod.number().min(getAdminEntryResponseOneOneFollowerMin).nullish(),
+  "pagineLette": zod.number().min(getAdminEntryResponseOneOnePagineLetteMin).nullish(),
+  "minutiScrittura": zod.number().min(getAdminEntryResponseOneOneMinutiScritturaMin).nullish()
+}).and(zod.object({
+  "shadowMinuti": zod.number().min(getAdminEntryResponseOneTwoShadowMinutiMin).max(getAdminEntryResponseOneTwoShadowMinutiMax).nullish(),
+  "allenamentoTecnica": zod.boolean().nullish(),
+  "allenamentoPesi": zod.boolean().nullish(),
+  "sparringFatto": zod.boolean().nullish(),
+  "pagineBibbia": zod.number().min(getAdminEntryResponseOneTwoPagineBibbiaMin).nullish(),
+  "pagineLibro": zod.number().min(getAdminEntryResponseOneTwoPagineLibroMin).nullish(),
+  "libroAttuale": zod.string().nullish(),
+  "diarioFatto": zod.boolean().nullish(),
+  "brainstormingArticoli": zod.boolean().nullish(),
+  "kcalColazione": zod.number().min(getAdminEntryResponseOneTwoKcalColazioneMin).nullish(),
+  "kcalPranzo": zod.number().min(getAdminEntryResponseOneTwoKcalPranzoMin).nullish(),
+  "kcalCena": zod.number().min(getAdminEntryResponseOneTwoKcalCenaMin).nullish(),
+  "fondoEmergenza": zod.number().min(getAdminEntryResponseOneTwoFondoEmergenzaMin).nullish(),
+  "investimento": zod.number().min(getAdminEntryResponseOneTwoInvestimentoMin).nullish(),
+  "caroselliPubblicati": zod.number().min(getAdminEntryResponseOneTwoCaroselliPubblicatiMin).nullish(),
+  "youtubePubblicati": zod.number().min(getAdminEntryResponseOneTwoYoutubePubblicatiMin).nullish()
+})).and(zod.object({
+  "id": zod.number(),
+  "numero": zod.number().describe('Day number (1-180)'),
+  "data": zod.string().regex(getAdminEntryResponseOneThreeDataRegExp).describe('ISO date string (YYYY-MM-DD)'),
+  "kcal": zod.number().nullish(),
+  "pasti": zod.number().min(1).max(getAdminEntryResponseOneThreePastiMax).nullish(),
+  "alcol": zod.boolean().nullish(),
+  "acqua": zod.number().min(getAdminEntryResponseOneThreeAcquaMin).max(getAdminEntryResponseOneThreeAcquaMax).nullish(),
+  "acquaAllenamento": zod.number().min(getAdminEntryResponseOneThreeAcquaAllenamentoMin).max(getAdminEntryResponseOneThreeAcquaAllenamentoMax).nullish().describe('Liters of water consumed around training'),
+  "tipoAllenamento": zod.union([zod.literal('NESSUNO'),zod.literal('MMA'),zod.literal('MUAY THAI'),zod.literal('BJJ'),zod.literal('CALISTHENICS'),zod.literal('CORSA'),zod.literal('SPARRING'),zod.literal('MISTO'),zod.literal(null)]).nullish(),
+  "durata": zod.number().min(getAdminEntryResponseOneThreeDurataMin).nullish(),
+  "intensita": zod.number().min(1).max(getAdminEntryResponseOneThreeIntensitaMax).nullish(),
+  "tipoGiorno": zod.union([zod.literal('A'),zod.literal('B'),zod.literal('RECUPERO'),zod.literal(null)]).nullish(),
+  "routineCompletata": zod.boolean().nullish(),
+  "routineForza": zod.boolean().nullish(),
+  "routineFlessioni": zod.string().nullish(),
+  "routineTrazioni": zod.string().nullish(),
+  "routineSquat": zod.string().nullish(),
+  "plank": zod.number().min(getAdminEntryResponseOneThreePlankMin).nullish(),
+  "collo": zod.boolean().nullish(),
+  "mobilita": zod.boolean().nullish(),
+  "sollevamentoGamba": zod.union([zod.literal('ANCA'),zod.literal('PETTO'),zod.literal('TESTA'),zod.literal('OLTRE'),zod.literal(null)]).nullish(),
+  "grapplingVuoto": zod.boolean().nullish(),
+  "energia": zod.number().min(1).max(getAdminEntryResponseOneThreeEnergiaMax).nullish(),
+  "noteAllenamento": zod.string().nullish(),
+  "sonno": zod.number().nullish().describe('Hours of sleep'),
+  "flessioni": zod.number().nullish(),
+  "addominali": zod.number().nullish(),
+  "squat": zod.number().min(getAdminEntryResponseOneThreeSquatMin).max(getAdminEntryResponseOneThreeSquatMax).nullish(),
+  "stretchingMin": zod.number().min(getAdminEntryResponseOneThreeStretchingMinMin).max(getAdminEntryResponseOneThreeStretchingMinMax).nullish(),
+  "stato1pct": zod.union([zod.literal('spinto'),zod.literal('mantenuto'),zod.literal('crollato'),zod.literal(null)]).nullish(),
+  "fronteSettimana": zod.union([zod.literal('corpo'),zod.literal('scrittura'),zod.literal('soldi'),zod.literal('social'),zod.literal(null)]).nullish(),
+  "nota1pct": zod.string().max(getAdminEntryResponseOneThreeNota1pctMax).nullish(),
+  "round": zod.number().nullish(),
+  "km": zod.number().nullish(),
+  "peso": zod.number().nullish().describe('Weight in kg'),
+  "battito": zod.number().nullish().describe('Resting heart rate bpm'),
+  "entrate": zod.number().nullish().describe('Daily income (€)'),
+  "uscite": zod.number().nullish().describe('Daily expenses (€)'),
+  "testo": zod.string().nullish().describe('Diary text'),
+  "sintesi": zod.string().max(getAdminEntryResponseOneThreeSintesiMax).nullish().describe('Short Instagram card summary'),
+  "foto": zod.string().nullish().describe('Photo URL'),
+  "attrito": zod.string().max(getAdminEntryResponseOneThreeAttritoMax).nullish().describe('The main friction faced on this day'),
+  "fatto": zod.string().max(getAdminEntryResponseOneThreeFattoMax).nullish().describe('What was completed on this day'),
+  "nonFatto": zod.string().max(getAdminEntryResponseOneThreeNonFattoMax).nullish().describe('What was intentionally not completed on this day'),
+  "cardTitolo": zod.string().max(getAdminEntryResponseOneThreeCardTitoloMax).nullish().describe('Custom Instagram card title (falls back to day number)'),
+  "cardSottotitolo": zod.string().max(getAdminEntryResponseOneThreeCardSottotitoloMax).nullish().describe('Custom Instagram card subtitle'),
+  "cardImmagine": zod.string().nullish().describe('Custom Instagram card background image path'),
+  "cardOverlay": zod.number().min(getAdminEntryResponseOneThreeCardOverlayMin).max(getAdminEntryResponseOneThreeCardOverlayMax).nullish().describe('Card overlay intensity (30-90, default 58)'),
+  "cardMostraParole": zod.boolean().nullish().describe('Show stats\/word count on the card (default true)'),
+  "cardFeed": zod.string().nullish().describe('Persisted feed card PNG object path'),
+  "cardStory": zod.string().nullish().describe('Persisted story card PNG object path'),
+  "createdAt": zod.string().optional()
+})).and(zod.object({
+  "dentiVolte": zod.number().min(getAdminEntryResponseTwoDentiVolteMin).max(getAdminEntryResponseTwoDentiVolteMax).nullish(),
+  "doccia": zod.boolean().nullish(),
+  "lavoroInizio": zod.string().regex(getAdminEntryResponseTwoLavoroInizioRegExp).nullish(),
+  "lavoroFine": zod.string().regex(getAdminEntryResponseTwoLavoroFineRegExp).nullish()
+}))
+
+
+/**
+ * @summary Get this week's goals and monthly money progress
+ */
+export const getAdminWeeklyGoalsResponseWeekStartDateRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
+export const getAdminWeeklyGoalsResponseWeekEndDateRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
+export const getAdminWeeklyGoalsResponseMonthlyMoneyMonthRegExp = new RegExp('^\\d{4}-\\d{2}$');
+
+
+export const GetAdminWeeklyGoalsResponse = zod.object({
+  "week": zod.object({
+  "startDate": zod.string().regex(getAdminWeeklyGoalsResponseWeekStartDateRegExp),
+  "endDate": zod.string().regex(getAdminWeeklyGoalsResponseWeekEndDateRegExp),
+  "goals": zod.array(zod.object({
+  "key": zod.string(),
+  "label": zod.string(),
+  "done": zod.number(),
+  "target": zod.number(),
+  "unit": zod.string(),
+  "met": zod.boolean()
+}))
+}),
+  "monthlyMoney": zod.object({
+  "month": zod.string().regex(getAdminWeeklyGoalsResponseMonthlyMoneyMonthRegExp),
+  "income": zod.number(),
+  "goals": zod.array(zod.object({
+  "key": zod.string(),
+  "label": zod.string(),
+  "share": zod.number(),
+  "income": zod.number(),
+  "target": zod.number(),
+  "actual": zod.number(),
+  "actualPercent": zod.number().nullable()
+}))
+})
 })
 
 
