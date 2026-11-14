@@ -437,3 +437,17 @@ mtime_ms = 1793950927749
 storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:f0698a0b-8b04-4823-a6d3-9f45ae32a3bf/ea80869e-35d6-4f2d-99c8-2de7a751a4c1/54a7b05d-1a7d-458a-a99d-dd76087653ee"
 storage_version_token = "1793951168495176"
 content_type = "image/png"
+
+[[outputs]]
+id = "0mYGNw4bTSkY6lJWoo4Pk"
+uri = "file://generated-artifacts/home-redesign/home-screenshots.html"
+type = "html"
+title = "Screenshot home Stagione 2"
+description = "Galleria autonoma con 14 schermate: sette capitoli in mobile e desktop. Mostra il fallback nero perché non era presente un video o un’immagine hero."
+logical_id = "c5af5920-6553-4bf0-a2da-85a512e7fd2d"
+content_hash = "sha256:db319cca2fa446eaa001fcab3a5d52b1fa289e2f2b8e91dc7d43257116162f0e"
+size = 503950
+mtime_ms = 1794644328864
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:f0698a0b-8b04-4823-a6d3-9f45ae32a3bf/c5af5920-6553-4bf0-a2da-85a512e7fd2d/710db47f-c098-40cf-a60f-a073d50af1c9"
+storage_version_token = "1794644813983343"
+content_type = "text/html"
