@@ -58,6 +58,7 @@ function ConditionalNavbar() {
   const [location] = useLocation();
   const { navigationHidden } = usePageChrome();
   if (navigationHidden) return null;
+  if (location === '/') return null;
   if (location.startsWith('/card/')) return null;
   if (location.startsWith('/clip/')) return null;
   if (location.startsWith('/admin/articoli/') && location.endsWith('/preview')) return null;

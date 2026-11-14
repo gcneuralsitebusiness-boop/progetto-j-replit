@@ -20,8 +20,6 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
-  AdminEntry,
-  AdminGoalsResponse,
   ApiError,
   Article,
   ArticleInput,
@@ -43,7 +41,6 @@ import type {
   EntryInput,
   EntrySummary,
   EntryUpdate,
-  GetAdminEntryParams,
   GetCurrentSeason200,
   GetEntriesBulkTextParams,
   GetEntryParams,
@@ -288,9 +285,9 @@ export const getCreateEntryUrl = (params?: CreateEntryParams,) => {
  * @summary Create a new journal entry (admin only)
  */
 export const createEntry = async (entryInput: EntryInput,
-    params?: CreateEntryParams, options?: RequestInit): Promise<AdminEntry> => {
+    params?: CreateEntryParams, options?: RequestInit): Promise<Entry> => {
 
-  return customFetch<AdminEntry>(getCreateEntryUrl(params),
+  return customFetch<Entry>(getCreateEntryUrl(params),
   {
     ...options,
     method: 'POST',
@@ -862,9 +859,9 @@ export const getUpdateEntryUrl = (numero: number,
  */
 export const updateEntry = async (numero: number,
     entryUpdate: EntryUpdate,
-    params?: UpdateEntryParams, options?: RequestInit): Promise<AdminEntry> => {
+    params?: UpdateEntryParams, options?: RequestInit): Promise<Entry> => {
 
-  return customFetch<AdminEntry>(getUpdateEntryUrl(numero,params),
+  return customFetch<Entry>(getUpdateEntryUrl(numero,params),
   {
     ...options,
     method: 'PATCH',
@@ -1718,172 +1715,6 @@ export function useAdminMe<TData = Awaited<ReturnType<typeof adminMe>>, TError =
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getAdminMeQueryOptions(options)
-
-  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
-
-  return withQueryKey(query, queryOptions.queryKey);
-}
-
-
-
-
-
-
-
-export const getGetAdminEntryUrl = (numero: number,
-    params: GetAdminEntryParams,) => {
-  const normalizedParams = new URLSearchParams();
-
-  Object.entries(params || {}).forEach(([key, value]) => {
-
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value))
-    }
-  });
-
-  const stringifiedParams = normalizedParams.toString();
-
-  return stringifiedParams.length > 0 ? `/api/admin/entries/${numero}?${stringifiedParams}` : `/api/admin/entries/${numero}`
-}
-
-/**
- * @summary Get one entry with admin-only fields
- */
-export const getAdminEntry = async (numero: number,
-    params: GetAdminEntryParams, options?: RequestInit): Promise<AdminEntry> => {
-
-  return customFetch<AdminEntry>(getGetAdminEntryUrl(numero,params),
-  {
-    ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
-
-
-export const getGetAdminEntryQueryKey = (numero: number,
-    params?: GetAdminEntryParams,) => {
-    return [
-    `/api/admin/entries/${numero}`, ...(params ? [params] : [])
-    ] as const;
-    }
-
-
-export const getGetAdminEntryQueryOptions = <TData = Awaited<ReturnType<typeof getAdminEntry>>, TError = ErrorType<ApiError>>(numero: number,
-    params: GetAdminEntryParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminEntry>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getGetAdminEntryQueryKey(numero,params);
-
-
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminEntry>>> = ({ signal }) => getAdminEntry(numero,params, { signal, ...requestOptions });
-
-
-
-
-
-   return  { queryKey, queryFn, enabled: numero !== null && numero !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdminEntry>>, TError, TData> & { queryKey: QueryKey }
-}
-
-export type GetAdminEntryQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminEntry>>>
-export type GetAdminEntryQueryError = ErrorType<ApiError>
-
-
-/**
- * @summary Get one entry with admin-only fields
- */
-
-export function useGetAdminEntry<TData = Awaited<ReturnType<typeof getAdminEntry>>, TError = ErrorType<ApiError>>(
- numero: number,
-    params: GetAdminEntryParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminEntry>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
-
- ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-
-  const queryOptions = getGetAdminEntryQueryOptions(numero,params,options)
-
-  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
-
-  return withQueryKey(query, queryOptions.queryKey);
-}
-
-
-
-
-
-
-
-export const getGetAdminWeeklyGoalsUrl = () => {
-
-
-
-
-  return `/api/admin/weekly-goals`
-}
-
-/**
- * @summary Get this week's goals and monthly money progress
- */
-export const getAdminWeeklyGoals = async ( options?: RequestInit): Promise<AdminGoalsResponse> => {
-
-  return customFetch<AdminGoalsResponse>(getGetAdminWeeklyGoalsUrl(),
-  {
-    ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
-
-
-export const getGetAdminWeeklyGoalsQueryKey = () => {
-    return [
-    `/api/admin/weekly-goals`
-    ] as const;
-    }
-
-
-export const getGetAdminWeeklyGoalsQueryOptions = <TData = Awaited<ReturnType<typeof getAdminWeeklyGoals>>, TError = ErrorType<ApiError>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminWeeklyGoals>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getGetAdminWeeklyGoalsQueryKey();
-
-
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminWeeklyGoals>>> = ({ signal }) => getAdminWeeklyGoals({ signal, ...requestOptions });
-
-
-
-
-
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdminWeeklyGoals>>, TError, TData> & { queryKey: QueryKey }
-}
-
-export type GetAdminWeeklyGoalsQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminWeeklyGoals>>>
-export type GetAdminWeeklyGoalsQueryError = ErrorType<ApiError>
-
-
-/**
- * @summary Get this week's goals and monthly money progress
- */
-
-export function useGetAdminWeeklyGoals<TData = Awaited<ReturnType<typeof getAdminWeeklyGoals>>, TError = ErrorType<ApiError>>(
-  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminWeeklyGoals>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
-
- ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-
-  const queryOptions = getGetAdminWeeklyGoalsQueryOptions(options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

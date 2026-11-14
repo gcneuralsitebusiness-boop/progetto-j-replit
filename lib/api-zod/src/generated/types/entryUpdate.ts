@@ -10,11 +10,9 @@ import type { EntryUpdateSollevamentoGamba } from './entryUpdateSollevamentoGamb
 import type { EntryUpdateStato1pct } from './entryUpdateStato1pct';
 import type { EntryUpdateTipoAllenamento } from './entryUpdateTipoAllenamento';
 import type { EntryUpdateTipoGiorno } from './entryUpdateTipoGiorno';
-import type { PrivateRoutineFields } from './privateRoutineFields';
-import type { RoutineFields } from './routineFields';
 import type { SeasonFields } from './seasonFields';
 
-export type EntryUpdate = SeasonFields & RoutineFields & PrivateRoutineFields & ({
+export type EntryUpdate = SeasonFields & ({
   /** @pattern ^\d{4}-\d{2}-\d{2}$ */
   data?: string;
   /**
@@ -172,7 +170,7 @@ export type EntryUpdate = SeasonFields & RoutineFields & PrivateRoutineFields & 
   cardFeed?: string | null;
   /** @nullable */
   cardStory?: string | null;
-}) & Required<Pick<SeasonFields & RoutineFields & PrivateRoutineFields & ({
+}) & Required<Pick<SeasonFields & ({
   /** @pattern ^\d{4}-\d{2}-\d{2}$ */
   data?: string;
   /**

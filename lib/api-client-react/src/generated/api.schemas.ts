@@ -100,93 +100,6 @@ export interface HealthStatus {
   status: string;
 }
 
-export interface RoutineFields {
-  /**
-     * @minimum 0
-     * @maximum 1440
-     * @nullable
-     */
-  shadowMinuti?: number | null;
-  /** @nullable */
-  allenamentoTecnica?: boolean | null;
-  /** @nullable */
-  allenamentoPesi?: boolean | null;
-  /** @nullable */
-  sparringFatto?: boolean | null;
-  /**
-     * @minimum 0
-     * @nullable
-     */
-  pagineBibbia?: number | null;
-  /**
-     * @minimum 0
-     * @nullable
-     */
-  pagineLibro?: number | null;
-  /** @nullable */
-  libroAttuale?: string | null;
-  /** @nullable */
-  diarioFatto?: boolean | null;
-  /** @nullable */
-  brainstormingArticoli?: boolean | null;
-  /**
-     * @minimum 0
-     * @nullable
-     */
-  kcalColazione?: number | null;
-  /**
-     * @minimum 0
-     * @nullable
-     */
-  kcalPranzo?: number | null;
-  /**
-     * @minimum 0
-     * @nullable
-     */
-  kcalCena?: number | null;
-  /**
-     * @minimum 0
-     * @nullable
-     */
-  fondoEmergenza?: number | null;
-  /**
-     * @minimum 0
-     * @nullable
-     */
-  investimento?: number | null;
-  /**
-     * @minimum 0
-     * @nullable
-     */
-  caroselliPubblicati?: number | null;
-  /**
-     * @minimum 0
-     * @nullable
-     */
-  youtubePubblicati?: number | null;
-}
-
-export interface PrivateRoutineFields {
-  /**
-     * @minimum 0
-     * @maximum 3
-     * @nullable
-     */
-  dentiVolte?: number | null;
-  /** @nullable */
-  doccia?: boolean | null;
-  /**
-     * @nullable
-     * @pattern ^([01][0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9](\.[0-9]+)?)?$
-     */
-  lavoroInizio?: string | null;
-  /**
-     * @nullable
-     * @pattern ^([01][0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9](\.[0-9]+)?)?$
-     */
-  lavoroFine?: string | null;
-}
-
 /**
  * @nullable
  */
@@ -254,7 +167,7 @@ export const EntryFronteSettimana = {
   social: 'social',
 } as const;
 
-export type Entry = SeasonFields & RoutineFields & ({
+export type Entry = SeasonFields & ({
   id: number;
   /** Day number (1-180) */
   numero: number;
@@ -462,48 +375,6 @@ export type Entry = SeasonFields & RoutineFields & ({
   createdAt?: string;
 });
 
-export type AdminEntry = Entry & PrivateRoutineFields;
-
-export interface WeeklyGoalResult {
-  key: string;
-  label: string;
-  done: number;
-  target: number;
-  unit: string;
-  met: boolean;
-}
-
-export interface MonthlyMoneyGoal {
-  key: string;
-  label: string;
-  share: number;
-  income: number;
-  target: number;
-  actual: number;
-  /** @nullable */
-  actualPercent: number | null;
-}
-
-export type AdminGoalsResponseWeek = {
-  /** @pattern ^\d{4}-\d{2}-\d{2}$ */
-  startDate: string;
-  /** @pattern ^\d{4}-\d{2}-\d{2}$ */
-  endDate: string;
-  goals: WeeklyGoalResult[];
-};
-
-export type AdminGoalsResponseMonthlyMoney = {
-  /** @pattern ^\d{4}-\d{2}$ */
-  month: string;
-  income: number;
-  goals: MonthlyMoneyGoal[];
-};
-
-export interface AdminGoalsResponse {
-  week: AdminGoalsResponseWeek;
-  monthlyMoney: AdminGoalsResponseMonthlyMoney;
-}
-
 export interface EntrySummary {
   fase?: number;
   id: number;
@@ -628,7 +499,7 @@ export const EntryInputFronteSettimana = {
   social: 'social',
 } as const;
 
-export type EntryInput = SeasonFields & RoutineFields & PrivateRoutineFields & ({
+export type EntryInput = SeasonFields & ({
   numero: number;
   /** @pattern ^\d{4}-\d{2}-\d{2}$ */
   data: string;
@@ -787,7 +658,7 @@ export type EntryInput = SeasonFields & RoutineFields & PrivateRoutineFields & (
   cardFeed?: string | null;
   /** @nullable */
   cardStory?: string | null;
-}) & Required<Pick<SeasonFields & RoutineFields & PrivateRoutineFields & ({
+}) & Required<Pick<SeasonFields & ({
   numero: number;
   /** @pattern ^\d{4}-\d{2}-\d{2}$ */
   data: string;
@@ -1015,7 +886,7 @@ export const EntryUpdateFronteSettimana = {
   social: 'social',
 } as const;
 
-export type EntryUpdate = SeasonFields & RoutineFields & PrivateRoutineFields & ({
+export type EntryUpdate = SeasonFields & ({
   /** @pattern ^\d{4}-\d{2}-\d{2}$ */
   data?: string;
   /**
@@ -1173,7 +1044,7 @@ export type EntryUpdate = SeasonFields & RoutineFields & PrivateRoutineFields & 
   cardFeed?: string | null;
   /** @nullable */
   cardStory?: string | null;
-}) & Required<Pick<SeasonFields & RoutineFields & PrivateRoutineFields & ({
+}) & Required<Pick<SeasonFields & ({
   /** @pattern ^\d{4}-\d{2}-\d{2}$ */
   data?: string;
   /**
@@ -1994,14 +1865,6 @@ fase?: number;
  * Explicit confirmation to modify the frozen Season 1 archive
  */
 overrideArchivio?: boolean;
-};
-
-export type GetAdminEntryParams = {
-/**
- * @minimum 1
- * @maximum 2
- */
-fase: number;
 };
 
 export type GetPlannerAnnotationParams = {
