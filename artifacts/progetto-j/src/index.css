@@ -372,7 +372,30 @@
   letter-spacing: -.025em; font-variant-numeric: tabular-nums;
 }
 .home-hero__statement { margin: 25px 0 0; color: var(--home-ivory); font: 400 32px/.98 'Bebas Neue', sans-serif; letter-spacing: .012em; }
+.home-hero__of180 { margin: 6px 0 0; color: var(--home-grey); letter-spacing: .18em; }
 .home-mobile-break { display: none; }
+
+/* ── Countdown ── */
+.home-countdown {
+  display: flex; align-items: flex-end; gap: 0;
+  margin: 28px 0 0;
+}
+.home-countdown__unit {
+  display: flex; flex-direction: column; align-items: center; min-width: 72px;
+}
+.home-countdown__num {
+  font: 400 clamp(52px, 10vw, 96px)/.88 'Bebas Neue', sans-serif;
+  letter-spacing: .02em; font-variant-numeric: tabular-nums;
+  color: var(--home-ivory);
+}
+.home-countdown__label {
+  margin-top: 4px; color: var(--home-grey); font-size: 10px; letter-spacing: .2em;
+}
+.home-countdown__sep {
+  font: 400 clamp(40px, 8vw, 72px)/1 'Bebas Neue', sans-serif;
+  color: var(--home-green); padding: 0 2px; padding-bottom: 14px;
+  align-self: flex-end;
+}
 .home-scroll {
   position: absolute; z-index: 1; bottom: 24px; left: 50%; transform: translateX(-50%); color: var(--home-grey);
   text-decoration: none; font: 400 13px/1.5 'JetBrains Mono', monospace; letter-spacing: .14em;
@@ -447,6 +470,8 @@
 @media (max-width: 767px) {
   .home-hero__number { font-size: 45vw; }
   .home-hero__statement { max-width: 300px; }
+  .home-countdown__unit { min-width: 56px; }
+  .home-countdown__sep { padding-bottom: 10px; }
   .home-mobile-break { display: initial; }
   .home-diary, .home-archive { min-height: 100vh; min-height: 100svh; }
   .home-metric strong { font-size: clamp(64px, 22vw, 144px); }

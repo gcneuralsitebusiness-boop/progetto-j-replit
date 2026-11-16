@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type SyntheticEvent } from "react";
+import { useEffect, useRef, useMemo, useState, type SyntheticEvent } from "react";
 import { Link } from "wouter";
 import {
   getGetLatestEntriesQueryKey,
@@ -263,6 +263,53 @@ function HeroMediaLayer() {
   return null;
 }
 
+/** Calcola quanto manca alla mezzanotte del (SEASON_2_START_DATE + 180 giorni) ora di Roma */
+function useCountdown(startDate: string, totalDays: number) {
+  const endMs = useMemo(() => {
+    // Fine = mezzanotte del giorno dopo l'ultimo giorno (startDate + totalDays) ora di Roma
+    const endLocal = new Date(`${startDate}T23:59:59`);
+    endLocal.setDate(endLocal.getDate() + totalDays - 1);
+    return endLocal.getTime();
+  }, [startDate, totalDays]);
+
+  const calc = () => {
+    const now = Date.now();
+    const diff = Math.max(0, endMs - now);
+    const totalSec = Math.floor(diff / 1000);
+    return {
+      days: Math.floor(totalSec / 86400),
+      hours: Math.floor((totalSec % 86400) / 3600),
+      minutes: Math.floor((totalSec % 3600) / 60),
+      seconds: totalSec % 60,
+    };
+  };
+
+  const [remaining, setRemaining] = useState(calc);
+  const rafRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    const tick = () => {
+      setRemaining(calc());
+      rafRef.current = window.setTimeout(tick, 1000);
+    };
+    rafRef.current = window.setTimeout(tick, 1000 - (Date.now() % 1000));
+    return () => { if (rafRef.current != null) clearTimeout(rafRef.current); };
+  }, [endMs]);
+
+  return remaining;
+}
+
+function pad2(n: number) { return String(n).padStart(2, "0"); }
+
+function CountdownUnit({ value, label }: { value: number; label: string }) {
+  return (
+    <div className="home-countdown__unit">
+      <span className="home-countdown__num">{pad2(value)}</span>
+      <span className="home-mono home-countdown__label">{label}</span>
+    </div>
+  );
+}
+
 export default function Home() {
   const params = { fase: 2 as const };
   const latestQueryKey = getGetLatestEntriesQueryKey(params);
@@ -283,6 +330,7 @@ export default function Home() {
   const currentDay = today < SEASON_2_START_DATE
     ? 1
     : Math.min(180, Math.max(storedDay, seasonDayForDate(today)));
+  const countdown = useCountdown(SEASON_2_START_DATE, 180);
   const currentMetrics = useMemo(() => weekMetrics(entries ?? [], today), [entries, today]);
   const hasPreviousWeek = (entries ?? []).some((entry) => {
     const start = shiftDate(mondayFor(today), -7);
@@ -305,7 +353,16 @@ export default function Home() {
           <div className="home-hero__content">
             <p className="home-mono home-hero__season">STAGIONE 2</p>
             <h1 id="home-title" className="home-hero__number" data-testid="text-current-season-day">{currentDay}</h1>
-            <p className="home-hero__statement">180 GIORNI PER<br className="home-mobile-break" /> MIGLIORARSI.</p>
+            <p className="home-mono home-hero__of180">GIORNO {String(currentDay).padStart(3, "0")} DI 180</p>
+            <div className="home-countdown" aria-label="Tempo rimanente al termine del progetto">
+              <CountdownUnit value={countdown.days} label="GG" />
+              <span className="home-countdown__sep" aria-hidden="true">:</span>
+              <CountdownUnit value={countdown.hours} label="HH" />
+              <span className="home-countdown__sep" aria-hidden="true">:</span>
+              <CountdownUnit value={countdown.minutes} label="MM" />
+              <span className="home-countdown__sep" aria-hidden="true">:</span>
+              <CountdownUnit value={countdown.seconds} label="SS" />
+            </div>
           </div>
           <a className="home-scroll" href="#origin" data-testid="link-scroll-origin">SCORRI <span aria-hidden="true">↓</span></a>
         </section>
